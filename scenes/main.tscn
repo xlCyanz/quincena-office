@@ -1,6 +1,13 @@
 [gd_scene format=3 uid="uid://u7h35tffev7u"]
 
 [ext_resource type="Script" uid="uid://riw4v02teahg" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/office_grid.tscn" id="2_grid"]
+[ext_resource type="Script" uid="uid://3sd40kaml334" path="res://scripts/office/office_camera.gd" id="3_camera"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
+
+[node name="OfficeGrid" parent="." instance=ExtResource("2_grid")]
+
+[node name="OfficeCamera" type="Camera2D" parent="."]
+script = ExtResource("3_camera")

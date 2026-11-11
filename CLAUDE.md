@@ -11,6 +11,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 - Ejecutable en macOS (no está en el PATH): `/Applications/Godot.app/Contents/MacOS/Godot`.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
+  - Pruebas sin ventana: `Godot --headless --path . res://tests/test_grid_camera.tscn` (imprime `RESULTADO: OK`)
 
 ## Convenciones de código
 
@@ -33,7 +34,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 ## Estructura
 
 - `scenes/` escenas · `scripts/autoload/` sistemas globales · `scripts/office/` cuadrícula y construcción
-- `scripts/characters/` personajes · `scripts/ui/` interfaz · `data/` datos de diseño · `assets/` arte
+- `scripts/characters/` personajes · `scripts/ui/` interfaz · `data/` datos de diseño · `assets/` arte · `tests/` pruebas sin ventana
 - Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `SaveManager`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
@@ -48,7 +49,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | Hito | Descripción | Estado |
 | --- | --- | --- |
 | 0 | Proyecto | ✅ Completado |
-| 1 | Cuadrícula y cámara | Pendiente |
+| 1 | Cuadrícula y cámara | ✅ Completado |
 | 2 | Reloj | Pendiente |
 | 3 | Inicio de partida | Pendiente |
 | 4 | CEO | Pendiente |

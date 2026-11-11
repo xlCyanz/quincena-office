@@ -20,3 +20,14 @@ const DAYS_PER_MONTH: int = 30
 
 ## Días del mes en que se paga la nómina.
 const PAYROLL_DAYS: Array[int] = [15, 30]
+
+## Niveles fijos de zoom de la cámara, de lejos a cerca. Son enteros para que el
+## pixel art se vea nítido (cada píxel del arte ocupa 1, 2 o 3 píxeles de pantalla).
+const CAMERA_ZOOM_LEVELS: Array[float] = [1.0, 2.0, 3.0]
+
+## Nivel de zoom con el que arranca la cámara (índice dentro de CAMERA_ZOOM_LEVELS).
+const CAMERA_START_ZOOM_INDEX: int = 1
+
+## Cuánto puede pasarse la vista más allá del borde del local, como fracción del
+## tamaño de la pantalla (0.25 = hasta un cuarto de pantalla de margen).
+const CAMERA_OVERSCROLL_RATIO: float = 0.25

@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://d035f2vf7qhnj" path="res://scripts/office/office_grid.gd" id="1_grid"]
+[ext_resource type="Script" uid="uid://dd1n0pvkkjutp" path="res://scripts/office/cell_highlight.gd" id="2_highlight"]
+
+[node name="OfficeGrid" type="Node2D"]
+script = ExtResource("1_grid")
+
+[node name="Floor" type="TileMapLayer" parent="."]
+
+[node name="CellHighlight" type="Node2D" parent="."]
+script = ExtResource("2_highlight")
