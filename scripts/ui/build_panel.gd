@@ -1,6 +1,6 @@
-# Panel del modo construcción (interfaz mínima del hito 5; el hito 8 la integra en la
-# interfaz superpuesta). Abajo al centro: el botón "Construir" o, en modo construcción,
-# las herramientas, el saldo, el estado de la última acción y "Salir".
+# Panel del modo construcción, parte de la interfaz superpuesta (el dinero y el reloj
+# están en Hud). Abajo al centro: el botón "Construir" o, en modo construcción, las
+# herramientas, el estado de la última acción y "Salir".
 class_name BuildPanel
 extends CanvasLayer
 
@@ -13,7 +13,6 @@ const MARGIN_BOTTOM: float = 16.0
 
 var _open_button: Button
 var _panel: PanelContainer
-var _balance_label: Label
 var _status_label: Label
 var _tool_buttons: Dictionary[String, Button] = {}
 var _exit_button: Button
@@ -62,19 +61,12 @@ func _ready() -> void:
 	_exit_button.text = "Salir"
 	_exit_button.pressed.connect(func() -> void: set_build_mode(false))
 	structure_row.add_child(_exit_button)
-	var info := HBoxContainer.new()
-	rows.add_child(info)
-	_balance_label = Label.new()
-	info.add_child(_balance_label)
 	_status_label = Label.new()
-	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	info.add_child(_status_label)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rows.add_child(_status_label)
 	_anchor_bottom_center(_panel)
 
 	_tool_buttons[BuildController.TOOL_WALL].button_pressed = true
-	EventBus.balance_changed.connect(_on_balance_changed)
-	_on_balance_changed(Economy.balance)
 	_panel.visible = false
 
 
@@ -126,10 +118,6 @@ func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup)
 		row.add_child(button)
 		_tool_buttons[tool] = button
 	return row
-
-
-func _on_balance_changed(balance: int) -> void:
-	_balance_label.text = "Saldo: $%d" % balance
 
 
 func _anchor_bottom_center(control: Control) -> void:

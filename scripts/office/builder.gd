@@ -18,6 +18,10 @@
 class_name Builder
 extends RefCounted
 
+## Conceptos de los movimientos de la cuenta empresarial.
+const CONCEPT_CONSTRUCTION: String = "Construcción"
+const CONCEPT_FURNITURE: String = "Muebles"
+
 ## Casillas donde hay personajes (por ejemplo, el CEO): ahí no se pueden poner muebles.
 var occupied_cells: Array[Vector2i] = []
 
@@ -83,9 +87,9 @@ func apply(changes: Array[Dictionary]) -> Dictionary:
 		OfficeState.rooms = rooms
 		result.erase("rooms")
 	if result["cost"] >= 0:
-		Economy.spend(result["cost"])
+		Economy.spend(result["cost"], CONCEPT_CONSTRUCTION)
 	else:
-		Economy.earn(-result["cost"])
+		Economy.earn(-result["cost"], CONCEPT_CONSTRUCTION)
 	EventBus.office_changed.emit()
 	return result
 
@@ -296,9 +300,9 @@ func _commit(result: Dictionary) -> Dictionary:
 	var furniture: Array[Dictionary] = result["furniture"]
 	OfficeState.furniture = furniture
 	if result["cost"] >= 0:
-		Economy.spend(result["cost"])
+		Economy.spend(result["cost"], CONCEPT_FURNITURE)
 	else:
-		Economy.earn(-result["cost"])
+		Economy.earn(-result["cost"], CONCEPT_FURNITURE)
 	EventBus.office_changed.emit()
 	result.erase("furniture")
 	return result

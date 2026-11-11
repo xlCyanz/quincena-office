@@ -1,5 +1,5 @@
-# Escena de juego: reúne la oficina, la cámara, el CEO y el modo construcción, y los
-# prepara con el estado de la partida.
+# Escena de juego: reúne la oficina, la cámara, el CEO, el modo construcción y la
+# interfaz superpuesta, y los prepara con el estado de la partida.
 # Sigue la regla de Godot "llamar hacia abajo, avisar hacia arriba": el nodo padre
 # configura a sus hijos directamente, y los hijos le avisan con señales.
 extends Node2D
@@ -17,6 +17,7 @@ var _was_paused_before_building: bool = false
 @onready var _camera: OfficeCamera = $OfficeCamera
 @onready var _build_controller: BuildController = $BuildController
 @onready var _build_panel: BuildPanel = $BuildPanel
+@onready var _hud: Hud = $Hud
 
 
 func _ready() -> void:
@@ -34,12 +35,10 @@ func _ready() -> void:
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
+	_hud.pause_pressed.connect(_on_pause_pressed)
+	_hud.speed_pressed.connect(_on_speed_pressed)
 	EventBus.office_changed.connect(_on_office_changed)
 	GameClock.start()
-	# Provisional hasta el hito 8 (interfaz): el reloj se muestra en la salida.
-	EventBus.hour_changed.connect(_on_hour_changed)
-	print("Saldo: $%d" % Economy.balance)
-	_print_clock()
 
 
 func _exit_tree() -> void:
@@ -72,6 +71,7 @@ func _on_office_changed() -> void:
 # El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
 func _on_build_mode_changed(active: bool) -> void:
 	_build_controller.set_active(active)
+	_hud.set_controls_enabled(not active)
 	_office_grid.set_rooms_visible(active)
 	_camera.left_drag_enabled = not active
 	# Con el tiempo en pausa el CEO no se mueve: su casilla queda reservada.
@@ -94,7 +94,18 @@ func _on_ceo_left_office() -> void:
 		GameClock.fast_forward_hours(hours)
 
 
-# Atajos de teclado (un extra: en el hito 8 la interfaz tendrá botones para esto).
+# Botones del reloj. En modo construcción están desactivados: el tiempo queda en pausa.
+func _on_pause_pressed() -> void:
+	if not _build_panel.is_build_mode():
+		GameClock.toggle_pause()
+
+
+func _on_speed_pressed(index: int) -> void:
+	if not _build_panel.is_build_mode():
+		GameClock.set_speed_index(index)
+
+
+# Atajos de teclado (un extra: los botones del reloj hacen lo mismo).
 # Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
 # nada, porque el tiempo tiene que quedarse en pausa.
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -109,14 +120,3 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_:
 			return
 	get_viewport().set_input_as_handled()
-	_print_clock()
-
-
-func _on_hour_changed(_hour: int) -> void:
-	_print_clock()
-
-
-func _print_clock() -> void:
-	var speed: String = "pausa" if GameClock.is_paused else "%dx" % int(GameClock.get_speed())
-	print("Día %d, mes %d — %02d:%02d (%s)" % [GameClock.get_day(), GameClock.get_month(),
-		GameClock.get_hour(), GameClock.get_minute(), speed])

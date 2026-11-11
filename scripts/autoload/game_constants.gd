@@ -12,6 +12,9 @@ const STARTING_LOT_SIZE := Vector2i(6, 8)
 ## Dinero con el que empieza la partida.
 const STARTING_CAPITAL: int = 20000
 
+## Mantenimiento mensual del local, en dólares por m², cobrado el día 1 de cada mes.
+const MAINTENANCE_PER_M2: int = 5
+
 ## Segundos reales que dura una hora de juego a velocidad 1x.
 const SECONDS_PER_GAME_HOUR: float = 5.0
 
