@@ -1,0 +1,14 @@
+{
+	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Los muebles se colocan a partir del hito 6 (cell = casilla de anclaje, rotation = 0 a 3).",
+	"rooms": [
+		{
+			"type": "executive_office",
+			"position": [0, 0],
+			"size": [3, 3]
+		}
+	],
+	"furniture": [
+		{ "id": "executive_desk", "cell": [1, 0], "rotation": 0 },
+		{ "id": "basic_chair", "cell": [1, 1], "rotation": 0 }
+	]
+}

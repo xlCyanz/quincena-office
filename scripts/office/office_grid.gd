@@ -4,13 +4,12 @@
 class_name OfficeGrid
 extends Node2D
 
-## Colores provisionales del piso (tablero de ajedrez para distinguir cada casilla).
-const FLOOR_COLOR_LIGHT := Color("c9b48a")
-const FLOOR_COLOR_DARK := Color("b39c72")
-
-## Coordenadas en el atlas de cada variante de piso.
-const ATLAS_LIGHT := Vector2i(0, 0)
-const ATLAS_DARK := Vector2i(1, 0)
+## Colores provisionales del piso (tablero de ajedrez para distinguir cada casilla):
+## una pareja para el piso común y otra por cada tipo de habitación.
+const FLOOR_COLORS: Array[Color] = [Color("c9b48a"), Color("b39c72")]
+const ROOM_FLOOR_COLORS: Dictionary[String, Array] = {
+	"executive_office": [Color("8f6b4a"), Color("7d5c3f")],
+}
 
 ## Casilla bajo el cursor, o NO_CELL si el cursor está fuera del local.
 const NO_CELL := Vector2i(-1, -1)
@@ -18,6 +17,9 @@ const NO_CELL := Vector2i(-1, -1)
 var hovered_cell: Vector2i = NO_CELL
 
 var _floor_source_id: int = -1
+var _lot_rect := Rect2i()
+# Fila del atlas de cada estilo de piso: "" es el piso común; el resto, tipos de habitación.
+var _atlas_rows: Dictionary[String, int] = {}
 
 @onready var _floor: TileMapLayer = $Floor
 @onready var _highlight: CellHighlight = $CellHighlight
@@ -25,7 +27,6 @@ var _floor_source_id: int = -1
 
 func _ready() -> void:
 	_floor.tile_set = _build_tile_set()
-	_paint_lot()
 	_highlight.visible = false
 
 
@@ -33,9 +34,27 @@ func _process(_delta: float) -> void:
 	update_hover(get_global_mouse_position())
 
 
+## Pinta el piso del local y de sus habitaciones. Cada habitación es un diccionario
+## con "type" (String) y "cells" (Array[Vector2i]), como los guarda OfficeState.
+func build(lot_rect: Rect2i, rooms: Array[Dictionary]) -> void:
+	_lot_rect = lot_rect
+	_floor.clear()
+	var room_types: Dictionary[Vector2i, String] = {}
+	for room: Dictionary in rooms:
+		for cell: Vector2i in room["cells"]:
+			room_types[cell] = room["type"]
+	for x: int in range(lot_rect.position.x, lot_rect.end.x):
+		for y: int in range(lot_rect.position.y, lot_rect.end.y):
+			var cell := Vector2i(x, y)
+			var row: int = _atlas_rows.get(room_types.get(cell, ""), 0)
+			_floor.set_cell(cell, _floor_source_id, Vector2i((x + y) % 2, row))
+	hovered_cell = NO_CELL
+	_highlight.visible = false
+
+
 ## Rectángulo de casillas del local actual.
 func get_lot_rect() -> Rect2i:
-	return Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE)
+	return _lot_rect
 
 
 ## Indica si una casilla pertenece al local.
@@ -89,26 +108,27 @@ func update_hover(world_position: Vector2) -> void:
 		_highlight.position = _floor.position + _floor.map_to_local(cell)
 
 
-func _paint_lot() -> void:
-	var lot: Rect2i = get_lot_rect()
-	for x: int in range(lot.position.x, lot.end.x):
-		for y: int in range(lot.position.y, lot.end.y):
-			var atlas: Vector2i = ATLAS_LIGHT if (x + y) % 2 == 0 else ATLAS_DARK
-			_floor.set_cell(Vector2i(x, y), _floor_source_id, atlas)
-
-
 # Crea el TileSet en código con rombos de colores generados (arte provisional).
+# Cada fila del atlas es un estilo de piso; cada columna, una casilla del tablero.
 func _build_tile_set() -> TileSet:
+	var styles: Array[Array] = [FLOOR_COLORS]
+	_atlas_rows = {"": 0}
+	for room_type: String in ROOM_FLOOR_COLORS:
+		_atlas_rows[room_type] = styles.size()
+		styles.append(ROOM_FLOOR_COLORS[room_type])
+
 	var tile_size: Vector2i = GameConstants.TILE_SIZE
-	var image := Image.create_empty(tile_size.x * 2, tile_size.y, false, Image.FORMAT_RGBA8)
-	_draw_diamond(image, Vector2i(0, 0), FLOOR_COLOR_LIGHT)
-	_draw_diamond(image, Vector2i(tile_size.x, 0), FLOOR_COLOR_DARK)
+	var image := Image.create_empty(tile_size.x * 2, tile_size.y * styles.size(), false, Image.FORMAT_RGBA8)
+	for row: int in range(styles.size()):
+		for column: int in range(2):
+			_draw_diamond(image, Vector2i(column, row) * tile_size, styles[row][column])
 
 	var source := TileSetAtlasSource.new()
 	source.texture = ImageTexture.create_from_image(image)
 	source.texture_region_size = tile_size
-	source.create_tile(ATLAS_LIGHT)
-	source.create_tile(ATLAS_DARK)
+	for row: int in range(styles.size()):
+		for column: int in range(2):
+			source.create_tile(Vector2i(column, row))
 
 	var tile_set := TileSet.new()
 	tile_set.tile_shape = TileSet.TILE_SHAPE_ISOMETRIC

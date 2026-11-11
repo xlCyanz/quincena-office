@@ -1,4 +1,4 @@
-# Escena principal del juego: reúne la oficina y la cámara.
+# Escena de juego: reúne la oficina y la cámara y las prepara con el estado de la partida.
 # Sigue la regla de Godot "llamar hacia abajo, avisar hacia arriba": el nodo padre
 # configura a sus hijos directamente, y los hijos avisarán con señales cuando haga falta.
 extends Node2D
@@ -11,10 +11,21 @@ func _ready() -> void:
 	var game_name: String = ProjectSettings.get_setting("application/config/name")
 	var godot_version: String = Engine.get_version_info().string
 	print("%s — Godot %s" % [game_name, godot_version])
+	# Si se abre esta escena sin pasar por el menú (por ejemplo, con Cmd+R en el
+	# editor), se empieza una partida nueva para poder probarla.
+	if not OfficeState.has_game():
+		SaveManager.new_game()
+	_office_grid.build(OfficeState.lot_rect, OfficeState.rooms)
 	_camera.set_bounds(_office_grid.get_lot_world_rect())
-	# Provisional hasta el hito 8 (interfaz): el reloj se muestra en la salida.
+	GameClock.start()
+	# Provisional hasta el hito 8 (interfaz): el saldo y el reloj se muestran en la salida.
 	EventBus.hour_changed.connect(_on_hour_changed)
+	print("Saldo: $%d" % Economy.balance)
 	_print_clock()
+
+
+func _exit_tree() -> void:
+	GameClock.stop()
 
 
 # Atajos de teclado (un extra: en el hito 8 la interfaz tendrá botones para esto).

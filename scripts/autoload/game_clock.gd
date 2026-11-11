@@ -17,8 +17,23 @@ var _hour: int = GameConstants.START_HOUR
 var _seconds_into_hour: float = 0.0
 
 
+func _ready() -> void:
+	# Fuera de una partida (por ejemplo, en el menú) el reloj no corre.
+	set_process(false)
+
+
 func _process(delta: float) -> void:
 	advance(delta)
+
+
+## Hace que el reloj corra con los fotogramas. Lo llama la escena de juego al abrirse.
+func start() -> void:
+	set_process(true)
+
+
+## Detiene el reloj (no es una pausa del jugador: lo usa la escena al cerrarse).
+func stop() -> void:
+	set_process(false)
 
 
 ## Avanza el reloj según los segundos reales transcurridos, aplicando pausa y velocidad.
@@ -94,8 +109,8 @@ func get_day_count() -> int:
 	return _day_count
 
 
-## Vuelve al inicio de una partida nueva: día 1, mes 1, a la hora de entrada, a 1x.
-func reset() -> void:
+## Prepara el reloj de una partida nueva: día 1, mes 1, a la hora de entrada, a 1x.
+func new_game() -> void:
 	_day_count = 0
 	_hour = GameConstants.START_HOUR
 	_seconds_into_hour = 0.0

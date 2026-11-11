@@ -37,7 +37,8 @@ func _ready() -> void:
 	_check_state_round_trip()
 
 	# Por último, que el reloj avance solo con los fotogramas reales.
-	GameClock.reset()
+	GameClock.new_game()
+	GameClock.start()
 	var before: float = float(GameClock.export_state()["seconds_into_hour"])
 	for i: int in range(10):
 		await get_tree().process_frame
@@ -83,7 +84,7 @@ func _run_frames(seconds: float) -> void:
 
 
 func _check_start() -> void:
-	GameClock.reset()
+	GameClock.new_game()
 	_expect(GameClock.get_day() == 1 and GameClock.get_month() == 1, "la partida no empieza el día 1 del mes 1")
 	_expect(GameClock.get_hour() == GameConstants.START_HOUR and GameClock.get_minute() == 0,
 		"la partida no empieza a las %d:00" % GameConstants.START_HOUR)
@@ -93,7 +94,7 @@ func _check_start() -> void:
 
 # Mide el tiempo real entre dos medianoches seguidas y entre horas seguidas.
 func _check_day_length(speed_index: int) -> void:
-	GameClock.reset()
+	GameClock.new_game()
 	GameClock.set_speed_index(speed_index)
 	var speed: float = GameClock.get_speed()
 	var expected_day: float = GameConstants.SECONDS_PER_GAME_HOUR * GameConstants.HOURS_PER_DAY / speed
@@ -118,7 +119,7 @@ func _check_day_length(speed_index: int) -> void:
 
 
 func _check_pause() -> void:
-	GameClock.reset()
+	GameClock.new_game()
 	GameClock.set_speed_index(2)
 	_run_frames(1.0)
 	var before: Dictionary = GameClock.export_state()
@@ -137,7 +138,7 @@ func _check_pause() -> void:
 
 # Un fotograma muy largo debe emitir todas las horas intermedias, en orden.
 func _check_big_step() -> void:
-	GameClock.reset()
+	GameClock.new_game()
 	_clear_records()
 	GameClock.advance(GameConstants.SECONDS_PER_GAME_HOUR * 20.0 + 0.5)
 	_expect(_hours.size() == 20, "un paso de 20 horas emitió %d horas" % _hours.size())
@@ -153,7 +154,7 @@ func _check_big_step() -> void:
 
 # Recorre 61 días: cambio de mes en el día 31 y de semana cada 7 días.
 func _check_calendar() -> void:
-	GameClock.reset()
+	GameClock.new_game()
 	_clear_records()
 	var day_seconds: float = GameConstants.SECONDS_PER_GAME_HOUR * GameConstants.HOURS_PER_DAY
 	for i: int in range(GameConstants.DAYS_PER_MONTH * 2 + 1):
@@ -171,14 +172,14 @@ func _check_calendar() -> void:
 
 
 func _check_state_round_trip() -> void:
-	GameClock.reset()
+	GameClock.new_game()
 	GameClock.set_speed_index(1)
 	GameClock.advance(1234.5)
 	GameClock.set_paused(true)
 	var saved: Dictionary = GameClock.export_state()
 	# Como en un guardado real, el estado pasa por JSON.
 	var restored: Dictionary = JSON.parse_string(JSON.stringify(saved))
-	GameClock.reset()
+	GameClock.new_game()
 	GameClock.import_state(restored)
 	_expect(GameClock.export_state() == saved, "el estado del reloj no se restauró igual: %s vs %s" % [
 		GameClock.export_state(), saved])
