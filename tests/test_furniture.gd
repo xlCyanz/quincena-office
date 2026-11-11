@@ -97,9 +97,9 @@ func _check_access() -> void:
 	var money: int = Economy.balance
 	# Frente a la puerta de la Oficina Ejecutiva, por dentro o por fuera: el CEO no llegaría.
 	for cell: Vector2i in [Vector2i(1, 2), Vector2i(1, 3)]:
-		var result: Dictionary = builder.place("small_plant", cell, 0)
-		_expect(not result["ok"] and Economy.balance == money and _index_at(cell) < 0,
-			"una planta en %s bloquea la puerta de la Oficina Ejecutiva: %s" % [cell, result])
+		var blocked: Dictionary = builder.place("small_plant", cell, 0)
+		_expect(not blocked["ok"] and Economy.balance == money and _index_at(cell) < 0,
+			"una planta en %s bloquea la puerta de la Oficina Ejecutiva: %s" % [cell, blocked])
 	# Un rincón al que solo se llega por (5, 1)–(5, 2): taparlo lo dejaría sin acceso.
 	builder.apply([
 		{"edge": Vector3i(3, 1, GridEdge.AXIS_Y), "kind": ConstructionCatalog.WALL},

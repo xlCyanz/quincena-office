@@ -69,6 +69,7 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	# Se quedan solo los puntos de casilla (los dos valores impares).
 	for point: Vector2i in points:
 		if point.x % 2 == 1 and point.y % 2 == 1:
+			@warning_ignore("integer_division")
 			result.append(_lot.position + (point - Vector2i.ONE) / 2)
 	return result
 

@@ -108,8 +108,8 @@ func get_day() -> int:
 
 
 ## Mes desde el inicio de la partida, empezando en 1.
-@warning_ignore("integer_division")
 func get_month() -> int:
+	@warning_ignore("integer_division")
 	return _day_count / GameConstants.DAYS_PER_MONTH + 1
 
 

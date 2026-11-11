@@ -168,11 +168,11 @@ func _update_preview(announce: bool = true) -> void:
 	var quote: Dictionary = {}
 	var info: Dictionary = FurnitureCatalog.get_item(tool)
 	if _is_furniture_tool():
-		var rotation: int = _placement_rotation
-		_preview_cells = FurnitureCatalog.get_footprint(tool, cell, rotation)
-		_preview_front = FurnitureCatalog.get_front(rotation)
-		quote = builder.quote_place(tool, cell, rotation)
-		_apply_preview = func() -> Dictionary: return builder.place(tool, cell, rotation)
+		var placement_rotation: int = _placement_rotation
+		_preview_cells = FurnitureCatalog.get_footprint(tool, cell, placement_rotation)
+		_preview_front = FurnitureCatalog.get_front(placement_rotation)
+		quote = builder.quote_place(tool, cell, placement_rotation)
+		_apply_preview = func() -> Dictionary: return builder.place(tool, cell, placement_rotation)
 	elif not info.is_empty():  # computadora
 		_preview_cells = _footprint_at(cell)
 		quote = builder.quote_install_computer(tool, cell)

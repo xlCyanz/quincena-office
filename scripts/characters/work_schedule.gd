@@ -30,11 +30,11 @@ func is_working(weekday: int, hour: int) -> bool:
 
 ## Horas enteras que faltan, contando desde el inicio de la hora actual, hasta la
 ## próxima hora en que toca trabajar. Devuelve -1 si el horario no tiene ninguna.
-@warning_ignore("integer_division")
 func hours_until_next_work(weekday: int, hour: int) -> int:
 	var hours_per_week: int = GameConstants.DAYS_PER_WEEK * GameConstants.HOURS_PER_DAY
 	for offset: int in range(1, hours_per_week + 1):
 		var total: int = hour + offset
+		@warning_ignore("integer_division")
 		var day: int = (weekday + total / GameConstants.HOURS_PER_DAY) % GameConstants.DAYS_PER_WEEK
 		if is_working(day, total % GameConstants.HOURS_PER_DAY):
 			return offset
