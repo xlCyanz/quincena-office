@@ -2,11 +2,16 @@
 
 [ext_resource type="Script" uid="uid://d035f2vf7qhnj" path="res://scripts/office/office_grid.gd" id="1_grid"]
 [ext_resource type="Script" uid="uid://dd1n0pvkkjutp" path="res://scripts/office/cell_highlight.gd" id="2_highlight"]
+[ext_resource type="Script" path="res://scripts/office/room_overlay.gd" id="3_rooms"]
 
 [node name="OfficeGrid" type="Node2D"]
 script = ExtResource("1_grid")
 
 [node name="Floor" type="TileMapLayer" parent="."]
+
+[node name="RoomOverlay" type="Node2D" parent="."]
+visible = false
+script = ExtResource("3_rooms")
 
 [node name="CellHighlight" type="Node2D" parent="."]
 script = ExtResource("2_highlight")

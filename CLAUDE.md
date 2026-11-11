@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5) y `test_furniture` (6)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6) y `test_rooms` (7)
 
 ## Convenciones de código
 
@@ -31,6 +31,8 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 - Todo sistema con estado implementa `export_state() -> Dictionary` e `import_state(state: Dictionary) -> void`.
 - Las paredes van en los bordes de las casillas, no ocupan casilla. Un borde es `Vector3i(x, y, eje)` (ver `GridEdge`);
   los caminos usan `AStarGrid2D` a doble resolución para que las paredes de borde bloqueen el paso.
+- Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
+  `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
 - Todo se controla con ratón; el teclado es un extra.
 
 ## Estructura
@@ -59,6 +61,6 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 4 | CEO | ✅ Completado (escritorio y silla iniciales dibujados fijos; horario lun–vie 8–17) |
 | 5 | Construcción: pisos y paredes | ✅ Completado (precios provisionales en `data/construction.json`; paredes bajas) |
 | 6 | Muebles | ✅ Completado (planta pequeña a $40 provisional; la silla del CEO no se vende) |
-| 7 | Habitaciones | Pendiente |
+| 7 | Habitaciones | ✅ Completado (tipos y requisitos en `data/rooms.json`; los muebles que aún no existen se listan como faltantes) |
 | 8 | Dinero e interfaz | Pendiente |
 | 9 | Guardado | Pendiente |

@@ -11,6 +11,10 @@
 # install_computer), cada una con su quote_ para la vista previa. Un mueble no puede
 # ponerse sobre otro, ni sobre la entrada o un personaje, ni dejar sin acceso una parte
 # de la oficina que lo tenía, ni una silla nueva sin acceso.
+#
+# Las habitaciones (hito 7) se marcan gratis con mark_room y unmark_room. Al cambiar
+# las paredes se recalculan con RoomRules; un cambio que desharía una habitación
+# bloqueada (la Oficina Ejecutiva) no se permite, y las demás se deshacen con aviso.
 class_name Builder
 extends RefCounted
 
@@ -41,10 +45,27 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 	for change: Dictionary in effective:
 		if change.has("edge") and not String(change["kind"]).is_empty() and _splits_furniture(change["edge"]):
 			return {"ok": false, "cost": cost, "message": "No se puede poner en medio de un mueble."}
-	if _changes_passage(effective) and not _keeps_ceo_access(_edges_with(effective), OfficeState.furniture):
+	if not _changes_passage(effective):
+		return {"ok": true, "cost": cost, "message": _describe(effective, cost)}
+	var new_edges: Dictionary[Vector3i, String] = _edges_with(effective)
+	if not _keeps_ceo_access(new_edges, OfficeState.furniture):
 		return {"ok": false, "cost": cost,
 			"message": "Así el CEO no podría llegar a su escritorio desde la entrada."}
-	return {"ok": true, "cost": cost, "message": _describe(effective, cost)}
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot_rect, new_edges)
+	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, OfficeState.entrance,
+		OfficeState.furniture)
+	var lost: Array[String] = _lost_rooms(rooms)
+	for type_id: String in lost:
+		if RoomCatalog.is_locked(type_id):
+			return {"ok": false, "cost": cost,
+				"message": "Así se desharía la %s." % RoomCatalog.get_display_name(type_id)}
+	var message: String = _describe(effective, cost)
+	if not lost.is_empty():
+		var names: Array[String] = []
+		for type_id: String in lost:
+			names.append(RoomCatalog.get_display_name(type_id))
+		message += ". Se deshace: %s" % ", ".join(names)
+	return {"ok": true, "cost": cost, "message": message, "rooms": rooms}
 
 
 ## Aplica un grupo de cambios si quote() lo permite. Devuelve lo mismo que quote().
@@ -57,6 +78,10 @@ func apply(changes: Array[Dictionary]) -> Dictionary:
 			OfficeState.set_edge(change["edge"], change["kind"])
 		else:
 			OfficeState.set_floor(change["cell"], change["kind"])
+	if result.has("rooms"):
+		var rooms: Array[Dictionary] = result["rooms"]
+		OfficeState.rooms = rooms
+		result.erase("rooms")
 	if result["cost"] >= 0:
 		Economy.spend(result["cost"])
 	else:
@@ -106,6 +131,20 @@ func _edges_with(changes: Array[Dictionary]) -> Dictionary[Vector3i, String]:
 			else:
 				edges[change["edge"]] = change["kind"]
 	return edges
+
+
+# Tipos de las habitaciones actuales que no siguen en rooms (una vez por habitación).
+func _lost_rooms(rooms: Array[Dictionary]) -> Array[String]:
+	var remaining: Array[String] = []
+	for room: Dictionary in rooms:
+		remaining.append(room["type"])
+	var lost: Array[String] = []
+	for room: Dictionary in OfficeState.rooms:
+		if remaining.has(room["type"]):
+			remaining.erase(room["type"])
+		else:
+			lost.append(room["type"])
+	return lost
 
 
 # Indica si el borde queda entre dos casillas del mismo mueble.
@@ -315,3 +354,85 @@ func _access_problem(candidate: Array[Dictionary], item: Dictionary) -> String:
 	if not _keeps_ceo_access(OfficeState.edges, candidate):
 		return "Así el CEO no podría llegar a su escritorio desde la entrada."
 	return ""
+
+
+# --- Habitaciones ----------------------------------------------------------------
+
+
+## Marcar como habitación de un tipo el espacio que contiene cell (no cuesta dinero).
+## Si ya era otra habitación, cambia de tipo. Se puede marcar aunque todavía le
+## falten tamaño o muebles para funcionar: el mensaje lo avisa.
+func quote_mark_room(type_id: String, cell: Vector2i) -> Dictionary:
+	if RoomCatalog.get_type(type_id).is_empty():
+		return _fail(0, "Ese tipo de habitación no existe.")
+	if not OfficeState.lot_rect.has_point(cell):
+		return _fail(0, "Esa casilla está fuera del local.")
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot_rect, OfficeState.edges)
+	var space: Dictionary = spaces[RoomRules.space_index_at(spaces, cell)]
+	var type_name: String = RoomCatalog.get_display_name(type_id)
+	var current: int = RoomRules.room_index_at(OfficeState.rooms, cell)
+	if current >= 0 and OfficeState.rooms[current]["type"] == type_id:
+		return _room_status(OfficeState.rooms[current], false)
+	var problem: String = RoomRules.mark_problem(type_id, space, OfficeState.rooms, OfficeState.entrance)
+	if not problem.is_empty():
+		return _fail(0, problem)
+	var cells: Array[Vector2i] = space["cells"]
+	var room: Dictionary = {"type": type_id, "cells": cells.duplicate()}
+	var rooms: Array[Dictionary] = []
+	for other: Dictionary in OfficeState.rooms:
+		if not RoomRules.shares_cells(other["cells"], cells):
+			rooms.append(other)
+	rooms.append(room)
+	var message: String = "Marcar como %s (%d m²)" % [type_name, cells.size()]
+	var problems: Array[String] = RoomRules.function_problems(room, OfficeState.furniture)
+	if not problems.is_empty():
+		message += ". No funcionará: %s" % ", ".join(problems)
+	return {"ok": true, "cost": 0, "message": message + ".", "rooms": rooms}
+
+
+func mark_room(type_id: String, cell: Vector2i) -> Dictionary:
+	return _commit_rooms(quote_mark_room(type_id, cell))
+
+
+## Quitar la habitación que contiene cell; el espacio queda sin tipo.
+func quote_unmark_room(cell: Vector2i) -> Dictionary:
+	var index: int = RoomRules.room_index_at(OfficeState.rooms, cell)
+	if index < 0:
+		return _fail(0, "Ahí no hay ninguna habitación.")
+	var type_id: String = OfficeState.rooms[index]["type"]
+	if RoomCatalog.is_locked(type_id):
+		return _fail(0, "La %s no se puede quitar." % RoomCatalog.get_display_name(type_id))
+	var rooms: Array[Dictionary] = OfficeState.rooms.duplicate()
+	rooms.remove_at(index)
+	return {"ok": true, "cost": 0, "rooms": rooms,
+		"message": "Quitar la habitación %s." % RoomCatalog.get_display_name(type_id)}
+
+
+func unmark_room(cell: Vector2i) -> Dictionary:
+	return _commit_rooms(quote_unmark_room(cell))
+
+
+## Estado de una habitación para el jugador: si funciona o qué le falta. ok dice si
+## funciona.
+func room_status(room: Dictionary) -> Dictionary:
+	return _room_status(room, true)
+
+
+func _room_status(room: Dictionary, ok_if_working: bool) -> Dictionary:
+	var type_name: String = RoomCatalog.get_display_name(room["type"])
+	var cells: Array[Vector2i] = room["cells"]
+	var problems: Array[String] = RoomRules.function_problems(room, OfficeState.furniture)
+	if problems.is_empty():
+		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona." % [type_name, cells.size()]}
+	return {"ok": false, "cost": 0,
+		"message": "%s (%d m²): no funciona, %s." % [type_name, cells.size(), ", ".join(problems)]}
+
+
+func _commit_rooms(result: Dictionary) -> Dictionary:
+	if not result["ok"] or not result.has("rooms"):
+		return result
+	var rooms: Array[Dictionary] = result["rooms"]
+	OfficeState.rooms = rooms
+	EventBus.office_changed.emit()
+	result.erase("rooms")
+	return result

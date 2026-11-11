@@ -1,0 +1,84 @@
+{
+	"_comentario": "Tipos de habitación (docs/diseno.md 2.1). Una habitación es un espacio cerrado (paredes o puertas en todo su contorno) con al menos una puerta. min_area (m²) y required son lo que necesita para funcionar: se puede marcar antes y amueblar después. Cada requisito pide un mueble de la lista items (ids de data/furniture.json; los que aún no están en el catálogo llegan en fases siguientes). unique = solo puede haber una; mandatory_count = cuántas tiene que tener la oficina; locked = no se puede quitar ni deshacer con paredes; needs_exterior_wall = tiene que tocar el borde del local; needs_entrance = tiene que contener la entrada. color = tinte en el modo construcción.",
+	"types": {
+		"executive_office": {
+			"name": "Oficina Ejecutiva",
+			"min_area": 9,
+			"unique": true,
+			"mandatory_count": 1,
+			"locked": true,
+			"required": [
+				{ "name": "Escritorio ejecutivo", "items": ["executive_desk"] },
+				{ "name": "Silla", "items": ["basic_chair"] }
+			],
+			"color": "d9a441"
+		},
+		"single_office": {
+			"name": "Oficina única",
+			"min_area": 4,
+			"required": [
+				{ "name": "Escritorio", "items": ["simple_desk", "executive_desk"] },
+				{ "name": "Silla", "items": ["basic_chair"] }
+			],
+			"color": "c97b5a"
+		},
+		"meeting_room": {
+			"name": "Sala de reuniones",
+			"min_area": 9,
+			"required": [
+				{ "name": "Mesa de reuniones", "items": ["meeting_table"] }
+			],
+			"color": "8a6fc9"
+		},
+		"bathroom": {
+			"name": "Baño",
+			"min_area": 2,
+			"mandatory_count": 2,
+			"required": [
+				{ "name": "Inodoro", "items": ["toilet"] },
+				{ "name": "Lavamanos", "items": ["sink"] }
+			],
+			"color": "4fb3c9"
+		},
+		"break_room": {
+			"name": "Sala de descanso",
+			"min_area": 9,
+			"unique": true,
+			"required": [
+				{ "name": "Cafetera", "items": ["coffee_maker"] }
+			],
+			"color": "e07aa8"
+		},
+		"work_area": {
+			"name": "Área de trabajo",
+			"min_area": 6,
+			"required": [
+				{ "name": "Escritorio", "items": ["simple_desk", "executive_desk"] },
+				{ "name": "Silla", "items": ["basic_chair"] }
+			],
+			"color": "5aa84f"
+		},
+		"server_room": {
+			"name": "Sala de servidores",
+			"min_area": 4,
+			"unique": true,
+			"required": [
+				{ "name": "Rack de servidores", "items": ["server_rack"] },
+				{ "name": "Aire acondicionado", "items": ["air_conditioner"] }
+			],
+			"color": "5f7fa8"
+		},
+		"reception": {
+			"name": "Recepción",
+			"min_area": 6,
+			"unique": true,
+			"mandatory_count": 1,
+			"needs_exterior_wall": true,
+			"needs_entrance": true,
+			"required": [
+				{ "name": "Mostrador de recepción", "items": ["reception_counter"] }
+			],
+			"color": "e0c341"
+		}
+	}
+}

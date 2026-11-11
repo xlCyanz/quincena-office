@@ -38,6 +38,7 @@ func _ready() -> void:
 	_panel.add_child(rows)
 	var group := ButtonGroup.new()
 	# Primera fila: estructura. Segunda fila: muebles (con su precio) y Girar.
+	# Tercera fila: tipos de habitación y Quitar habitación.
 	var structure: Array[Array] = [
 		[BuildController.TOOL_WALL, ConstructionCatalog.get_display_name(ConstructionCatalog.WALL)],
 		[BuildController.TOOL_DOOR, ConstructionCatalog.get_display_name(ConstructionCatalog.DOOR)],
@@ -50,8 +51,13 @@ func _ready() -> void:
 		var item: Dictionary = FurnitureCatalog.get_item(id)
 		furniture.append([id, "%s $%d" % [item["name"], item["price"]]])
 	furniture.append([BuildController.TOOL_ROTATE, "Girar"])
+	var room_tools: Array[Array] = []
+	for type_id: String in RoomCatalog.get_type_ids():
+		room_tools.append([type_id, RoomCatalog.get_display_name(type_id)])
+	room_tools.append([BuildController.TOOL_UNMARK_ROOM, "Quitar habitación"])
 	var structure_row: HBoxContainer = _add_tool_row(rows, structure, group)
 	_add_tool_row(rows, furniture, group)
+	_add_tool_row(rows, room_tools, group)
 	_exit_button = Button.new()
 	_exit_button.text = "Salir"
 	_exit_button.pressed.connect(func() -> void: set_build_mode(false))

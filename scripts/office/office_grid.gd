@@ -16,6 +16,7 @@ var _atlas_rows: Dictionary[String, int] = {}
 
 @onready var _floor: TileMapLayer = $Floor
 @onready var _highlight: CellHighlight = $CellHighlight
+@onready var _room_overlay: RoomOverlay = $RoomOverlay
 # Capa ordenada por Y: muebles y personajes. Lo que está más abajo en pantalla
 # (más cerca de quien mira) se dibuja encima.
 @onready var _objects: Node2D = $Objects
@@ -24,16 +25,18 @@ var _atlas_rows: Dictionary[String, int] = {}
 func _ready() -> void:
 	_floor.tile_set = _build_tile_set()
 	_highlight.visible = false
+	_room_overlay.setup(self)
 
 
 func _process(_delta: float) -> void:
 	update_hover(get_global_mouse_position())
 
 
-## Dibuja la oficina: el piso de cada casilla, las paredes y puertas de los bordes y
-## los muebles. Recibe los datos tal como los guarda OfficeState.
+## Dibuja la oficina: el piso de cada casilla, las paredes y puertas de los bordes,
+## los muebles y el tinte de las habitaciones. Recibe los datos tal como los guarda
+## OfficeState.
 func build(lot_rect: Rect2i, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
-		furniture: Array[Dictionary]) -> void:
+		furniture: Array[Dictionary], rooms: Array[Dictionary] = []) -> void:
 	_lot_rect = lot_rect
 	_floor.clear()
 	for x: int in range(lot_rect.position.x, lot_rect.end.x):
@@ -46,6 +49,12 @@ func build(lot_rect: Rect2i, floors: Dictionary[Vector2i, String], edges: Dictio
 	_highlight.visible = false
 	_place_edge_pieces(edges)
 	_place_furniture(furniture)
+	_room_overlay.set_rooms(rooms)
+
+
+## Muestra u oculta el tinte de las habitaciones (se ve en modo construcción).
+func set_rooms_visible(rooms_visible: bool) -> void:
+	_room_overlay.visible = rooms_visible
 
 
 ## Convierte píxeles del mundo a una posición de cuadrícula con decimales (la inversa

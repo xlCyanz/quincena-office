@@ -47,7 +47,8 @@ func _exit_tree() -> void:
 
 
 func _rebuild_office() -> void:
-	_office_grid.build(OfficeState.lot_rect, OfficeState.floors, OfficeState.edges, OfficeState.furniture)
+	_office_grid.build(OfficeState.lot_rect, OfficeState.floors, OfficeState.edges, OfficeState.furniture,
+		OfficeState.rooms)
 	pathfinder.build(OfficeState.lot_rect, OfficeState.get_furniture_cells(), OfficeState.edges)
 
 
@@ -71,6 +72,7 @@ func _on_office_changed() -> void:
 # El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
 func _on_build_mode_changed(active: bool) -> void:
 	_build_controller.set_active(active)
+	_office_grid.set_rooms_visible(active)
 	_camera.left_drag_enabled = not active
 	# Con el tiempo en pausa el CEO no se mueve: su casilla queda reservada.
 	var occupied: Array[Vector2i] = []

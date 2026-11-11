@@ -8,6 +8,9 @@
 # - Girar: clic en un mueble lo gira un cuarto de vuelta.
 # - Vender: clic en una pared o puerta, en un mueble (si es un escritorio con
 #   computadora, primero la computadora) o en una casilla, para vender su piso.
+# - Tipo de habitación: clic en un espacio cerrado con puerta lo marca con ese tipo.
+# - Quitar habitación: clic en una habitación la deja sin tipo.
+# En modo construcción se escribe sobre cada habitación su nombre y si funciona.
 class_name BuildController
 extends Node2D
 
@@ -18,6 +21,7 @@ const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
 const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
+const TOOL_UNMARK_ROOM: String = "unmark_room"
 
 ## Distancia máxima (en casillas) a un borde para que Vender lo elija en vez de la casilla.
 const SELL_EDGE_DISTANCE: float = 0.2
@@ -29,7 +33,16 @@ const PREVIEW_OK := Color(0.4, 1.0, 0.5, 0.9)
 const PREVIEW_BAD := Color(1.0, 0.35, 0.3, 0.9)
 const PREVIEW_LINE_WIDTH: float = 3.0
 
-## Herramienta elegida: una de las constantes TOOL_, un tipo de piso o el id de un mueble.
+const LABEL_FONT_SIZE: int = 20
+const LABEL_WIDTH: float = 240.0
+const LABEL_OUTLINE: int = 5
+const LABEL_COLOR := Color(1.0, 1.0, 1.0)
+const LABEL_OK_COLOR := Color(0.55, 1.0, 0.6)
+const LABEL_BAD_COLOR := Color(1.0, 0.6, 0.5)
+const LABEL_OUTLINE_COLOR := Color(0.0, 0.0, 0.0, 0.8)
+
+## Herramienta elegida: una de las constantes TOOL_, un tipo de piso, el id de un
+## mueble o un tipo de habitación.
 var tool: String = TOOL_WALL
 var builder := Builder.new()
 
@@ -47,6 +60,8 @@ var _preview_edges: Array[Vector3i] = []
 var _preview_front := Vector2i.ZERO
 var _preview_ok: bool = false
 var _apply_preview := Callable()
+# Zoom con el que se dibujaron los nombres de las habitaciones.
+var _label_zoom: float = 0.0
 
 
 func setup(grid: OfficeGrid) -> void:
@@ -69,12 +84,25 @@ func set_tool(new_tool: String) -> void:
 	tool = new_tool
 	_dragging = false
 	_update_preview()
+	if _is_room_tool():
+		var missing: Array[String] = RoomRules.missing_mandatory(OfficeState.rooms)
+		var hint: String = "Clic en un espacio cerrado con puerta."
+		if not missing.is_empty():
+			hint += " Faltan: %s." % ", ".join(missing)
+		status_changed.emit(hint)
 
 
 ## Gira un cuarto de vuelta el mueble que se va a colocar.
 func rotate_placement() -> void:
 	_placement_rotation = (_placement_rotation + 1) % 4
 	_update_preview()
+
+
+# Los nombres de las habitaciones se dibujan a tamaño fijo en pantalla: si cambia el
+# zoom, se vuelven a dibujar.
+func _process(_delta: float) -> void:
+	if _active and get_canvas_transform().get_scale().x != _label_zoom:
+		queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -115,6 +143,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
+func _is_room_tool() -> bool:
+	return not RoomCatalog.get_type(tool).is_empty()
+
+
 func _is_furniture_tool() -> bool:
 	var info: Dictionary = FurnitureCatalog.get_item(tool)
 	return not info.is_empty() and not bool(info["on_desk"])
@@ -153,6 +185,16 @@ func _update_preview(announce: bool = true) -> void:
 			_preview_cells = FurnitureCatalog.get_footprint(item["id"], item["cell"], int(item["rotation"]) + 1)
 			_preview_front = FurnitureCatalog.get_front(int(item["rotation"]) + 1)
 		_apply_preview = func() -> Dictionary: return builder.rotate(cell)
+	elif _is_room_tool() or tool == TOOL_UNMARK_ROOM:
+		if OfficeState.lot_rect.has_point(cell):
+			_preview_cells = _space_at(cell)
+			if tool == TOOL_UNMARK_ROOM:
+				quote = builder.quote_unmark_room(cell)
+				_apply_preview = func() -> Dictionary: return builder.unmark_room(cell)
+			else:
+				var room_type: String = tool
+				quote = builder.quote_mark_room(room_type, cell)
+				_apply_preview = func() -> Dictionary: return builder.mark_room(room_type, cell)
 	elif tool == TOOL_SELL and _sell_targets_furniture(cell):
 		_preview_cells = _footprint_at(cell)
 		quote = builder.quote_sell_furniture_at(cell)
@@ -182,6 +224,15 @@ func _sell_targets_furniture(cell: Vector2i) -> bool:
 	return OfficeState.get_edge(edge).is_empty() or GridEdge.distance_to(edge, _pointer) > SELL_EDGE_DISTANCE
 
 
+# Casillas del espacio (zona entre paredes y puertas) que contiene cell.
+func _space_at(cell: Vector2i) -> Array[Vector2i]:
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot_rect, OfficeState.edges)
+	var index: int = RoomRules.space_index_at(spaces, cell)
+	if index < 0:
+		return [cell]
+	return spaces[index]["cells"]
+
+
 func _footprint_at(cell: Vector2i) -> Array[Vector2i]:
 	var index: int = OfficeState.find_furniture_at(cell)
 	if index < 0:
@@ -205,7 +256,7 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 				changes.append({"edge": edge, "kind": ""})
 			else:
 				changes.append({"cell": Vector2i(end.round()), "kind": ConstructionCatalog.BARE_FLOOR})
-		TOOL_ROTATE:
+		TOOL_ROTATE, TOOL_UNMARK_ROOM:
 			pass
 		_:
 			var first: Vector2i = Vector2i(start.round())
@@ -235,6 +286,7 @@ func _edge_line(start: Vector3i, end: Vector2) -> Array[Vector3i]:
 func _draw() -> void:
 	if not _active:
 		return
+	_draw_room_labels()
 	var color: Color = PREVIEW_OK if _preview_ok else PREVIEW_BAD
 	for edge: Vector3i in _preview_edges:
 		var ends: Array[Vector2] = GridEdge.get_endpoints(edge)
@@ -254,3 +306,30 @@ func _draw() -> void:
 		var tip: Vector2 = center + Vector2(_preview_front) * 0.45
 		draw_line(_grid.grid_to_world(center), _grid.grid_to_world(tip), color, PREVIEW_LINE_WIDTH)
 		draw_circle(_grid.grid_to_world(tip), PREVIEW_LINE_WIDTH * 1.5, color)
+
+
+# Nombre de cada habitación y, debajo, si funciona.
+func _draw_room_labels() -> void:
+	var font: Font = ThemeDB.fallback_font
+	_label_zoom = get_canvas_transform().get_scale().x
+	for room: Dictionary in OfficeState.rooms:
+		var cells: Array[Vector2i] = room["cells"]
+		var center := Vector2.ZERO
+		for cell: Vector2i in cells:
+			center += Vector2(cell)
+		center = _grid.grid_to_world(center / cells.size())
+		var working: bool = builder.room_status(room)["ok"]
+		var lines: Array[Array] = [
+			[RoomCatalog.get_display_name(room["type"]), LABEL_COLOR],
+			["Funciona" if working else "No funciona", LABEL_OK_COLOR if working else LABEL_BAD_COLOR],
+		]
+		# Escala inversa al zoom de la cámara, para que el texto no crezca ni se pixele.
+		draw_set_transform(center, 0.0, Vector2.ONE / _label_zoom)
+		var text_position := Vector2(-LABEL_WIDTH / 2.0, 0.0)
+		for line: Array in lines:
+			draw_string_outline(font, text_position, line[0], HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH,
+				LABEL_FONT_SIZE, LABEL_OUTLINE, LABEL_OUTLINE_COLOR)
+			draw_string(font, text_position, line[0], HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH,
+				LABEL_FONT_SIZE, line[1])
+			text_position.y += LABEL_FONT_SIZE + 2
+	draw_set_transform(Vector2.ZERO)
