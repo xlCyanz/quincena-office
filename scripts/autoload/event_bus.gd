@@ -12,3 +12,12 @@ signal hour_changed(hour: int)
 ## La emite GameClock justo antes del hour_changed de las 0:00.
 @warning_ignore("unused_signal")
 signal day_changed(day: int, month: int)
+
+## Cambió el saldo de la cuenta empresarial. La emite Economy.
+@warning_ignore("unused_signal")
+signal balance_changed(balance: int)
+
+## Cambió la oficina (pisos, paredes, puertas o muebles). La emite Builder después
+## de cada compra o venta, para que se redibuje y se recalculen los caminos.
+@warning_ignore("unused_signal")
+signal office_changed

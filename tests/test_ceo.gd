@@ -73,6 +73,7 @@ func _expect(condition: bool, message: String) -> void:
 func _walk_until(condition: Callable, max_seconds: float, label: String) -> void:
 	var lot: Rect2i = OfficeState.lot_rect
 	var elapsed: float = 0.0
+	var previous_cell: Vector2i = _ceo.get_cell()
 	while not condition.call() and elapsed < max_seconds:
 		GameClock.advance(FRAME)
 		_ceo._process(FRAME)
@@ -81,11 +82,15 @@ func _walk_until(condition: Callable, max_seconds: float, label: String) -> void
 		if _ceo.visible and lot.has_point(cell):
 			_expect(not _blocked.has(cell) or cell == _seat,
 				"%s: el CEO atravesó un mueble en %s" % [label, cell])
+		if _ceo.visible and cell != previous_cell and lot.has_point(previous_cell):
+			var crossed: Vector3i = GridEdge.between(previous_cell, cell)
+			_expect(not OfficeState.blocks_passage(crossed), "%s: el CEO atravesó la pared %s" % [label, crossed])
+		previous_cell = cell
 	_expect(condition.call(), "%s: no ocurrió en %.0f s" % [label, max_seconds])
 
 
 # Comprueba que un camino sea válido: pasos de una casilla, dentro del local, sin
-# atravesar muebles (salvo la silla de destino) y tan corto como el mejor posible.
+# atravesar muebles (salvo la silla de destino) ni paredes, y tan corto como el mejor posible.
 func _check_path(start: Vector2i, path: Array[Vector2i], goal: Vector2i, label: String) -> void:
 	_expect(not path.is_empty(), "%s: camino vacío" % label)
 	if path.is_empty():
@@ -97,6 +102,9 @@ func _check_path(start: Vector2i, path: Array[Vector2i], goal: Vector2i, label: 
 		_expect(step.x + step.y == 1, "%s: salto de %s a %s" % [label, previous, cell])
 		_expect(OfficeState.lot_rect.has_point(cell), "%s: %s fuera del local" % [label, cell])
 		_expect(not _blocked.has(cell) or cell == goal, "%s: atraviesa el mueble en %s" % [label, cell])
+		if step.x + step.y == 1:
+			_expect(not OfficeState.blocks_passage(GridEdge.between(previous, cell)),
+				"%s: atraviesa la pared entre %s y %s" % [label, previous, cell])
 		previous = cell
 	var best: int = _bfs_distance(start, goal, OfficeState.lot_rect, _blocked)
 	_expect(path.size() == best, "%s: %d pasos, el más corto tiene %d" % [label, path.size(), best])
@@ -112,7 +120,8 @@ func _bfs_distance(start: Vector2i, goal: Vector2i, lot: Rect2i, blocked: Array[
 			return distances[cell]
 		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
 			var next: Vector2i = cell + direction
-			if lot.has_point(next) and not distances.has(next) and (next == goal or not blocked.has(next)):
+			if lot.has_point(next) and not distances.has(next) and (next == goal or not blocked.has(next)) \
+					and not OfficeState.blocks_passage(GridEdge.between(cell, next)):
 				distances[next] = distances[cell] + 1
 				queue.append(next)
 	return -1
@@ -143,12 +152,15 @@ func _check_pathfinder_detour() -> void:
 	var previous_blocked: Array[Vector2i] = _blocked
 	_blocked = wall
 	var saved_lot: Rect2i = OfficeState.lot_rect
+	var saved_edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
+	OfficeState.edges.clear()
 	OfficeState.lot_rect = lot
 	if path.size() > 0:
 		path.pop_front()
 		_check_path(Vector2i(0, 0), path, Vector2i(0, 6), "rodeo")
 		_expect(path.has(Vector2i(5, 3)), "el rodeo no pasa por el único hueco (5, 3)")
 	OfficeState.lot_rect = saved_lot
+	OfficeState.edges = saved_edges
 	_blocked = previous_blocked
 	wall.append(Vector2i(5, 3))
 	finder.build(lot, wall)

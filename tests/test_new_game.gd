@@ -118,10 +118,31 @@ func _check_new_game_state() -> void:
 	_expect(grid.get_lot_rect() == lot, "la cuadrícula dibuja el local %s" % grid.get_lot_rect())
 	_expect(floor_layer.get_used_cells().size() == lot.get_area(),
 		"casillas de piso: %d" % floor_layer.get_used_cells().size())
+	# La Oficina Ejecutiva es de madera y el resto de cerámica; cada casilla se dibuja
+	# con la fila del atlas de su tipo de piso.
+	var rows: Dictionary = grid.get("_atlas_rows")
 	for cell: Vector2i in floor_layer.get_used_cells():
+		var expected_type: String = "wood" if office_cells.has(cell) else "ceramic"
+		_expect(OfficeState.get_floor(cell) == expected_type, "casilla %s con piso %s" % [cell, OfficeState.get_floor(cell)])
 		var row: int = floor_layer.get_cell_atlas_coords(cell).y
-		var expected_row: int = 1 if office_cells.has(cell) else 0
-		_expect(row == expected_row, "casilla %s con piso %d, se esperaba %d" % [cell, row, expected_row])
+		_expect(row == rows[expected_type], "casilla %s dibujada con la fila %d" % [cell, row])
+	# Paredes exteriores en todo el contorno, con la puerta de entrada, y la oficina cerrada con su puerta.
+	for edge: Vector3i in GridEdge.get_lot_outline(lot):
+		var expected_kind: String = ConstructionCatalog.WALL
+		if edge == GridEdge.between(OfficeState.entrance, OfficeState.get_outside_of_entrance()):
+			expected_kind = ConstructionCatalog.DOOR
+		_expect(OfficeState.get_edge(edge) == expected_kind, "borde exterior %s: «%s»" % [edge, OfficeState.get_edge(edge)])
+	var office_doors: int = 0
+	for cell: Vector2i in office_cells:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var neighbour: Vector2i = cell + direction
+			if office_cells.has(neighbour) or not lot.has_point(neighbour):
+				continue
+			var kind: String = OfficeState.get_edge(GridEdge.between(cell, neighbour))
+			_expect(not kind.is_empty(), "la Oficina Ejecutiva está abierta entre %s y %s" % [cell, neighbour])
+			if kind == ConstructionCatalog.DOOR:
+				office_doors += 1
+	_expect(office_doors == 1, "la Oficina Ejecutiva tiene %d puertas" % office_doors)
 	var camera: OfficeCamera = scene.get_node("OfficeCamera")
 	_expect(camera.is_current(), "la cámara de la oficina no es la actual")
 	_expect(camera.position.distance_to(grid.get_lot_world_rect().get_center()) < 0.01,

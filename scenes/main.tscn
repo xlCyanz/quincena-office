@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://riw4v02teahg" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/office_grid.tscn" id="2_grid"]
 [ext_resource type="Script" uid="uid://3sd40kaml334" path="res://scripts/office/office_camera.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://dedblacc2ivtb" path="res://scripts/office/build_controller.gd" id="4_build"]
+[ext_resource type="Script" uid="uid://csuq8yq7cux6e" path="res://scripts/ui/build_panel.gd" id="5_panel"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -11,3 +13,9 @@ script = ExtResource("1_main")
 
 [node name="OfficeCamera" type="Camera2D" parent="."]
 script = ExtResource("3_camera")
+
+[node name="BuildController" type="Node2D" parent="."]
+script = ExtResource("4_build")
+
+[node name="BuildPanel" type="CanvasLayer" parent="."]
+script = ExtResource("5_panel")

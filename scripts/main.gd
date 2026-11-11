@@ -1,5 +1,5 @@
-# Escena de juego: reúne la oficina, la cámara y el CEO, y los prepara con el estado
-# de la partida.
+# Escena de juego: reúne la oficina, la cámara, el CEO y el modo construcción, y los
+# prepara con el estado de la partida.
 # Sigue la regla de Godot "llamar hacia abajo, avisar hacia arriba": el nodo padre
 # configura a sus hijos directamente, y los hijos le avisan con señales.
 extends Node2D
@@ -10,8 +10,13 @@ var ceo: Ceo
 var pathfinder := OfficePathfinder.new()
 var ceo_schedule: WorkSchedule
 
+# Si el reloj estaba en pausa antes de entrar al modo construcción.
+var _was_paused_before_building: bool = false
+
 @onready var _office_grid: OfficeGrid = $OfficeGrid
 @onready var _camera: OfficeCamera = $OfficeCamera
+@onready var _build_controller: BuildController = $BuildController
+@onready var _build_panel: BuildPanel = $BuildPanel
 
 
 func _ready() -> void:
@@ -22,12 +27,16 @@ func _ready() -> void:
 	# editor), se empieza una partida nueva para poder probarla.
 	if not OfficeState.has_game():
 		SaveManager.new_game()
-	_office_grid.build(OfficeState.lot_rect, OfficeState.rooms, OfficeState.furniture)
-	pathfinder.build(OfficeState.lot_rect, OfficeState.get_furniture_cells())
+	_rebuild_office()
 	_camera.set_bounds(_office_grid.get_lot_world_rect())
 	_spawn_ceo()
+	_build_controller.setup(_office_grid)
+	_build_controller.status_changed.connect(_build_panel.show_status)
+	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
+	_build_panel.tool_selected.connect(_build_controller.set_tool)
+	EventBus.office_changed.connect(_on_office_changed)
 	GameClock.start()
-	# Provisional hasta el hito 8 (interfaz): el saldo y el reloj se muestran en la salida.
+	# Provisional hasta el hito 8 (interfaz): el reloj se muestra en la salida.
 	EventBus.hour_changed.connect(_on_hour_changed)
 	print("Saldo: $%d" % Economy.balance)
 	_print_clock()
@@ -35,6 +44,11 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	GameClock.stop()
+
+
+func _rebuild_office() -> void:
+	_office_grid.build(OfficeState.lot_rect, OfficeState.floors, OfficeState.edges, OfficeState.furniture)
+	pathfinder.build(OfficeState.lot_rect, OfficeState.get_furniture_cells(), OfficeState.edges)
 
 
 func _spawn_ceo() -> void:
@@ -45,7 +59,24 @@ func _spawn_ceo() -> void:
 	_office_grid.add_object(ceo)
 	ceo.sat_down.connect(func() -> void: print("El CEO se sentó en su escritorio."))
 	ceo.left_office.connect(_on_ceo_left_office)
-	ceo.setup(_office_grid, pathfinder, ceo_schedule, seat_cell, OfficeState.entrance)
+	ceo.setup(_office_grid, pathfinder, ceo_schedule, seat_cell, OfficeState.entrance,
+		OfficeState.get_outside_of_entrance())
+
+
+func _on_office_changed() -> void:
+	_rebuild_office()
+	ceo.replan()
+
+
+# El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
+func _on_build_mode_changed(active: bool) -> void:
+	_build_controller.set_active(active)
+	_camera.left_drag_enabled = not active
+	if active:
+		_was_paused_before_building = GameClock.is_paused
+		GameClock.set_paused(true)
+	else:
+		GameClock.set_paused(_was_paused_before_building)
 
 
 # Con el CEO fuera, la oficina queda vacía: el tiempo salta hasta su próxima entrada.
@@ -57,10 +88,11 @@ func _on_ceo_left_office() -> void:
 
 
 # Atajos de teclado (un extra: en el hito 8 la interfaz tendrá botones para esto).
-# Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x.
+# Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
+# nada, porque el tiempo tiene que quedarse en pausa.
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo:
+	if key == null or not key.pressed or key.echo or _build_panel.is_build_mode():
 		return
 	match key.keycode:
 		KEY_SPACE:

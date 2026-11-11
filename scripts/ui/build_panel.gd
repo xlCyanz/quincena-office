@@ -1,0 +1,121 @@
+# Panel del modo construcción (interfaz mínima del hito 5; el hito 8 la integra en la
+# interfaz superpuesta). Abajo al centro: el botón "Construir" o, en modo construcción,
+# las herramientas, el saldo, el estado de la última acción y "Salir".
+class_name BuildPanel
+extends CanvasLayer
+
+## Se entró (true) o se salió (false) del modo construcción.
+signal build_mode_changed(active: bool)
+## Se eligió una herramienta (ver BuildController).
+signal tool_selected(tool: String)
+
+const MARGIN_BOTTOM: float = 16.0
+
+var _open_button: Button
+var _panel: PanelContainer
+var _balance_label: Label
+var _status_label: Label
+var _tool_buttons: Dictionary[String, Button] = {}
+var _exit_button: Button
+
+
+func _ready() -> void:
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root)
+
+	_open_button = Button.new()
+	_open_button.text = "Construir"
+	_open_button.custom_minimum_size = Vector2(160, 44)
+	_open_button.pressed.connect(func() -> void: set_build_mode(true))
+	root.add_child(_open_button)
+	_anchor_bottom_center(_open_button)
+
+	_panel = PanelContainer.new()
+	root.add_child(_panel)
+	var rows := VBoxContainer.new()
+	_panel.add_child(rows)
+	var tools := HBoxContainer.new()
+	rows.add_child(tools)
+	var group := ButtonGroup.new()
+	var tool_names: Array[Array] = [
+		[BuildController.TOOL_WALL, ConstructionCatalog.get_display_name(ConstructionCatalog.WALL)],
+		[BuildController.TOOL_DOOR, ConstructionCatalog.get_display_name(ConstructionCatalog.DOOR)],
+	]
+	for floor_type: String in ConstructionCatalog.get_floor_types():
+		tool_names.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])
+	tool_names.append([BuildController.TOOL_SELL, "Vender"])
+	for entry: Array in tool_names:
+		var button := Button.new()
+		button.text = entry[1]
+		button.toggle_mode = true
+		button.button_group = group
+		var tool: String = entry[0]
+		button.pressed.connect(func() -> void: tool_selected.emit(tool))
+		tools.add_child(button)
+		_tool_buttons[tool] = button
+	_exit_button = Button.new()
+	_exit_button.text = "Salir"
+	_exit_button.pressed.connect(func() -> void: set_build_mode(false))
+	tools.add_child(_exit_button)
+	var info := HBoxContainer.new()
+	rows.add_child(info)
+	_balance_label = Label.new()
+	info.add_child(_balance_label)
+	_status_label = Label.new()
+	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	info.add_child(_status_label)
+	_anchor_bottom_center(_panel)
+
+	_tool_buttons[BuildController.TOOL_WALL].button_pressed = true
+	EventBus.balance_changed.connect(_on_balance_changed)
+	_on_balance_changed(Economy.balance)
+	_panel.visible = false
+
+
+## Entra o sale del modo construcción.
+func set_build_mode(active: bool) -> void:
+	_open_button.visible = not active
+	_panel.visible = active
+	_status_label.text = "El tiempo está en pausa." if active else ""
+	build_mode_changed.emit(active)
+
+
+func is_build_mode() -> bool:
+	return _panel.visible
+
+
+## Elige una herramienta como si se hubiera pulsado su botón.
+func select_tool(tool: String) -> void:
+	_tool_buttons[tool].button_pressed = true
+	tool_selected.emit(tool)
+
+
+func show_status(text: String) -> void:
+	_status_label.text = text
+
+
+func get_open_button() -> Button:
+	return _open_button
+
+
+func get_exit_button() -> Button:
+	return _exit_button
+
+
+func get_tool_button(tool: String) -> Button:
+	return _tool_buttons[tool]
+
+
+func _on_balance_changed(balance: int) -> void:
+	_balance_label.text = "Saldo: $%d" % balance
+
+
+func _anchor_bottom_center(control: Control) -> void:
+	control.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE)
+	control.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	control.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	control.offset_top -= MARGIN_BOTTOM
+	control.offset_bottom -= MARGIN_BOTTOM

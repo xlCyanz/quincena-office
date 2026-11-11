@@ -36,14 +36,15 @@ var _path: Array[Vector2i] = []
 
 
 ## Prepara al CEO con lo que necesita de la oficina. Lo llama la escena de juego.
+## outside es la casilla de fuera del local a la que sale por la puerta de entrada.
 func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, schedule: WorkSchedule,
-		seat_cell: Vector2i, entrance: Vector2i) -> void:
+		seat_cell: Vector2i, entrance: Vector2i, outside: Vector2i) -> void:
 	_grid = grid
 	_pathfinder = pathfinder
 	_schedule = schedule
 	_seat_cell = seat_cell
 	_entrance = entrance
-	_outside = entrance + _outward_direction(entrance, grid.get_lot_rect())
+	_outside = outside
 	if not EventBus.hour_changed.is_connected(_on_hour_changed):
 		EventBus.hour_changed.connect(_on_hour_changed)
 	_set_activity(Activity.AWAY)
@@ -70,6 +71,15 @@ func update_routine() -> void:
 		_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 	elif not working and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK):
 		_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
+
+
+## Vuelve a calcular el camino hacia donde iba (por ejemplo, después de construir).
+func replan() -> void:
+	match activity:
+		Activity.WALKING_TO_DESK:
+			_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
+		Activity.WALKING_OUT:
+			_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
 
 
 func _process(delta: float) -> void:
@@ -155,17 +165,6 @@ func _set_activity(new_activity: Activity) -> void:
 
 func _update_position() -> void:
 	position = _grid.grid_to_world(grid_position)
-
-
-# Dirección hacia fuera del local desde una casilla de su borde.
-func _outward_direction(cell: Vector2i, lot: Rect2i) -> Vector2i:
-	if cell.y == lot.end.y - 1:
-		return Vector2i(0, 1)
-	if cell.x == lot.end.x - 1:
-		return Vector2i(1, 0)
-	if cell.y == lot.position.y:
-		return Vector2i(0, -1)
-	return Vector2i(-1, 0)
 
 
 # Muñeco provisional. El origen es el punto de apoyo en el centro de su casilla.

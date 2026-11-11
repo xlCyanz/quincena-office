@@ -4,13 +4,6 @@
 class_name OfficeGrid
 extends Node2D
 
-## Colores provisionales del piso (tablero de ajedrez para distinguir cada casilla):
-## una pareja para el piso común y otra por cada tipo de habitación.
-const FLOOR_COLORS: Array[Color] = [Color("c9b48a"), Color("b39c72")]
-const ROOM_FLOOR_COLORS: Dictionary[String, Array] = {
-	"executive_office": [Color("8f6b4a"), Color("7d5c3f")],
-}
-
 ## Casilla bajo el cursor, o NO_CELL si el cursor está fuera del local.
 const NO_CELL := Vector2i(-1, -1)
 
@@ -18,7 +11,7 @@ var hovered_cell: Vector2i = NO_CELL
 
 var _floor_source_id: int = -1
 var _lot_rect := Rect2i()
-# Fila del atlas de cada estilo de piso: "" es el piso común; el resto, tipos de habitación.
+# Fila del atlas de cada tipo de piso (los colores vienen de ConstructionCatalog).
 var _atlas_rows: Dictionary[String, int] = {}
 
 @onready var _floor: TileMapLayer = $Floor
@@ -37,23 +30,42 @@ func _process(_delta: float) -> void:
 	update_hover(get_global_mouse_position())
 
 
-## Pinta el piso del local y de sus habitaciones y coloca los muebles. Las habitaciones
-## y los muebles son diccionarios como los guarda OfficeState.
-func build(lot_rect: Rect2i, rooms: Array[Dictionary], furniture: Array[Dictionary]) -> void:
+## Dibuja la oficina: el piso de cada casilla, las paredes y puertas de los bordes y
+## los muebles. Recibe los datos tal como los guarda OfficeState.
+func build(lot_rect: Rect2i, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
+		furniture: Array[Dictionary]) -> void:
 	_lot_rect = lot_rect
 	_floor.clear()
-	var room_types: Dictionary[Vector2i, String] = {}
-	for room: Dictionary in rooms:
-		for cell: Vector2i in room["cells"]:
-			room_types[cell] = room["type"]
 	for x: int in range(lot_rect.position.x, lot_rect.end.x):
 		for y: int in range(lot_rect.position.y, lot_rect.end.y):
 			var cell := Vector2i(x, y)
-			var row: int = _atlas_rows.get(room_types.get(cell, ""), 0)
+			var floor_type: String = floors.get(cell, ConstructionCatalog.BARE_FLOOR)
+			var row: int = _atlas_rows.get(floor_type, _atlas_rows[ConstructionCatalog.BARE_FLOOR])
 			_floor.set_cell(cell, _floor_source_id, Vector2i((x + y) % 2, row))
 	hovered_cell = NO_CELL
 	_highlight.visible = false
+	_place_edge_pieces(edges)
 	_place_furniture(furniture)
+
+
+## Convierte píxeles del mundo a una posición de cuadrícula con decimales (la inversa
+## de grid_to_world). Sirve para saber qué borde está más cerca del ratón.
+func world_to_grid(world_position: Vector2) -> Vector2:
+	var origin: Vector2 = cell_to_world(Vector2i.ZERO)
+	var basis := Transform2D(cell_to_world(Vector2i(1, 0)) - origin, cell_to_world(Vector2i(0, 1)) - origin, origin)
+	return basis.affine_inverse() * world_position
+
+
+func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
+	for child: Node in _objects.get_children():
+		if child is EdgePieceView:
+			_objects.remove_child(child)
+			child.queue_free()
+	for edge: Vector3i in edges:
+		var view := EdgePieceView.new()
+		view.name = "%s_%d_%d_%d" % [edges[edge], edge.x, edge.y, edge.z]
+		_objects.add_child(view)
+		view.setup(self, edge, edges[edge])
 
 
 ## Añade un objeto (por ejemplo, un personaje) a la capa ordenada por Y.
@@ -83,14 +95,8 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 		for cell: Vector2i in cells:
 			low = low.min(Vector2(cell))
 			high = high.max(Vector2(cell))
-		# Esquinas de la base en coordenadas de cuadrícula: medio paso por fuera de
-		# los centros de las casillas de los extremos.
-		var corners := PackedVector2Array([
-			grid_to_world(Vector2(low.x - 0.5, low.y - 0.5)),
-			grid_to_world(Vector2(high.x + 0.5, low.y - 0.5)),
-			grid_to_world(Vector2(high.x + 0.5, high.y + 0.5)),
-			grid_to_world(Vector2(low.x - 0.5, high.y + 0.5)),
-		])
+		# Esquinas de la base: medio paso por fuera de los centros de las casillas de los extremos.
+		var corners: PackedVector2Array = IsoBox.grid_rect_corners(self, low - Vector2(0.5, 0.5), high + Vector2(0.5, 0.5))
 		var view := FurnitureView.new()
 		view.name = "%s_%d_%d" % [item["id"], item["cell"].x, item["cell"].y]
 		_objects.add_child(view)
@@ -156,11 +162,13 @@ func update_hover(world_position: Vector2) -> void:
 # Crea el TileSet en código con rombos de colores generados (arte provisional).
 # Cada fila del atlas es un estilo de piso; cada columna, una casilla del tablero.
 func _build_tile_set() -> TileSet:
-	var styles: Array[Array] = [FLOOR_COLORS]
-	_atlas_rows = {"": 0}
-	for room_type: String in ROOM_FLOOR_COLORS:
-		_atlas_rows[room_type] = styles.size()
-		styles.append(ROOM_FLOOR_COLORS[room_type])
+	var floor_types: Array[String] = [ConstructionCatalog.BARE_FLOOR]
+	floor_types.append_array(ConstructionCatalog.get_floor_types())
+	var styles: Array[Array] = []
+	_atlas_rows = {}
+	for floor_type: String in floor_types:
+		_atlas_rows[floor_type] = styles.size()
+		styles.append(ConstructionCatalog.get_floor_colors(floor_type))
 
 	var tile_size: Vector2i = GameConstants.TILE_SIZE
 	var image := Image.create_empty(tile_size.x * 2, tile_size.y * styles.size(), false, Image.FORMAT_RGBA8)

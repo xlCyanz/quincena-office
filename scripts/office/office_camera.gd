@@ -15,6 +15,10 @@ const PINCH_STEP: float = 0.25
 
 var zoom_index: int = GameConstants.CAMERA_START_ZOOM_INDEX
 
+## Si el botón izquierdo arrastra la cámara. En modo construcción se apaga, porque el
+## botón izquierdo construye; el central y el derecho siguen moviéndola.
+var left_drag_enabled: bool = true
+
 var _bounds := Rect2()
 var _drag_button: MouseButton = MOUSE_BUTTON_NONE
 var _drag_start := Vector2.ZERO
@@ -84,6 +88,8 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 			if event.pressed:
 				_handle_wheel(event)
 		MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT:
+			if event.button_index == MOUSE_BUTTON_LEFT and not left_drag_enabled:
+				return
 			if event.pressed and _drag_button == MOUSE_BUTTON_NONE:
 				_drag_button = event.button_index
 				_drag_start = event.position

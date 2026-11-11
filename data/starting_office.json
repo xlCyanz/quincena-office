@@ -1,5 +1,18 @@
 {
-	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Muebles: cell = casilla de anclaje (la de menor x e y), rotation = 0 a 3, assigned_to = quién lo usa. entrance = casilla del borde por la que se entra y se sale. ceo_schedule: days 0 = lunes … 6 = domingo; trabaja desde start_hour hasta end_hour (sin incluirla).",
+	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Bordes [x, y, eje]: eje \"x\" = el borde entre [x, y] y [x+1, y]; eje \"y\" = el borde entre [x, y] y [x, y+1] (así [-1, y, \"x\"] es el borde oeste del local). exterior_walls pone pared en todo el borde del local; doors reemplaza esas paredes por puertas. Muebles: cell = casilla de anclaje (la de menor x e y), rotation = 0 a 3, assigned_to = quién lo usa. entrance = casilla junto a la puerta de entrada. ceo_schedule: days 0 = lunes … 6 = domingo; trabaja desde start_hour hasta end_hour (sin incluirla).",
+	"floor": "ceramic",
+	"floor_areas": [
+		{ "type": "wood", "position": [0, 0], "size": [3, 3] }
+	],
+	"exterior_walls": true,
+	"walls": [
+		[2, 0, "x"], [2, 1, "x"], [2, 2, "x"],
+		[0, 2, "y"], [2, 2, "y"]
+	],
+	"doors": [
+		[1, 2, "y"],
+		[3, 7, "y"]
+	],
 	"rooms": [
 		{
 			"type": "executive_office",

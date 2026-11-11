@@ -1,0 +1,12 @@
+{
+	"_comentario": "Precios y arte provisional de la construcción (hito 5). Los precios son provisionales: el diseño (13.7) los deja por definir. Vender devuelve sale_refund_ratio del precio; reemplazar algo vende lo anterior y compra lo nuevo.",
+	"sale_refund_ratio": 0.5,
+	"floors": {
+		"carpet": { "name": "Alfombra", "price_per_m2": 15, "colors": ["5b6f8a", "52657e"] },
+		"wood": { "name": "Madera", "price_per_m2": 25, "colors": ["8f6b4a", "7d5c3f"] },
+		"ceramic": { "name": "Cerámica", "price_per_m2": 35, "colors": ["c9b48a", "b39c72"] }
+	},
+	"bare_floor": { "name": "Sin piso", "colors": ["8c8a86", "807e7a"] },
+	"wall": { "name": "Pared", "price": 50, "height": 20, "color": "d8d0c4" },
+	"door": { "name": "Puerta", "price": 200, "height": 20, "color": "8a5a34" }
+}

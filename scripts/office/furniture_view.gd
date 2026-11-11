@@ -7,10 +7,6 @@ extends Node2D
 ## misma casilla (por ejemplo, sentado en una silla) siempre se dibuja delante.
 const SORT_BIAS_PX: float = 1.0
 
-## Oscurecimiento de las caras laterales respecto a la tapa, para dar volumen.
-const LEFT_FACE_DARKEN: float = 0.25
-const RIGHT_FACE_DARKEN: float = 0.4
-
 var item_id: String = ""
 var footprint: Array[Vector2i] = []
 
@@ -35,15 +31,4 @@ func setup(id: String, cells: Array[Vector2i], corners: PackedVector2Array, cent
 
 
 func _draw() -> void:
-	if _base.size() != 4:
-		return
-	var lift := Vector2(0.0, -_height)
-	var top_corner: Vector2 = _base[0]
-	var right: Vector2 = _base[1]
-	var bottom: Vector2 = _base[2]
-	var left: Vector2 = _base[3]
-	draw_colored_polygon(PackedVector2Array([left, bottom, bottom + lift, left + lift]),
-		_color.darkened(LEFT_FACE_DARKEN))
-	draw_colored_polygon(PackedVector2Array([bottom, right, right + lift, bottom + lift]),
-		_color.darkened(RIGHT_FACE_DARKEN))
-	draw_colored_polygon(PackedVector2Array([top_corner + lift, right + lift, bottom + lift, left + lift]), _color)
+	IsoBox.draw(self, _base, _height, _color)
