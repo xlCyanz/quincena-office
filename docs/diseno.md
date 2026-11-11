@@ -69,6 +69,13 @@ Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece se
   - [15.5 Orden y dependencias](#m0x07y26p1s.44370)
   - [15.6 Cómo trabajar con Claude Code](#m0x07y26p1s.44770)
   - [15.7 Riesgos de esta fase](#m0x07y26p1s.45295)
+* [16. Plan de desarrollo: fase 2](#16-plan-de-desarrollo-fase-2)
+  - [16.1 Alcance](#161-alcance)
+  - [16.2 Decisiones técnicas](#162-decisiones-técnicas)
+  - [16.3 Hitos](#163-hitos)
+  - [16.4 Orden y dependencias](#164-orden-y-dependencias)
+  - [16.5 Riesgos de esta fase](#165-riesgos-de-esta-fase)
+  - [16.6 Fases siguientes](#166-fases-siguientes)
 
 ## 1. Visión general
 
@@ -690,3 +697,70 @@ La fase 1 entrega una oficina funcional sin empleados: proyecto de Godot 4 confi
 - **Paredes y orden de dibujo:** en isométrico, una pared en un borde puede dibujarse delante o detrás de quien no debe. Conviene resolverlo en el hito 5 con una prueba de un personaje rodeando una pared.
 - **Detección de habitaciones:** con paredes libres, saber qué casillas forman un espacio cerrado requiere un recorrido de relleno desde cada casilla. Hay que recalcularlo solo al salir del modo construcción.
 - **Guardado tardío:** si el formato de guardado se deja para el final, cada sistema debe exponer desde el inicio una función para exportar y otra para restaurar su estado.
+
+## 16. Plan de desarrollo: fase 2
+
+La fase 2 cierra el ciclo básico del juego: contratar empleados, ponerlos a trabajar, tomar contratos, entregarlos, cobrar y pagar la nómina el 15 y el 30. Al terminarla, el juego ya se puede ganar y perder dinero de verdad. Se construye en diez hitos, numerados después de los de la fase 1.
+
+### 16.1 Alcance
+
+| Entra en la fase 2 | Queda para fases siguientes |
+| --- | --- |
+| Vacantes, candidatos y contratación (5.2) | Banco: préstamos, calificación, mora y embargo |
+| Empleados que llegan, trabajan en su puesto y se van | Compra de terreno |
+| Ficha de empleado con energía, ánimo y estrés | Etapas de la empresa, valor de la empresa y objetivos guiados |
+| Nómina los días 15 y 30, y despidos | Jerarquía: líderes, gerentes, ejecutivos y departamentos |
+| Bandeja de contratos pequeños y medianos | Ascensos por experiencia y horas extra |
+| Equipos con un turno y un proyecto | Recepcionista con visitas de clientes, contador y limpieza |
+| Producción por puntos y las tres fases del trabajo | Productos propios y sala de servidores |
+| Errores, pruebas y entrega con penalidades | Eventos y salir a bolsa |
+| Reputación de 1 a 5 estrellas | Ambiente y decoración con efecto |
+| Ánimo, aviso de renuncia y aumentos | Arte final y sonido |
+
+### 16.2 Decisiones técnicas
+
+- **Sistemas nuevos (autoload):** `Staff` (empleados, vacantes y candidatos) y `Projects` (ofertas, contratos y producción). Se comunican con los demás por `EventBus`, igual que en la fase 1.
+- **Datos fuera del código:** cargos, niveles, sueldos y producción en `data/staff.json`; tamaños, pagos y penalidades de contratos en `data/contracts.json`; nombres y rasgos en `data/names.json`. Son los valores de las secciones 5, 7 y 13.
+- **Azar reproducible:** todo lo aleatorio (candidatos, ofertas, errores) sale de un `RandomNumberGenerator` con semilla guardada en la partida. Así una prueba sin ventana da siempre el mismo resultado y cargar una partida no cambia lo que iba a pasar.
+- **Guardado:** cada sistema nuevo implementa `export_state()` e `import_state()`, y su importación tolera claves ausentes, para que las partidas de la fase 1 sigan cargando.
+- **Personajes:** cada empleado es una escena como la del CEO, con la misma rutina de llegar, caminar a su puesto, sentarse e irse. La rutina del CEO se generaliza en lugar de copiarse.
+- **Puesto de trabajo:** escritorio + silla + computadora dentro de un Área de trabajo que funciona. El CEO conserva el suyo en la Oficina Ejecutiva.
+- **Arte provisional:** los empleados son figuras dibujadas en código, con un color de camisa por especialidad.
+
+### 16.3 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 10. Vacantes y candidatos | Menú Personal con vacantes: cargo, nivel, sueldo ofrecido y publicidad ($100). En los días siguientes llegan candidatos con nombre, nivel, sueldo pedido y habilidades en rangos; caducan a los pocos días | Al publicar una vacante llegan candidatos en los días siguientes; con publicidad llegan más; un candidato desaparece al caducar |
+| 11. Contratación | Contratar a un candidato: exige un puesto de trabajo libre, acepta si el sueldo iguala o supera lo que pide y si no rechaza o contraoferta. Entrevista opcional que ocupa horas del CEO y revela un rasgo y los valores reales | Sin puesto libre no se puede contratar; con puesto, el empleado queda asignado a él y ningún puesto queda con dos empleados |
+| 12. Jornada de los empleados | Los empleados llegan a su hora, caminan a su puesto, se sientan, almuerzan y se van, como el CEO. La energía baja trabajando y se recupera fuera. Clic en un empleado abre su ficha (12.4) | Cada empleado llega a su puesto por un camino válido y se va al terminar; la ficha muestra sus barras; con la oficina vacía el tiempo salta a la próxima entrada |
+| 13. Nómina y despidos | Los días 15 y 30 se paga la mitad del sueldo mensual de cada empleado. Sin dinero no se paga y baja el ánimo de todos. Despedir cuesta lo ganado hasta ese día y baja el ánimo de los compañeros | El día 15 el saldo baja exactamente la mitad de la suma de sueldos; un despido el día 10 cobra 10/30 del sueldo |
+| 14. Ofertas de contratos | Menú Proyectos con la bandeja de ofertas: cliente, tipo, tamaño, plazo, pago, anticipo y penalidad (13.4). Llegan más y mejores con más reputación y con vendedores. Aceptar cobra el anticipo | Los puntos, plazos y pagos de cada oferta caen en los rangos de la tabla 13.4; aceptar un contrato con anticipo suma el 30% al saldo |
+| 15. Equipos y turnos | Crear equipos con miembros, un turno (entrada, salida y días, con al menos un día de descanso) y un proyecto asignado. Un equipo trabaja en un proyecto a la vez | Un empleado solo está en un equipo; cambiar el turno de un equipo cambia la hora a la que llegan sus miembros |
+| 16. Producción | Cada empleado suma puntos por hora trabajada en su especialidad según nivel, energía y computadora (13.3). Las fases diseño, programación y pruebas avanzan en orden, con solapamiento desde la mitad. Tres barras por proyecto | El CEO solo produce 24 puntos por día; 2 programadores y 1 diseñador Junior producen 48; la programación no empieza antes de la mitad del diseño |
+| 17. Errores y pruebas | Al programar se generan errores ocultos, más con empleados cansados o de bajo nivel. QA los encuentra en la fase de pruebas y los programadores los corrigen | Sin QA los errores llegan a la entrega; con QA bajan; con la misma semilla se generan siempre los mismos errores |
+| 18. Entrega y reputación | El jugador decide cuándo entregar. Pago con penalidad por atraso (5% por día, máximo 50%) y por errores (2% cada uno, máximo 30%). Cancelar devuelve el anticipo. Reputación de 1 a 5 estrellas visible arriba a la izquierda | Cada resultado de la tabla 7.4 paga y mueve la reputación como dice; un contrato con 3 días de atraso y 2 errores paga el 81% |
+| 19. Ánimo y renuncias | El ánimo y el estrés cambian con el trabajo, el sueldo comparado con su nivel, la nómina sin pagar y los despidos. Con ánimo bajo o estrés alto por mucho tiempo, el empleado avisa que renuncia; un aumento lo retiene. A veces alguien pide aumento | Un empleado con ánimo bajo varios días avisa y, si no se le retiene, se va; con un aumento a tiempo se queda |
+
+### 16.4 Orden y dependencias
+
+- **Personal:** el 10, el 11 y el 12 van en cadena; sin empleados no hay nada que producir.
+- **Dinero de los empleados:** el 13 va después del 12, porque la nómina y los despidos necesitan empleados contratados.
+- **Trabajo:** el 14 puede ir en paralelo con el 12 y el 13. El 15 necesita empleados y contratos; el 16, el 17 y el 18 van en cadena después.
+- **Cierre:** el 19 va al final, porque el ánimo depende de la nómina, la carga de trabajo y las entregas.
+
+### 16.5 Riesgos de esta fase
+
+- **Muchos personajes:** con decenas de empleados, recalcular caminos a la vez puede trabar el juego. Conviene repartir los cálculos entre cuadros y probarlo en el hito 12 con 20 empleados.
+- **Puestos compartidos:** dos empleados no deben ir al mismo puesto ni sentarse en la misma silla. La asignación de puesto se guarda en el empleado y se valida al construir y vender muebles.
+- **Balance:** los valores de la sección 13 son una propuesta. El hito 16 compara la producción real con la tabla 13.8 antes de seguir.
+- **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 1.
+
+### 16.6 Fases siguientes
+
+| Fase | Tema | Qué incluye |
+| --- | --- | --- |
+| 3 | Banco y crecimiento | Préstamos, calificación de crédito, préstamo de emergencia, mora y embargo; compra de terreno; etapas de la empresa, valor de la empresa, objetivos guiados y menú Empresa |
+| 4 | Organización | Líderes de equipo, gerentes, ejecutivos y departamentos con el rendimiento del CEO; ascensos por experiencia; horas extra y agenda semanal; recepcionista con visitas, contador y limpieza; competencia por empleados |
+| 5 | Productos y eventos | Productos propios con ciclo de vida y sala de servidores; eventos con tarjetas y cuenta atrás; ambiente y decoración con efecto; salir a bolsa |
+| 6 | Arte y sonido | Sprites finales generados con la herramienta de arte, animaciones de los personajes, sonido y pulido de la interfaz |

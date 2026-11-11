@@ -56,7 +56,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md`.
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9) y en la 16.3 (fase 2, hitos 10–19).
 
 ## Estado actual
 
@@ -72,3 +72,13 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 7 | Habitaciones | ✅ Completado (tipos y requisitos en `data/rooms.json`; los muebles que aún no existen se listan como faltantes) |
 | 8 | Dinero e interfaz | ✅ Completado (primer mantenimiento el día 1 del mes 2; el saldo puede quedar negativo por gastos obligatorios) |
 | 9 | Guardado | ✅ Completado (autoguardado al pasar a las 00:00 y ranuras manuales 1–5 desde Ajustes) |
+| 10 | Vacantes y candidatos | Pendiente (fase 2) |
+| 11 | Contratación | Pendiente (fase 2) |
+| 12 | Jornada de los empleados | Pendiente (fase 2) |
+| 13 | Nómina y despidos | Pendiente (fase 2) |
+| 14 | Ofertas de contratos | Pendiente (fase 2) |
+| 15 | Equipos y turnos | Pendiente (fase 2) |
+| 16 | Producción | Pendiente (fase 2) |
+| 17 | Errores y pruebas | Pendiente (fase 2) |
+| 18 | Entrega y reputación | Pendiente (fase 2) |
+| 19 | Ánimo y renuncias | Pendiente (fase 2) |
