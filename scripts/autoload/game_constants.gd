@@ -15,8 +15,20 @@ const STARTING_CAPITAL: int = 20000
 ## Segundos reales que dura una hora de juego a velocidad 1x.
 const SECONDS_PER_GAME_HOUR: float = 5.0
 
+## Horas que tiene un día de juego (reloj de 24 horas).
+const HOURS_PER_DAY: int = 24
+
 ## Días que tiene cada mes del juego.
 const DAYS_PER_MONTH: int = 30
+
+## Días que tiene una semana del juego (el día 1 de la partida es lunes).
+const DAYS_PER_WEEK: int = 7
+
+## Hora a la que empieza una partida nueva (el inicio de la jornada).
+const START_HOUR: int = 8
+
+## Velocidades del reloj, sin contar la pausa (1x, 2x y 4x).
+const CLOCK_SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 
 ## Días del mes en que se paga la nómina.
 const PAYROLL_DAYS: Array[int] = [15, 30]

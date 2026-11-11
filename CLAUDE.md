@@ -11,7 +11,8 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 - Ejecutable en macOS (no está en el PATH): `/Applications/Godot.app/Contents/MacOS/Godot`.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
-  - Pruebas sin ventana: `Godot --headless --path . res://tests/test_grid_camera.tscn` (imprime `RESULTADO: OK`)
+  - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
+    hay una por hito: `test_grid_camera` (hito 1) y `test_game_clock` (hito 2)
 
 ## Convenciones de código
 
@@ -50,7 +51,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | --- | --- | --- |
 | 0 | Proyecto | ✅ Completado |
 | 1 | Cuadrícula y cámara | ✅ Completado |
-| 2 | Reloj | Pendiente |
+| 2 | Reloj | ✅ Completado |
 | 3 | Inicio de partida | Pendiente |
 | 4 | CEO | Pendiente |
 | 5 | Construcción: pisos y paredes | Pendiente |
