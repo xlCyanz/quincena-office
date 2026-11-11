@@ -14,6 +14,12 @@ var _camera: OfficeCamera
 
 
 func _ready() -> void:
+	# Con ventana (por ejemplo, F6 en el editor) la prueba movería la cámara a saltos
+	# y cerraría el juego; en ese caso se abre el juego normal.
+	if DisplayServer.get_name() != "headless":
+		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
+		get_tree().change_scene_to_packed.call_deferred(MAIN_SCENE)
+		return
 	var main: Node = MAIN_SCENE.instantiate()
 	add_child(main)
 	_grid = main.get_node("OfficeGrid")
