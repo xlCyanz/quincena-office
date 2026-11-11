@@ -89,12 +89,23 @@ func _check_builder() -> void:
 	_expect(result["ok"] and Economy.balance == money - 15 + 17 and OfficeState.get_floor(cell) == "carpet",
 		"cambiar cerámica por alfombra: %s" % [result])
 	money = Economy.balance
+	# El contorno del local (paredes y entrada) no se compra ni se vende.
+	var entrance_edge := Vector3i(OfficeState.entrance.x, OfficeState.entrance.y, GridEdge.AXIS_Y)
+	for pair: Array in [[Vector3i(5, 3, GridEdge.AXIS_X), ""], [Vector3i(5, 3, GridEdge.AXIS_X), DOOR],
+			[entrance_edge, ""], [entrance_edge, WALL]]:
+		var outline_edge: Vector3i = pair[0]
+		var before: String = OfficeState.get_edge(outline_edge)
+		result = builder.apply(_edge_change(outline_edge, pair[1]))
+		_expect(not result["ok"] and Economy.balance == money and OfficeState.get_edge(outline_edge) == before,
+			"cambiar el contorno en %s: %s" % [outline_edge, result])
+
+	# Un piso no se quita: solo se cambia por otro.
 	result = builder.apply(_floor_change(cell, ConstructionCatalog.BARE_FLOOR))
-	_expect(result["ok"] and Economy.balance == money + 7 and OfficeState.get_floor(cell) == ConstructionCatalog.BARE_FLOOR,
-		"vender la alfombra: %s" % [result])
-	money = Economy.balance
+	_expect(not result["ok"] and Economy.balance == money and OfficeState.get_floor(cell) == "carpet",
+		"quitar la alfombra no debería poderse: %s" % [result])
 	result = builder.apply(_floor_change(cell, "wood"))
-	_expect(result["ok"] and Economy.balance == money - 25, "madera sobre casilla sin piso: %s" % [result])
+	_expect(result["ok"] and Economy.balance == money - 25 + 7 and OfficeState.get_floor(cell) == "wood",
+		"madera sobre la alfombra: %s" % [result])
 	money = Economy.balance
 
 	# Una fila de paredes se cobra entera o no se hace.

@@ -7,10 +7,14 @@ extends Node2D
 ## Casilla bajo el cursor, o NO_CELL si el cursor está fuera del local.
 const NO_CELL := Vector2i(-1, -1)
 
+## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos con zoom.
+const TILE_OVERLAP_PX: float = 1.0
+
 var hovered_cell: Vector2i = NO_CELL
 
 var _floor_source_id: int = -1
 var _lot_rect := Rect2i()
+var _site_rect := Rect2i()
 # Fila del atlas de cada tipo de piso (los colores vienen de ConstructionCatalog).
 var _atlas_rows: Dictionary[String, int] = {}
 
@@ -34,11 +38,16 @@ func _process(_delta: float) -> void:
 
 ## Dibuja la oficina: el piso de cada casilla, las paredes y puertas de los bordes,
 ## los muebles y el tinte de las habitaciones. Recibe los datos tal como los guarda
-## OfficeState.
+## OfficeState. Alrededor del local dibuja el terreno del solar (ver set_site).
 func build(lot_rect: Rect2i, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
 		furniture: Array[Dictionary], rooms: Array[Dictionary] = []) -> void:
 	_lot_rect = lot_rect
 	_floor.clear()
+	for x: int in range(_site_rect.position.x, _site_rect.end.x):
+		for y: int in range(_site_rect.position.y, _site_rect.end.y):
+			if not lot_rect.has_point(Vector2i(x, y)):
+				_floor.set_cell(Vector2i(x, y), _floor_source_id,
+					Vector2i(posmod(x + y, 2), _atlas_rows[ConstructionCatalog.TERRAIN]))
 	for x: int in range(lot_rect.position.x, lot_rect.end.x):
 		for y: int in range(lot_rect.position.y, lot_rect.end.y):
 			var cell := Vector2i(x, y)
@@ -109,6 +118,21 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 			backrest.setup(self, item, FurnitureView.PART_BACKREST)
 
 
+## Fija el solar: el mapa fijo de terreno que rodea al local. Se dibuja en build().
+func set_site(site_rect: Rect2i) -> void:
+	_site_rect = site_rect
+
+
+## Rombo del solar en píxeles del mundo, como Transform2D: origin es la esquina de
+## arriba, x recorre el lado a lo largo del eje x de la cuadrícula e y el del eje y.
+## Un punto está dentro si affine_inverse() * punto queda entre 0 y 1 en ambos ejes.
+func get_site_world_area() -> Transform2D:
+	var origin: Vector2 = grid_to_world(Vector2(_site_rect.position) - Vector2(0.5, 0.5))
+	var side_x: Vector2 = grid_to_world(Vector2(_site_rect.end.x, _site_rect.position.y) - Vector2(0.5, 0.5)) - origin
+	var side_y: Vector2 = grid_to_world(Vector2(_site_rect.position.x, _site_rect.end.y) - Vector2(0.5, 0.5)) - origin
+	return Transform2D(side_x, side_y, origin)
+
+
 ## Rectángulo de casillas del local actual.
 func get_lot_rect() -> Rect2i:
 	return _lot_rect
@@ -168,7 +192,7 @@ func update_hover(world_position: Vector2) -> void:
 # Crea el TileSet en código con rombos de colores generados (arte provisional).
 # Cada fila del atlas es un estilo de piso; cada columna, una casilla del tablero.
 func _build_tile_set() -> TileSet:
-	var floor_types: Array[String] = [ConstructionCatalog.BARE_FLOOR]
+	var floor_types: Array[String] = [ConstructionCatalog.BARE_FLOOR, ConstructionCatalog.TERRAIN]
 	floor_types.append_array(ConstructionCatalog.get_floor_types())
 	var styles: Array[Array] = []
 	_atlas_rows = {}
@@ -197,13 +221,15 @@ func _build_tile_set() -> TileSet:
 	return tile_set
 
 
-# Pinta un rombo que llena exactamente una casilla. Usa el centro de cada píxel
-# para que los rombos vecinos encajen sin huecos ni solapes.
+# Pinta un rombo que llena una casilla. Usa el centro de cada píxel y se pasa
+# TILE_OVERLAP_PX del borde: con zoom no entero (0.5 o 1.5) los rombos que encajan
+# justo dejan rayas de huecos entre casillas; con el solape, el vecino las tapa.
 func _draw_diamond(image: Image, offset: Vector2i, color: Color) -> void:
 	var half: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
+	var limit: float = 1.0 + TILE_OVERLAP_PX / half.y
 	for y: int in range(GameConstants.TILE_SIZE.y):
 		for x: int in range(GameConstants.TILE_SIZE.x):
 			var dx: float = absf(x + 0.5 - half.x) / half.x
 			var dy: float = absf(y + 0.5 - half.y) / half.y
-			if dx + dy <= 1.0:
+			if dx + dy <= limit:
 				image.set_pixel(offset.x + x, offset.y + y, color)

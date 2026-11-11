@@ -5,8 +5,10 @@ extends RefCounted
 
 const CATALOG_PATH: String = "res://data/construction.json"
 
-## Tipo de piso de una casilla sin piso (después de vender el suyo).
+## Tipo de piso de una casilla sin piso.
 const BARE_FLOOR: String = "bare"
+## Terreno del solar que rodea al local (no se construye sobre él).
+const TERRAIN: String = "terrain"
 ## Tipos de pieza que pueden ir en un borde.
 const WALL: String = "wall"
 const DOOR: String = "door"
@@ -25,6 +27,8 @@ static func get_floor_types() -> Array[String]:
 static func get_floor(floor_type: String) -> Dictionary:
 	if floor_type == BARE_FLOOR:
 		return _catalog().get("bare_floor", {})
+	if floor_type == TERRAIN:
+		return _catalog().get("terrain", {})
 	return _catalog().get("floors", {}).get(floor_type, {})
 
 

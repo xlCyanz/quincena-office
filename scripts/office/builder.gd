@@ -2,10 +2,11 @@
 # sobre OfficeState cobrando o devolviendo dinero con Economy.
 #
 # Un cambio es un diccionario {"edge": Vector3i, "kind": String} para paredes y puertas
-# (kind = "" para vender) o {"cell": Vector2i, "kind": String} para pisos (kind =
-# ConstructionCatalog.BARE_FLOOR para vender). Reemplazar una pieza vende la anterior y
-# compra la nueva. Varios cambios juntos (por ejemplo, una fila de paredes) se cobran
-# todos o ninguno.
+# (kind = "" para vender) o {"cell": Vector2i, "kind": String} para pisos. Reemplazar
+# una pieza vende la anterior y compra la nueva. Las paredes y la puerta del contorno
+# del local no se compran ni se venden, y un piso no se puede quitar (dejar la casilla
+# con ConstructionCatalog.BARE_FLOOR): solo cambiar por otro. Varios cambios juntos
+# (por ejemplo, una fila de paredes) se cobran todos o ninguno.
 #
 # Los muebles tienen sus propias funciones (place, rotate, sell_furniture_at,
 # install_computer), cada una con su quote_ para la vista previa. Un mueble no puede
@@ -42,8 +43,13 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 	for change: Dictionary in effective:
 		if change.has("edge") and not GridEdge.touches_lot(change["edge"], OfficeState.lot_rect):
 			return {"ok": false, "cost": cost, "message": "Ese borde está fuera del local."}
+		if change.has("edge") and GridEdge.is_exterior(change["edge"], OfficeState.lot_rect):
+			return {"ok": false, "cost": cost, "message": "Las paredes exteriores no se pueden comprar ni vender."}
 		if change.has("cell") and not OfficeState.lot_rect.has_point(change["cell"]):
 			return {"ok": false, "cost": cost, "message": "Esa casilla está fuera del local."}
+		if change.has("cell") and change["kind"] == ConstructionCatalog.BARE_FLOOR:
+			return {"ok": false, "cost": cost,
+				"message": "El piso no se puede quitar, solo cambiar por otro: elige un piso y pásalo encima."}
 	if not Economy.can_afford(cost):
 		return {"ok": false, "cost": cost, "message": "No alcanza el dinero: cuesta $%d." % cost}
 	for change: Dictionary in effective:

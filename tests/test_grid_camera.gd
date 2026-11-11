@@ -58,11 +58,12 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Centro y esquinas del local: la cámara se lleva a cada una (los límites la recortan).
+# Centro y esquinas del local, más un punto lejano: la cámara se lleva a cada uno
+# (los límites del mapa la recortan).
 func _camera_targets() -> Array[Vector2]:
 	var rect: Rect2 = _grid.get_lot_world_rect()
 	return [rect.get_center(), rect.position, rect.end,
-		Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y)]
+		Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y), Vector2(-9000.0, 9000.0)]
 
 
 # Fórmula isométrica escrita a mano, independiente de TileMapLayer.
@@ -86,10 +87,19 @@ func _check_lot_shape() -> void:
 	var expected := Vector2((size.x + size.y) * GameConstants.TILE_SIZE.x / 2.0,
 		(size.x + size.y) * GameConstants.TILE_SIZE.y / 2.0)
 	_expect(rect.size == expected, "tamaño del local en píxeles %s, se esperaba %s" % [rect.size, expected])
+	# El mapa pinta todo el solar (local + terreno) con el local en el centro.
+	var site: Rect2i = OfficeState.site_rect
+	_expect(site.size == GameConstants.MAX_SITE_SIZE, "tamaño del solar %s" % site.size)
+	_expect(site.encloses(_grid.get_lot_rect()), "el solar no contiene al local")
 	var floor_layer: TileMapLayer = _grid.get_node("Floor")
-	_expect(floor_layer.get_used_cells().size() == size.x * size.y,
-		"casillas pintadas %d, se esperaban %d" % [floor_layer.get_used_cells().size(), size.x * size.y])
-	_expect(floor_layer.get_used_rect() == _grid.get_lot_rect(), "rectángulo pintado distinto del local")
+	_expect(floor_layer.get_used_cells().size() == site.get_area(),
+		"casillas pintadas %d, se esperaban %d" % [floor_layer.get_used_cells().size(), site.get_area()])
+	_expect(floor_layer.get_used_rect() == site, "rectángulo pintado distinto del solar")
+	var area: Transform2D = _grid.get_site_world_area()
+	for corner: Vector2i in [site.position, site.end - Vector2i.ONE]:
+		var local: Vector2 = area.affine_inverse() * _grid.cell_to_world(corner)
+		_expect(local.x > 0.0 and local.x < 1.0 and local.y > 0.0 and local.y < 1.0,
+			"la casilla %s queda fuera del rombo del mapa (%s)" % [corner, local])
 
 
 func _check_camera_transform() -> void:
@@ -170,7 +180,7 @@ func _check_drag_and_zoom() -> void:
 	var lot_center: Vector2 = _grid.get_lot_world_rect().get_center()
 
 	# Zoom con la rueda: niveles fijos, sin pasarse de los extremos.
-	_camera.set_bounds(_grid.get_lot_world_rect())
+	_camera.set_map_area(_grid.get_site_world_area())
 	_camera.import_state({"zoom_index": GameConstants.CAMERA_START_ZOOM_INDEX})
 	_camera.position = lot_center
 	var levels: Array[float] = GameConstants.CAMERA_ZOOM_LEVELS
@@ -206,35 +216,37 @@ func _check_drag_and_zoom() -> void:
 	_expect(_grid.screen_to_world(finish).distance_to(grabbed) < 0.01,
 		"tras arrastrar, el punto agarrado no quedó bajo el ratón %s vs %s" % [_grid.screen_to_world(finish), grabbed])
 
-	# Límites: arrastrar muy lejos deja la vista como mucho a un margen del local.
+	# Movimiento libre: se puede llevar la vista lejos del local, dentro del mapa.
+	_camera.import_state({"zoom_index": GameConstants.CAMERA_START_ZOOM_INDEX, "x": lot_center.x, "y": lot_center.y})
+	var far_cell: Vector2i = OfficeState.site_rect.position + Vector2i(2, 2)
+	_camera.center_on(_grid.cell_to_world(far_cell))
+	_expect(_camera.position == _grid.cell_to_world(far_cell), "la cámara no llega a una esquina del mapa")
+
+	# Encuadre: la oficina completa queda a la vista y centrada.
+	_camera.fit_rect(_grid.get_lot_world_rect())
+	var fit_size: Vector2 = view_size / _camera.get_zoom_level()
+	var fit_view := Rect2(_camera.position - fit_size / 2.0, fit_size)
+	_expect(fit_view.encloses(_grid.get_lot_world_rect()), "el encuadre no muestra toda la oficina")
+	_expect(_camera.position.distance_to(lot_center) < 0.01, "el encuadre no centra la oficina")
+
+	# Límites: arrastrar muy lejos deja el centro de la vista en el borde del mapa.
 	for index: int in range(levels.size()):
 		_camera.import_state({"zoom_index": index, "x": lot_center.x, "y": lot_center.y})
 		for direction: Vector2 in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
 			_camera.position = lot_center
 			var from: Vector2 = view_size / 2.0
 			_push_mouse_button(MOUSE_BUTTON_MIDDLE, true, from)
-			_push_mouse_motion(from, from + direction * 5000.0, MOUSE_BUTTON_MASK_MIDDLE)
-			_push_mouse_button(MOUSE_BUTTON_MIDDLE, false, from + direction * 5000.0)
+			_push_mouse_motion(from, from + direction * 20000.0, MOUSE_BUTTON_MASK_MIDDLE)
+			_push_mouse_button(MOUSE_BUTTON_MIDDLE, false, from + direction * 20000.0)
 			await _next_frame()
-			_check_view_near_lot("zoom %s, arrastre %s" % [_camera.get_zoom_level(), direction])
+			_check_center_in_map("zoom %s, arrastre %s" % [_camera.get_zoom_level(), direction])
 
 
-func _check_view_near_lot(context: String) -> void:
-	var view_size: Vector2 = get_viewport().get_visible_rect().size
-	var zoom_level: float = _camera.get_zoom_level()
-	var view := Rect2(_camera.position - view_size / 2.0 / zoom_level, view_size / zoom_level)
-	var lot: Rect2 = _grid.get_lot_world_rect()
-	var margin: Vector2 = view_size * GameConstants.CAMERA_OVERSCROLL_RATIO / zoom_level
-	var allowed: Rect2 = lot.grow_individual(margin.x, margin.y, margin.x, margin.y)
-	var tolerance := 0.01
-	# O la vista cabe dentro del local con su margen, o el local con su margen cabe en la vista.
-	var view_inside: bool = allowed.grow(tolerance).encloses(view)
-	var lot_inside: bool = view.grow(tolerance).encloses(allowed)
-	var x_ok: bool = (view.position.x >= allowed.position.x - tolerance and view.end.x <= allowed.end.x + tolerance) \
-		or (allowed.position.x >= view.position.x - tolerance and allowed.end.x <= view.end.x + tolerance)
-	var y_ok: bool = (view.position.y >= allowed.position.y - tolerance and view.end.y <= allowed.end.y + tolerance) \
-		or (allowed.position.y >= view.position.y - tolerance and allowed.end.y <= view.end.y + tolerance)
-	_expect(x_ok and y_ok, "%s: vista %s fuera del margen permitido %s (%s, %s)" % [
-		context, view, allowed, view_inside, lot_inside])
-	# Siempre debe verse alguna casilla del local.
-	_expect(view.intersects(lot), "%s: el local quedó fuera de la vista" % context)
+func _check_center_in_map(context: String) -> void:
+	var local: Vector2 = _grid.get_site_world_area().affine_inverse() * _camera.position
+	var tolerance := 0.0001
+	var inside: bool = local.x >= -tolerance and local.x <= 1.0 + tolerance \
+		and local.y >= -tolerance and local.y <= 1.0 + tolerance
+	var on_edge: bool = absf(local.x) < tolerance or absf(local.x - 1.0) < tolerance \
+		or absf(local.y) < tolerance or absf(local.y - 1.0) < tolerance
+	_expect(inside and on_edge, "%s: el centro de la vista no quedó en el borde del mapa (%s)" % [context, local])

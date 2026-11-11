@@ -118,12 +118,16 @@ func _check_new_game_state() -> void:
 	var grid: OfficeGrid = scene.get_node("OfficeGrid")
 	var floor_layer: TileMapLayer = grid.get_node("Floor")
 	_expect(grid.get_lot_rect() == lot, "la cuadrícula dibuja el local %s" % grid.get_lot_rect())
-	_expect(floor_layer.get_used_cells().size() == lot.get_area(),
-		"casillas de piso: %d" % floor_layer.get_used_cells().size())
-	# La Oficina Ejecutiva es de madera y el resto de cerámica; cada casilla se dibuja
-	# con la fila del atlas de su tipo de piso.
+	_expect(floor_layer.get_used_cells().size() == OfficeState.site_rect.get_area(),
+		"casillas pintadas: %d" % floor_layer.get_used_cells().size())
+	# La Oficina Ejecutiva es de madera, el resto del local de cerámica y fuera del
+	# local hay terreno; cada casilla se dibuja con la fila del atlas de su tipo.
 	var rows: Dictionary = grid.get("_atlas_rows")
 	for cell: Vector2i in floor_layer.get_used_cells():
+		if not lot.has_point(cell):
+			var terrain_row: int = floor_layer.get_cell_atlas_coords(cell).y
+			_expect(terrain_row == rows[ConstructionCatalog.TERRAIN], "casilla %s sin terreno" % cell)
+			continue
 		var expected_type: String = "wood" if office_cells.has(cell) else "ceramic"
 		_expect(OfficeState.get_floor(cell) == expected_type, "casilla %s con piso %s" % [cell, OfficeState.get_floor(cell)])
 		var row: int = floor_layer.get_cell_atlas_coords(cell).y
@@ -147,6 +151,7 @@ func _check_new_game_state() -> void:
 	_expect(office_doors == 1, "la Oficina Ejecutiva tiene %d puertas" % office_doors)
 	var camera: OfficeCamera = scene.get_node("OfficeCamera")
 	_expect(camera.is_current(), "la cámara de la oficina no es la actual")
+	_expect(OfficeState.site_rect == OfficeState.site_around(OfficeState.lot_rect), "el solar no rodea al local")
 	_expect(camera.position.distance_to(grid.get_lot_world_rect().get_center()) < 0.01,
 		"la cámara no empieza centrada en el local")
 

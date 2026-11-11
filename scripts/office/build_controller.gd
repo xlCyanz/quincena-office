@@ -6,8 +6,9 @@
 # - Mueble: clic coloca el mueble; clic derecho (o la tecla R) lo gira antes de ponerlo.
 # - Computadora: clic en un escritorio.
 # - Girar: clic en un mueble lo gira un cuarto de vuelta.
-# - Vender: clic en una pared o puerta, en un mueble (si es un escritorio con
-#   computadora, primero la computadora) o en una casilla, para vender su piso.
+# - Vender: clic en una pared o puerta interior, o en un mueble (si es un escritorio
+#   con computadora, primero la computadora). Los pisos no se venden: se cambian
+#   pasando otro piso encima.
 # - Tipo de habitación: clic en un espacio cerrado con puerta lo marca con ese tipo.
 # - Quitar habitación: clic en una habitación la deja sin tipo.
 # En modo construcción se escribe sobre cada habitación su nombre y si funciona.

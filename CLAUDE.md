@@ -33,6 +33,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   los caminos usan `AStarGrid2D` a doble resolución para que las paredes de borde bloqueen el paso.
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
+- El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
+  fuera del local se dibuja terreno. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
+  Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
+- Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - Todo se controla con ratón; el teclado es un extra.
 
 ## Estructura

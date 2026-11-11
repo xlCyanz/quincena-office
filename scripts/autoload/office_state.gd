@@ -9,6 +9,9 @@ const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
 ## Casillas que ocupa el local.
 var lot_rect := Rect2i()
 
+## Casillas del solar: el mapa fijo que rodea al local, con el local en el centro.
+var site_rect := Rect2i()
+
 ## Tipo de piso de cada casilla del local (ver ConstructionCatalog).
 var floors: Dictionary[Vector2i, String] = {}
 
@@ -41,6 +44,7 @@ func has_game() -> bool:
 ## STARTING_OFFICE_PATH.
 func new_game() -> void:
 	lot_rect = Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE)
+	site_rect = site_around(lot_rect)
 	rooms.clear()
 	furniture.clear()
 	floors.clear()
@@ -73,6 +77,13 @@ func new_game() -> void:
 		furniture.append(_furniture_from_data(item))
 	entrance = _to_cell(data.get("entrance", [0, 0]))
 	ceo_schedule = WorkSchedule.from_dict(data.get("ceo_schedule", {})).to_dict()
+
+
+## Solar de tamaño GameConstants.MAX_SITE_SIZE con el local en el centro.
+static func site_around(lot: Rect2i) -> Rect2i:
+	@warning_ignore("integer_division")
+	var offset: Vector2i = (GameConstants.MAX_SITE_SIZE - lot.size) / 2
+	return Rect2i(lot.position - offset, GameConstants.MAX_SITE_SIZE)
 
 
 ## Devuelve el primer mueble asignado a alguien (por ejemplo, "ceo"), o un diccionario vacío.
@@ -174,6 +185,7 @@ func export_state() -> Dictionary:
 		saved_edges.append(GridEdge.to_data(edge) + [edges[edge]])
 	return {
 		"lot": [lot_rect.position.x, lot_rect.position.y, lot_rect.size.x, lot_rect.size.y],
+		"site": [site_rect.position.x, site_rect.position.y, site_rect.size.x, site_rect.size.y],
 		"floors": saved_floors,
 		"edges": saved_edges,
 		"rooms": saved_rooms,
@@ -187,6 +199,8 @@ func export_state() -> Dictionary:
 func import_state(state: Dictionary) -> void:
 	var lot: Array = state.get("lot", [0, 0, 0, 0])
 	lot_rect = Rect2i(int(lot[0]), int(lot[1]), int(lot[2]), int(lot[3]))
+	var site: Array = state.get("site", [])
+	site_rect = Rect2i(int(site[0]), int(site[1]), int(site[2]), int(site[3])) if site.size() == 4 else site_around(lot_rect)
 	floors.clear()
 	for entry: Array in state.get("floors", []):
 		floors[Vector2i(int(entry[0]), int(entry[1]))] = String(entry[2])

@@ -192,16 +192,21 @@ func _check_walls_change_rooms() -> void:
 	_expect(_room_type_at(Vector2i(0, 7)) == "reception" and OfficeState.rooms.size() == 2
 		and _room_at(OfficeState.entrance)["cells"].size() == 39, "el baño se unió a la Recepción: %s" % [OfficeState.rooms])
 
-	# Vender una pared exterior abre la Recepción a la calle: se deshace.
-	result = builder.apply([_wall(5, 0, x, "")])
-	_expect(result["ok"] and _room_type_at(OfficeState.entrance) == "", "la Recepción abierta se deshizo: %s" % [result])
-	builder.apply([_wall(5, 0, x)])
-
-	# Lo que desharía la Oficina Ejecutiva (abrirla a la calle) no se permite.
+	# Las paredes exteriores no se venden: la Recepción no se puede abrir a la calle.
 	var money: int = Economy.balance
-	result = builder.apply([_wall(-1, 0, x, "")])
-	_expect(not result["ok"] and String(result["message"]).contains("Oficina Ejecutiva") and Economy.balance == money
-		and OfficeState.get_edge(Vector3i(-1, 0, x)) == ConstructionCatalog.WALL, "abrir la Oficina Ejecutiva: %s" % [result])
+	for edge: Vector3i in [Vector3i(5, 0, x), Vector3i(-1, 0, x)]:
+		result = builder.apply([{"edge": edge, "kind": ""}])
+		_expect(not result["ok"] and String(result["message"]).contains("exteriores") and Economy.balance == money
+			and OfficeState.get_edge(edge) == ConstructionCatalog.WALL, "vender la pared exterior %s: %s" % [edge, result])
+	_expect(_room_type_at(OfficeState.entrance) == "reception" and _room_type_at(Vector2i(0, 0)) == "executive_office",
+		"las habitaciones siguen igual")
+	# Si un espacio se abriera a la calle, la habitación se desharía (por eso Builder
+	# protege la Oficina Ejecutiva con locked).
+	var open_edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
+	open_edges.erase(Vector3i(-1, 0, x))
+	var reconciled: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms,
+		RoomRules.find_spaces(OfficeState.lot_rect, open_edges), OfficeState.entrance, OfficeState.furniture)
+	_expect(RoomRules.room_index_at(reconciled, Vector2i(0, 0)) < 0, "una Oficina Ejecutiva abierta debería deshacerse")
 	# Agrandarla sí: al quitar una pared interior, absorbe el espacio vecino.
 	builder.mark_room("reception", OfficeState.entrance)
 	result = builder.apply([_wall(2, 0, x, "")])

@@ -1,5 +1,7 @@
-# Cámara de la oficina: se arrastra con el ratón, hace zoom en niveles fijos con la
-# rueda y no deja alejarse del local más que un margen (CAMERA_OVERSCROLL_RATIO).
+# Cámara de la oficina: se arrastra con el ratón y hace zoom en niveles fijos con la
+# rueda. Se mueve libre por todo el mapa (el solar) y se detiene en su borde: el centro
+# de la vista no puede salir del rombo del solar. fit_rect() encuadra un rectángulo,
+# por ejemplo la oficina completa.
 class_name OfficeCamera
 extends Camera2D
 
@@ -19,7 +21,9 @@ var zoom_index: int = GameConstants.CAMERA_START_ZOOM_INDEX
 ## botón izquierdo construye; el central y el derecho siguen moviéndola.
 var left_drag_enabled: bool = true
 
-var _bounds := Rect2()
+# Rombo del mapa (ver OfficeGrid.get_site_world_area); sin mapa no hay límites.
+var _area := Transform2D()
+var _has_area: bool = false
 var _drag_button: MouseButton = MOUSE_BUTTON_NONE
 var _drag_start := Vector2.ZERO
 var _is_dragging: bool = false
@@ -32,11 +36,31 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_clamp_position)
 
 
-## Fija el rectángulo del local (en píxeles del mundo) y centra la cámara en él.
-func set_bounds(bounds: Rect2) -> void:
-	_bounds = bounds
-	position = bounds.get_center()
+## Fija el rombo del mapa (en píxeles del mundo) por el que se puede mover la cámara.
+func set_map_area(area: Transform2D) -> void:
+	_area = area
+	_has_area = true
 	_clamp_position()
+
+
+## Centra la vista en un punto del mundo (dentro del mapa).
+func center_on(world_position: Vector2) -> void:
+	position = world_position
+	_clamp_position()
+
+
+## Encuadra un rectángulo del mundo: elige el zoom más cercano en que cabe entero
+## (con un margen para los paneles) y lo centra.
+func fit_rect(target: Rect2) -> void:
+	var available: Vector2 = get_viewport_rect().size * (1.0 - 2.0 * GameConstants.CAMERA_FIT_MARGIN)
+	var best: int = 0
+	for index: int in range(GameConstants.CAMERA_ZOOM_LEVELS.size()):
+		var level: float = GameConstants.CAMERA_ZOOM_LEVELS[index]
+		if target.size.x * level <= available.x and target.size.y * level <= available.y:
+			best = index
+	zoom_index = best
+	_apply_zoom()
+	center_on(target.get_center())
 
 
 ## Nivel de zoom actual (1.0 = un píxel del arte por píxel de pantalla).
@@ -143,17 +167,13 @@ func _apply_zoom() -> void:
 	zoom = Vector2.ONE * get_zoom_level()
 
 
-# Mantiene la vista cerca del local. En cada eje, el borde de la vista puede pasarse
-# del local como mucho un margen; si la vista es más grande que el local con su
-# margen (zoom lejano), es el local el que no puede salirse de la vista.
+# Mantiene el centro de la vista dentro del rombo del mapa: pasa la posición a
+# coordenadas del rombo (0 a 1 en cada lado), la recorta y la devuelve al mundo.
 func _clamp_position() -> void:
-	if not _bounds.has_area():
+	if not _has_area:
 		return
-	var view_half: Vector2 = get_viewport_rect().size / 2.0 / get_zoom_level()
-	var margin: Vector2 = get_viewport_rect().size * GameConstants.CAMERA_OVERSCROLL_RATIO / get_zoom_level()
-	var low: Vector2 = _bounds.position - margin + view_half
-	var high: Vector2 = _bounds.end + margin - view_half
-	position = Vector2(
-		clampf(position.x, minf(low.x, high.x), maxf(low.x, high.x)),
-		clampf(position.y, minf(low.y, high.y), maxf(low.y, high.y)),
-	)
+	var local: Vector2 = _area.affine_inverse() * position
+	var clamped: Vector2 = local.clamp(Vector2.ZERO, Vector2.ONE)
+	# Dentro del mapa no se toca la posición (la ida y vuelta redondearía decimales).
+	if clamped != local:
+		position = _area * clamped

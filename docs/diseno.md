@@ -463,7 +463,7 @@ La oficina es el fondo a pantalla completa y toda la interfaz flota superpuesta 
 - **Todo con ratón:** ninguna acción depende del teclado, para facilitar el paso a móvil. Los atajos de teclado son un extra.
 - **Menús superpuestos:** al abrir un menú, su panel aparece encima de la oficina sin taparla entera.
 - **Clic para inspeccionar:** un clic en un empleado, un mueble o una habitación abre su ficha.
-- **Cámara:** se arrastra para mover y tiene zoom en niveles fijos. Puede desplazarse un poco más allá del límite de la oficina, para que ningún panel tape una casilla sin remedio.
+- **Cámara:** se arrastra para mover y tiene zoom en niveles fijos. Se mueve libre por todo el solar (el mapa fijo de 40×40 con la oficina en el centro) y se detiene en su borde. Al empezar encuadra la oficina completa; el botón «Ver oficina» (o la tecla F) la vuelve a encuadrar.
 - **Idioma:** solo español por el momento.
 
 ### 12.2 Elementos siempre visibles

@@ -31,7 +31,8 @@ func _ready() -> void:
 	if not OfficeState.has_game():
 		SaveManager.new_game()
 	_rebuild_office()
-	_camera.set_bounds(_office_grid.get_lot_world_rect())
+	_camera.set_map_area(_office_grid.get_site_world_area())
+	_camera.fit_rect(_office_grid.get_lot_world_rect())
 	_spawn_ceo()
 	_restore_scene_state(SaveManager.take_scene_state())
 	SaveManager.scene_state_provider = _export_scene_state
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
+	_add_frame_button(_build_panel.get_menu_bar())
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
 	_settings_panel.settings_mode_changed.connect(_on_settings_mode_changed)
 	_settings_panel.save_requested.connect(_on_save_requested)
@@ -71,6 +73,7 @@ func _restore_scene_state(state: Dictionary) -> void:
 
 
 func _rebuild_office() -> void:
+	_office_grid.set_site(OfficeState.site_rect)
 	_office_grid.build(OfficeState.lot_rect, OfficeState.floors, OfficeState.edges, OfficeState.furniture,
 		OfficeState.rooms)
 	pathfinder.build(OfficeState.lot_rect, OfficeState.get_furniture_cells(), OfficeState.edges)
@@ -156,6 +159,22 @@ func _on_pause_pressed() -> void:
 		GameClock.toggle_pause()
 
 
+# Botón «Ver oficina» de la barra de menús: vuelve a encuadrar la oficina completa.
+func _add_frame_button(menu_bar: Container) -> void:
+	var button := Button.new()
+	button.name = "FrameOfficeButton"
+	button.text = "Ver oficina"
+	button.custom_minimum_size = Vector2(160.0, 44.0)
+	button.focus_mode = Control.FOCUS_NONE
+	button.pressed.connect(frame_office)
+	menu_bar.add_child(button)
+
+
+## Encuadra la oficina completa (botón «Ver oficina» o tecla F).
+func frame_office() -> void:
+	_camera.fit_rect(_office_grid.get_lot_world_rect())
+
+
 func _on_speed_pressed(index: int) -> void:
 	if not _is_menu_open():
 		GameClock.set_speed_index(index)
@@ -163,10 +182,17 @@ func _on_speed_pressed(index: int) -> void:
 
 # Atajos de teclado (un extra: los botones del reloj hacen lo mismo).
 # Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
-# nada, porque el tiempo tiene que quedarse en pausa.
+# nada, porque el tiempo tiene que quedarse en pausa. F: ver la oficina completa
+# (funciona siempre).
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo or _is_menu_open():
+	if key == null or not key.pressed or key.echo:
+		return
+	if key.keycode == KEY_F:
+		frame_office()
+		get_viewport().set_input_as_handled()
+		return
+	if _is_menu_open():
 		return
 	match key.keycode:
 		KEY_SPACE:

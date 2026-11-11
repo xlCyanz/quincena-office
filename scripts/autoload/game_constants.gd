@@ -6,6 +6,10 @@ extends RefCounted
 ## Tamaño de una casilla isométrica en píxeles (1 casilla = 1 m²).
 const TILE_SIZE := Vector2i(64, 32)
 
+## Tamaño del solar en casillas (40×40 m): el mapa fijo que rodea al local y el tope
+## de crecimiento al comprar terreno (diseño, 13.1).
+const MAX_SITE_SIZE := Vector2i(40, 40)
+
 ## Tamaño del local inicial en casillas (6×8 m = 48 m²).
 const STARTING_LOT_SIZE := Vector2i(6, 8)
 
@@ -36,16 +40,18 @@ const CLOCK_SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 ## Días del mes en que se paga la nómina.
 const PAYROLL_DAYS: Array[int] = [15, 30]
 
-## Niveles fijos de zoom de la cámara, de lejos a cerca. Son enteros para que el
-## pixel art se vea nítido (cada píxel del arte ocupa 1, 2 o 3 píxeles de pantalla).
-const CAMERA_ZOOM_LEVELS: Array[float] = [1.0, 2.0, 3.0]
+## Niveles fijos de zoom de la cámara, de lejos a cerca. Desde 1 son enteros para que
+## el pixel art se vea nítido; los menores que 1 sirven para ver todo el solar.
+const CAMERA_ZOOM_LEVELS: Array[float] = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
 
-## Nivel de zoom con el que arranca la cámara (índice dentro de CAMERA_ZOOM_LEVELS).
-const CAMERA_START_ZOOM_INDEX: int = 1
+## Nivel de zoom de referencia (índice dentro de CAMERA_ZOOM_LEVELS). Al empezar, la
+## cámara encuadra la oficina completa con el nivel más cercano en que cabe.
+const CAMERA_START_ZOOM_INDEX: int = 3
 
-## Cuánto puede pasarse la vista más allá del borde del local, como fracción del
-## tamaño de la pantalla (0.25 = hasta un cuarto de pantalla de margen).
-const CAMERA_OVERSCROLL_RATIO: float = 0.25
+## Margen alrededor de la oficina al encuadrarla, como fracción de la pantalla (deja
+## sitio a los paneles de arriba y abajo).
+const CAMERA_FIT_MARGIN: float = 0.2
+
 
 ## Velocidad al caminar de los personajes, en casillas por segundo real a 1x
 ## (se multiplica por la velocidad del reloj; en pausa nadie se mueve).
