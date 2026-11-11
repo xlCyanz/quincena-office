@@ -12,9 +12,16 @@ var lot_rect := Rect2i()
 ## Habitaciones: cada una es {"type": String, "cells": Array[Vector2i]}.
 var rooms: Array[Dictionary] = []
 
-## Muebles: cada uno es {"id": String, "cell": Vector2i, "rotation": int}.
-## Por ahora solo se guardan; se colocan y dibujan a partir del hito 6.
+## Muebles: cada uno es {"id": String, "cell": Vector2i, "rotation": int,
+## "assigned_to": String}. assigned_to dice quién lo usa ("" si nadie).
+## Los de la oficina inicial se dibujan fijos; colocarlos y venderlos llega en el hito 6.
 var furniture: Array[Dictionary] = []
+
+## Casilla del borde del local por la que se entra y se sale.
+var entrance := Vector2i.ZERO
+
+## Horario del CEO: {"days": Array, "start_hour": int, "end_hour": int} (ver WorkSchedule).
+var ceo_schedule: Dictionary = {}
 
 
 ## Indica si hay una partida cargada (nueva o guardada).
@@ -37,11 +44,25 @@ func new_game() -> void:
 				cells.append(Vector2i(x, y))
 		rooms.append({"type": String(room_data["type"]), "cells": cells})
 	for item: Dictionary in data.get("furniture", []):
-		furniture.append({
-			"id": String(item["id"]),
-			"cell": _to_cell(item["cell"]),
-			"rotation": int(item.get("rotation", 0)),
-		})
+		furniture.append(_furniture_from_data(item))
+	entrance = _to_cell(data.get("entrance", [0, 0]))
+	ceo_schedule = WorkSchedule.from_dict(data.get("ceo_schedule", {})).to_dict()
+
+
+## Devuelve el primer mueble asignado a alguien (por ejemplo, "ceo"), o un diccionario vacío.
+func find_furniture_assigned_to(who: String) -> Dictionary:
+	for item: Dictionary in furniture:
+		if item["assigned_to"] == who:
+			return item
+	return {}
+
+
+## Todas las casillas ocupadas por muebles.
+func get_furniture_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for item: Dictionary in furniture:
+		cells.append_array(FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]))
+	return cells
 
 
 ## Devuelve la primera habitación del tipo indicado, o un diccionario vacío.
@@ -64,11 +85,14 @@ func export_state() -> Dictionary:
 	var saved_furniture: Array = []
 	for item: Dictionary in furniture:
 		var cell: Vector2i = item["cell"]
-		saved_furniture.append({"id": item["id"], "cell": [cell.x, cell.y], "rotation": item["rotation"]})
+		saved_furniture.append({"id": item["id"], "cell": [cell.x, cell.y], "rotation": item["rotation"],
+			"assigned_to": item["assigned_to"]})
 	return {
 		"lot": [lot_rect.position.x, lot_rect.position.y, lot_rect.size.x, lot_rect.size.y],
 		"rooms": saved_rooms,
 		"furniture": saved_furniture,
+		"entrance": [entrance.x, entrance.y],
+		"ceo_schedule": ceo_schedule.duplicate(true),
 	}
 
 
@@ -84,11 +108,18 @@ func import_state(state: Dictionary) -> void:
 		rooms.append({"type": String(room["type"]), "cells": cells})
 	furniture.clear()
 	for item: Dictionary in state.get("furniture", []):
-		furniture.append({
-			"id": String(item["id"]),
-			"cell": _to_cell(item["cell"]),
-			"rotation": int(item.get("rotation", 0)),
-		})
+		furniture.append(_furniture_from_data(item))
+	entrance = _to_cell(state.get("entrance", [0, 0]))
+	ceo_schedule = WorkSchedule.from_dict(state.get("ceo_schedule", {})).to_dict()
+
+
+func _furniture_from_data(item: Dictionary) -> Dictionary:
+	return {
+		"id": String(item["id"]),
+		"cell": _to_cell(item["cell"]),
+		"rotation": int(item.get("rotation", 0)),
+		"assigned_to": String(item.get("assigned_to", "")),
+	}
 
 
 # JSON guarda los números como decimales; aquí vuelven a ser casillas enteras.

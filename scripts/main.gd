@@ -1,7 +1,14 @@
-# Escena de juego: reúne la oficina y la cámara y las prepara con el estado de la partida.
+# Escena de juego: reúne la oficina, la cámara y el CEO, y los prepara con el estado
+# de la partida.
 # Sigue la regla de Godot "llamar hacia abajo, avisar hacia arriba": el nodo padre
-# configura a sus hijos directamente, y los hijos avisarán con señales cuando haga falta.
+# configura a sus hijos directamente, y los hijos le avisan con señales.
 extends Node2D
+
+const CEO_SCENE: PackedScene = preload("res://scenes/ceo.tscn")
+
+var ceo: Ceo
+var pathfinder := OfficePathfinder.new()
+var ceo_schedule: WorkSchedule
 
 @onready var _office_grid: OfficeGrid = $OfficeGrid
 @onready var _camera: OfficeCamera = $OfficeCamera
@@ -15,8 +22,10 @@ func _ready() -> void:
 	# editor), se empieza una partida nueva para poder probarla.
 	if not OfficeState.has_game():
 		SaveManager.new_game()
-	_office_grid.build(OfficeState.lot_rect, OfficeState.rooms)
+	_office_grid.build(OfficeState.lot_rect, OfficeState.rooms, OfficeState.furniture)
+	pathfinder.build(OfficeState.lot_rect, OfficeState.get_furniture_cells())
 	_camera.set_bounds(_office_grid.get_lot_world_rect())
+	_spawn_ceo()
 	GameClock.start()
 	# Provisional hasta el hito 8 (interfaz): el saldo y el reloj se muestran en la salida.
 	EventBus.hour_changed.connect(_on_hour_changed)
@@ -26,6 +35,25 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	GameClock.stop()
+
+
+func _spawn_ceo() -> void:
+	ceo_schedule = WorkSchedule.from_dict(OfficeState.ceo_schedule)
+	var chair: Dictionary = OfficeState.find_furniture_assigned_to("ceo")
+	var seat_cell: Vector2i = chair.get("cell", OfficeState.entrance)
+	ceo = CEO_SCENE.instantiate()
+	_office_grid.add_object(ceo)
+	ceo.sat_down.connect(func() -> void: print("El CEO se sentó en su escritorio."))
+	ceo.left_office.connect(_on_ceo_left_office)
+	ceo.setup(_office_grid, pathfinder, ceo_schedule, seat_cell, OfficeState.entrance)
+
+
+# Con el CEO fuera, la oficina queda vacía: el tiempo salta hasta su próxima entrada.
+func _on_ceo_left_office() -> void:
+	var hours: int = ceo_schedule.hours_until_next_work(GameClock.get_weekday(), GameClock.get_hour())
+	print("El CEO se fue; la oficina está vacía.")
+	if hours > 0:
+		GameClock.fast_forward_hours(hours)
 
 
 # Atajos de teclado (un extra: en el hito 8 la interfaz tendrá botones para esto).

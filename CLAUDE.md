@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2) y `test_new_game` (3)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3) y `test_ceo` (4)
 
 ## Convenciones de código
 
@@ -55,7 +55,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 1 | Cuadrícula y cámara | ✅ Completado |
 | 2 | Reloj | ✅ Completado |
 | 3 | Inicio de partida | ✅ Completado (menú y estado; paredes, muebles y CEO de la oficina inicial se añaden en sus hitos) |
-| 4 | CEO | Pendiente |
+| 4 | CEO | ✅ Completado (escritorio y silla iniciales dibujados fijos; horario lun–vie 8–17) |
 | 5 | Construcción: pisos y paredes | Pendiente |
 | 6 | Muebles | Pendiente |
 | 7 | Habitaciones | Pendiente |

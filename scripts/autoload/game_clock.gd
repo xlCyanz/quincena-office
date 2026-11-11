@@ -42,12 +42,26 @@ func advance(real_seconds: float) -> void:
 	_seconds_into_hour += real_seconds * get_time_scale()
 	while _seconds_into_hour >= GameConstants.SECONDS_PER_GAME_HOUR:
 		_seconds_into_hour -= GameConstants.SECONDS_PER_GAME_HOUR
-		_hour += 1
-		if _hour >= GameConstants.HOURS_PER_DAY:
-			_hour = 0
-			_day_count += 1
-			EventBus.day_changed.emit(get_day(), get_month())
-		EventBus.hour_changed.emit(_hour)
+		_next_hour()
+
+
+## Salta hasta el inicio de la hora que está `hours` horas por delante de la actual
+## (1 = el inicio de la próxima hora). Avisa de cada hora y cada día intermedios, para
+## que nada que dependa de ellos (por ejemplo, la nómina) se pierda. Se usa cuando la
+## oficina queda vacía, para saltar hasta la próxima hora de entrada.
+func fast_forward_hours(hours: int) -> void:
+	_seconds_into_hour = 0.0
+	for i: int in range(hours):
+		_next_hour()
+
+
+func _next_hour() -> void:
+	_hour += 1
+	if _hour >= GameConstants.HOURS_PER_DAY:
+		_hour = 0
+		_day_count += 1
+		EventBus.day_changed.emit(get_day(), get_month())
+	EventBus.hour_changed.emit(_hour)
 
 
 ## Multiplicador del tiempo: 0 en pausa; si no, la velocidad actual. Los sistemas que

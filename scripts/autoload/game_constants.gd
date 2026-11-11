@@ -43,3 +43,7 @@ const CAMERA_START_ZOOM_INDEX: int = 1
 ## Cuánto puede pasarse la vista más allá del borde del local, como fracción del
 ## tamaño de la pantalla (0.25 = hasta un cuarto de pantalla de margen).
 const CAMERA_OVERSCROLL_RATIO: float = 0.25
+
+## Velocidad al caminar de los personajes, en casillas por segundo real a 1x
+## (se multiplica por la velocidad del reloj; en pausa nadie se mueve).
+const CHARACTER_WALK_SPEED: float = 2.0

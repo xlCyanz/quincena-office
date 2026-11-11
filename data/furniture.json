@@ -1,0 +1,17 @@
+{
+	"_comentario": "Catálogo de muebles. Por ahora solo los de la oficina inicial; el hito 6 completa el catálogo con precios, reventa y efectos. size = [ancho en x, fondo en y] en casillas con rotation 0; height y color son del arte provisional (cajas).",
+	"executive_desk": {
+		"name": "Escritorio ejecutivo",
+		"size": [2, 1],
+		"height": 26,
+		"color": "6b4a32",
+		"is_seat": false
+	},
+	"basic_chair": {
+		"name": "Silla básica",
+		"size": [1, 1],
+		"height": 14,
+		"color": "3d5a80",
+		"is_seat": true
+	}
+}

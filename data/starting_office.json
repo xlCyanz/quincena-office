@@ -1,5 +1,5 @@
 {
-	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Los muebles se colocan a partir del hito 6 (cell = casilla de anclaje, rotation = 0 a 3).",
+	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Muebles: cell = casilla de anclaje (la de menor x e y), rotation = 0 a 3, assigned_to = quién lo usa. entrance = casilla del borde por la que se entra y se sale. ceo_schedule: days 0 = lunes … 6 = domingo; trabaja desde start_hour hasta end_hour (sin incluirla).",
 	"rooms": [
 		{
 			"type": "executive_office",
@@ -9,6 +9,12 @@
 	],
 	"furniture": [
 		{ "id": "executive_desk", "cell": [1, 0], "rotation": 0 },
-		{ "id": "basic_chair", "cell": [1, 1], "rotation": 0 }
-	]
+		{ "id": "basic_chair", "cell": [1, 1], "rotation": 0, "assigned_to": "ceo" }
+	],
+	"entrance": [3, 7],
+	"ceo_schedule": {
+		"days": [0, 1, 2, 3, 4],
+		"start_hour": 8,
+		"end_hour": 17
+	}
 }

@@ -23,6 +23,9 @@ var _atlas_rows: Dictionary[String, int] = {}
 
 @onready var _floor: TileMapLayer = $Floor
 @onready var _highlight: CellHighlight = $CellHighlight
+# Capa ordenada por Y: muebles y personajes. Lo que está más abajo en pantalla
+# (más cerca de quien mira) se dibuja encima.
+@onready var _objects: Node2D = $Objects
 
 
 func _ready() -> void:
@@ -34,9 +37,9 @@ func _process(_delta: float) -> void:
 	update_hover(get_global_mouse_position())
 
 
-## Pinta el piso del local y de sus habitaciones. Cada habitación es un diccionario
-## con "type" (String) y "cells" (Array[Vector2i]), como los guarda OfficeState.
-func build(lot_rect: Rect2i, rooms: Array[Dictionary]) -> void:
+## Pinta el piso del local y de sus habitaciones y coloca los muebles. Las habitaciones
+## y los muebles son diccionarios como los guarda OfficeState.
+func build(lot_rect: Rect2i, rooms: Array[Dictionary], furniture: Array[Dictionary]) -> void:
 	_lot_rect = lot_rect
 	_floor.clear()
 	var room_types: Dictionary[Vector2i, String] = {}
@@ -50,6 +53,48 @@ func build(lot_rect: Rect2i, rooms: Array[Dictionary]) -> void:
 			_floor.set_cell(cell, _floor_source_id, Vector2i((x + y) % 2, row))
 	hovered_cell = NO_CELL
 	_highlight.visible = false
+	_place_furniture(furniture)
+
+
+## Añade un objeto (por ejemplo, un personaje) a la capa ordenada por Y.
+func add_object(node: Node2D) -> void:
+	_objects.add_child(node)
+
+
+## Convierte una posición de cuadrícula con decimales (por ejemplo, un personaje a
+## medio camino entre dos casillas) a píxeles del mundo. Las casillas enteras caen
+## en su centro, igual que cell_to_world.
+func grid_to_world(grid_position: Vector2) -> Vector2:
+	var origin: Vector2 = cell_to_world(Vector2i.ZERO)
+	var axis_x: Vector2 = cell_to_world(Vector2i(1, 0)) - origin
+	var axis_y: Vector2 = cell_to_world(Vector2i(0, 1)) - origin
+	return origin + axis_x * grid_position.x + axis_y * grid_position.y
+
+
+func _place_furniture(furniture: Array[Dictionary]) -> void:
+	for child: Node in _objects.get_children():
+		if child is FurnitureView:
+			_objects.remove_child(child)
+			child.queue_free()
+	for item: Dictionary in furniture:
+		var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"])
+		var low := Vector2(cells[0])
+		var high := Vector2(cells[0])
+		for cell: Vector2i in cells:
+			low = low.min(Vector2(cell))
+			high = high.max(Vector2(cell))
+		# Esquinas de la base en coordenadas de cuadrícula: medio paso por fuera de
+		# los centros de las casillas de los extremos.
+		var corners := PackedVector2Array([
+			grid_to_world(Vector2(low.x - 0.5, low.y - 0.5)),
+			grid_to_world(Vector2(high.x + 0.5, low.y - 0.5)),
+			grid_to_world(Vector2(high.x + 0.5, high.y + 0.5)),
+			grid_to_world(Vector2(low.x - 0.5, high.y + 0.5)),
+		])
+		var view := FurnitureView.new()
+		view.name = "%s_%d_%d" % [item["id"], item["cell"].x, item["cell"].y]
+		_objects.add_child(view)
+		view.setup(item["id"], cells, corners, grid_to_world((low + high) / 2.0))
 
 
 ## Rectángulo de casillas del local actual.
