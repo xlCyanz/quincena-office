@@ -20,6 +20,8 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_packed.call_deferred(MAIN_SCENE)
 		return
+	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	SaveManager.save_dir = "user://test_saves"
 	var main: Node = MAIN_SCENE.instantiate()
 	add_child(main)
 	_grid = main.get_node("OfficeGrid")

@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7) y `test_money_ui` (8)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8) y `test_save` (9)
 
 ## Convenciones de código
 
@@ -43,6 +43,8 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   La interfaz superpuesta es `Hud` (dinero y reloj) más `BuildPanel` (botón Construir y herramientas).
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`).
   `SaveManager.new_game()` prepara una partida nueva; la oficina inicial está en `data/starting_office.json`.
+  Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
+  ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
 - Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `SaveManager`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
@@ -65,4 +67,4 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 6 | Muebles | ✅ Completado (planta pequeña a $40 provisional; la silla del CEO no se vende) |
 | 7 | Habitaciones | ✅ Completado (tipos y requisitos en `data/rooms.json`; los muebles que aún no existen se listan como faltantes) |
 | 8 | Dinero e interfaz | ✅ Completado (primer mantenimiento el día 1 del mes 2; el saldo puede quedar negativo por gastos obligatorios) |
-| 9 | Guardado | Pendiente |
+| 9 | Guardado | ✅ Completado (autoguardado al pasar a las 00:00 y ranuras manuales 1–5 desde Ajustes) |

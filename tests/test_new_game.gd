@@ -17,6 +17,8 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
+	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	SaveManager.save_dir = "user://test_saves"
 	await get_tree().process_frame
 
 	_expect(not OfficeState.has_game(), "al abrir el juego ya había una partida")

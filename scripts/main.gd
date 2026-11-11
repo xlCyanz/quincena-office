@@ -5,19 +5,21 @@
 extends Node2D
 
 const CEO_SCENE: PackedScene = preload("res://scenes/ceo.tscn")
+const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 
 var ceo: Ceo
 var pathfinder := OfficePathfinder.new()
 var ceo_schedule: WorkSchedule
 
-# Si el reloj estaba en pausa antes de entrar al modo construcción.
-var _was_paused_before_building: bool = false
+# Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
+var _was_paused_before_menu: bool = false
 
 @onready var _office_grid: OfficeGrid = $OfficeGrid
 @onready var _camera: OfficeCamera = $OfficeCamera
 @onready var _build_controller: BuildController = $BuildController
 @onready var _build_panel: BuildPanel = $BuildPanel
 @onready var _hud: Hud = $Hud
+@onready var _settings_panel: SettingsPanel = $SettingsPanel
 
 
 func _ready() -> void:
@@ -31,18 +33,41 @@ func _ready() -> void:
 	_rebuild_office()
 	_camera.set_bounds(_office_grid.get_lot_world_rect())
 	_spawn_ceo()
+	_restore_scene_state(SaveManager.take_scene_state())
+	SaveManager.scene_state_provider = _export_scene_state
 	_build_controller.setup(_office_grid)
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
+	_settings_panel.attach_button(_build_panel.get_menu_bar())
+	_settings_panel.settings_mode_changed.connect(_on_settings_mode_changed)
+	_settings_panel.save_requested.connect(_on_save_requested)
+	_settings_panel.quit_requested.connect(_on_quit_requested)
 	EventBus.office_changed.connect(_on_office_changed)
 	GameClock.start()
 
 
 func _exit_tree() -> void:
 	GameClock.stop()
+	SaveManager.scene_state_provider = Callable()
+
+
+# Lo que se guarda de la escena (el resto vive en los autoloads).
+func _export_scene_state() -> Dictionary:
+	return {"camera": _camera.export_state(), "ceo": ceo.export_state()}
+
+
+# Al abrir una partida cargada: la cámara y el CEO como estaban. Si el CEO estaba
+# fuera de su horario, el tiempo salta hasta su próxima entrada, igual que al irse.
+func _restore_scene_state(state: Dictionary) -> void:
+	if state.is_empty():
+		return
+	_camera.import_state(state.get("camera", {}))
+	ceo.import_state(state.get("ceo", {}))
+	if ceo.activity == Ceo.Activity.AWAY:
+		_on_ceo_left_office()
 
 
 func _rebuild_office() -> void:
@@ -79,11 +104,42 @@ func _on_build_mode_changed(active: bool) -> void:
 	if active and ceo.visible:
 		occupied.append(ceo.get_cell())
 	_build_controller.builder.occupied_cells = occupied
+	_set_menu_pause(active)
+
+
+func _on_settings_mode_changed(active: bool) -> void:
+	_build_panel.get_menu_bar().visible = not active
+	_hud.set_controls_enabled(not active)
+	_set_menu_pause(active)
+
+
+# Mientras un menú que pausa está abierto, el tiempo se detiene; al cerrarlo vuelve a
+# como estaba.
+func _set_menu_pause(active: bool) -> void:
 	if active:
-		_was_paused_before_building = GameClock.is_paused
+		_was_paused_before_menu = GameClock.is_paused
 		GameClock.set_paused(true)
 	else:
-		GameClock.set_paused(_was_paused_before_building)
+		GameClock.set_paused(_was_paused_before_menu)
+
+
+func _is_menu_open() -> bool:
+	return _build_panel.is_build_mode() or _settings_panel.is_open()
+
+
+func _on_save_requested(slot: String) -> void:
+	# Se guarda con la pausa que había antes de abrir Ajustes, no con la del menú.
+	var paused_now: bool = GameClock.is_paused
+	GameClock.set_paused(_was_paused_before_menu)
+	var saved: bool = SaveManager.save_game(slot)
+	GameClock.set_paused(paused_now)
+	_settings_panel.refresh_slots()
+	_settings_panel.show_status("Guardado en la %s." % SaveManager.get_slot_name(slot).to_lower()
+		if saved else "No se pudo guardar.")
+
+
+func _on_quit_requested() -> void:
+	get_tree().change_scene_to_file(MENU_SCENE_PATH)
 
 
 # Con el CEO fuera, la oficina queda vacía: el tiempo salta hasta su próxima entrada.
@@ -96,12 +152,12 @@ func _on_ceo_left_office() -> void:
 
 # Botones del reloj. En modo construcción están desactivados: el tiempo queda en pausa.
 func _on_pause_pressed() -> void:
-	if not _build_panel.is_build_mode():
+	if not _is_menu_open():
 		GameClock.toggle_pause()
 
 
 func _on_speed_pressed(index: int) -> void:
-	if not _build_panel.is_build_mode():
+	if not _is_menu_open():
 		GameClock.set_speed_index(index)
 
 
@@ -110,7 +166,7 @@ func _on_speed_pressed(index: int) -> void:
 # nada, porque el tiempo tiene que quedarse en pausa.
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo or _build_panel.is_build_mode():
+	if key == null or not key.pressed or key.echo or _is_menu_open():
 		return
 	match key.keycode:
 		KEY_SPACE:

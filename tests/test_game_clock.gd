@@ -23,6 +23,8 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MAIN_SCENE_PATH)
 		return
+	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	SaveManager.save_dir = "user://test_saves"
 	EventBus.hour_changed.connect(_on_hour_changed)
 	EventBus.day_changed.connect(_on_day_changed)
 

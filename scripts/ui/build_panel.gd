@@ -1,6 +1,7 @@
 # Panel del modo construcción, parte de la interfaz superpuesta (el dinero y el reloj
-# están en Hud). Abajo al centro: el botón "Construir" o, en modo construcción, las
-# herramientas, el estado de la última acción y "Salir".
+# están en Hud). Abajo al centro: la barra de menús con "Construir" (otros paneles,
+# como Ajustes, añaden ahí su botón) o, en modo construcción, las herramientas, el
+# estado de la última acción y "Salir".
 class_name BuildPanel
 extends CanvasLayer
 
@@ -11,6 +12,7 @@ signal tool_selected(tool: String)
 
 const MARGIN_BOTTOM: float = 16.0
 
+var _menu_bar: HBoxContainer
 var _open_button: Button
 var _panel: PanelContainer
 var _status_label: Label
@@ -24,12 +26,15 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
+	_menu_bar = HBoxContainer.new()
+	_menu_bar.add_theme_constant_override("separation", 8)
+	root.add_child(_menu_bar)
 	_open_button = Button.new()
 	_open_button.text = "Construir"
 	_open_button.custom_minimum_size = Vector2(160, 44)
 	_open_button.pressed.connect(func() -> void: set_build_mode(true))
-	root.add_child(_open_button)
-	_anchor_bottom_center(_open_button)
+	_menu_bar.add_child(_open_button)
+	_anchor_bottom_center(_menu_bar)
 
 	_panel = PanelContainer.new()
 	root.add_child(_panel)
@@ -72,7 +77,7 @@ func _ready() -> void:
 
 ## Entra o sale del modo construcción.
 func set_build_mode(active: bool) -> void:
-	_open_button.visible = not active
+	_menu_bar.visible = not active
 	_panel.visible = active
 	_status_label.text = "El tiempo está en pausa." if active else ""
 	build_mode_changed.emit(active)
@@ -90,6 +95,11 @@ func select_tool(tool: String) -> void:
 
 func show_status(text: String) -> void:
 	_status_label.text = text
+
+
+## Barra de menús de abajo al centro (se oculta en modo construcción).
+func get_menu_bar() -> HBoxContainer:
+	return _menu_bar
 
 
 func get_open_button() -> Button:

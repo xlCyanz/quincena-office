@@ -34,7 +34,7 @@ func _ready() -> void:
 	add_child(root)
 
 	# Dinero, arriba a la izquierda.
-	var money_panel: PanelContainer = _make_panel()
+	var money_panel: PanelContainer = make_panel()
 	root.add_child(money_panel)
 	money_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	_balance_label = Label.new()
@@ -42,7 +42,7 @@ func _ready() -> void:
 	money_panel.add_child(_balance_label)
 
 	# Reloj, arriba a la derecha.
-	var clock_panel: PanelContainer = _make_panel()
+	var clock_panel: PanelContainer = make_panel()
 	root.add_child(clock_panel)
 	var clock_rows := VBoxContainer.new()
 	clock_panel.add_child(clock_rows)
@@ -128,8 +128,9 @@ func _update_clock() -> void:
 		_speed_buttons[index].disabled = not _controls_enabled
 
 
-# Panel semitransparente con margen interior y esquinas redondeadas.
-func _make_panel() -> PanelContainer:
+## Panel semitransparente con margen interior y esquinas redondeadas (lo usan también
+## otros paneles de la interfaz).
+static func make_panel() -> PanelContainer:
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANEL_COLOR
 	style.set_corner_radius_all(PANEL_RADIUS)

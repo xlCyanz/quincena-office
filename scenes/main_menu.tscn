@@ -45,3 +45,17 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 24
 text = "Nueva partida"
+
+[node name="LoadButton" type="Button" parent="Center/Items"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "Cargar partida"
+
+[node name="LoadList" type="VBoxContainer" parent="Center/Items"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
