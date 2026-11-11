@@ -1,0 +1,692 @@
+# Quincena Office: documento de diseño
+
+Nov 11, 2026 · @Johan Ezequiel Sierra Linares
+
+Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece secciones, más las ideas para versiones futuras y el plan de desarrollo de la primera fase.
+
+## Índice
+
+- [1. Visión general](#m0x07y26p1s.11888)
+- [2. Construcción y decoración](#m0x07y26p1s.71)
+  - [2.1 Tipos de habitación](#m0x07y26p1s.915)
+  - [2.2 Alcance de la primera versión](#m0x07y26p1s.1306)
+- [3. Escala y terreno](#m0x07y26p1s.3688)
+  - [3.1 Compra de terreno](#m0x07y26p1s.4135)
+- [4. Jerarquía y departamentos](#m0x07y26p1s.4798)
+  - [4.1 Departamentos](#m0x07y26p1s.8968)
+- [5. Empleados](#m0x07y26p1s.6072)
+  - [5.1 Roles de apoyo](#m0x07y26p1s.8603)
+  - [5.2 Contratación](#m0x07y26p1s.18421)
+  - [5.3 Despidos y renuncias](#m0x07y26p1s.19397)
+- [6. Equipos y horarios](#m0x07y26p1s.1531)
+  - [6.1 Reloj y calendario](#m0x07y26p1s.13757)
+  - [6.2 Horas extra](#m0x07y26p1s.14321)
+- [7. Ingresos y proyectos](#m0x07y26p1s.5581)
+  - [7.1 Contratos de clientes](#m0x07y26p1s.15380)
+  - [7.2 Avance del trabajo](#m0x07y26p1s.16092)
+  - [7.3 Errores](#m0x07y26p1s.16548)
+  - [7.4 Entrega](#m0x07y26p1s.16968)
+  - [7.5 Productos propios](#m0x07y26p1s.17234)
+- [8. Banco](#m0x07y26p1s.9682)
+  - [8.1 Cuenta empresarial](#m0x07y26p1s.9827)
+  - [8.2 Préstamos](#m0x07y26p1s.10055)
+  - [8.3 Calificación de crédito](#m0x07y26p1s.10728)
+  - [8.4 Atrasos y embargo](#m0x07y26p1s.11042)
+- [9. Metas y progresión](#m0x07y26p1s.20750)
+  - [9.1 Etapas de la empresa](#m0x07y26p1s.20882)
+  - [9.2 Reputación](#m0x07y26p1s.21678)
+  - [9.3 Valor de la empresa](#m0x07y26p1s.21885)
+  - [9.4 Objetivos guiados](#m0x07y26p1s.22080)
+  - [9.5 Final: salir a bolsa](#m0x07y26p1s.22314)
+- [10. Eventos](#m0x07y26p1s.23334)
+  - [10.1 Reglas](#m0x07y26p1s.23478)
+  - [10.2 Lista inicial de eventos](#m0x07y26p1s.24116)
+- [11. Catálogo de muebles](#m0x07y26p1s.27035)
+  - [11.1 Reglas](#m0x07y26p1s.27185)
+  - [11.2 Lista de objetos](#m0x07y26p1s.27775)
+- [12. Interfaz](#m0x07y26p1s.31526)
+  - [12.1 Principios](#m0x07y26p1s.31648)
+  - [12.2 Elementos siempre visibles](#m0x07y26p1s.32296)
+  - [12.3 Menús](#m0x07y26p1s.32970)
+  - [12.4 Ficha de empleado](#m0x07y26p1s.33614)
+  - [12.5 Guardado](#m0x07y26p1s.33850)
+- [13. Economía](#m0x07y26p1s.12514)
+  - [13.1 Punto de partida](#m0x07y26p1s.35136)
+  - [13.2 Salarios mensuales](#m0x07y26p1s.35487)
+  - [13.3 Producción](#m0x07y26p1s.35950)
+  - [13.4 Contratos](#m0x07y26p1s.36257)
+  - [13.5 Productos propios](#m0x07y26p1s.36686)
+  - [13.6 Banco](#m0x07y26p1s.37000)
+  - [13.7 Precios de muebles](#m0x07y26p1s.37438)
+  - [13.8 Comprobación](#m0x07y26p1s.37928)
+- [14. Ideas para versiones futuras](#m0x07y26p1s.25847)
+
+* [15. Plan de desarrollo: fase 1](#m0x07y26p1s.39696)
+  - [15.1 Alcance](#m0x07y26p1s.39952)
+  - [15.2 Decisiones técnicas](#m0x07y26p1s.40509)
+  - [15.3 Estructura de carpetas](#m0x07y26p1s.41784)
+  - [15.4 Hitos](#m0x07y26p1s.42264)
+  - [15.5 Orden y dependencias](#m0x07y26p1s.44370)
+  - [15.6 Cómo trabajar con Claude Code](#m0x07y26p1s.44770)
+  - [15.7 Riesgos de esta fase](#m0x07y26p1s.45295)
+
+## 1. Visión general
+
+El jugador es el CEO de una empresa de tecnología y software: contrata empleados, arma su oficina, toma contratos, paga la nómina y hace crecer la empresa sin que el banco la embargue.
+
+| Aspecto | Decisión |
+| --- | --- |
+| Nombre | Quincena Office |
+| Género | Gestión de oficina en pixel art |
+| Vista | Isométrica |
+| Plataforma | PC primero; móvil en el futuro |
+| Motor | Godot 4, desarrollado con Claude Code |
+| Arte | Muebles y sprites generados por Claude Code mediante MCP con una herramienta de arte |
+| Tiempo | Reloj de 24 horas con pausa y velocidades |
+| Tono | Mezcla de gestión seria y humor de oficina |
+| Derrota | Embargo total de la empresa por el banco |
+
+## 2. Construcción y decoración
+
+El jugador decora la oficina y organiza las habitaciones sobre la cuadrícula isométrica.
+
+- **Modo construcción:** al entrar, el tiempo se pausa. Herramientas: paredes, pisos, puertas, muebles, rotar y vender (se recupera parte del precio).
+- **Habitaciones:** el jugador coloca las paredes pieza por pieza. Cuando un espacio queda cerrado y con puerta, el juego lo detecta como habitación y se le asigna un tipo. Cada tipo exige un tamaño mínimo y ciertos muebles para funcionar.
+- **Puesto de trabajo:** escritorio + silla + computadora. La calidad de la computadora (básica, media, pro) afecta la velocidad de quien se sienta ahí.
+- **Decoración:** plantas, cuadros, alfombras e iluminación suben el "ambiente" de la habitación, que a su vez sube el ánimo. Amontonar escritorios lo baja.
+- **Expansión:** la empresa nunca se muda. Se empieza con un local pequeño y se amplía el mismo comprando terreno adyacente; el jugador decide cuántos metros compra y paga según la cantidad.
+
+### 2.1 Tipos de habitación
+
+| Habitación | Cantidad | Función |
+| --- | --- | --- |
+| Oficina Ejecutiva | Una sola, obligatoria | Oficina del CEO; donde atiende eventos y clientes |
+| Oficina única | Varias | Oficina individual para altos cargos |
+| Sala de reuniones | Varias | Necesaria para cerrar contratos grandes |
+| Baños | Varios; mínimo dos obligatorios, uno por sexo | Necesidad básica de los empleados |
+| Sala de descanso y cafetería | Una sola | Recupera energía y ánimo |
+| Área de trabajo | Varias | Escritorios; donde se produce |
+| Sala de servidores | Una sola | Requisito para productos propios |
+| Recepción | Una sola, obligatoria | Contiene la puerta de entrada de la oficina; solo se puede colocar junto a una pared exterior. Puesto del recepcionista |
+
+### 2.2 Alcance de la primera versión
+
+Este es el sistema más caro de programar de todo el juego. La primera versión incluye paredes libres pieza por pieza desde el inicio, en lugar de habitaciones rectangulares con paredes automáticas. Por su costo, conviene construirlo y probarlo antes que los demás sistemas.
+
+## 3. Escala y terreno
+
+1 metro equivale a 1 casilla isométrica de 64×32 píxeles; todo el arte se dibuja a esa escala.
+
+| Elemento | Tamaño |
+| --- | --- |
+| Casilla de piso (1 m²) | 64×32 px |
+| Empleado de pie | Unos 32×64 px; ocupa 1 casilla |
+| Escritorio con computadora | 1 casilla (2 si es grande) |
+| Altura de pared | Unos 96 px |
+| Oficina inicial de 6×8 m | 48 casillas |
+
+En Godot 4, el TileMapLayer va en modo isométrico con casilla de 64×32 y filtro de texturas "Nearest".
+
+### 3.1 Compra de terreno
+
+- **Unidad:** 1 casilla = 1 m². El jugador elige un lado del local (norte, sur, este u oeste) y escribe ancho × fondo, por ejemplo 4 × 3 = 12 m². El juego muestra la vista previa del terreno y calcula cuánto dinero cuesta esa expansión antes de confirmar.
+- **Adyacencia:** solo se compra terreno que toque el local actual, para que no queden islas sueltas.
+- **Costo:** un pago único por metro, más un aumento del gasto mensual proporcional a los metros totales.
+- **Límite:** el solar tiene un tamaño máximo, que es el tope de crecimiento del juego.
+
+## 4. Jerarquía y departamentos
+
+La empresa tiene cinco niveles: CEO, ejecutivos, gerentes, líderes de equipo y empleados.
+
+| Cargo | A quién dirige | Dónde trabaja |
+| --- | --- | --- |
+| CEO (el jugador) | Toda la empresa | Oficina Ejecutiva |
+| Ejecutivo | Su departamento completo, sin límite de empleados | Oficina única |
+| Gerente | Hasta 5 líderes de equipo y sus equipos | Oficina única |
+| Líder de equipo | Un equipo de hasta 10 empleados | Área de trabajo, junto a su equipo |
+| Empleado | Nadie | Área de trabajo |
+
+- **Capacidad:** un líder de equipo cubre hasta 10 empleados y un gerente hasta 5 líderes de equipo. Cada ejecutivo tiene su propia oficina y dirige su departamento completo, sin límite de empleados por ahora.
+- **Niveles vacíos:** si un departamento existe y no tiene ejecutivo, el CEO se hace cargo de él. Al inicio el jugador dirige todos los departamentos; al crecer, contrata ejecutivos y delega.
+- **Ascensos:** un Senior puede ascender a líder de equipo sin requisitos adicionales de experiencia, siempre que haya una vacante; al ascender sube de cargo y de sueldo.
+
+### 4.1 Departamentos
+
+Hay cuatro departamentos, cada uno con su ejecutivo. Un departamento existe desde que tiene al menos un empleado.
+
+| Departamento | Quiénes lo forman |
+| --- | --- |
+| Desarrollo | Programadores y QA |
+| Diseño | Diseñadores |
+| Ventas | Vendedores y recepcionistas |
+| Administración | Contadores y limpieza |
+
+Mientras más departamentos dirige el CEO personalmente, peor rinde cada uno. Un ejecutivo devuelve su departamento al 100% y le suma una ventaja según su habilidad.
+
+| Departamentos a cargo del CEO | Rendimiento de cada uno |
+| --- | --- |
+| 1 | 100% |
+| 2 | 85% |
+| 3 | 70% |
+| 4 | 55% |
+
+## 5. Empleados
+
+Cada empleado tiene una ficha con rasgos de personalidad, nivel y datos de su trabajo. Lo siguiente es una propuesta por revisar.
+
+| Bloque de la ficha | Contenido |
+| --- | --- |
+| Identidad | Nombre, sexo, edad y apariencia |
+| Cargo y especialidad | Programador, diseñador, QA, vendedor, servicio al cliente (recepcionista), contabilidad o limpieza |
+| Nivel | Pasante, Junior, SemiSenior y Senior |
+| Habilidades (1–100) | Programación, diseño, pruebas, ventas y liderazgo |
+| Desempeño | Velocidad, calidad (menos errores) y puntualidad |
+| Estado | Energía, ánimo y estrés |
+| Contrato | Salario, antigüedad, horario, equipo y puesto asignado |
+| Rasgos | De 1 a 3 por empleado |
+| Historial | Proyectos entregados, errores causados y ausencias |
+
+- **Experiencia:** para subir de nivel (Pasante → Junior → SemiSenior → Senior) el empleado debe cumplir dos requisitos: proyectos trabajados y tiempo de juego en la empresa (propuesta: 3 proyectos y 30 días para Junior, 8 y 90 para SemiSenior, 15 y 180 para Senior). Cumplidos, el jugador decide si lo asciende y con qué sueldo. Para los vendedores, en lugar de proyectos cuentan las ventas cerradas. Recepcionistas, contadores y personal de limpieza no tienen niveles por ahora; solo se les puede subir el sueldo.
+- **Rasgos de ejemplo:** noctámbulo (rinde más de noche), perfeccionista (más lento, menos errores), adicto al café, sociable (sube el ánimo del equipo, se distrae), impuntual, mentor (acelera a los juniors), ambicioso (pide ascensos) y leal (difícilmente renuncia).
+- **Candidatos:** al contratar se ve parte de la ficha; los rasgos se descubren con el tiempo.
+- **Renuncias:** un empleado con ánimo bajo o estrés alto por mucho tiempo se va.
+
+### 5.1 Roles de apoyo
+
+| Rol | Qué aporta |
+| --- | --- |
+| Recepcionista | Atiende a los clientes que visitan la oficina; sin él se pierden contratos |
+| Contador | Reduce gastos y evita multas por errores en la nómina |
+| Limpieza | Mantiene la oficina limpia; la suciedad baja el ánimo |
+
+### 5.2 Contratación
+
+La partida empieza con el CEO solo, en un local pequeño con su oficina. Todo lo demás se contrata.
+
+- **Vacante:** el jugador elige el cargo, el nivel y el sueldo que ofrece. Publicarla es gratis; con publicidad cuesta $100 y atrae más candidatos. En los días siguientes llegan candidatos; llegan más y mejores con buena reputación, buen sueldo y buen ambiente en la oficina.
+- **Requisito:** hace falta un puesto de trabajo libre. Un gerente o un ejecutivo necesitan su oficina.
+- **Lo que se ve del candidato:** nombre, cargo, nivel, sueldo que pide y habilidades en rangos aproximados.
+- **Lo que no se ve:** sus rasgos de personalidad y sus valores exactos.
+- **Entrevista:** opcional. Ocupa unas horas de quien la hace y revela un rasgo y los valores reales. Al inicio las hace el CEO; cuando hay un ejecutivo de Administración, el jugador puede delegárselas y las hace él.
+- **Caducidad:** un candidato espera pocos días; después lo contrata otra empresa.
+- **Oferta:** si el sueldo propuesto iguala o supera lo que pide, acepta. Si queda por debajo, puede rechazar o hacer una contraoferta.
+
+### 5.3 Despidos y renuncias
+
+- **Despido:** cuesta el sueldo que el empleado lleva ganado hasta ese día. Además baja el ánimo de sus compañeros, más si se despide a varios seguidos.
+- **Por qué renuncian:** ánimo bajo o estrés alto por mucho tiempo, sueldo por debajo de lo que vale su nivel, nómina sin pagar o un ascenso negado.
+- **Aviso:** el empleado avisa unos días antes. En ese plazo el jugador puede retenerlo con un aumento o un ascenso, si corresponde.
+- **Aumentos:** de vez en cuando alguien pide aumento; negarlo le baja el ánimo.
+- **Competencia:** a veces otra empresa le hace una oferta a un buen empleado. El rasgo "leal" lo protege; el "ambicioso" lo hace más probable.
+
+## 6. Equipos y horarios
+
+Los horarios se asignan por equipo o por empleado, sobre un reloj de 24 horas.
+
+- **Turnos:** plantillas con nombre, hora de entrada, hora de salida y días (por ejemplo "Diurno 8–17, lun–vie").
+- **Equipos:** grupos de empleados con un turno, un líder de equipo y un proyecto asignados.
+- **Individual:** cualquier empleado puede tener un horario propio que reemplaza el de su equipo.
+- **Supervisión real:** el líder de equipo solo cuenta mientras su horario coincide con el del equipo. Un turno de noche sin jefe rinde menos.
+- **Turno nocturno:** cuesta un extra de salario y desgasta más el ánimo.
+- **Vista de agenda:** pantalla tipo calendario para ver quién trabaja a qué hora y detectar huecos.
+
+### 6.1 Reloj y calendario
+
+Un día de juego dura 2 minutos reales a velocidad normal: cada hora del reloj son 5 segundos.
+
+| Elemento | Valor |
+| --- | --- |
+| Reloj | 24 horas, visible siempre junto con el día y la fecha |
+| Velocidades | Pausa, 1x, 2x y 4x |
+| Un día de juego | 2 minutos a 1x; 30 segundos a 4x |
+| Mes | 30 días (1 hora real a 1x) |
+| Nómina | Cada 15 días: los días 15 y 30 de cada mes |
+| Gastos mensuales y cuotas del banco | Día 1 de cada mes |
+| Jornada normal | 8 horas, con pausa de almuerzo |
+| Horario y días de trabajo | Los decide el jugador; cada empleado debe tener al menos 1 día de descanso por semana |
+
+Cuando la oficina queda vacía, el tiempo salta solo hasta la próxima hora de entrada.
+
+### 6.2 Horas extra
+
+Las horas que pasan de la jornada de 8 horas son horas extra.
+
+- **Pago:** cada hora extra se paga a 1.5 veces la hora normal y se suma a la nómina siguiente.
+- **Límite:** hasta 4 horas extra por día por empleado.
+- **Desgaste:** bajan la energía y el ánimo, y suben el estrés. Un empleado agotado trabaja más lento y comete más errores.
+- **Quién las asigna:** el jugador, al definir el turno de un equipo o el horario de un empleado.
+
+## 7. Ingresos y proyectos
+
+El dinero entra por contratos de clientes y por productos propios.
+
+- **Contratos:** pago único al entregar, con fecha límite y requisitos de programación, diseño y pruebas. Entregar tarde tiene penalidad y baja la reputación.
+- **Productos propios:** se desarrollan, se lanzan y generan ingreso diario. Requieren sala de servidores y mantenimiento; sin actualizaciones, el ingreso decae.
+- **Progresión:** contratos al inicio para sobrevivir; productos propios como meta a mediano plazo.
+
+### 7.1 Contratos de clientes
+
+- **Cómo llegan:** aparecen ofertas en una bandeja. Cuántas y de qué tamaño depende de la reputación y de los vendedores. Algunos clientes visitan la oficina; sin recepcionista, se van.
+- **Qué trae cada oferta:** cliente, tipo de proyecto (sitio web, app móvil, tienda en línea, sistema interno), tamaño, plazo en días, pago y penalidad por atraso.
+- **Trabajo requerido:** tres barras de puntos: diseño, programación y pruebas.
+- **Anticipo:** algunos contratos pagan un anticipo al aceptar (propuesta: 30%) y el resto al entregar; otros pagan todo al entregar. Si se cancela un contrato con anticipo, hay que devolverlo.
+- **Requisitos:** los contratos grandes exigen sala de reuniones y cierta reputación.
+
+### 7.2 Avance del trabajo
+
+- **Asignación:** el jugador asigna el proyecto a un equipo. Un equipo trabaja en un proyecto a la vez.
+- **Producción:** cada empleado genera puntos por hora trabajada en su especialidad. Influyen su nivel, habilidad, energía, ánimo, la calidad de su computadora y si su líder de equipo está presente.
+- **Fases:** diseño, luego programación, luego pruebas, en orden y con solapamiento: una fase puede empezar cuando la anterior va por la mitad.
+
+### 7.3 Errores
+
+- **De dónde salen:** al programar se generan errores ocultos. Salen más con empleados cansados, de bajo nivel o de poca calidad.
+- **Quién los quita:** QA los encuentra durante la fase de pruebas y los programadores los corrigen. Sin QA, casi todos llegan al cliente.
+- **Qué cuestan:** entregar con errores reduce el pago final y la reputación. El jugador decide cuándo entregar: a tiempo con errores, o tarde y limpio.
+
+### 7.4 Entrega
+
+| Resultado | Consecuencia |
+| --- | --- |
+| A tiempo y limpio | Pago completo y sube la reputación |
+| A tiempo con errores | Pago reducido y baja la reputación |
+| Tarde | Penalidad por cada día de atraso |
+| Cancelado | Se devuelve el anticipo, si lo hubo, y cae la reputación |
+
+### 7.5 Productos propios
+
+- **Desarrollo:** el jugador elige tipo y tamaño. Se construye igual que un contrato, pero sin cliente, sin plazo y sin anticipo: la empresa lo paga todo hasta lanzarlo.
+- **Requisito:** sala de servidores. Su capacidad limita cuántos productos y usuarios se pueden sostener.
+- **Lanzamiento:** el producto empieza a dar ingreso diario, según su calidad (diseño y pocos errores) y los vendedores.
+- **Ciclo de vida:** los usuarios crecen, se estancan y luego caen. Una actualización, que es un proyecto pequeño, lo reaviva.
+- **Errores en producción:** los que se colaron hacen perder usuarios hasta que se corrigen.
+
+## 8. Banco
+
+El banco guarda todo el dinero de la empresa, presta, y embarga si no se le paga. Se accede desde un botón del menú; no es una habitación.
+
+### 8.1 Cuenta empresarial
+
+Hay una sola cuenta con todo el dinero. Ahí entran los pagos de contratos y productos, y de ahí salen la nómina, el alquiler, las compras y las cuotas. El banco muestra el saldo y el historial de movimientos.
+
+### 8.2 Préstamos
+
+- **Solicitud:** el jugador elige el monto y el plazo en meses. El juego muestra la tasa de interés, la cuota mensual y el total a pagar antes de aceptar.
+- **Cuota:** se cobra sola cada mes, el mismo día que el alquiler.
+- **Límite:** cuánto presta el banco depende de la calificación de crédito.
+- **Pago anticipado:** se puede saldar antes y ahorrar parte de los intereses.
+- **Refinanciar:** una sola vez por préstamo se puede alargar el plazo para bajar la cuota, a cambio de una tasa más alta.
+- **Préstamo de emergencia:** si el día de nómina no hay dinero, el banco ofrece un préstamo rápido con tasa muy alta. Rechazarlo significa no pagar la nómina, con golpe al ánimo y renuncias.
+
+### 8.3 Calificación de crédito
+
+Una nota de la A a la E calculada con los ingresos mensuales, el valor de los bienes, la antigüedad de la empresa y el historial de pagos. Sube pagando puntual y cae con cada atraso. Con un contador en nómina se consiguen mejores tasas y un aviso antes de una cuota que no se podrá cubrir.
+
+### 8.4 Atrasos y embargo
+
+| Situación | Consecuencia |
+| --- | --- |
+| 1 cuota atrasada | Recargo por mora y baja la calificación |
+| 2 cuotas seguidas | Aviso de embargo; el banco no presta más |
+| 3 cuotas seguidas | Embargo |
+
+- **Qué se evalúa:** el banco suma el valor de reventa de todos los muebles y equipos de la oficina y lo compara con la deuda del préstamo.
+- **Si alcanza:** se lleva muebles hasta cubrir la deuda, el préstamo queda saldado y la partida sigue. Se lleva primero la decoración y deja los puestos de trabajo para el final.
+- **Si no alcanza:** el banco embarga la empresa completa y el jugador pierde la partida.
+- **Terreno:** no entra en el embargo.
+
+El embargo total es la única forma de perder. No pagar la nómina cuesta ánimo y renuncias, pero no termina la partida.
+
+## 9. Metas y progresión
+
+La empresa crece por cinco etapas que van desbloqueando el juego, con una meta final opcional: salir a bolsa.
+
+### 9.1 Etapas de la empresa
+
+Los números son una propuesta inicial y se ajustan al definir la economía.
+
+| Etapa | Requisito para llegar | Qué desbloquea |
+| --- | --- | --- |
+| 1. Emprendimiento | Inicio de la partida | CEO solo, contratos pequeños, préstamos pequeños |
+| 2. Startup | 5 empleados y 3 contratos entregados | Líderes de equipo, contratos medianos |
+| 3. Pequeña empresa | 15 empleados y 2 equipos completos | Gerentes, oficinas únicas, sala de servidores, productos propios |
+| 4. Mediana empresa | 40 empleados y 1 producto lanzado | Ejecutivos, contratos grandes, préstamos grandes |
+| 5. Corporación | 4 ejecutivos y 3 productos activos | Tamaño máximo del solar, clientes de élite |
+
+La sala de reuniones no depende de la etapa: aparece para construir solo cuando llega el primer contrato que amerita una reunión, no antes.
+
+### 9.2 Reputación
+
+Una nota de 1 a 5 estrellas. Sube al entregar a tiempo y sin errores, y baja con atrasos, errores y cancelaciones. Determina qué clientes ofrecen contratos y qué tan buenos candidatos llegan.
+
+### 9.3 Valor de la empresa
+
+Un número siempre visible que funciona como puntuación: el dinero en la cuenta, más el valor de los bienes, más lo que generan los productos, menos la deuda con el banco.
+
+### 9.4 Objetivos guiados
+
+Una lista corta de tareas que cambia según el avance, como "contrata a tu primer programador" o "entrega tu primer contrato". Hace de tutorial sin interrumpir, y cada objetivo cumplido da una recompensa pequeña.
+
+### 9.5 Final: salir a bolsa
+
+Cuando la empresa es Corporación y su valor supera los $5,000,000, el jugador puede salir a bolsa. Ve una pantalla de cierre con sus estadísticas (días jugados, empleados contratados, proyectos entregados) y después sigue jugando en modo libre.
+
+## 10. Eventos
+
+Los eventos son situaciones que aparecen de vez en cuando como una tarjeta con un texto corto y, casi siempre, dos o tres opciones.
+
+### 10.1 Reglas
+
+- **Respuesta:** el tiempo sigue corriendo y el jugador tiene al menos 2 minutos reales para elegir, sin importar la velocidad del juego. Si no elige, el juego toma una opción al azar.
+- **Cuándo no ocurren:** no aparecen eventos con el juego en pausa ni en modo construcción.
+- **Frecuencia:** uno cada pocos días al inicio; más seguidos mientras más grande es la empresa.
+- **Dependen del estado de la oficina:** con empleados agotados salen más eventos de errores; sin contador, más problemas de impuestos; sin limpieza, más problemas de higiene.
+- **Se pueden prevenir:** los roles de apoyo y ciertos muebles reducen o anulan eventos malos.
+- **Balance:** más o menos mitad buenos y mitad malos.
+
+### 10.2 Lista inicial de eventos
+
+| Categoría | Evento | Opciones o efecto |
+| --- | --- | --- |
+| Empleados | Despliegue de viernes: un junior rompió producción a las 5 de la tarde | Todos se quedan a arreglarlo (horas extra) o se arregla el lunes (se pierden usuarios) |
+| Empleados | Cumpleaños en la oficina | Comprar bizcocho (sube el ánimo) o ignorarlo (baja un poco) |
+| Empleados | Guerra por el aire acondicionado | Mediar (horas del CEO) o dejarlo pasar (baja el ánimo de dos empleados) |
+| Empleados | Se acabó el café | Compra de emergencia más cara, o los adictos al café rinden menos ese día |
+| Empleados | La reunión que pudo ser un correo | Un equipo pierde dos horas; con un buen líder de equipo no ocurre |
+| Clientes | El cliente cambia los requisitos a mitad del proyecto | Aceptar (más trabajo, mismo pago), negociar (más pago y plazo) o negarse (baja la reputación) |
+| Clientes | El cliente se atrasa con el pago | Esperar, o mandar al contador a cobrar |
+| Clientes | Un cliente satisfecho recomienda la empresa | Llega una oferta mejor de lo normal |
+| Técnicos | Apagón | Se pierde el trabajo del día, salvo que haya baterías de respaldo |
+| Técnicos | Se cae el servidor | Los productos pierden usuarios hasta que un programador lo levanta |
+| Técnicos | Se daña una computadora | Reparar (barato, tarda) o reemplazar (caro, inmediato) |
+| Negocio | Inspección de impuestos | Con contador, pasa sin problemas; sin contador, multa |
+| Negocio | Un competidor lanza un producto parecido | El producto pierde usuarios; una actualización los recupera |
+| Negocio | Premio de la industria | Sube la reputación y llegan mejores candidatos |
+| Oficina | Baño dañado | Baja el ánimo hasta pagar la reparación |
+| Oficina | Oficina sucia | Solo ocurre sin personal de limpieza; baja el ánimo de todos |
+
+## 11. Catálogo de muebles
+
+El catálogo tiene unos 40 objetos, que son también la lista de arte por generar. Los precios se fijan al definir la economía.
+
+### 11.1 Reglas
+
+- **Datos de cada objeto:** precio, tamaño en casillas, habitación donde se permite, efecto y valor de reventa, que es el que cuenta el banco en un embargo.
+- **Rotación:** todos se pueden girar en las 4 direcciones.
+- **Calidades:** los objetos clave vienen en básico, medio y pro. Mejor calidad cuesta más y da más efecto.
+- **Silla y escritorio:** son objetos separados; el jugador coloca cada uno.
+- **Computadora:** no es un objeto suelto. Se instala sobre un escritorio y se mejora desde ahí.
+- **Estructura:** paredes, puertas, ventanas (suben el ambiente) y tres pisos: alfombra, madera y cerámica.
+
+### 11.2 Lista de objetos
+
+| Categoría | Objeto | Tamaño | Efecto |
+| --- | --- | --- | --- |
+| Puesto de trabajo | Escritorio sencillo | 1 casilla | Un puesto de trabajo |
+| Puesto de trabajo | Escritorio amplio | 2 casillas | Un puesto; sube un poco el ánimo |
+| Puesto de trabajo | Escritorio ejecutivo | 2 casillas | Para oficinas del CEO, ejecutivos y gerentes |
+| Puesto de trabajo | Silla básica / ergonómica | 1 casilla | La ergonómica hace que la energía baje más lento |
+| Puesto de trabajo | Computadora básica / media / pro | Sobre el escritorio | Velocidad de trabajo |
+| Puesto de trabajo | Segundo monitor | Sobre el escritorio | Pequeño extra de velocidad |
+| Recepción | Mostrador de recepción | 2 casillas | Puesto del recepcionista; obligatorio en la recepción |
+| Recepción | Sofá de espera | 2 casillas | Los clientes esperan más antes de irse |
+| Reuniones | Mesa de reuniones | 4 casillas | Obligatoria en la sala de reuniones |
+| Reuniones | Pizarra | En pared | Las reuniones duran menos |
+| Reuniones | Pantalla de presentaciones | En pared | Mejora las probabilidades de cerrar un contrato |
+| Descanso y cafetería | Cafetera | 1 casilla | Recupera energía; imprescindible para los adictos al café |
+| Descanso y cafetería | Nevera y microondas | 1 casilla cada uno | Permiten almorzar en la oficina; el almuerzo dura menos |
+| Descanso y cafetería | Mesa de comedor | 2 casillas | Asientos para almorzar |
+| Descanso y cafetería | Sofá | 2 casillas | Recupera energía en los descansos |
+| Descanso y cafetería | Dispensador de agua | 1 casilla | Pequeña mejora de ánimo |
+| Descanso y cafetería | Mesa de ping pong | 4 casillas | Sube mucho el ánimo, pero la gente se distrae |
+| Descanso y cafetería | Máquina expendedora | 1 casilla | Sube el ánimo y da un ingreso mínimo |
+| Baños | Inodoro y lavamanos | 1 casilla cada uno | Obligatorios en cada baño; un inodoro por cada 10 empleados |
+| Servidores | Rack de servidores | 1 casilla | Capacidad para productos y usuarios |
+| Servidores | Baterías de respaldo | 1 casilla | Anulan el evento de apagón |
+| Servicios | Aire acondicionado | En pared | Sube el ánimo de la habitación; obligatorio en la sala de servidores |
+| Servicios | Impresora | 1 casilla | Los contadores trabajan más rápido |
+| Servicios | Archivero | 1 casilla | Reduce las multas de la inspección de impuestos |
+| Servicios | Zafacón | 1 casilla | La oficina se ensucia más lento |
+| Decoración | Planta pequeña / grande | 1 casilla | Ambiente |
+| Decoración | Cuadro y reloj de pared | En pared | Ambiente |
+| Decoración | Alfombra | 2 a 4 casillas | Ambiente; se puede caminar encima |
+| Decoración | Lámpara de pie | 1 casilla | Ambiente |
+| Decoración | Pecera | 2 casillas | Mucho ambiente; baja el estrés de quien trabaja cerca |
+
+## 12. Interfaz
+
+La oficina es el fondo a pantalla completa y toda la interfaz flota superpuesta encima, en paneles pequeños.
+
+### 12.1 Principios
+
+- **Oficina de fondo:** no hay barras de borde a borde. La oficina se ve entre los paneles y hasta las esquinas.
+- **Todo con ratón:** ninguna acción depende del teclado, para facilitar el paso a móvil. Los atajos de teclado son un extra.
+- **Menús superpuestos:** al abrir un menú, su panel aparece encima de la oficina sin taparla entera.
+- **Clic para inspeccionar:** un clic en un empleado, un mueble o una habitación abre su ficha.
+- **Cámara:** se arrastra para mover y tiene zoom en niveles fijos. Puede desplazarse un poco más allá del límite de la oficina, para que ningún panel tape una casilla sin remedio.
+- **Idioma:** solo español por el momento.
+
+### 12.2 Elementos siempre visibles
+
+| Elemento | Posición | Contenido |
+| --- | --- | --- |
+| Estado de la empresa | Arriba a la izquierda | Dinero, reputación y valor de la empresa |
+| Reloj | Arriba a la derecha | Fecha, cuenta atrás de la próxima nómina, hora, pausa y velocidades |
+| Objetivos | Izquierda, plegable | Lista corta de objetivos guiados |
+| Eventos | Derecha, plegable | Tarjeta con el texto, las opciones y la cuenta atrás |
+| Avisos | Junto a los eventos | Mensajes breves que no piden decisión; un clic lleva a la ficha correspondiente |
+| Barra de menús | Abajo, centrada | Los siete menús |
+| Iconos de estado | Sobre cada empleado | Aparecen cuando algo va mal: cansado, molesto, sin puesto o sin tarea |
+
+### 12.3 Menús
+
+| Menú | Qué contiene |
+| --- | --- |
+| Construir | Paredes, pisos, puertas, tipos de habitación, catálogo de muebles y compra de terreno. Pausa el tiempo |
+| Personal | Lista de empleados con filtros, vacantes abiertas, candidatos y organigrama por departamento |
+| Proyectos | Bandeja de ofertas, proyectos en curso con sus tres barras y productos lanzados |
+| Horarios | Plantillas de turno, equipos y la agenda semanal |
+| Banco | Saldo, movimientos, préstamos activos, calificación de crédito y solicitud de préstamo |
+| Empresa | Etapa actual y requisitos de la siguiente, reputación, e ingresos y gastos del mes |
+| Ajustes | Guardar, cargar, sonido y opciones |
+
+### 12.4 Ficha de empleado
+
+Muestra nombre, cargo, nivel y equipo; barras de energía, ánimo y estrés; habilidades; rasgos descubiertos y sueldo. Tiene botones para subir el sueldo, ascender, cambiar de equipo, cambiar el horario y despedir.
+
+### 12.5 Guardado
+
+El juego se guarda solo al final de cada día de juego, y el jugador también puede guardar manualmente en cualquier momento desde Ajustes.
+
+## 13. Economía
+
+Estos son los valores de partida, calculados para que cuadren entre sí; se afinan cuando el juego se pueda probar.
+
+### 13.1 Punto de partida
+
+| Concepto | Valor |
+| --- | --- |
+| Capital inicial | $20,000 |
+| Local inicial | 6×8 m (48 m²), con la oficina del CEO |
+| Terreno | $150 por m², pago único |
+| Mantenimiento del local | $5 por m² al mes |
+| Solar máximo | 40×40 m (1,600 m²) |
+| Publicar una vacante | Gratis; con publicidad, $100 |
+| Meta para salir a bolsa | Valor de la empresa de $5,000,000 |
+
+### 13.2 Salarios mensuales
+
+Se pagan en dos mitades, los días 15 y 30. El CEO no tiene sueldo por el momento.
+
+| Cargo | Pasante | Junior | SemiSenior | Senior |
+| --- | --- | --- | --- | --- |
+| Programador | $600 | $1,200 | $2,000 | $3,200 |
+| Diseñador | $500 | $1,000 | $1,700 | $2,700 |
+| QA | $500 | $900 | $1,500 | $2,400 |
+| Vendedor | $500 | $1,000 | $1,600 | $2,500 |
+
+| Cargo sin niveles | Sueldo |
+| --- | --- |
+| Limpieza | $500 |
+| Recepcionista | $700 |
+| Contador | $1,300 |
+| Líder de equipo | $4,200 |
+| Gerente | $6,000 |
+| Ejecutivo | $9,000 |
+
+### 13.3 Producción
+
+| Nivel | Puntos por hora | Puntos por jornada de 8 h |
+| --- | --- | --- |
+| Pasante | 1 | 8 |
+| Junior | 2 | 16 |
+| SemiSenior | 3 | 24 |
+| Senior | 4.5 | 36 |
+
+- **CEO:** produce como un SemiSenior cuando trabaja él mismo.
+- **Sin líder de equipo presente:** el equipo rinde al 75%.
+- **Computadora:** básica sin extra, media +15%, pro +30%.
+
+### 13.4 Contratos
+
+Pagan unos $8 por punto de trabajo; los grandes, algo más.
+
+| Tamaño | Trabajo total | Plazo | Pago |
+| --- | --- | --- | --- |
+| Pequeño | 150 a 300 puntos | 7 a 12 días | $1,200 a $2,400 |
+| Mediano | 800 a 1,500 puntos | 20 a 30 días | $7,000 a $13,000 |
+| Grande | 4,000 a 8,000 puntos | 45 a 75 días | $38,000 a $76,000 |
+
+- **Atraso:** 5% del pago por cada día, hasta un máximo del 50%.
+- **Errores entregados:** 2% del pago por cada uno, hasta un máximo del 30%.
+
+### 13.5 Productos propios
+
+| Tamaño | Trabajo | Ingreso diario en su mejor momento | Racks necesarios |
+| --- | --- | --- | --- |
+| Pequeño | 1,500 puntos | $150 | 1 |
+| Mediano | 5,000 puntos | $600 | 3 |
+| Grande | 15,000 puntos | $2,200 | 8 |
+
+El ingreso real va de la mitad al 150% de esa cifra según la calidad. Cada rack cuesta $100 al mes de mantenimiento.
+
+### 13.6 Banco
+
+| Calificación | Interés mensual | Límite de préstamo |
+| --- | --- | --- |
+| A | 2% | 6 veces el ingreso mensual |
+| B | 3% | 4 veces |
+| C | 4.5% | 3 veces |
+| D | 6% | 2 veces |
+| E | 8% | 1 vez |
+
+- **Empresa nueva:** empieza en C, con un límite fijo de $5,000 hasta tener ingresos.
+- **Plazo:** de 3 a 24 meses, con interés simple.
+- **Mora:** 5% de la cuota atrasada.
+- **Préstamo de emergencia:** 12% mensual.
+- **Reventa de muebles:** 50% del precio, que es lo que cuenta en un embargo.
+
+### 13.7 Precios de muebles
+
+Un puesto básico completo (escritorio, silla y computadora) cuesta $710. Los objetos que no aparecen aquí están por definir.
+
+| Objeto | Precio |
+| --- | --- |
+| Escritorio sencillo / amplio / ejecutivo | $150 / $350 / $900 |
+| Silla básica / ergonómica | $60 / $250 |
+| Computadora básica / media / pro | $500 / $1,200 / $2,500 |
+| Mesa de reuniones | $1,200 |
+| Mostrador de recepción | $600 |
+| Rack de servidores | $3,000 |
+| Baterías de respaldo | $1,500 |
+| Cafetera | $200 |
+| Decoración | $30 a $500 |
+
+### 13.8 Comprobación
+
+- **CEO solo:** produce 24 puntos al día. Un contrato pequeño de 200 puntos toma unos 8 días y paga $1,600, contra $240 de mantenimiento al mes.
+- **Primer equipo:** 2 programadores y 1 diseñador Junior producen 48 puntos al día, unos 1,050 al mes con trabajo continuo. Son $8,400 de ingresos contra $3,400 de sueldos.
+- **El riesgo real:** los días sin contrato. Los sueldos corren igual; ahí entran los vendedores y, con descuido, el banco.
+
+## 14. Ideas para versiones futuras
+
+Ideas aprobadas que no entran en la primera versión.
+
+- **Inversionista:** un evento donde un inversionista ofrece efectivo inmediato a cambio de un porcentaje de los ingresos futuros de la empresa.
+- **Versión móvil:** el juego sale primero en PC.
+- **Otros idiomas:** la primera versión sale solo en español.
+
+## 15. Plan de desarrollo: fase 1
+
+La fase 1 entrega una oficina funcional sin empleados: proyecto de Godot 4 configurado, oficina isométrica construible, reloj, CEO, dinero y guardado. Se construye en diez hitos, cada uno probado antes de pasar al siguiente.
+
+### 15.1 Alcance
+
+| Entra en la fase 1 | Queda para fases siguientes |
+| --- | --- |
+| Configuración del proyecto | Empleados, contratación y jerarquía |
+| Cuadrícula isométrica, cámara y local inicial | Contratos, proyectos y productos |
+| Reloj de 24 horas con pausa y velocidades | Equipos, turnos y horas extra |
+| CEO que camina y usa su escritorio | Banco, préstamos y embargo |
+| Modo construcción: pisos, paredes, puertas y muebles | Eventos, etapas y objetivos dinámicos |
+| Detección y tipos de habitación | Compra de terreno |
+| Dinero, interfaz mínima y guardado | Arte final y sonido |
+
+### 15.2 Decisiones técnicas
+
+- **Motor y lenguaje:** Godot 4 en su versión estable más reciente (4.3 o superior, por el nodo TileMapLayer), con GDScript.
+- **Pantalla:** resolución base de 1280×720, modo de estirado `canvas_items` y aspecto `expand`. Filtro de texturas por defecto en `Nearest`.
+- **Cuadrícula:** TileMapLayer isométrico con casilla de 64×32. Toda la lógica trabaja en coordenadas de cuadrícula y solo convierte a píxeles para dibujar.
+- **Paredes:** van en los bordes de las casillas, no ocupan casilla. Se guardan como una lista de bordes y bloquean el paso entre las dos casillas que separan.
+- **Orden de dibujo:** un nodo con ordenamiento por Y contiene paredes, muebles y personajes.
+- **Caminos:** AStarGrid2D sobre la cuadrícula lógica, recalculado al construir.
+- **Datos fuera del código:** el catálogo de muebles, los tipos de habitación y los valores de economía viven en archivos de datos (Resources o JSON), para cambiar números sin tocar scripts.
+- **Sistemas globales (autoload):** reloj, economía, estado de la oficina, guardado y un bus de señales para que los sistemas se avisen entre sí sin depender unos de otros.
+- **Arte provisional:** rombos y cajas de colores hasta que el arte final esté listo. Cada objeto apunta a su sprite desde los datos, así el cambio posterior no toca la lógica.
+
+### 15.3 Estructura de carpetas
+
+| Carpeta | Contenido |
+| --- | --- |
+| `scenes/` | Escena principal, oficina, personajes e interfaz |
+| `scripts/autoload/` | Reloj, economía, estado de la oficina, guardado y bus de señales |
+| `scripts/office/` | Cuadrícula, construcción, paredes, muebles y habitaciones |
+| `scripts/characters/` | Movimiento, caminos y rutina del CEO |
+| `scripts/ui/` | Paneles de la interfaz superpuesta |
+| `data/` | Catálogo de muebles, tipos de habitación y economía |
+| `assets/` | Sprites, tiles y fuentes |
+
+### 15.4 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 0. Proyecto | Proyecto de Godot, ajustes de pantalla y texturas, carpetas, autoloads vacíos, git y un `CLAUDE.md` con las reglas del proyecto | El proyecto abre y corre una escena vacía sin errores |
+| 1. Cuadrícula y cámara | Piso isométrico del local de 6×8, cámara que se arrastra, zoom en 3 niveles fijos y resaltado de la casilla bajo el cursor | El cursor resalta la casilla correcta en todo el local y en cada nivel de zoom |
+| 2. Reloj | Reloj de 24 horas, fecha, mes de 30 días, pausa y velocidades 1x, 2x y 4x, con señales de cambio de hora y de día | Un día dura 2 minutos a 1x y 30 segundos a 4x; en pausa nada avanza |
+| 3. Inicio de partida | Nueva partida con el local inicial, la Oficina Ejecutiva ya construida, el CEO y $20,000 | Al pulsar "Nueva partida" aparece la oficina lista para jugar |
+| 4. CEO | Personaje que camina por la cuadrícula, esquiva obstáculos, se sienta en su escritorio en horario de trabajo y se va al terminar | El CEO llega a su escritorio por un camino válido y queda bien ordenado respecto a los muebles |
+| 5. Construcción: pisos y paredes | Modo construcción que pausa el tiempo, con pisos, paredes pieza por pieza, puertas y venta | Las paredes bloquean el paso, las puertas lo permiten y cada acción cobra o devuelve dinero |
+| 6. Muebles | Colocar, rotar y vender escritorio, silla, computadora sobre el escritorio y una planta | No se puede colocar sobre otro objeto ni bloquear el único acceso; la reventa devuelve el 50% |
+| 7. Habitaciones | Detección de espacios cerrados con puerta, asignación de tipo y validación de requisitos | Al cerrar un espacio con puerta se puede marcar como habitación; la Recepción exige pared exterior |
+| 8. Dinero e interfaz | Cuenta empresarial, cobro del mantenimiento el día 1 y la interfaz superpuesta mínima: dinero, reloj, velocidades y botón Construir | El saldo cambia con cada compra y el día 1 se descuenta $5 por m² |
+| 9. Guardado | Autoguardado al final de cada día y guardado manual, con carga desde el menú | Tras guardar, cerrar y cargar, la oficina, el dinero y la fecha son idénticos |
+
+### 15.5 Orden y dependencias
+
+- **Base:** los hitos 0, 1 y 2 no dependen de nada más y van primero, en ese orden.
+- **Partida jugable:** el 3 y el 4 necesitan la cuadrícula y el reloj.
+- **Construcción:** el 5, el 6 y el 7 van en cadena; cada uno se apoya en el anterior.
+- **Cierre:** el 8 puede adelantarse en parte, porque la construcción necesita cobrar. El 9 va al final, cuando ya existe todo lo que hay que guardar.
+
+### 15.6 Cómo trabajar con Claude Code
+
+- **Un hito por sesión:** pedir un solo hito, probarlo en Godot y hacer commit antes de pedir el siguiente.
+- **Este documento como referencia:** guardar una copia en el repositorio y citar la sección que corresponde a cada hito.
+- **Reglas en `CLAUDE.md`:** versión de Godot, casilla de 64×32, lógica en coordenadas de cuadrícula, datos fuera del código y textos en español.
+- **Criterio de aceptación:** cada petición incluye la columna "Cómo se comprueba" del hito, para que Claude Code sepa cuándo terminó.
+
+### 15.7 Riesgos de esta fase
+
+- **Paredes y orden de dibujo:** en isométrico, una pared en un borde puede dibujarse delante o detrás de quien no debe. Conviene resolverlo en el hito 5 con una prueba de un personaje rodeando una pared.
+- **Detección de habitaciones:** con paredes libres, saber qué casillas forman un espacio cerrado requiere un recorrido de relleno desde cada casilla. Hay que recalcularlo solo al salir del modo construcción.
+- **Guardado tardío:** si el formato de guardado se deja para el final, cada sistema debe exponer desde el inicio una función para exportar y otra para restaurar su estado.

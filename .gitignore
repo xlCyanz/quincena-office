@@ -1,0 +1,13 @@
+# Godot 4: caché del editor y de importación (se regenera sola)
+.godot/
+
+# Exportaciones
+/android/
+/build/
+*.tmp
+
+# Ajustes locales del editor de código (rutas propias de cada máquina)
+.vscode/
+
+# macOS
+.DS_Store
