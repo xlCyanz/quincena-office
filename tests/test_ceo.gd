@@ -199,11 +199,19 @@ func _check_sorting() -> void:
 	_expect(objects.y_sort_enabled and _ceo.get_parent() == objects, "el CEO no está en la capa ordenada por Y")
 	var views: Array[FurnitureView] = []
 	for child: Node in objects.get_children():
-		if child is FurnitureView:
+		if child is FurnitureView and child.part == FurnitureView.PART_MAIN:
 			views.append(child)
 	_expect(views.size() == OfficeState.furniture.size(), "se dibujan %d muebles" % views.size())
 	for view: FurnitureView in views:
 		_expect(_ceo.position.y > view.position.y, "sentado, el CEO queda detrás de %s" % view.item_id)
+	# El respaldo de su silla queda del lado de quien mira (+y), así que va delante del CEO.
+	for child: Node in objects.get_children():
+		if child is FurnitureView and child.part == FurnitureView.PART_BACKREST:
+			var back: Vector2i = -FurnitureCatalog.get_front(child.rotation_index)
+			if back.x + back.y > 0:
+				_expect(child.position.y > _ceo.position.y, "el respaldo hacia quien mira debería tapar al CEO")
+			else:
+				_expect(child.position.y < _ceo.position.y, "el respaldo del fondo debería quedar detrás del CEO")
 	var saved: Vector2 = _ceo.grid_position
 	for x: int in range(OfficeState.lot_rect.size.x):
 		for y: int in range(OfficeState.lot_rect.size.y):

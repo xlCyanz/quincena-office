@@ -20,8 +20,9 @@ var edges: Dictionary[Vector3i, String] = {}
 var rooms: Array[Dictionary] = []
 
 ## Muebles: cada uno es {"id": String, "cell": Vector2i, "rotation": int,
-## "assigned_to": String}. assigned_to dice quién lo usa ("" si nadie).
-## Los de la oficina inicial se dibujan fijos; colocarlos y venderlos llega en el hito 6.
+## "assigned_to": String, "computer": String}. cell es la casilla de anclaje,
+## assigned_to dice quién lo usa ("" si nadie) y computer, la computadora instalada
+## en un escritorio ("" si no tiene). Comprar, girar y vender lo hace Builder.
 var furniture: Array[Dictionary] = []
 
 ## Casilla del borde del local por la que se entra y se sale.
@@ -82,12 +83,26 @@ func find_furniture_assigned_to(who: String) -> Dictionary:
 	return {}
 
 
-## Todas las casillas ocupadas por muebles.
+## Todas las casillas ocupadas por los muebles de la oficina.
 func get_furniture_cells() -> Array[Vector2i]:
+	return cells_of_furniture(furniture)
+
+
+## Todas las casillas ocupadas por una lista de muebles.
+func cells_of_furniture(items: Array[Dictionary]) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	for item: Dictionary in furniture:
+	for item: Dictionary in items:
 		cells.append_array(FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]))
 	return cells
+
+
+## Índice en furniture del mueble que ocupa una casilla, o -1 si está libre.
+func find_furniture_at(cell: Vector2i) -> int:
+	for index: int in range(furniture.size()):
+		var item: Dictionary = furniture[index]
+		if FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]).has(cell):
+			return index
+	return -1
 
 
 ## Pieza en un borde: ConstructionCatalog.WALL, DOOR o "" si está libre.
@@ -150,7 +165,7 @@ func export_state() -> Dictionary:
 	for item: Dictionary in furniture:
 		var cell: Vector2i = item["cell"]
 		saved_furniture.append({"id": item["id"], "cell": [cell.x, cell.y], "rotation": item["rotation"],
-			"assigned_to": item["assigned_to"]})
+			"assigned_to": item["assigned_to"], "computer": item["computer"]})
 	var saved_floors: Array = []
 	for cell: Vector2i in floors:
 		saved_floors.append([cell.x, cell.y, floors[cell]])
@@ -197,6 +212,7 @@ func _furniture_from_data(item: Dictionary) -> Dictionary:
 		"cell": _to_cell(item["cell"]),
 		"rotation": int(item.get("rotation", 0)),
 		"assigned_to": String(item.get("assigned_to", "")),
+		"computer": String(item.get("computer", "")),
 	}
 
 

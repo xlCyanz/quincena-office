@@ -72,6 +72,11 @@ func _on_office_changed() -> void:
 func _on_build_mode_changed(active: bool) -> void:
 	_build_controller.set_active(active)
 	_camera.left_drag_enabled = not active
+	# Con el tiempo en pausa el CEO no se mueve: su casilla queda reservada.
+	var occupied: Array[Vector2i] = []
+	if active and ceo.visible:
+		occupied.append(ceo.get_cell())
+	_build_controller.builder.occupied_cells = occupied
 	if active:
 		_was_paused_before_building = GameClock.is_paused
 		GameClock.set_paused(true)

@@ -36,29 +36,26 @@ func _ready() -> void:
 	root.add_child(_panel)
 	var rows := VBoxContainer.new()
 	_panel.add_child(rows)
-	var tools := HBoxContainer.new()
-	rows.add_child(tools)
 	var group := ButtonGroup.new()
-	var tool_names: Array[Array] = [
+	# Primera fila: estructura. Segunda fila: muebles (con su precio) y Girar.
+	var structure: Array[Array] = [
 		[BuildController.TOOL_WALL, ConstructionCatalog.get_display_name(ConstructionCatalog.WALL)],
 		[BuildController.TOOL_DOOR, ConstructionCatalog.get_display_name(ConstructionCatalog.DOOR)],
 	]
 	for floor_type: String in ConstructionCatalog.get_floor_types():
-		tool_names.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])
-	tool_names.append([BuildController.TOOL_SELL, "Vender"])
-	for entry: Array in tool_names:
-		var button := Button.new()
-		button.text = entry[1]
-		button.toggle_mode = true
-		button.button_group = group
-		var tool: String = entry[0]
-		button.pressed.connect(func() -> void: tool_selected.emit(tool))
-		tools.add_child(button)
-		_tool_buttons[tool] = button
+		structure.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])
+	structure.append([BuildController.TOOL_SELL, "Vender"])
+	var furniture: Array[Array] = []
+	for id: String in FurnitureCatalog.get_ids():
+		var item: Dictionary = FurnitureCatalog.get_item(id)
+		furniture.append([id, "%s $%d" % [item["name"], item["price"]]])
+	furniture.append([BuildController.TOOL_ROTATE, "Girar"])
+	var structure_row: HBoxContainer = _add_tool_row(rows, structure, group)
+	_add_tool_row(rows, furniture, group)
 	_exit_button = Button.new()
 	_exit_button.text = "Salir"
 	_exit_button.pressed.connect(func() -> void: set_build_mode(false))
-	tools.add_child(_exit_button)
+	structure_row.add_child(_exit_button)
 	var info := HBoxContainer.new()
 	rows.add_child(info)
 	_balance_label = Label.new()
@@ -107,6 +104,22 @@ func get_exit_button() -> Button:
 
 func get_tool_button(tool: String) -> Button:
 	return _tool_buttons[tool]
+
+
+func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	parent.add_child(row)
+	for entry: Array in entries:
+		var button := Button.new()
+		button.text = entry[1]
+		button.toggle_mode = true
+		button.button_group = group
+		var tool: String = entry[0]
+		button.pressed.connect(func() -> void: tool_selected.emit(tool))
+		row.add_child(button)
+		_tool_buttons[tool] = button
+	return row
 
 
 func _on_balance_changed(balance: int) -> void:

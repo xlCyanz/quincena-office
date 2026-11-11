@@ -73,6 +73,24 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	return result
 
 
+## Casillas a las que se puede llegar caminando desde from (incluida), sin cruzar
+## paredes ni pisar casillas bloqueadas. Vacío si from no se puede pisar.
+func get_reachable(from: Vector2i) -> Dictionary[Vector2i, bool]:
+	var reached: Dictionary[Vector2i, bool] = {}
+	if not is_walkable(from):
+		return reached
+	reached[from] = true
+	var queue: Array[Vector2i] = [from]
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_back()
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var next: Vector2i = cell + direction
+			if not reached.has(next) and is_walkable(next) and can_cross(cell, next):
+				reached[next] = true
+				queue.append(next)
+	return reached
+
+
 func _cell_point(cell: Vector2i) -> Vector2i:
 	return (cell - _lot.position) * 2 + Vector2i.ONE
 

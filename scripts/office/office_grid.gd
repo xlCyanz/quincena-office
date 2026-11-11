@@ -89,18 +89,15 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 			_objects.remove_child(child)
 			child.queue_free()
 	for item: Dictionary in furniture:
-		var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"])
-		var low := Vector2(cells[0])
-		var high := Vector2(cells[0])
-		for cell: Vector2i in cells:
-			low = low.min(Vector2(cell))
-			high = high.max(Vector2(cell))
-		# Esquinas de la base: medio paso por fuera de los centros de las casillas de los extremos.
-		var corners: PackedVector2Array = IsoBox.grid_rect_corners(self, low - Vector2(0.5, 0.5), high + Vector2(0.5, 0.5))
 		var view := FurnitureView.new()
 		view.name = "%s_%d_%d" % [item["id"], item["cell"].x, item["cell"].y]
 		_objects.add_child(view)
-		view.setup(item["id"], cells, corners, grid_to_world((low + high) / 2.0))
+		view.setup(self, item)
+		if FurnitureView.has_backrest(item["id"]):
+			var backrest := FurnitureView.new()
+			backrest.name = view.name + "_respaldo"
+			_objects.add_child(backrest)
+			backrest.setup(self, item, FurnitureView.PART_BACKREST)
 
 
 ## Rectángulo de casillas del local actual.

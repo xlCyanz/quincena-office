@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4) y `test_construction` (5)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5) y `test_furniture` (6)
 
 ## Convenciones de código
 
@@ -58,7 +58,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 3 | Inicio de partida | ✅ Completado (menú y estado; paredes, muebles y CEO de la oficina inicial se añaden en sus hitos) |
 | 4 | CEO | ✅ Completado (escritorio y silla iniciales dibujados fijos; horario lun–vie 8–17) |
 | 5 | Construcción: pisos y paredes | ✅ Completado (precios provisionales en `data/construction.json`; paredes bajas) |
-| 6 | Muebles | Pendiente |
+| 6 | Muebles | ✅ Completado (planta pequeña a $40 provisional; la silla del CEO no se vende) |
 | 7 | Habitaciones | Pendiente |
 | 8 | Dinero e interfaz | Pendiente |
 | 9 | Guardado | Pendiente |
