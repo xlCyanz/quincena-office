@@ -19,10 +19,10 @@ const EPSILON: float = 0.0001
 
 
 ## Puntos por hora de una persona: los de su nivel, menos si está cansada (energía bajo
-## energy_full_from) y más con una computadora mejor.
-static func get_rate(level: String, energy: float, computer_bonus: float) -> float:
+## energy_full_from) o desanimada (ánimo bajo mood_full_from) y más con una computadora mejor.
+static func get_rate(level: String, energy: float, computer_bonus: float, mood: float = 100.0) -> float:
 	var base: float = StaffCatalog.get_points_per_hour(level)
-	return base * get_energy_factor(energy) * (1.0 + computer_bonus)
+	return base * get_energy_factor(energy) * get_mood_factor(mood) * (1.0 + computer_bonus)
 
 
 ## Cuánto rinde según la energía: 1 desde energy_full_from; debajo baja en línea recta
@@ -33,6 +33,16 @@ static func get_energy_factor(energy: float) -> float:
 	if energy >= full_from:
 		return 1.0
 	return lerpf(min_factor, 1.0, clampf(energy, 0.0, full_from) / full_from)
+
+
+## Cuánto rinde según el ánimo: 1 desde mood_full_from; debajo baja en línea recta hasta
+## mood_min_factor con ánimo 0.
+static func get_mood_factor(mood: float) -> float:
+	var full_from: float = float(StaffCatalog.get_production("mood_full_from"))
+	var min_factor: float = float(StaffCatalog.get_production("mood_min_factor"))
+	if mood >= full_from:
+		return 1.0
+	return lerpf(min_factor, 1.0, clampf(mood, 0.0, full_from) / full_from)
 
 
 ## Bonificación de una computadora (data/furniture.json, production_bonus).

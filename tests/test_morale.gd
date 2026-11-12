@@ -30,6 +30,7 @@ func _ready() -> void:
 	_check_raise_request()
 	_check_save()
 	await _check_card()
+	await _check_notice()
 
 	print("Comprobaciones: %d, fallos: %d" % [_checks, _failures])
 	print("RESULTADO: %s" % ("OK" if _failures == 0 else "FALLO"))
@@ -320,7 +321,10 @@ func _check_card() -> void:
 	employee["raise_request"] = {"amount": 100, "until_day": GameClock.get_day_count() + 2}
 	card.open_employee(employee["id"])
 	await get_tree().process_frame
+	employee["mood"] = 25
+	card.refresh()
 	var text: String = card.get_text()
+	_expect(text.contains("Rinde 85 % (desanimado)"), "la ficha muestra el rendimiento: %s" % text)
 	_expect(text.contains("Renuncia: se va en 4 días"), "la ficha muestra el aviso: %s" % text)
 	_expect(text.contains("Pide un aumento de %s (2 días para responder" % MoneyFormat.format(100)), "y el pedido: %s" % text)
 	_expect(card.get_accept_raise_button().is_visible_in_tree() and card.get_deny_raise_button().is_visible_in_tree(), "botones del pedido")
@@ -344,6 +348,32 @@ func _check_card() -> void:
 	_expect(int(employee["salary"]) == salary + retain and int(employee["quit_day"]) == Staff.NO_QUIT, "Dar aumento lo retiene: %d" % employee["salary"])
 	await get_tree().process_frame
 	_expect(not card.get_text().contains("Renuncia: se va"), "la ficha ya no muestra el aviso")
+	game.queue_free()
+	await get_tree().process_frame
+
+
+# El aviso del Hud no tapa el dinero ni el reloj: un texto largo se parte en líneas.
+func _check_notice() -> void:
+	_new_game()
+	var game: Node = GAME_SCENE.instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	GameClock.stop()
+	var hud: Hud = game.get_node("Hud")
+	Economy.earn(9000000, "Prueba")  # un saldo largo ensancha el panel del dinero
+	EventBus.notice.emit("Un aviso muy largo que antes se metía debajo del reloj: " + "bla ".repeat(40))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var rect: Rect2 = hud.get_notice_rect()
+	_expect(get_viewport().get_visible_rect().encloses(rect) and rect.size.y < 200.0, "el aviso entra en pantalla: %s" % rect)
+	for corner: Rect2 in hud.get_corner_rects():
+		_expect(not rect.intersects(corner), "el aviso no tapa %s: %s" % [corner, rect])
+	EventBus.notice.emit("Corto.")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	rect = hud.get_notice_rect()
+	_expect(hud.get_notice_text() == "Corto." and rect.size.x < 200.0 and absf(rect.get_center().x - get_viewport().get_visible_rect().size.x / 2.0) < 2.0,
+		"un aviso corto queda chico y centrado: %s" % rect)
 	game.queue_free()
 	await get_tree().process_frame
 

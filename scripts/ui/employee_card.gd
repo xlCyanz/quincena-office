@@ -296,6 +296,9 @@ func _refresh() -> void:
 		_describe_pay(employee),
 		"Ahora: %s" % (String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"),
 	])
+	var performance: String = describe_performance(employee)
+	if not performance.is_empty():
+		_info.text += "\n" + performance
 	for bar: String in BARS:
 		var value: int = int(employee[bar])
 		_bars[bar].value = value
@@ -309,6 +312,20 @@ func _refresh() -> void:
 	if _confirm_row.visible:
 		_confirm_label.text = "¿Despedir a %s? Cuesta %s y baja el ánimo de sus compañeros." % [
 			employee["name"], MoneyFormat.format(Staff.get_firing_cost(employee))]
+
+
+## "Rinde 85 % (desanimado)" si la energía o el ánimo le bajan la producción, o "".
+static func describe_performance(employee: Dictionary) -> String:
+	var energy: float = Production.get_energy_factor(float(employee["energy"]))
+	var mood: float = Production.get_mood_factor(float(employee["mood"]))
+	if energy * mood >= 1.0 - Production.EPSILON:
+		return ""
+	var causes: Array[String] = []
+	if energy < 1.0:
+		causes.append("cansado")
+	if mood < 1.0:
+		causes.append("desanimado")
+	return "Rinde %d %% (%s)" % [roundi(energy * mood * 100.0), " y ".join(causes)]
 
 
 # Ajusta el alto: lo que pide el contenido, sin pasar de la pantalla.

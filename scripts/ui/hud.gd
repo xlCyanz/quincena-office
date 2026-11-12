@@ -1,7 +1,8 @@
 # Interfaz superpuesta mínima (diseño, 12.2): arriba a la izquierda el dinero y arriba
 # a la derecha el reloj, con la fecha, la cuenta atrás de la próxima nómina (o lo que
 # se debe de ella), la pausa y las velocidades. Arriba al centro aparecen unos segundos
-# los avisos de EventBus.notice. El botón Construir está en BuildPanel, abajo al centro. Se construye
+# los avisos de EventBus.notice, sin tapar el dinero ni el reloj (un texto largo se parte
+# en líneas). El botón Construir está en BuildPanel, abajo al centro. Se construye
 # en código; los botones avisan con señales y la escena de juego decide qué hacer.
 class_name Hud
 extends CanvasLayer
@@ -33,6 +34,8 @@ var _controls_enabled: bool = true
 var _notice_panel: PanelContainer
 var _notice_label: Label
 var _notice_timer: Timer
+var _money_panel: PanelContainer
+var _clock_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -43,6 +46,7 @@ func _ready() -> void:
 
 	# Dinero, arriba a la izquierda.
 	var money_panel: PanelContainer = make_panel()
+	_money_panel = money_panel
 	root.add_child(money_panel)
 	money_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	var money_row := HBoxContainer.new()
@@ -85,6 +89,7 @@ func _ready() -> void:
 		_speed_buttons.append(button)
 	clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	clock_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_clock_panel = clock_panel
 
 	# Avisos, arriba al centro.
 	_notice_panel = make_panel()
@@ -92,6 +97,8 @@ func _ready() -> void:
 	_notice_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	_notice_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_notice_label = Label.new()
+	_notice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_notice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_notice_panel.add_child(_notice_label)
 	_notice_panel.visible = false
 	_notice_timer = Timer.new()
@@ -100,6 +107,8 @@ func _ready() -> void:
 	_notice_timer.timeout.connect(func() -> void: _notice_panel.visible = false)
 	add_child(_notice_timer)
 	EventBus.notice.connect(show_notice)
+	get_viewport().size_changed.connect(_fit_notice)
+	_notice_panel.minimum_size_changed.connect(_place_notice)
 
 	EventBus.balance_changed.connect(_on_balance_changed)
 	EventBus.projects_changed.connect(_update_reputation)
@@ -145,7 +154,46 @@ func get_balance_text() -> String:
 func show_notice(text: String) -> void:
 	_notice_label.text = text
 	_notice_panel.visible = true
+	_fit_notice()
 	_notice_timer.start(NOTICE_SECONDS)
+
+
+## Rectángulo del aviso en pantalla (para las pruebas).
+func get_notice_rect() -> Rect2:
+	return _notice_panel.get_global_rect()
+
+
+## Rectángulos del dinero y del reloj (para las pruebas).
+func get_corner_rects() -> Array[Rect2]:
+	return [_money_panel.get_global_rect(), _clock_panel.get_global_rect()]
+
+
+# Ubica el aviso entre el dinero y el reloj, partiendo el texto en líneas si hace falta.
+# (Con stretch "expand" el ancho lógico nunca baja de 1280, así que siempre hay lugar.)
+func _fit_notice() -> void:
+	if _notice_panel == null or not _notice_panel.visible:
+		return
+	var view: Vector2 = _notice_panel.get_viewport_rect().size
+	var side: float = maxf(_money_panel.get_combined_minimum_size().x, _clock_panel.get_combined_minimum_size().x) + MARGIN * 2.0
+	var padding: float = PANEL_PADDING * 2.0
+	var available: float = view.x - side * 2.0 - padding
+	var font: Font = _notice_label.get_theme_font("font")
+	var natural: float = font.get_string_size(_notice_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0,
+		_notice_label.get_theme_font_size("font_size")).x + 2.0
+	var width: float = minf(natural, available)
+	_notice_label.custom_minimum_size.x = width
+	_place_notice()
+
+
+# Achica el aviso a lo justo y lo centra. Con ajuste de línea el alto se conoce recién
+# cuando el texto se acomoda al ancho, así que se repite al cambiar el mínimo del panel.
+func _place_notice() -> void:
+	if not _notice_panel.visible:
+		return
+	var view: Vector2 = _notice_panel.get_viewport_rect().size
+	_notice_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_notice_panel.size = _notice_panel.get_combined_minimum_size()
+	_notice_panel.position = Vector2(roundf((view.x - _notice_panel.size.x) / 2.0), MARGIN)
 
 
 ## Texto del aviso visible, o "" si no hay.

@@ -504,15 +504,16 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 			continue
 		var computer: String = Workstations.computer_of(OfficeState.furniture, key)
 		workers.append({"key": key, "phase": phase, "rate": Production.get_rate(employee["level"],
-			float(employee["energy"]), Production.get_computer_bonus(computer)),
-			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]))})
+			float(employee["energy"]), Production.get_computer_bonus(computer), float(employee["mood"])),
+			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))})
 	return workers
 
 
-## Errores por punto de programación de alguien de ese nivel con esa energía.
-static func get_bug_chance(level: String, energy: float) -> float:
+## Errores por punto de programación de alguien de ese nivel con esa energía y estrés:
+## el doble cansado o estresado (no se acumula).
+static func get_bug_chance(level: String, energy: float, stress: float = 0.0) -> float:
 	var chance: float = 1.0 / ContractCatalog.get_points_per_bug(level)
-	if energy < float(ContractCatalog.get_bugs("tired_below")):
+	if energy < float(ContractCatalog.get_bugs("tired_below")) or stress >= float(ContractCatalog.get_bugs("stressed_from")):
 		chance *= float(ContractCatalog.get_bugs("tired_multiplier"))
 	return chance
 

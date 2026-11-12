@@ -80,6 +80,10 @@ func _check_rates() -> void:
 	_expect(_near(Production.get_rate("junior", 25.0, 0.0), 1.5), "un junior cansado rinde 1.5")
 	_expect(_near(Production.get_rate("junior", 100.0, 0.3), 2.6) and _near(Production.get_computer_bonus("basic_computer"), 0.0),
 		"computadora pro +30%, básica sin extra")
+	# Hito 19: el ánimo bajo 50 baja el rendimiento hasta 70 % con ánimo 0.
+	_expect(_near(Production.get_mood_factor(100.0), 1.0) and _near(Production.get_mood_factor(50.0), 1.0)
+		and _near(Production.get_mood_factor(25.0), 0.85) and _near(Production.get_mood_factor(0.0), 0.7), "efecto del ánimo")
+	_expect(_near(Production.get_rate("junior", 25.0, 0.0, 0.0), 2.0 * 0.75 * 0.7), "cansado y desanimado se multiplican")
 	_expect(Production.get_role_phase("programmer") == "programming" and Production.get_role_phase("designer") == "design"
 		and Production.get_role_phase("qa") == "testing" and Production.get_role_phase("salesperson") == "", "fase de cada cargo")
 
@@ -220,6 +224,8 @@ func _check_overlap() -> void:
 	Projects.accept(Projects.offers[0]["id"])
 	var contract: Dictionary = Projects.contracts[0]
 	_expect(contract["team_id"] == team["id"], "lo lleva el equipo")
+	# Sin plazo encima: atrasado subiría el estrés y podrían renunciar (hito 19).
+	contract["deadline_day"] = int(contract["deadline_day"]) + 1000
 	var opened_at: float = -1.0
 	var testing_at: float = -1.0
 	var ok: bool = true

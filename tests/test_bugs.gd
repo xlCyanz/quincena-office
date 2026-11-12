@@ -56,6 +56,9 @@ func _check_chances() -> void:
 		"un error cada 20, 30, 45 o 70 puntos según el nivel")
 	_expect(_near(Projects.get_bug_chance("junior", 40.0), 2.0 / 30.0) and _near(Projects.get_bug_chance("junior", 50.0), 1.0 / 30.0),
 		"cansado, el doble")
+	# Hito 19: estresado también el doble, sin sumarse al cansancio.
+	_expect(_near(Projects.get_bug_chance("junior", 100.0, 70.0), 2.0 / 30.0) and _near(Projects.get_bug_chance("junior", 100.0, 69.0), 1.0 / 30.0)
+		and _near(Projects.get_bug_chance("junior", 40.0, 90.0), 2.0 / 30.0), "estresado, el doble (no se acumula)")
 
 
 # Corregir cuesta 3 puntos por error y va antes de programar algo nuevo.
