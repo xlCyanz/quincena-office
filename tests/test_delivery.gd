@@ -48,6 +48,9 @@ func _near(a: float, b: float) -> bool:
 
 func _new_game() -> void:
 	SaveManager.new_game()
+	# Sin objetivos guiados (hito 28): sus recompensas cambiarían el saldo y la reputación.
+	for objective: Dictionary in Company.get_objectives():
+		Company.objectives_done.append(String(objective["id"]))
 	Staff.set_seed(SEED)
 	Projects.set_seed(SEED)
 	_notices.clear()

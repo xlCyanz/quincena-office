@@ -44,6 +44,9 @@ func _expect(condition: bool, message: String) -> void:
 
 func _new_game() -> void:
 	SaveManager.new_game()
+	# Sin objetivos guiados (hito 28): sus recompensas cambiarían el saldo y la reputación.
+	for objective: Dictionary in Company.get_objectives():
+		Company.objectives_done.append(String(objective["id"]))
 	Projects.set_seed(SEED)
 
 

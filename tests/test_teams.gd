@@ -140,10 +140,16 @@ func _check_contracts() -> void:
 	var team: Dictionary = Staff.create_team()
 	Staff.add_to_team(team["id"], 901)
 	_expect(Projects.get_contract_limit() == 2, "un equipo con miembros suma uno")
-	while Projects.offers.size() < 2:
+	# Una oferta grande pide Sala de reuniones: se toma la primera que no lo sea.
+	var second_offer: int = 0
+	while second_offer == 0:
 		GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
-	var second_offer: int = Projects.offers[0]["id"]
-	_expect(Projects.accept(second_offer)["ok"], "aceptar el segundo")
+		for offer: Dictionary in Projects.offers:
+			if offer["size"] != "large":
+				second_offer = offer["id"]
+				break
+	var second_result: Dictionary = Projects.accept(second_offer)
+	_expect(second_result["ok"], "aceptar el segundo: %s" % second_result.get("message", ""))
 	var second: Dictionary = Projects.get_contract(second_offer)
 	_expect(second["team_id"] == team["id"] and Projects.describe_owner(second) == "lo lleva %s" % team["name"],
 		"el nuevo va al equipo libre")

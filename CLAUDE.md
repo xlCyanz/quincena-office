@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26) y `test_stages` (27)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27) y `test_objectives` (28)
 
 ## Convenciones de código
 
@@ -131,6 +131,14 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   en Pequeña empresa; `Builder.quote_mark_room` las rechaza y `BuildPanel` las deshabilita) y contratos medianos con `min_stage` 2
   o un vendedor. Menú Empresa (`CompanyPanel`, lado izquierdo, no pausa): etapa, requisitos de la siguiente, reputación, valor e
   ingresos y gastos del mes. Las pruebas viejas fijan `Company.stage` cuando necesitan algo bloqueado.
+- Objetivos guiados (`Company.objectives_done`; `data/objectives.json`, 15 en orden): se ven los 3 primeros sin cumplir
+  (`ObjectivesPanel`, izquierda bajo el dinero, plegable). Las condiciones miran el estado (habitación, cargos, empleados,
+  `Projects.accepted_count`, entregados, equipos, etapa, terreno, estrellas, valor) y se revisan con las señales de esos sistemas;
+  al cumplirse uno avisa, paga «Objetivo cumplido» y/o `Projects.add_reputation` una sola vez y entra el siguiente.
+  `SaveManager` envuelve preparar/cargar en `Company.begin_load`/`finish_load` para no revisar con el estado a medias; una
+  partida sin `objectives_done` marca al cargar los que ya cumple, sin recompensa. `main.gd` pliega la lista mientras hay un
+  panel izquierdo abierto y al cerrarlo vuelve como el jugador la tenía. Las pruebas que miden saldo o reputación exactos
+  marcan todos los objetivos como cumplidos en su `_new_game`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -171,5 +179,5 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 25 | Compra de terreno | ✅ Completado (local como conjunto de casillas; $150/m² + cerámica a mitad de precio; no tapa la entrada; rellena huecos cobrando solo lo nuevo; controles −/+ con vista previa; una habitación no se junta con otro espacio) |
 | 26 | Valor de la empresa | ✅ Completado (dinero + reventa + terreno a lo pagado − deuda; paredes y pisos no suman; en el Hud tras las estrellas y en el Banco con detalle) |
 | 27 | Etapas y menú Empresa | ✅ Completado (se revisan cada día y nunca bajan; el CEO no cuenta como empleado; tope por préstamo $10k/$30k/$30k/sin tope; oficina única y sala de servidores desde Pequeña empresa; medianos desde Startup o con vendedor; líderes, gerentes, productos y ejecutivos en fases siguientes) |
-| 28 | Objetivos guiados | Pendiente (fase 3) |
+| 28 | Objetivos guiados | ✅ Completado (15 objetivos hasta Pequeña empresa, $300–$5,000 y algunos con ★; 3 visibles; se pliega con los paneles izquierdos y vuelve como estaba) |
 | 29 | Comprobación de la fase | Pendiente (fase 3) |

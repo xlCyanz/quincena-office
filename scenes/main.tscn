@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/ui/projects_panel.gd" id="10_projects"]
 [ext_resource type="Script" path="res://scripts/ui/bank_panel.gd" id="12_bank"]
 [ext_resource type="Script" path="res://scripts/ui/company_panel.gd" id="15_company"]
+[ext_resource type="Script" path="res://scripts/ui/objectives_panel.gd" id="16_objectives"]
 [ext_resource type="Script" path="res://scripts/ui/game_over_screen.gd" id="13_game_over"]
 [ext_resource type="Script" path="res://scripts/ui/emergency_loan_dialog.gd" id="14_emergency"]
 [ext_resource type="Script" path="res://scripts/ui/teams_panel.gd" id="11_teams"]
@@ -32,6 +33,9 @@ script = ExtResource("5_panel")
 
 [node name="Hud" type="CanvasLayer" parent="."]
 script = ExtResource("6_hud")
+
+[node name="ObjectivesPanel" type="CanvasLayer" parent="."]
+script = ExtResource("16_objectives")
 
 [node name="StaffPanel" type="CanvasLayer" parent="."]
 script = ExtResource("8_staff")

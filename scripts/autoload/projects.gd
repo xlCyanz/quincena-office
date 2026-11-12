@@ -50,6 +50,8 @@ var reputation: float = 1.0
 var history: Array[Dictionary] = []
 ## Contratos entregados en toda la partida.
 var delivered_count: int = 0
+## Contratos aceptados en toda la partida (hito 28, para los objetivos).
+var accepted_count: int = 0
 ## La mejor reputación que tuvo la empresa (para la pantalla de fin).
 var best_reputation: float = 1.0
 
@@ -69,6 +71,7 @@ func new_game() -> void:
 	contracts.clear()
 	history.clear()
 	delivered_count = 0
+	accepted_count = 0
 	reputation = float(ContractCatalog.get_offers("start_reputation"))
 	best_reputation = reputation
 	_next_id = 1
@@ -148,6 +151,7 @@ func accept(offer_id: int) -> Dictionary:
 	contract["cancel_day"] = NO_CANCEL_DAY
 	contract["team_id"] = _first_free_team()
 	contracts.append(contract)
+	accepted_count += 1
 	var message: String = "Contrato aceptado: %s para %s, %d días; %s." % [
 		ContractCatalog.get_type_name(offer["type"]), offer["client"], offer["days"], describe_owner(contract)]
 	if int(offer["advance"]) > 0:
@@ -439,7 +443,7 @@ func _take_id() -> int:
 ## (JSON guarda los números como decimales y perdería precisión).
 func export_state() -> Dictionary:
 	return {"offers": offers.duplicate(true), "contracts": contracts.duplicate(true), "reputation": reputation,
-		"history": history.duplicate(true), "delivered_count": delivered_count, "best_reputation": best_reputation,
+		"history": history.duplicate(true), "delivered_count": delivered_count, "accepted_count": accepted_count, "best_reputation": best_reputation,
 		"next_id": _next_id, "rng_state": str(_rng.state)}
 
 
@@ -474,6 +478,8 @@ func import_state(state: Dictionary) -> void:
 			"paid": int(saved.get("paid", 0)), "reputation_change": float(saved.get("reputation_change", 0.0)),
 			"day": int(saved.get("day", 0))})
 	delivered_count = int(state.get("delivered_count", 0))
+	# Antes del hito 28 no se contaban: al menos los que están en curso o en el historial.
+	accepted_count = int(state.get("accepted_count", contracts.size() + history.size()))
 	_next_id = int(state.get("next_id", 1))
 	var rng_state: String = String(state.get("rng_state", ""))
 	if rng_state.is_valid_int():
@@ -609,6 +615,14 @@ func _client_cancel(contract: Dictionary) -> void:
 	var message: String = "%s canceló %s por el atraso: no paga nada más. %s" % [contract["client"],
 		describe_title(contract), _change_reputation(change)]
 	_finish(contract, "Cancelado por el cliente", 0, change, message)
+
+
+## Suma (o resta) reputación desde otro sistema, como la recompensa de un objetivo
+## (hito 28). Devuelve el texto del cambio, como «Reputación +0.1.».
+func add_reputation(change: float) -> String:
+	var text: String = _change_reputation(change)
+	EventBus.projects_changed.emit()
+	return text
 
 
 func _change_reputation(change: float) -> String:

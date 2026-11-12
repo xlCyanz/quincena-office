@@ -1,0 +1,22 @@
+{
+	"_comentario": "Objetivos guiados (diseño 9.4 y 17.2; hito 28). Se ven visible_count a la vez, en el orden de la lista; al cumplirse uno avisa, paga money (concepto «Objetivo cumplido») y reputation (estrellas), y entra el siguiente. condition: type y su valor. Tipos: room (existe una habitación de ese tipo), role (contratados de ese cargo ≥ count), employees, accepted (contratos aceptados), delivered (entregados), teams (equipos con miembros), complete_teams (diseñador + programador + QA), stage (índice en data/stages.json: 1 = Startup), land (se compró terreno), reputation (estrellas ≥ value), value (valor de la empresa ≥ value). Valores provisionales: el hito 29 los ajusta.",
+	"visible_count": 3,
+	"concept": "Objetivo cumplido",
+	"objectives": [
+		{ "id": "work_area", "text": "Arma un Área de trabajo", "condition": { "type": "room", "room": "work_area" }, "money": 300 },
+		{ "id": "first_programmer", "text": "Contrata a tu primer programador", "condition": { "type": "role", "role": "programmer", "count": 1 }, "money": 500 },
+		{ "id": "first_contract", "text": "Acepta tu primer contrato", "condition": { "type": "accepted", "count": 1 }, "money": 300 },
+		{ "id": "first_delivery", "text": "Entrega tu primer contrato", "condition": { "type": "delivered", "count": 1 }, "money": 500, "reputation": 0.1 },
+		{ "id": "first_qa", "text": "Contrata a un QA", "condition": { "type": "role", "role": "qa", "count": 1 }, "money": 500 },
+		{ "id": "first_team", "text": "Arma tu primer equipo", "condition": { "type": "teams", "count": 1 }, "money": 500 },
+		{ "id": "five_employees", "text": "Llega a 5 empleados", "condition": { "type": "employees", "count": 5 }, "money": 1000 },
+		{ "id": "three_deliveries", "text": "Entrega 3 contratos", "condition": { "type": "delivered", "count": 3 }, "money": 1000, "reputation": 0.2 },
+		{ "id": "startup", "text": "Llega a la etapa Startup", "condition": { "type": "stage", "stage": 1 }, "money": 2000 },
+		{ "id": "first_salesperson", "text": "Contrata a un vendedor", "condition": { "type": "role", "role": "salesperson", "count": 1 }, "money": 1000 },
+		{ "id": "buy_land", "text": "Compra terreno", "condition": { "type": "land" }, "money": 1000 },
+		{ "id": "three_stars", "text": "Llega a 3 ★", "condition": { "type": "reputation", "value": 3 }, "money": 2000 },
+		{ "id": "value_50k", "text": "Valor de la empresa de $50,000", "condition": { "type": "value", "value": 50000 }, "money": 3000 },
+		{ "id": "complete_team", "text": "Arma un equipo completo (diseñador, programador y QA)", "condition": { "type": "complete_teams", "count": 1 }, "money": 1500 },
+		{ "id": "small_business", "text": "Llega a la etapa Pequeña empresa", "condition": { "type": "stage", "stage": 2 }, "money": 5000, "reputation": 0.3 }
+	]
+}

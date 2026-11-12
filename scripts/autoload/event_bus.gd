@@ -78,3 +78,11 @@ signal company_value_changed(value: int)
 ## La empresa subió de etapa (hito 27): 0 = Emprendimiento … 4 = Corporación.
 @warning_ignore("unused_signal")
 signal stage_changed(stage: int)
+
+## Se cumplió un objetivo guiado (hito 28), ya pagada su recompensa. La emite Company.
+@warning_ignore("unused_signal")
+signal objective_completed(objective_id: String)
+
+## Cambió la lista de objetivos visibles (se cumplió uno o se cargó una partida).
+@warning_ignore("unused_signal")
+signal objectives_changed

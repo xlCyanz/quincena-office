@@ -38,6 +38,7 @@ var _ceo_button: Button
 @onready var _teams_panel: TeamsPanel = $TeamsPanel
 @onready var _bank_panel: BankPanel = $BankPanel
 @onready var _company_panel: CompanyPanel = $CompanyPanel
+@onready var _objectives_panel: ObjectivesPanel = $ObjectivesPanel
 @onready var _game_over_screen: GameOverScreen = $GameOverScreen
 @onready var _emergency_dialog: EmergencyLoanDialog = $EmergencyLoanDialog
 @onready var _employee_card: EmployeeCard = $EmployeeCard
@@ -90,6 +91,10 @@ func _ready() -> void:
 	_company_panel.company_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_company_panel))
+	# Los objetivos se pliegan mientras hay un panel izquierdo abierto.
+	for panel: Signal in [_staff_panel.staff_mode_changed, _projects_panel.projects_mode_changed,
+			_teams_panel.teams_mode_changed, _bank_panel.bank_mode_changed, _company_panel.company_mode_changed]:
+		panel.connect(func(_active: bool) -> void: _update_objectives_fold())
 	_add_ceo_button(_build_panel.get_menu_bar())
 	_employee_card.status_provider = describe_employee_activity
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
@@ -227,6 +232,12 @@ func _on_office_changed() -> void:
 	_rebuild_office()
 	for character: OfficeCharacter in get_characters():
 		character.replan()
+
+
+# Pliega los objetivos si hay algún panel del lado izquierdo abierto.
+func _update_objectives_fold() -> void:
+	_objectives_panel.set_suppressed(_staff_panel.is_open() or _projects_panel.is_open() or _teams_panel.is_open()
+		or _bank_panel.is_open() or _company_panel.is_open())
 
 
 # Cierra los paneles del lado izquierdo menos uno (null los cierra todos).
