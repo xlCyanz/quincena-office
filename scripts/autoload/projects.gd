@@ -50,6 +50,8 @@ var reputation: float = 1.0
 var history: Array[Dictionary] = []
 ## Contratos entregados en toda la partida.
 var delivered_count: int = 0
+## La mejor reputación que tuvo la empresa (para la pantalla de fin).
+var best_reputation: float = 1.0
 
 var _next_id: int = 1
 var _rng := RandomNumberGenerator.new()
@@ -68,6 +70,7 @@ func new_game() -> void:
 	history.clear()
 	delivered_count = 0
 	reputation = float(ContractCatalog.get_offers("start_reputation"))
+	best_reputation = reputation
 	_next_id = 1
 	_rng.randomize()
 	offers.append(_make_offer(GameClock.get_day_count(), "small"))
@@ -435,7 +438,7 @@ func _take_id() -> int:
 ## (JSON guarda los números como decimales y perdería precisión).
 func export_state() -> Dictionary:
 	return {"offers": offers.duplicate(true), "contracts": contracts.duplicate(true), "reputation": reputation,
-		"history": history.duplicate(true), "delivered_count": delivered_count,
+		"history": history.duplicate(true), "delivered_count": delivered_count, "best_reputation": best_reputation,
 		"next_id": _next_id, "rng_state": str(_rng.state)}
 
 
@@ -463,6 +466,7 @@ func import_state(state: Dictionary) -> void:
 		contract["team_id"] = team_id if team_id <= CEO_TEAM or not Staff.get_team(team_id).is_empty() else NO_TEAM
 		contracts.append(contract)
 	reputation = float(state.get("reputation", ContractCatalog.get_offers("start_reputation")))
+	best_reputation = maxf(float(state.get("best_reputation", reputation)), reputation)
 	history.clear()
 	for saved: Dictionary in state.get("history", []):
 		history.append({"title": String(saved.get("title", "")), "result": String(saved.get("result", "")),
@@ -611,6 +615,7 @@ func _change_reputation(change: float) -> String:
 	reputation = clampf(reputation + change, float(ContractCatalog.get_delivery("min_reputation")),
 		float(ContractCatalog.get_delivery("max_reputation")))
 	var applied: float = reputation - before
+	best_reputation = maxf(best_reputation, reputation)
 	if absf(applied) < Production.EPSILON:
 		return "La reputación no cambia."
 	return "Reputación %s%s." % ["+" if applied > 0.0 else "−", String.num(absf(applied), 2)]

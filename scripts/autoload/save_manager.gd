@@ -22,18 +22,22 @@ var save_dir: String = DEFAULT_SAVE_DIR
 var scene_state_provider := Callable()
 
 var _pending_scene_state: Dictionary = {}
+# La partida terminó por embargo: no se autoguarda más.
+var _game_over: bool = false
 
 
 func _ready() -> void:
 	# Economy se conecta antes (va antes en la lista de autoloads), así que el
 	# autoguardado del día 1 ya incluye el cobro del mantenimiento.
 	EventBus.day_changed.connect(_on_day_changed)
+	EventBus.game_over.connect(_on_game_over)
 
 
 ## Deja todos los sistemas como al empezar una partida nueva: el local inicial con
 ## la Oficina Ejecutiva, el capital inicial y el reloj en el día 1 a la hora de entrada.
 func new_game() -> void:
 	_pending_scene_state = {}
+	_game_over = false
 	Economy.new_game()
 	OfficeState.new_game()
 	Staff.new_game()
@@ -108,6 +112,7 @@ func load_game(slot: String) -> bool:
 	var data: Dictionary = _read(slot)
 	if data.is_empty():
 		return false
+	_game_over = false
 	OfficeState.import_state(data["office"])
 	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
 	Staff.import_state(data.get("staff", {}))
@@ -151,8 +156,16 @@ func take_scene_state() -> Dictionary:
 
 
 func _on_day_changed(_day: int, _month: int) -> void:
-	if scene_state_provider.is_valid():
+	if scene_state_provider.is_valid() and not _game_over:
 		save_game(AUTOSAVE)
+
+
+# Al perder se borra el autoguardado para no volver al momento del embargo; las
+# ranuras manuales quedan.
+func _on_game_over(_stats: Dictionary) -> void:
+	_game_over = true
+	if has_save(AUTOSAVE):
+		DirAccess.remove_absolute(_path(AUTOSAVE))
 
 
 func _path(slot: String) -> String:

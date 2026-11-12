@@ -73,6 +73,8 @@ var ceo_at_work: bool = true
 ## Día (GameClock.get_day_count) del último despido; -1000 si no hubo.
 var last_firing_day: int = NO_FIRING
 var teams: Array[Dictionary] = []
+## Empleados contratados en toda la partida (para la pantalla de fin).
+var hired_count: int = 0
 
 var _next_id: int = 1
 var _next_team_id: int = 1
@@ -95,6 +97,7 @@ func new_game() -> void:
 	ceo_at_work = true
 	last_firing_day = NO_FIRING
 	teams.clear()
+	hired_count = 0
 	_next_id = 1
 	_next_team_id = 1
 	_last_interview_end = NO_FIRING
@@ -912,6 +915,7 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 	employee["owed"] = 0
 	_add_morale_fields(employee, {})
 	employees.append(employee)
+	hired_count += 1
 	OfficeState.furniture[station["chair"]]["assigned_to"] = employee_key(employee["id"])
 	for index: int in range(vacancies.size()):
 		if vacancies[index]["candidates"].has(candidate):
@@ -1004,7 +1008,7 @@ func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
 		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
-		"rng_state": str(_rng.state)}
+		"rng_state": str(_rng.state), "hired_count": hired_count}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -1056,6 +1060,7 @@ func import_state(state: Dictionary) -> void:
 	_last_interview_end = NO_FIRING
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))
+	hired_count = int(state.get("hired_count", employees.size()))
 	_next_id = int(state.get("next_id", 1))
 	var rng_state: String = String(state.get("rng_state", ""))
 	if rng_state.is_valid_int():

@@ -6,6 +6,7 @@
 # Préstamos (hito 22): cada préstamo activo con su cuota, lo que falta y los botones
 # Saldar (con confirmación) y Refinanciar (eligiendo cuántos meses alargar), y la
 # solicitud con monto y plazo de a pasos y la vista previa de tasa, cuota y total.
+# Con cuotas atrasadas (hito 23) avisa cuántos meses van y qué haría hoy un embargo.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos y Equipos (abrir
 # uno cierra los otros; lo hace la escena de juego). Se construye en código; su botón va
@@ -40,6 +41,7 @@ var _empty_label: Label
 var _credit_label: Label
 var _credit_rows: VBoxContainer
 var _loan_rows: VBoxContainer
+var _overdue_label: Label
 var _amount_label: Label
 var _months_label: Label
 var _amount_minus: Button
@@ -131,6 +133,10 @@ func _ready() -> void:
 	loans_title.text = "Préstamos"
 	loans_title.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	content.add_child(loans_title)
+	_overdue_label = Label.new()
+	_overdue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_overdue_label.add_theme_color_override("font_color", Hud.NEGATIVE_COLOR)
+	content.add_child(_overdue_label)
 	_loan_rows = VBoxContainer.new()
 	content.add_child(_loan_rows)
 	var amount_row := HBoxContainer.new()
@@ -260,6 +266,11 @@ func get_loan_status() -> String:
 	return _loan_status.text
 
 
+## Aviso de cuotas atrasadas ("" si está al día).
+func get_overdue_text() -> String:
+	return _overdue_label.text if _overdue_label.visible else ""
+
+
 ## Texto de los préstamos activos (una entrada por renglón).
 func get_loans_text() -> String:
 	var lines: Array[String] = []
@@ -382,6 +393,19 @@ func _refresh_loans() -> void:
 		_loan_rows.add_child(none)
 	if Bank.get_loan(_pending_loan).is_empty():
 		_pending_loan = 0
+	_overdue_label.visible = Bank.get_overdue() > 0
+	if _overdue_label.visible:
+		var seizure: int = int(Bank.get_config("seizure_months"))
+		var plan: Dictionary = Bank.preview_seizure()
+		var outcome: String
+		if bool(plan["covers"]):
+			var taken: int = (plan["take"] as Array).size()
+			outcome = "se llevaría %d %s y saldaría la deuda" % [taken, "mueble" if taken == 1 else "muebles"]
+		else:
+			outcome = "tus muebles (%s) no alcanzan: perderías la empresa" % MoneyFormat.format(int(plan["value"]))
+		_overdue_label.text = "Cuotas atrasadas: %s, %d %s seguido%s debiendo. Se pagan solas cuando alcance el saldo. A los %d meses el banco no presta; a los %d embarga: hoy %s." % [
+			MoneyFormat.format(Bank.get_overdue()), Bank.overdue_months, "mes" if Bank.overdue_months == 1 else "meses",
+			"" if Bank.overdue_months == 1 else "s", int(Bank.get_config("warning_months")), seizure, outcome]
 	for loan: Dictionary in Bank.loans:
 		var box := VBoxContainer.new()
 		_loan_rows.add_child(box)
@@ -390,8 +414,11 @@ func _refresh_loans() -> void:
 		var left: int = Bank.get_remaining_months(loan)
 		info.text = "%s al %s mensual%s · cuota %s · %d %s · capital pendiente %s" % [
 			MoneyFormat.format(int(loan["amount"])), _percent(float(loan["rate"])), " (refinanciado)" if bool(loan["refinanced"]) else "",
-			MoneyFormat.format(Bank.get_installment(loan)), left, "cuota" if left == 1 else "cuotas",
+			MoneyFormat.format(Bank.get_installment(loan)) if left > 0 else "—", left, "cuota" if left == 1 else "cuotas",
 			MoneyFormat.format(Bank.get_remaining_principal(loan))]
+		if int(loan.get("overdue", 0)) > 0:
+			info.text += " · atrasado %s" % MoneyFormat.format(int(loan["overdue"]))
+			info.add_theme_color_override("font_color", Hud.NEGATIVE_COLOR)
 		box.add_child(info)
 		var buttons := HBoxContainer.new()
 		box.add_child(buttons)

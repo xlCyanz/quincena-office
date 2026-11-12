@@ -49,3 +49,9 @@ signal payment_recorded(concept: String, on_time: bool)
 ## Cambió algo del banco (calificación, límite o, más adelante, préstamos). La emite Bank.
 @warning_ignore("unused_signal")
 signal bank_changed
+
+## La partida terminó (embargo total). stats: {"days", "hired", "delivered",
+## "best_reputation", "debt", "assets"}. La emite Bank; la escuchan SaveManager y la
+## escena de juego.
+@warning_ignore("unused_signal")
+signal game_over(stats: Dictionary)

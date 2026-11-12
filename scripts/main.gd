@@ -36,6 +36,7 @@ var _ceo_button: Button
 @onready var _projects_panel: ProjectsPanel = $ProjectsPanel
 @onready var _teams_panel: TeamsPanel = $TeamsPanel
 @onready var _bank_panel: BankPanel = $BankPanel
+@onready var _game_over_screen: GameOverScreen = $GameOverScreen
 @onready var _employee_card: EmployeeCard = $EmployeeCard
 
 
@@ -90,6 +91,8 @@ func _ready() -> void:
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _update_routines())
 	EventBus.presence_changed.connect(_update_routines)
+	EventBus.game_over.connect(_on_game_over)
+	_game_over_screen.menu_requested.connect(_on_quit_requested)
 	GameClock.start()
 
 
@@ -260,7 +263,7 @@ func _set_menu_pause(active: bool) -> void:
 
 
 func _is_menu_open() -> bool:
-	return _build_panel.is_build_mode() or _settings_panel.is_open()
+	return _build_panel.is_build_mode() or _settings_panel.is_open() or _game_over_screen.is_open()
 
 
 func _on_save_requested(slot: String) -> void:
@@ -272,6 +275,15 @@ func _on_save_requested(slot: String) -> void:
 	_settings_panel.refresh_slots()
 	_settings_panel.show_status("Guardado en la %s." % SaveManager.get_slot_name(slot).to_lower()
 		if saved else "No se pudo guardar.")
+
+
+# Embargo total: se detiene el tiempo, se cierran los menús y queda la pantalla de fin.
+func _on_game_over(stats: Dictionary) -> void:
+	GameClock.stop()
+	_close_side_panels(null)
+	_employee_card.close()
+	_hud.set_controls_enabled(false)
+	_game_over_screen.show_stats(stats)
 
 
 func _on_quit_requested() -> void:
@@ -289,7 +301,7 @@ func is_office_empty() -> bool:
 # Cuando se va el último, la oficina queda vacía: el tiempo salta hasta que llegue alguien.
 func _on_character_left_office() -> void:
 	_remove_departed()
-	if not is_office_empty():
+	if not is_office_empty() or Bank.game_over:
 		return
 	var hours: int = Staff.hours_until_anyone_expected()
 	print("La oficina está vacía.")

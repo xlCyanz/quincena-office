@@ -7,8 +7,12 @@
 # Hito 22: préstamos con interés simple. Un préstamo guarda el capital con que se
 # reparte (base), la tasa, los meses y cuántas cuotas se pagaron; la cuota se cobra el
 # día 1 de cada mes siguiente. Se puede saldar antes (capital pendiente + interés de un
-# mes) y refinanciar una vez (más meses, tasa más alta). La mora y el embargo llegan en
-# el hito 23: hasta entonces una cuota sin dinero se cobra igual y cuenta como atraso.
+# mes) y refinanciar una vez (más meses, tasa más alta).
+#
+# Hito 23: una cuota que no alcanza queda atrasada (overdue en el préstamo) con recargo
+# y se paga sola apenas alcanza el saldo. overdue_months cuenta los días 1 seguidos con
+# cuotas atrasadas: con warning_months el banco no presta y con seizure_months embarga
+# (Embargo). Si los muebles no alcanzan, la partida termina: EventBus.game_over.
 #
 # Se recalcula el día 1 de cada mes (después del mantenimiento, porque Economy va antes
 # en la lista de autoloads) y en el momento de un atraso. Los pagos llegan por
@@ -19,6 +23,8 @@ const DATA_PATH: String = "res://data/bank.json"
 const CONCEPT_LOAN: String = "Préstamo"
 const CONCEPT_INSTALLMENT: String = "Cuota de préstamo"
 const CONCEPT_PREPAYMENT: String = "Pago anticipado de préstamo"
+const CONCEPT_OVERDUE: String = "Cuota atrasada"
+const CONCEPT_SURPLUS: String = "Sobrante del embargo"
 ## Letra actual ("A" … "E").
 var rating: String = "C"
 ## Puntaje con el que se calculó la letra (0 a 100).
@@ -32,6 +38,12 @@ var late_payments: int = 0
 ## cuotas), "rate", "months", "paid" (cuotas pagadas), "refinanced", "taken_day"}.
 var loans: Array[Dictionary] = []
 var _next_loan_id: int = 1
+## Días 1 seguidos con alguna cuota atrasada (0 = al día).
+var overdue_months: int = 0
+## La partida terminó por embargo (el banco ya no hace nada).
+var game_over: bool = false
+# Evita pagar atrasos dentro de otro pago (cada pago cambia el saldo).
+var _paying_overdue: bool = false
 
 var _data: Dictionary = {}
 
@@ -39,6 +51,7 @@ var _data: Dictionary = {}
 func _ready() -> void:
 	EventBus.day_changed.connect(_on_day_changed)
 	EventBus.payment_recorded.connect(_on_payment_recorded)
+	EventBus.balance_changed.connect(func(_balance: int) -> void: _pay_overdue())
 
 
 ## Deja el banco como en una partida nueva: sin historial, en la letra que da la base.
@@ -48,6 +61,8 @@ func new_game() -> void:
 	late_payments = 0
 	loans.clear()
 	_next_loan_id = 1
+	overdue_months = 0
+	game_over = false
 	_recalculate(false)
 
 
@@ -149,6 +164,19 @@ static func quote(amount: int, months: int, rate: float) -> Dictionary:
 	return {"rate": rate, "total": total, "installment": roundi(float(total) / months), "interest": total - amount}
 
 
+## Cuotas atrasadas (con recargo), sumando todos los préstamos.
+func get_overdue() -> int:
+	var total: int = 0
+	for loan: Dictionary in loans:
+		total += int(loan.get("overdue", 0))
+	return total
+
+
+## Lo que se embarga: cuotas atrasadas más capital pendiente.
+func get_seizable_debt() -> int:
+	return get_overdue() + get_debt()
+
+
 ## Cuánto se debe de capital, sumando todos los préstamos.
 func get_debt() -> int:
 	var total: int = 0
@@ -187,9 +215,10 @@ func get_remaining_total(loan: Dictionary) -> int:
 	return int(terms["total"]) - int(terms["installment"]) * int(loan["paid"])
 
 
-## Saldar hoy: capital pendiente más el interés de un mes.
+## Saldar hoy: capital pendiente más el interés de un mes y las cuotas atrasadas.
 func get_prepay_cost(loan: Dictionary) -> int:
-	return get_remaining_principal(loan) + roundi(float(loan["base"]) * float(loan["rate"]))
+	var interest: int = roundi(float(loan["base"]) * float(loan["rate"])) if get_remaining_months(loan) > 0 else 0
+	return get_remaining_principal(loan) + interest + int(loan.get("overdue", 0))
 
 
 func get_loan(loan_id: int) -> Dictionary:
@@ -201,6 +230,8 @@ func get_loan(loan_id: int) -> Dictionary:
 
 ## Por qué no se puede pedir ese préstamo, o "" si se puede.
 func loan_problem(amount: int, months: int) -> String:
+	if overdue_months >= int(get_config("warning_months")):
+		return "El banco no presta: llevas %d meses con cuotas atrasadas." % overdue_months
 	var min_amount: int = int(get_config("loan_min_amount"))
 	if amount < min_amount:
 		return "El monto mínimo es %s." % MoneyFormat.format(min_amount)
@@ -218,7 +249,7 @@ func request_loan(amount: int, months: int) -> Dictionary:
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
 	var loan: Dictionary = {"id": _next_loan_id, "amount": amount, "base": amount, "rate": get_monthly_rate(),
-		"months": months, "paid": 0, "refinanced": false, "taken_day": GameClock.get_day_count()}
+		"months": months, "paid": 0, "refinanced": false, "taken_day": GameClock.get_day_count(), "overdue": 0}
 	_next_loan_id += 1
 	loans.append(loan)
 	Economy.earn(amount, CONCEPT_LOAN)
@@ -237,7 +268,7 @@ func prepay(loan_id: int) -> Dictionary:
 	var cost: int = get_prepay_cost(loan)
 	if not Economy.spend(cost, CONCEPT_PREPAYMENT):
 		return {"ok": false, "message": "No alcanza: saldarlo cuesta %s." % MoneyFormat.format(cost)}
-	var saved: int = get_remaining_total(loan) - cost
+	var saved: int = get_remaining_total(loan) + int(loan.get("overdue", 0)) - cost
 	loans.erase(loan)
 	var message: String = "Préstamo saldado por %s (ahorras %s de intereses)." % [MoneyFormat.format(cost), MoneyFormat.format(maxi(0, saved))]
 	EventBus.bank_changed.emit()
@@ -261,6 +292,8 @@ func refinance_problem(loan: Dictionary, extra_months: int) -> String:
 		return "Ese préstamo ya no está."
 	if bool(loan["refinanced"]):
 		return "Este préstamo ya se refinanció una vez."
+	if get_remaining_months(loan) <= 0:
+		return "Ya no le quedan cuotas por venir."
 	var min_extra: int = int(get_config("refinance_min_extra"))
 	var max_extra: int = mini(int(get_config("refinance_max_extra")), int(get_config("loan_max_months")) - get_remaining_months(loan))
 	if max_extra < min_extra:
@@ -272,7 +305,7 @@ func refinance_problem(loan: Dictionary, extra_months: int) -> String:
 
 ## Mayor alargue posible para un préstamo (0 si no se puede refinanciar).
 func get_max_refinance_extra(loan: Dictionary) -> int:
-	if loan.is_empty() or bool(loan["refinanced"]):
+	if loan.is_empty() or bool(loan["refinanced"]) or get_remaining_months(loan) <= 0:
 		return 0
 	var max_extra: int = mini(int(get_config("refinance_max_extra")), int(get_config("loan_max_months")) - get_remaining_months(loan))
 	return max_extra if max_extra >= int(get_config("refinance_min_extra")) else 0
@@ -296,19 +329,99 @@ func refinance(loan_id: int, extra_months: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-# Cobra la cuota de cada préstamo (el día 1). Sin dinero se cobra igual y es un atraso.
+# Cobra la cuota de cada préstamo (el día 1). La que no alcanza queda atrasada con
+# recargo. Después cuenta los meses seguidos debiendo: aviso y, al final, embargo.
 func _charge_installments() -> void:
+	var fee: float = float(get_config("late_fee_ratio"))
 	for loan: Dictionary in loans.duplicate():
-		Economy.charge(get_installment(loan), CONCEPT_INSTALLMENT)
+		if get_remaining_months(loan) <= 0:
+			continue
+		var installment: int = get_installment(loan)
 		loan["paid"] = int(loan["paid"]) + 1
+		# Con atrasos previos tampoco se paga la nueva: va a la cola.
+		if int(loan.get("overdue", 0)) == 0 and Economy.spend(installment, CONCEPT_INSTALLMENT):
+			EventBus.payment_recorded.emit(CONCEPT_INSTALLMENT, true)
+			if get_remaining_months(loan) <= 0:
+				loans.erase(loan)
+				EventBus.notice.emit("Pagaste la última cuota de un préstamo de %s." % MoneyFormat.format(int(loan["amount"])))
+			continue
+		var late: int = roundi(installment * (1.0 + fee))
+		loan["overdue"] = int(loan.get("overdue", 0)) + late
+		EventBus.payment_recorded.emit(CONCEPT_INSTALLMENT, false)
+		EventBus.notice.emit("No alcanza para la cuota de %s: queda atrasada con recargo (%s)." % [
+			MoneyFormat.format(installment), MoneyFormat.format(late)])
+	if get_overdue() == 0:
+		overdue_months = 0
+		return
+	overdue_months += 1
+	if overdue_months >= int(get_config("seizure_months")):
+		_seize()
+	elif overdue_months >= int(get_config("warning_months")):
+		EventBus.notice.emit("Aviso de embargo: llevas %d meses con cuotas atrasadas. El banco no presta más y al tercero embarga." % overdue_months)
+	EventBus.bank_changed.emit()
+
+
+# Paga las cuotas atrasadas que alcance el saldo, de la más vieja a la más nueva.
+func _pay_overdue() -> void:
+	if _paying_overdue or game_over or get_overdue() == 0:
+		return
+	_paying_overdue = true
+	for loan: Dictionary in loans.duplicate():
+		var owed: int = int(loan.get("overdue", 0))
+		if owed == 0:
+			continue
+		if not Economy.spend(owed, CONCEPT_OVERDUE):
+			break
+		loan["overdue"] = 0
 		if get_remaining_months(loan) <= 0:
 			loans.erase(loan)
-			EventBus.notice.emit("Pagaste la última cuota de un préstamo de %s." % MoneyFormat.format(int(loan["amount"])))
-		EventBus.payment_recorded.emit(CONCEPT_INSTALLMENT, Economy.balance >= 0)
+	_paying_overdue = false
+	if get_overdue() == 0:
+		overdue_months = 0
+		EventBus.notice.emit("Pagaste las cuotas atrasadas: estás al día con el banco.")
+	EventBus.bank_changed.emit()
+
+
+## Lo que pasaría con un embargo hoy (ver Embargo.plan).
+func preview_seizure() -> Dictionary:
+	return Embargo.plan(OfficeState.furniture, OfficeState.rooms, get_seizable_debt())
+
+
+# El embargo: se lleva muebles para saldar todo o, si no alcanzan, termina la partida.
+func _seize() -> void:
+	var debt: int = get_seizable_debt()
+	var result: Dictionary = preview_seizure()
+	if not bool(result["covers"]):
+		game_over = true
+		EventBus.notice.emit("El banco embargó la empresa: los muebles (%s) no cubren la deuda (%s)." % [
+			MoneyFormat.format(int(result["value"])), MoneyFormat.format(debt)])
+		EventBus.game_over.emit(get_game_over_stats(debt, int(result["value"])))
+		return
+	var take: Array[int] = result["take"]
+	var indices: Array[int] = take.duplicate()
+	indices.sort()
+	indices.reverse()
+	for index: int in indices:
+		OfficeState.furniture.remove_at(index)
+	loans.clear()
+	overdue_months = 0
+	var surplus: int = int(result["recovered"]) - debt
+	EventBus.office_changed.emit()
+	if surplus > 0:
+		Economy.earn(surplus, CONCEPT_SURPLUS)
+	EventBus.notice.emit("Embargo: el banco se llevó %d %s (%s) y saldó la deuda de %s; te devuelve %s." % [
+		take.size(), "mueble" if take.size() == 1 else "muebles", MoneyFormat.format(int(result["recovered"])),
+		MoneyFormat.format(debt), MoneyFormat.format(maxi(0, surplus))])
+
+
+## Estadísticas para la pantalla de fin.
+func get_game_over_stats(debt: int, value: int) -> Dictionary:
+	return {"days": GameClock.get_day_count() + 1, "hired": Staff.hired_count, "delivered": Projects.delivered_count,
+		"best_reputation": Projects.best_reputation, "debt": debt, "assets": value}
 
 
 func _on_day_changed(day: int, month: int) -> void:
-	if day != 1:
+	if day != 1 or game_over:
 		return
 	_charge_installments()
 	var totals: Dictionary[String, int] = Economy.get_month_totals(month - 1)
@@ -343,7 +456,7 @@ func _recalculate(announce: bool) -> void:
 func export_state() -> Dictionary:
 	return {"rating": rating, "score": score, "monthly_income": monthly_income,
 		"on_time_payments": on_time_payments, "late_payments": late_payments,
-		"loans": loans.duplicate(true), "next_loan_id": _next_loan_id}
+		"loans": loans.duplicate(true), "next_loan_id": _next_loan_id, "overdue_months": overdue_months}
 
 
 ## Restaura el banco. Una partida de antes del hito 21 se calcula con lo que hay.
@@ -355,8 +468,11 @@ func import_state(state: Dictionary) -> void:
 	for saved: Dictionary in state.get("loans", []):
 		loans.append({"id": int(saved["id"]), "amount": int(saved["amount"]), "base": int(saved.get("base", saved["amount"])),
 			"rate": float(saved["rate"]), "months": int(saved["months"]), "paid": int(saved.get("paid", 0)),
-			"refinanced": bool(saved.get("refinanced", false)), "taken_day": int(saved.get("taken_day", 0))})
+			"refinanced": bool(saved.get("refinanced", false)), "taken_day": int(saved.get("taken_day", 0)),
+			"overdue": int(saved.get("overdue", 0))})
 	_next_loan_id = int(state.get("next_loan_id", loans.size() + 1))
+	overdue_months = int(state.get("overdue_months", 0))
+	game_over = false
 	if state.has("rating"):
 		rating = String(state["rating"])
 		score = int(state.get("score", compute_score()))

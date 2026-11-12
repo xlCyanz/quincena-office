@@ -155,9 +155,10 @@ func _check_late() -> void:
 	Economy.charge(Economy.balance, "Prueba")
 	var late: int = Bank.late_payments
 	_to_next_month()
-	# Sin dinero se cobran el mantenimiento y la cuota igual: dos atrasos.
-	_expect(Bank.late_payments == late + 2 and Economy.balance < 0, "la cuota sin dinero es un atraso: %d" % Bank.late_payments)
-	_expect(int(Bank.loans[0]["paid"]) == 1, "la cuota se cuenta pagada (la mora es el hito 23)")
+	# Sin dinero el mantenimiento deja saldo negativo y la cuota queda atrasada: dos atrasos.
+	_expect(Bank.late_payments == late + 2, "la cuota sin dinero es un atraso: %d" % Bank.late_payments)
+	_expect(_sum(Bank.CONCEPT_INSTALLMENT) == 0 and Bank.get_overdue() > 0, "la cuota no se cobra: queda atrasada (hito 23)")
+	_expect(int(Bank.loans[0]["paid"]) == 1, "la cuota atrasada cuenta como vencida")
 
 
 func _check_save() -> void:
