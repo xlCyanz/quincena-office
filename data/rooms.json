@@ -79,6 +79,14 @@
 				{ "name": "Mostrador de recepción", "items": ["reception_counter"] }
 			],
 			"color": "e0c341"
+		},
+		"cleaning_room": {
+			"name": "Cuarto de limpieza",
+			"min_area": 2,
+			"required": [
+				{ "name": "Armario de limpieza", "items": ["cleaning_closet"] }
+			],
+			"color": "8fa3b8"
 		}
 	}
 }

@@ -35,6 +35,9 @@ signal projects_changed
 @warning_ignore("unused_signal")
 signal visits_changed
 
+## Cambió la suciedad de alguna habitación (hito 37).
+signal dirt_changed
+
 ## Un aviso para el jugador (por ejemplo, la nómina pagada). Lo muestra el Hud.
 @warning_ignore("unused_signal")
 signal notice(text: String)

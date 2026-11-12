@@ -112,6 +112,7 @@ func _ready() -> void:
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.visits_changed.connect(_sync_visitors)
+	EventBus.dirt_changed.connect(_on_dirt_changed)
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _update_routines())
 	EventBus.presence_changed.connect(_update_routines)
 	EventBus.game_over.connect(_on_game_over)
@@ -173,14 +174,14 @@ func _sync_employees() -> void:
 	for employee: Dictionary in Staff.employees:
 		var employee_id: int = employee["id"]
 		if employees.has(employee_id):
-			employees[employee_id].set_seat(_seat_of(Staff.employee_key(employee_id)))
+			employees[employee_id].set_seat(_spot_of(employee))
 			employees[employee_id].update_role(employee)
 			continue
 		var character: Employee = EMPLOYEE_SCENE.instantiate()
 		character.configure(employee)
 		_office_grid.add_object(character)
 		character.left_office.connect(_on_character_left_office)
-		character.setup(_office_grid, pathfinder, _seat_of(character.person_key), OfficeState.entrance,
+		character.setup(_office_grid, pathfinder, _spot_of(employee), OfficeState.entrance,
 			OfficeState.get_outside_of_entrance())
 		employees[employee_id] = character
 		character.update_routine(Staff.is_expected_now(character.person_key))
@@ -235,6 +236,20 @@ func _remove_departed() -> void:
 		if leaving.activity == OfficeCharacter.Activity.AWAY:
 			_departing.erase(leaving)
 			leaving.queue_free()
+
+
+func _on_dirt_changed() -> void:
+	_office_grid.set_dirt(OfficeState.rooms)
+	_sync_employees()
+
+
+# Adónde va un empleado: el personal de limpieza en su turno, a la habitación que limpia
+# (hito 37); los demás, a su silla.
+func _spot_of(employee: Dictionary) -> Vector2i:
+	var room_index: int = Staff.get_cleaning_room(employee)
+	if room_index >= 0:
+		return OfficeState.get_room_spot(room_index)
+	return _seat_of(Staff.employee_key(employee["id"]))
 
 
 func _seat_of(key: String) -> Vector2i:

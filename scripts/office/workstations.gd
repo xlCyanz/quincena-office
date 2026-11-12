@@ -14,12 +14,17 @@
 #
 # Desde el hito 36 la Recepción tiene puestos para los recepcionistas: una silla
 # delante del frente de un mostrador (is_counter), uno por mostrador.
+#
+# Desde el hito 37 el personal de limpieza tiene su puesto en un Cuarto de limpieza que
+# funciona: el armario de limpieza (is_closet) mismo, sin silla; uno por armario. En esos
+# puestos "chair" y "desk" son el armario (ahí va su assigned_to).
 class_name Workstations
 extends RefCounted
 
 const WORK_AREA: String = "work_area"
 const SINGLE_OFFICE: String = "single_office"
 const RECEPTION: String = "reception"
+const CLEANING_ROOM: String = "cleaning_room"
 
 
 ## Todos los puestos de la oficina. Cada uno es {"chair": int, "desk": int,
@@ -28,7 +33,7 @@ const RECEPTION: String = "reception"
 ## de esa clase.
 static func find_all(furniture: Array[Dictionary], rooms: Array[Dictionary], room_type: String = "") -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for kind: String in [WORK_AREA, SINGLE_OFFICE, RECEPTION]:
+	for kind: String in [WORK_AREA, SINGLE_OFFICE, RECEPTION, CLEANING_ROOM]:
 		if room_type.is_empty() or room_type == kind:
 			result.append_array(_find_kind(furniture, rooms, kind))
 	return result
@@ -53,9 +58,15 @@ static func _find_kind(furniture: Array[Dictionary], rooms: Array[Dictionary], k
 			continue
 		for cell: Vector2i in room["cells"]:
 			room_cells[cell] = room_index
+	var result: Array[Dictionary] = []
+	if kind == CLEANING_ROOM:
+		for index: int in range(furniture.size()):
+			var item: Dictionary = furniture[index]
+			if bool(FurnitureCatalog.get_item(item["id"]).get("is_closet", false)) and room_cells.has(item["cell"]):
+				result.append({"chair": index, "desk": index, "cell": item["cell"], "room_type": kind})
+		return result
 	var needs_computer: bool = kind == WORK_AREA
 	var one_per_room: bool = kind == SINGLE_OFFICE
-	var result: Array[Dictionary] = []
 	var used_desks: Dictionary[int, bool] = {}
 	var used_rooms: Dictionary[int, bool] = {}
 	for chair_index: int in range(furniture.size()):

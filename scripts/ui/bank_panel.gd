@@ -381,6 +381,8 @@ func _refresh() -> void:
 func _refresh_credit() -> void:
 	_credit_label.text = "Crédito: %s (%d puntos) · interés %s al mes · presta hasta %s" % [
 		Bank.rating, Bank.score, _percent(Bank.get_monthly_rate()), MoneyFormat.format(Bank.get_limit())]
+	if Staff.has_accountant():
+		_credit_label.text += " · con contador: interés y mantenimiento más bajos"
 	_clear(_credit_rows)
 	for part: Dictionary in Bank.get_score_parts():
 		var label: String = part["label"] if String(part["detail"]).is_empty() else "%s (%s)" % [part["label"], part["detail"]]

@@ -92,6 +92,13 @@
 # equipo siempre es su turno vigente. get_agenda da quién trabaja cada hora de un día y
 # marca los huecos (AGENDA_GAP: un equipo trabajando sin su líder presente o, desde el
 # hito 36, nadie en la Recepción mientras puede haber un cliente esperando).
+#
+# Contador y limpieza (hito 37, data/staff.json accounting y cleaning): con un contador
+# en la empresa el mantenimiento y la tasa de los préstamos nuevos bajan (por el factor de
+# Administración) y, unos días antes de cada nómina o día 1, avisa si el saldo de hoy no
+# alcanza. Cada hora que termina, quien trabajó en su puesto ensucia la habitación de su
+# puesto (OfficeState.add_dirt) y cada persona de limpieza en su turno limpia la más sucia.
+# Una habitación sucia baja la meta de ánimo de quienes trabajan en ella.
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -118,6 +125,7 @@ const NO_OFFICE_MESSAGE: String = "No hay ninguna Oficina única libre: hace fal
 const NO_RECEPTION_MESSAGE: String = "No hay ningún mostrador libre: hace falta una Recepción que funcione, con un mostrador y una silla delante."
 ## Cargo que atiende a los clientes que visitan la Recepción (hito 36).
 const RECEPTIONIST_ROLE: String = "receptionist"
+const NO_CLOSET_MESSAGE: String = "No hay ningún armario de limpieza libre: hace falta un Cuarto de limpieza que funcione, con un armario."
 
 var vacancies: Array[Dictionary] = []
 var employees: Array[Dictionary] = []
@@ -776,6 +784,8 @@ func get_mood_target(employee: Dictionary) -> int:
 		target += StaffCatalog.get_morale("stressed_mood")
 	if get_schedule(employee).get_night_hours() > 0:
 		target += float(StaffCatalog.get_overtime("night_mood"))
+	if works_in_dirty_room(employee_key(employee["id"])):
+		target += float(StaffCatalog.get_cleaning("dirty_mood"))
 	return clampi(roundi(target), 0, 100)
 
 
@@ -1435,6 +1445,8 @@ func get_station_problem(role: String) -> String:
 			return NO_OFFICE_MESSAGE
 		Workstations.RECEPTION:
 			return NO_RECEPTION_MESSAGE
+		Workstations.CLEANING_ROOM:
+			return NO_CLOSET_MESSAGE
 	return NO_STATION_MESSAGE
 
 
@@ -1549,6 +1561,7 @@ static func describe_employee(employee: Dictionary) -> String:
 
 func _on_hour_changed(hour: int) -> void:
 	_update_energy()
+	_update_dirt()
 	if not ceo_at_work and hour == StaffCatalog.get_ceo_arrival_hour() \
 			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
 		set_ceo_at_work(true)
@@ -1564,6 +1577,128 @@ func _on_day_changed(day: int, _month: int) -> void:
 	if GameConstants.PAYROLL_DAYS.has(day):
 		_run_payroll()
 	_update_morale()
+	_accountant_warning(day)
+
+
+## Indica si la empresa tiene al menos un contador (hito 37).
+func has_accountant() -> bool:
+	var role: String = String(StaffCatalog.get_accounting("role"))
+	for employee: Dictionary in employees:
+		if employee["role"] == role:
+			return true
+	return false
+
+
+## Cuánto baja el mantenimiento (0.1 = 10 %): el descuento del contador por el factor
+## de Administración, o 0 sin contador.
+func get_maintenance_discount() -> float:
+	if not has_accountant():
+		return 0.0
+	return float(StaffCatalog.get_accounting("maintenance_discount")) * get_department_factor("administration")
+
+
+## Cuánto baja la tasa mensual de un préstamo nuevo (0.01 = 1 punto), o 0 sin contador.
+func get_loan_rate_discount() -> float:
+	if not has_accountant():
+		return 0.0
+	return float(StaffCatalog.get_accounting("loan_rate_discount")) * get_department_factor("administration")
+
+
+## Lo que costaría la nómina del día de pago que está a days_ahead días: lo ganado hasta
+## hoy, lo de esos días, horas extra y lo que ya se debe.
+func estimate_payroll(days_ahead: int) -> int:
+	var total: int = 0
+	for employee: Dictionary in employees:
+		total += get_firing_cost(employee) + roundi(int(employee["salary"]) * days_ahead / float(GameConstants.DAYS_PER_MONTH))
+	return total
+
+
+# El contador avisa warning_days días antes de cada nómina y de cada día 1 si con el
+# saldo de hoy no alcanza para todo lo que se paga hasta ese día.
+func _accountant_warning(day: int) -> void:
+	if not has_accountant():
+		return
+	var ahead: int = int(StaffCatalog.get_accounting("warning_days"))
+	var target: int = (day - 1 + ahead) % GameConstants.DAYS_PER_MONTH + 1
+	if not GameConstants.PAYROLL_DAYS.has(target) and target != 1:
+		return
+	var payroll_day: int = -1
+	for payday: int in GameConstants.PAYROLL_DAYS:
+		var until: int = posmod(payday - day, GameConstants.DAYS_PER_MONTH)
+		if until > 0 and until <= ahead:
+			payroll_day = until
+	var due: int = 0
+	var what: Array[String] = []
+	if payroll_day > 0 and not employees.is_empty():
+		due += estimate_payroll(payroll_day)
+		what.append("la nómina")
+	if target == 1:
+		due += Bank.get_due_on_first() + Economy.get_monthly_maintenance()
+		what.append("las cuotas y el mantenimiento")
+	if due <= 0 or Economy.balance >= due:
+		return
+	EventBus.notice.emit("El contador avisa: el día %d no alcanza para %s (faltan %s)." % [
+		target, " ni ".join(what), MoneyFormat.format(due - Economy.balance)])
+
+
+# Cada hora que termina: quien trabajó en su puesto ensucia su habitación y el personal
+# de limpieza en su turno limpia la más sucia.
+func _update_dirt() -> void:
+	var ended: int = _absolute_hour() - 1
+	var weekday: int = get_weekday_at(ended)
+	var hour: int = posmod(ended, GameConstants.HOURS_PER_DAY)
+	var cleaner_role: String = String(StaffCatalog.get_cleaning("role"))
+	var cleaners: Array[Dictionary] = []
+	var keys: Array[String] = ["ceo"]
+	for employee: Dictionary in employees:
+		if employee["role"] == cleaner_role:
+			if has_working_station(employee) and is_expected(employee_key(employee["id"]), weekday, hour):
+				cleaners.append(employee)
+		else:
+			keys.append(employee_key(employee["id"]))
+	var changed: bool = false
+	var was_dirty: Array[bool] = []
+	for room: Dictionary in OfficeState.rooms:
+		was_dirty.append(OfficeState.is_room_dirty(room))
+	for key: String in keys:
+		if not is_expected(key, weekday, hour):
+			continue
+		var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
+		if seat.is_empty():
+			continue
+		var room_index: int = OfficeState.get_room_index_at(seat["cell"])
+		if room_index >= 0:
+			OfficeState.add_dirt(room_index, 1.0)
+			changed = true
+	var amount: float = float(StaffCatalog.get_cleaning("clean_per_hour")) * get_department_factor("administration")
+	for _cleaner: Dictionary in cleaners:
+		var dirtiest: int = OfficeState.get_dirtiest_room()
+		if dirtiest >= 0:
+			OfficeState.clean_room(dirtiest, amount)
+			changed = true
+	if not changed:
+		return
+	for index: int in range(OfficeState.rooms.size()):
+		if not was_dirty[index] and OfficeState.is_room_dirty(OfficeState.rooms[index]):
+			EventBus.notice.emit("%s está sucia: baja el ánimo de quienes trabajan ahí." % RoomCatalog.get_display_name(OfficeState.rooms[index]["type"]))
+	EventBus.dirt_changed.emit()
+
+
+## Habitación donde está limpiando ahora alguien de limpieza (la más sucia), o -1 si no
+## está en su turno o todo está limpio.
+func get_cleaning_room(employee: Dictionary) -> int:
+	if employee["role"] != String(StaffCatalog.get_cleaning("role")) or not is_expected_now(employee_key(employee["id"])):
+		return -1
+	return OfficeState.get_dirtiest_room()
+
+
+## Indica si la habitación del puesto de alguien está sucia.
+func works_in_dirty_room(key: String) -> bool:
+	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
+	if seat.is_empty():
+		return false
+	var room_index: int = OfficeState.get_room_index_at(seat["cell"])
+	return room_index >= 0 and OfficeState.is_room_dirty(OfficeState.rooms[room_index])
 
 
 # Anota lo ganado por cada uno hasta hoy como deuda y trata de pagarla toda. Si no

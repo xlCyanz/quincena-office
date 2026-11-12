@@ -24,12 +24,18 @@ var _atlas_rows: Dictionary[String, int] = {}
 # Capa ordenada por Y: muebles y personajes. Lo que está más abajo en pantalla
 # (más cerca de quien mira) se dibuja encima.
 @onready var _objects: Node2D = $Objects
+# Manchas de suciedad (hito 37); se crea en _ready, justo encima del tinte de habitaciones.
+var _dirt_overlay := DirtOverlay.new()
 
 
 func _ready() -> void:
 	_floor.tile_set = _build_tile_set()
 	_highlight.visible = false
 	_room_overlay.setup(self)
+	_dirt_overlay.name = "DirtOverlay"
+	add_child(_dirt_overlay)
+	move_child(_dirt_overlay, _room_overlay.get_index() + 1)
+	_dirt_overlay.setup(self)
 
 
 func _process(_delta: float) -> void:
@@ -57,6 +63,17 @@ func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vec
 	_place_edge_pieces(edges)
 	_place_furniture(furniture)
 	_room_overlay.set_rooms(rooms)
+	_dirt_overlay.set_rooms(rooms)
+
+
+## Vuelve a dibujar la suciedad de las habitaciones (hito 37).
+func set_dirt(rooms: Array[Dictionary]) -> void:
+	_dirt_overlay.set_rooms(rooms)
+
+
+## Capa de suciedad (para las pruebas).
+func get_dirt_overlay() -> DirtOverlay:
+	return _dirt_overlay
 
 
 ## Muestra u oculta el tinte de las habitaciones (se ve en modo construcción).

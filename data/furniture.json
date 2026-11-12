@@ -1,5 +1,5 @@
 {
-	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3).",
+	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). Limpieza (hito 37): trash_can = zafacón (la habitación se ensucia más lento; $30 provisional); is_closet = armario de limpieza, puesto del personal de limpieza dentro de un Cuarto de limpieza ($200 provisional). production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3).",
 	"resale_ratio": 0.5,
 	"items": {
 		"simple_desk": {
@@ -56,6 +56,25 @@
 			"height": 12,
 			"color": "a0523d",
 			"waiting_seat": true
+		},
+		"trash_can": {
+			"name": "Zafacón",
+			"price": 30,
+			"size": [1, 1],
+			"shape": "desk",
+			"height": 10,
+			"color": "6f7a80",
+			"trash_can": true
+		},
+		"cleaning_closet": {
+			"name": "Armario de limpieza",
+			"short_name": "Armario",
+			"price": 200,
+			"size": [1, 1],
+			"shape": "desk",
+			"height": 30,
+			"color": "8fa3b8",
+			"is_closet": true
 		},
 		"basic_computer": {
 			"name": "Computadora básica",

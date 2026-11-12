@@ -6,7 +6,8 @@
 # desde cada casilla (diseño, 15.7); con los tamaños de la fase 1 es instantáneo, así
 # que se recalcula con cada cambio de paredes y no solo al salir del modo construcción.
 #
-# Una habitación es {"type": String, "cells": Array[Vector2i]}: siempre ocupa un
+# Una habitación es {"type": String, "cells": Array[Vector2i]} (y "dirt", su suciedad
+# desde el hito 37): siempre ocupa un
 # espacio entero. Al cambiar las paredes, cada habitación pasa al espacio nuevo que
 # tiene más de sus muebles obligatorios y, a igualdad, más casillas en común con ella;
 # si ninguno le sirve, se deshace.
@@ -130,7 +131,8 @@ static func reconcile(rooms: Array[Dictionary], spaces: Array[Dictionary], entra
 			continue
 		claimed[best] = true
 		var cells: Array[Vector2i] = spaces[best]["cells"]
-		result.append({"type": room["type"], "cells": cells.duplicate()})
+		# La suciedad (hito 37) sigue a la habitación aunque cambie de casillas.
+		result.append({"type": room["type"], "cells": cells.duplicate(), "dirt": float(room.get("dirt", 0.0))})
 	return result
 
 

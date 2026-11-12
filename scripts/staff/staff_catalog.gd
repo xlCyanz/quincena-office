@@ -116,6 +116,16 @@ static func get_departments(key: String) -> Variant:
 	return _staff_data()["departments"][key]
 
 
+## Valor de data/staff.json, accounting (contador, hito 37).
+static func get_accounting(key: String) -> Variant:
+	return _staff_data()["accounting"][key]
+
+
+## Valor de data/staff.json, cleaning (suciedad y limpieza, hito 37).
+static func get_cleaning(key: String) -> Variant:
+	return _staff_data()["cleaning"][key]
+
+
 ## Ids de los departamentos, en orden.
 static func get_department_ids() -> Array[String]:
 	var ids: Array[String] = []

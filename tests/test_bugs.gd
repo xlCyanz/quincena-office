@@ -22,6 +22,10 @@ func _ready() -> void:
 		return
 	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
+	# La oficina se mantiene limpia: la suciedad (hito 37) bajaría el ánimo y el ritmo.
+	EventBus.hour_changed.connect(func(_hour: int) -> void:
+		for room: Dictionary in OfficeState.rooms:
+			room["dirt"] = 0.0)
 	_check_chances()
 	_check_fix()
 	_check_qa()

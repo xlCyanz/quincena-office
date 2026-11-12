@@ -26,7 +26,8 @@ var floors: Dictionary[Vector2i, String] = {}
 ## está en el diccionario está libre.
 var edges: Dictionary[Vector3i, String] = {}
 
-## Habitaciones: cada una es {"type": String, "cells": Array[Vector2i]}.
+## Habitaciones: cada una es {"type": String, "cells": Array[Vector2i], "dirt": float}
+## (dirt = suciedad de 0 a cleaning.max_dirt, hito 37; puede faltar y vale 0).
 var rooms: Array[Dictionary] = []
 
 ## Muebles: cada uno es {"id": String, "cell": Vector2i, "rotation": int,
@@ -174,6 +175,68 @@ func find_room(room_type: String) -> Dictionary:
 	return {}
 
 
+## Suciedad de una habitación (hito 37).
+static func get_room_dirt(room: Dictionary) -> float:
+	return float(room.get("dirt", 0.0))
+
+
+## Índice de la habitación que contiene una casilla, o -1.
+func get_room_index_at(cell: Vector2i) -> int:
+	return RoomRules.room_index_at(rooms, cell)
+
+
+## Indica si una habitación está tan sucia que baja el ánimo de quienes trabajan ahí.
+static func is_room_dirty(room: Dictionary) -> bool:
+	return get_room_dirt(room) >= float(StaffCatalog.get_cleaning("dirty_from"))
+
+
+## Indica si una habitación tiene zafacón.
+func has_trash_can(room: Dictionary) -> bool:
+	var cells: Array[Vector2i] = room["cells"]
+	for item: Dictionary in furniture:
+		if bool(FurnitureCatalog.get_item(item["id"]).get("trash_can", false)) and cells.has(item["cell"]):
+			return true
+	return false
+
+
+## Suma la suciedad de people_hours horas-persona a la habitación de room_index (la
+## mitad con zafacón), sin pasar del máximo.
+func add_dirt(room_index: int, people_hours: float) -> void:
+	if room_index < 0 or room_index >= rooms.size():
+		return
+	var room: Dictionary = rooms[room_index]
+	var amount: float = people_hours * float(StaffCatalog.get_cleaning("dirt_per_person_hour"))
+	if has_trash_can(room):
+		amount *= float(StaffCatalog.get_cleaning("trash_can_factor"))
+	room["dirt"] = minf(get_room_dirt(room) + amount, float(StaffCatalog.get_cleaning("max_dirt")))
+
+
+## Quita suciedad de una habitación (sin bajar de 0).
+func clean_room(room_index: int, amount: float) -> void:
+	if room_index >= 0 and room_index < rooms.size():
+		rooms[room_index]["dirt"] = maxf(0.0, get_room_dirt(rooms[room_index]) - amount)
+
+
+## Habitación más sucia (la primera si empatan), o -1 si todas están limpias.
+func get_dirtiest_room() -> int:
+	var best: int = -1
+	for index: int in range(rooms.size()):
+		if get_room_dirt(rooms[index]) > 0.0 and (best < 0 or get_room_dirt(rooms[index]) > get_room_dirt(rooms[best])):
+			best = index
+	return best
+
+
+## Casilla libre de una habitación donde puede pararse alguien (sin muebles y que no sea
+## la entrada), o la primera si no hay.
+func get_room_spot(room_index: int) -> Vector2i:
+	var cells: Array[Vector2i] = rooms[room_index]["cells"]
+	var taken: Array[Vector2i] = get_furniture_cells()
+	for cell: Vector2i in cells:
+		if not taken.has(cell) and cell != entrance:
+			return cell
+	return cells[0]
+
+
 ## Devuelve el estado de la oficina para guardarlo (hito 9). Las casillas se
 ## guardan como listas [x, y] para que pasen por JSON sin perderse.
 func export_state() -> Dictionary:
@@ -182,7 +245,7 @@ func export_state() -> Dictionary:
 		var cells: Array = []
 		for cell: Vector2i in room["cells"]:
 			cells.append([cell.x, cell.y])
-		saved_rooms.append({"type": room["type"], "cells": cells})
+		saved_rooms.append({"type": room["type"], "cells": cells, "dirt": get_room_dirt(room)})
 	var saved_furniture: Array = []
 	for item: Dictionary in furniture:
 		var cell: Vector2i = item["cell"]
@@ -232,7 +295,7 @@ func import_state(state: Dictionary) -> void:
 		var cells: Array[Vector2i] = []
 		for cell: Array in room["cells"]:
 			cells.append(_to_cell(cell))
-		rooms.append({"type": String(room["type"]), "cells": cells})
+		rooms.append({"type": String(room["type"]), "cells": cells, "dirt": float(room.get("dirt", 0.0))})
 	furniture.clear()
 	for item: Dictionary in state.get("furniture", []):
 		furniture.append(_furniture_from_data(item))

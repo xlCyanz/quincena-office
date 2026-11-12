@@ -85,4 +85,6 @@ static func _load() -> void:
 			"on_desk": bool(raw.get("on_desk", false)),
 			"is_counter": bool(raw.get("is_counter", false)),
 			"waiting_seat": bool(raw.get("waiting_seat", false)),
+			"trash_can": bool(raw.get("trash_can", false)),
+			"is_closet": bool(raw.get("is_closet", false)),
 		}

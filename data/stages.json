@@ -7,7 +7,7 @@
 		},
 		{
 			"id": "startup", "name": "Startup", "requirements": { "employees": 5, "delivered": 3 }, "max_loan": 30000, "rooms": [],
-			"unlocks": ["Contratos medianos sin vendedor", "Líderes de equipo"]
+			"unlocks": ["Contratos medianos sin vendedor", "Líderes de equipo", "Recepcionistas y contadores"]
 		},
 		{
 			"id": "small_business", "name": "Pequeña empresa", "requirements": { "employees": 15, "complete_teams": 2 }, "max_loan": 30000,

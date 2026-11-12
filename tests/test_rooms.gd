@@ -62,7 +62,7 @@ func _interior_room_changes() -> Array[Dictionary]:
 
 func _check_catalog() -> void:
 	var ids: Array[String] = RoomCatalog.get_type_ids()
-	_expect(ids.size() == 8, "debería haber 8 tipos de habitación: %s" % [ids])
+	_expect(ids.size() == 9, "debería haber 9 tipos de habitación: %s" % [ids])
 	_expect(RoomCatalog.needs_exterior_wall("reception") and RoomCatalog.needs_entrance("reception"),
 		"la Recepción exige pared exterior y entrada")
 	_expect(RoomCatalog.is_locked("executive_office") and RoomCatalog.is_unique("executive_office"),

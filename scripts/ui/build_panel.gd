@@ -22,6 +22,8 @@ const DEFAULT_LAND_WIDTH: int = 4
 const DEFAULT_LAND_DEPTH: int = 3
 
 const MARGIN_BOTTOM: float = 16.0
+## Botones por fila de muebles y de habitaciones.
+const MAX_ROW_BUTTONS: int = 6
 
 var _menu_bar: HBoxContainer
 var _open_button: Button
@@ -81,8 +83,8 @@ func _ready() -> void:
 		room_tools.append([type_id, RoomCatalog.get_display_name(type_id)])
 	room_tools.append([BuildController.TOOL_UNMARK_ROOM, "Quitar habitación"])
 	var structure_row: HBoxContainer = _add_tool_row(rows, structure, group)
-	_add_tool_row(rows, furniture, group)
-	_add_tool_row(rows, room_tools, group)
+	_add_tool_rows(rows, furniture, group)
+	_add_tool_rows(rows, room_tools, group)
 	_build_land_row(rows)
 	_exit_button = Button.new()
 	_exit_button.text = "Salir"
@@ -164,6 +166,12 @@ func get_exit_button() -> Button:
 
 func get_tool_button(tool: String) -> Button:
 	return _tool_buttons[tool]
+
+
+# Pone los botones en filas de hasta MAX_ROW_BUTTONS para que el panel quepa en pantalla.
+func _add_tool_rows(parent: Container, entries: Array[Array], group: ButtonGroup) -> void:
+	for start: int in range(0, entries.size(), MAX_ROW_BUTTONS):
+		_add_tool_row(parent, entries.slice(start, start + MAX_ROW_BUTTONS), group)
 
 
 func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup) -> HBoxContainer:

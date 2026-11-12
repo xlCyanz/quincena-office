@@ -476,6 +476,8 @@ func _refresh_raise(employee: Dictionary) -> void:
 		var left: int = maxi(0, int(request["until_day"]) - GameClock.get_day_count())
 		alerts.append("Pide un aumento de %s (%d %s para responder)." % [
 			MoneyFormat.format(int(request["amount"])), left, "día" if left == 1 else "días"])
+	if Staff.works_in_dirty_room(Staff.employee_key(employee["id"])):
+		alerts.append("Su lugar de trabajo está sucio: le baja el ánimo. Contrata personal de limpieza.")
 	_alert.text = "\n".join(alerts)
 	_alert.visible = not alerts.is_empty()
 	_request_row.visible = not request.is_empty()

@@ -92,9 +92,25 @@ func get_rating_info(letter: String = "") -> Dictionary:
 	return {}
 
 
-## Interés mensual de la letra actual (0.045 = 4.5 %).
+## Interés mensual de un préstamo nuevo: el de la letra actual (0.045 = 4.5 %) menos el
+## descuento del contador (hito 37), sin bajar del mínimo.
 func get_monthly_rate() -> float:
-	return float(get_rating_info().get("monthly_rate", 0.0))
+	var rate: float = float(get_rating_info().get("monthly_rate", 0.0))
+	var discount: float = Staff.get_loan_rate_discount()
+	if discount <= 0.0:
+		return rate
+	return maxf(rate - discount, minf(rate, float(StaffCatalog.get_accounting("min_loan_rate"))))
+
+
+## Lo que se cobraría el próximo día 1: las cuotas que tocan y las atrasadas.
+func get_due_on_first() -> int:
+	var day_count: int = GameClock.get_day_count()
+	var next_first: int = day_count + GameConstants.DAYS_PER_MONTH - (GameClock.get_day() - 1)
+	var total: int = get_overdue()
+	for loan: Dictionary in loans:
+		if get_remaining_months(loan) > 0 and next_first >= int(loan.get("first_due_day", 0)):
+			total += get_installment(loan)
+	return total
 
 
 ## Cuánto presta el banco como máximo: múltiplo de la letra × ingreso del mes pasado,

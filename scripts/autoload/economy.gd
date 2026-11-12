@@ -88,13 +88,19 @@ static func get_maintenance(area: int) -> int:
 	return area * GameConstants.MAINTENANCE_PER_M2
 
 
+## Mantenimiento de este local con el descuento del contador (hito 37).
+func get_monthly_maintenance() -> int:
+	var base: int = get_maintenance(OfficeState.lot.get_area())
+	return roundi(base * (1.0 - Staff.get_maintenance_discount()))
+
+
 func _on_day_changed(day: int, month: int) -> void:
 	_day = day
 	_month = month
 	_drop_old_months()
 	if day == 1:
-		# Lee el tamaño del local del estado de la oficina (solo lectura).
-		charge(get_maintenance(OfficeState.lot.get_area()), CONCEPT_MAINTENANCE)
+		# Lee el tamaño del local y el descuento del contador (solo lectura).
+		charge(get_monthly_maintenance(), CONCEPT_MAINTENANCE)
 		EventBus.payment_recorded.emit(CONCEPT_MAINTENANCE, balance >= 0)
 
 
