@@ -138,7 +138,9 @@ func _check_mark_and_rules() -> void:
 	_expect(builder.mark_room("break_room", Vector2i(3, 3))["ok"], "marcar la sala de descanso")
 	result = builder.mark_room("break_room", Vector2i(5, 7))
 	_expect(not result["ok"] and String(result["message"]).contains("Solo puede haber una"), "dos salas de descanso: %s" % [result])
-	# Cambiar el tipo de una habitación.
+	# Cambiar el tipo de una habitación (la Sala de reuniones se habilita con la primera
+	# oferta grande, hito 47).
+	Projects.meeting_room_unlocked = true
 	result = builder.mark_room("meeting_room", Vector2i(3, 3))
 	_expect(result["ok"] and _room_type_at(Vector2i(4, 4)) == "meeting_room"
 		and RoomRules.room_index_at(OfficeState.rooms, Vector2i(3, 3)) == OfficeState.rooms.size() - 1

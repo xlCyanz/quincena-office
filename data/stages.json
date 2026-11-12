@@ -16,11 +16,11 @@
 		},
 		{
 			"id": "medium_business", "name": "Mediana empresa", "requirements": { "employees": 40, "products_launched": 1 }, "max_loan": 0, "rooms": [],
-			"unlocks": ["Ejecutivos y departamentos", "Contratos grandes (próximamente)"]
+			"unlocks": ["Ejecutivos y departamentos", "Contratos grandes (con 4 ★ y Sala de reuniones)"]
 		},
 		{
 			"id": "corporation", "name": "Corporación", "requirements": { "executives": 4, "active_products": 3 }, "max_loan": 0, "rooms": [],
-			"unlocks": ["Tamaño máximo del solar y clientes de élite (próximamente)"]
+			"unlocks": ["Clientes de élite (con 5 ★)", "Tamaño máximo del solar (próximamente)"]
 		}
 	],
 	"requirement_names": {

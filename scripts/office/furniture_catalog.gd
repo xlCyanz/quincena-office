@@ -111,6 +111,7 @@ static func _load() -> void:
 			"is_monitor": bool(raw.get("is_monitor", false)),
 			"energy_per_work_hour": int(raw.get("energy_per_work_hour", 0)),
 			"mood_bonus": int(raw.get("mood_bonus", 0)),
+			"presentation_screen": bool(raw.get("presentation_screen", false)),
 		}
 
 
@@ -148,6 +149,11 @@ static func get_work_energy(id: String) -> int:
 ## Lo que suma a la meta de ánimo de quien trabaja en ese escritorio.
 static func get_mood_bonus(id: String) -> int:
 	return int(get_item(id).get("mood_bonus", 0))
+
+
+## Indica si es una pantalla de presentaciones (hito 47).
+static func is_presentation_screen(id: String) -> bool:
+	return bool(get_item(id).get("presentation_screen", false))
 
 
 ## Indica si estorba el paso (la alfombra se pisa: ocupa su casilla pero no tapa el paso).

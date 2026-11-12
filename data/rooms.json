@@ -1,5 +1,5 @@
 {
-	"_comentario": "Tipos de habitación (docs/diseno.md 2.1). Una habitación es un espacio cerrado (paredes o puertas en todo su contorno) con al menos una puerta. min_area (m²) y required son lo que necesita para funcionar: se puede marcar antes y amueblar después. Cada requisito pide un mueble de la lista items (ids de data/furniture.json; los que aún no están en el catálogo llegan en fases siguientes). unique = solo puede haber una; mandatory_count = cuántas tiene que tener la oficina; locked = no se puede quitar ni deshacer con paredes; needs_exterior_wall = tiene que tocar el borde del local; needs_entrance = tiene que contener la entrada. color = tinte en el modo construcción.",
+	"_comentario": "Tipos de habitación (docs/diseno.md 2.1). Una habitación es un espacio cerrado (paredes o puertas en todo su contorno) con al menos una puerta. min_area (m²) y required son lo que necesita para funcionar: se puede marcar antes y amueblar después. Cada requisito pide un mueble de la lista items (ids de data/furniture.json; los que aún no están en el catálogo llegan en fases siguientes). unique = solo puede haber una; mandatory_count = cuántas tiene que tener la oficina; locked = no se puede quitar ni deshacer con paredes; needs_exterior_wall = tiene que tocar el borde del local; needs_entrance = tiene que contener la entrada. color = tinte en el modo construcción. unlocked_by_offer = solo se puede marcar desde que llegó la primera oferta que la exige (Projects.meeting_room_unlocked; hito 47).",
 	"types": {
 		"executive_office": {
 			"name": "Oficina Ejecutiva",
@@ -25,6 +25,7 @@
 		"meeting_room": {
 			"name": "Sala de reuniones",
 			"min_area": 9,
+			"unlocked_by_offer": true,
 			"required": [
 				{ "name": "Mesa de reuniones", "items": ["meeting_table"] }
 			],

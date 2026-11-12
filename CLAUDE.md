@@ -93,7 +93,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.
 - `Projects` guarda reputación (empieza en 1 ★), ofertas y contratos (`data/contracts.json`, `ContractCatalog`). A las 9:00
   caducan las ofertas viejas (5 días) y llega una con 50 % + 25 % por vendedor (bandeja de 6). Tamaños: pequeño siempre,
-  mediano desde Startup o con un vendedor, grande con 4 ★ y exige Sala de reuniones. Plazo = puntos ÷ `points_per_day` del tamaño
+  mediano desde Startup o con un vendedor, grande desde Mediana empresa con 4 ★ y exige Sala de reuniones (hito 47). Plazo = puntos ÷ `points_per_day` del tamaño
   (17 el CEO, 34 un equipo, 100) × `days_slack` (1.1–1.4), hacia arriba (`ContractCatalog.get_days_range`). Contratos en curso: uno por equipo (mínimo 1).
   Aceptar cobra el anticipo (30 %, si trae). El menú Proyectos (`ProjectsPanel`) no pausa.
 - Equipos (`Staff.teams`): `{id, name, members, schedule}`; un empleado está como mucho en un equipo. El turno es hora de entrada
@@ -274,6 +274,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   siguiente; `Builder.quote_upgrade`/`upgrade` (herramienta Mejorar) la cambia en su lugar cobrando la diferencia, también en un puesto
   ocupado o la silla del CEO. El bono de un puesto es computadora + monitor (`Workstations.get_desk_bonus`, `bonus_of`, `bonuses_by_owner`
   con caché). `data/rooms.json` acepta la silla ergonómica y el escritorio amplio donde pedía silla y escritorio.
+- Contratos grandes y élite (hito 47, `data/contracts.json`): grande (`min_stage` 4 = Mediana empresa, 4 ★) y `elite` «De élite» (`min_stage`
+  5 = Corporación, 5 ★, puntos del grande, pago ×1.5, clientes de `elite_clients`); los dos exigen Sala de reuniones que funcione
+  (`requires_room`, mesa de reuniones 2×2 $1,200). La Sala de reuniones (`unlocked_by_offer` en `data/rooms.json`) se marca solo desde que
+  llega la primera oferta que la exige (`Projects.meeting_room_unlocked`, guardado; `_unlock_room_for` en `_make_offer`, aviso y
+  `EventBus.rooms_unlocked`; partidas viejas la habilitan si ya hay una sala u oferta que la pide). `Company.room_lock_reason` da el motivo
+  al modo construcción. Pantalla de presentaciones (de pared, $800): en una Sala de reuniones que funciona el peso de esos tamaños ×1.25
+  (`Projects.get_size_weight`, `meetings.screen_weight_factor`). La pizarra queda para más adelante.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -334,3 +341,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 44 | Lista de eventos | ✅ Completado (los 16 de 10.2; multa 10 % de los ingresos del mes pasado, mínimo $500, la mitad con archivero y nada con contador; pago atrasado retiene 30 % de una entrega de la última semana, 15 días o 3 con contador; baterías anulan el apagón; oficina sucia solo sin limpieza; reunión inútil con líder bajo 60; inodoro, lavamanos y cafetera nuevos para Baño y Sala de descanso; los buenos pesan más) |
 | 45 | Ambiente y decoración | ✅ Completado (planta grande, cuadro, reloj, lámpara, alfombra que se pisa y pecera que baja el estrés; puntos × 10 / área − amontonar según el porcentaje de escritorios de más que 1 cada 4 m² (−15 con 50 % más), tope ±15 a la meta de ánimo; objetos de pared en una cara de pared con casilla y lado; el aire acondicionado pasa a la pared y las partidas viejas lo cuelgan solas) |
 | 46 | Calidades de muebles | ✅ Completado (computadora media $1,200 +15 % y pro $2,500 +30 %; segundo monitor $300 +5 % sobre un escritorio con computadora; silla ergonómica $250 −4/h de energía en vez de −6; escritorio amplio $350 +5 a la meta de ánimo; herramienta Mejorar sube computadora o silla en su lugar cobrando la diferencia, también en puestos ocupados) |
+| 47 | Contratos grandes y Sala de reuniones | ✅ Completado (grandes desde Mediana empresa con 4 ★; de élite desde Corporación con 5 ★, pago ×1.5 y clientes propios; los dos exigen Sala de reuniones con mesa 2×2 $1,200; la sala se habilita para siempre con la primera oferta grande; pantalla de presentaciones $800 en la pared: +25 % de peso a grandes y de élite; pizarra pendiente) |

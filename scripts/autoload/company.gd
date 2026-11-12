@@ -218,7 +218,18 @@ func get_room_stage(type_id: String) -> int:
 
 ## Indica si ya se puede marcar un tipo de habitación.
 func is_room_unlocked(type_id: String) -> bool:
+	if RoomCatalog.is_unlocked_by_offer(type_id) and not Projects.meeting_room_unlocked:
+		return false
 	return stage >= get_room_stage(type_id)
+
+
+## Por qué todavía no se puede marcar un tipo de habitación (o "" si se puede).
+func room_lock_reason(type_id: String) -> String:
+	if is_room_unlocked(type_id):
+		return ""
+	if RoomCatalog.is_unlocked_by_offer(type_id) and not Projects.meeting_room_unlocked:
+		return "La %s se habilita cuando llegue la primera oferta grande." % RoomCatalog.get_display_name(type_id)
+	return "La %s se desbloquea en %s." % [RoomCatalog.get_display_name(type_id), get_stage_name(get_room_stage(type_id))]
 
 
 # --- Objetivos (hito 28) ---

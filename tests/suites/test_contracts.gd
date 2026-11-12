@@ -64,7 +64,7 @@ func _add_fake_salesperson(employee_id: int) -> void:
 
 
 func _check_catalog() -> void:
-	var sizes: Array[String] = ["small", "medium", "large"]
+	var sizes: Array[String] = ["small", "medium", "large", "elite"]
 	_expect(ContractCatalog.get_size_ids() == sizes, "tamaños: %s" % [ContractCatalog.get_size_ids()])
 	_expect(ContractCatalog.get_size_range("small", "points") == Vector2i(150, 300)
 		and ContractCatalog.get_days_range("small", 250) == Vector2i(17, 21)
@@ -86,11 +86,11 @@ func _check_new_game() -> void:
 	_expect(Projects.get_contract_limit() == 1, "sin equipos, un contrato a la vez")
 
 
-# Con 5 estrellas llegan los tres tamaños; cada oferta respeta su fila de la tabla.
+# Con 5 estrellas en Corporación llegan los cuatro tamaños; cada oferta respeta su fila de la tabla.
 func _check_ranges() -> void:
 	_new_game()
 	Projects.reputation = 5.0
-	Company.stage = 1  # Startup: llegan medianos sin vendedor (hito 27).
+	Company.stage = 4  # Corporación: llegan grandes y de élite (hito 47).
 	var seen: Dictionary[int, bool] = {}
 	var sizes_seen: Dictionary[String, int] = {}
 	var with_advance: int = 0
@@ -110,7 +110,7 @@ func _check_ranges() -> void:
 			Projects.reject(offer["id"])
 	_expect(seen.size() > 80, "llegaron %d ofertas en 250 días" % seen.size())
 	_expect(sizes_seen.get("small", 0) > sizes_seen.get("medium", 0) and sizes_seen.get("medium", 0) > sizes_seen.get("large", 0)
-		and sizes_seen.get("large", 0) > 0, "los tamaños llegan según su peso: %s" % [sizes_seen])
+		and sizes_seen.get("large", 0) > 0 and sizes_seen.get("elite", 0) > 0, "los tamaños llegan según su peso: %s" % [sizes_seen])
 	_expect(with_advance > seen.size() / 4 and with_advance < seen.size() * 3 / 4, "más o menos la mitad trae anticipo: %d de %d" % [
 		with_advance, seen.size()])
 
@@ -133,7 +133,8 @@ func _check_offer(offer: Dictionary) -> void:
 	var advance: int = offer["advance"]
 	_expect(advance == 0 or advance == roundi(int(offer["pay"]) * 0.3), "%s: anticipo %d" % [label, advance])
 	_expect(int(offer["expires_day"]) == int(offer["arrived_day"]) + 5, "%s: caduca a los 5 días" % label)
-	_expect(ContractCatalog.get_clients().has(offer["client"]), "%s: cliente de la lista" % label)
+	var clients: Array[String] = ContractCatalog.get_elite_clients() if size == "elite" else ContractCatalog.get_clients()
+	_expect(clients.has(offer["client"]), "%s: cliente de la lista" % label)
 
 
 # Con vendedores llegan más ofertas y, aun con 1 estrella, también medianas.
@@ -212,8 +213,9 @@ func _check_accept() -> void:
 	# Sin anticipo no entra dinero.
 	Projects.contracts.clear()
 	_expect(Projects.accept(without["id"])["ok"] and Economy.balance == before, "aceptar sin anticipo no cobra")
-	# Los grandes exigen Sala de reuniones.
+	# Los grandes exigen Sala de reuniones (y llegan desde Mediana empresa, hito 47).
 	Projects.contracts.clear()
+	Company.stage = 3
 	var large: Dictionary = {}
 	for day: int in range(120):
 		for offer: Dictionary in Projects.offers:

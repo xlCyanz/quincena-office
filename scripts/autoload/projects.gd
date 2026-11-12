@@ -64,6 +64,9 @@ var delivered_count: int = 0
 var accepted_count: int = 0
 ## La mejor reputación que tuvo la empresa (para la pantalla de fin).
 var best_reputation: float = 1.0
+## Ya llegó una oferta que exige Sala de reuniones: desde entonces se puede construir
+## (hito 47; RoomCatalog.is_unlocked_by_offer).
+var meeting_room_unlocked: bool = false
 
 var _next_id: int = 1
 var _rng := RandomNumberGenerator.new()
@@ -83,12 +86,25 @@ func new_game() -> void:
 	history.clear()
 	delivered_count = 0
 	accepted_count = 0
+	meeting_room_unlocked = false
 	reputation = float(ContractCatalog.get_offers("start_reputation"))
 	best_reputation = reputation
 	_next_id = 1
 	_rng.randomize()
 	offers.append(_make_offer(GameClock.get_day_count(), "small"))
 	EventBus.projects_changed.emit()
+	EventBus.rooms_unlocked.emit()
+
+
+# Para partidas de antes del hito 47: algo ya usa la Sala de reuniones.
+func _meeting_room_in_use() -> bool:
+	for room: Dictionary in OfficeState.rooms:
+		if RoomCatalog.is_unlocked_by_offer(room["type"]):
+			return true
+	for project: Dictionary in offers + contracts:
+		if not ContractCatalog.get_required_room(String(project.get("size", ""))).is_empty():
+			return true
+	return false
 
 
 ## Fija la semilla del azar (las pruebas la usan para tener resultados repetibles).
@@ -556,7 +572,8 @@ func _make_offer(today: int, forced_size: String = "") -> Dictionary:
 	var advance: int = 0
 	if _rng.randf() < float(ContractCatalog.get_offers("advance_chance")):
 		advance = roundi(pay * float(ContractCatalog.get_offers("advance_ratio")))
-	var clients: Array[String] = ContractCatalog.get_clients()
+	var clients: Array[String] = ContractCatalog.get_elite_clients() if ContractCatalog.is_elite(size) else ContractCatalog.get_clients()
+	_unlock_room_for(size)
 	var offer: Dictionary = {
 		"id": _take_id(), "client": clients[_rng.randi_range(0, clients.size() - 1)], "type": type_id,
 		"size": size, "points": {"design": design, "programming": programming, "testing": total - design - programming},
@@ -569,15 +586,51 @@ func _make_offer(today: int, forced_size: String = "") -> Dictionary:
 # Elige un tamaño entre los permitidos según su peso.
 func _pick_size() -> String:
 	var sizes: Array[String] = get_allowed_sizes()
-	var total: int = 0
+	var total: float = 0.0
+	var whole: bool = true
 	for size: String in sizes:
-		total += int(ContractCatalog.get_size(size)["weight"])
-	var roll: int = _rng.randi_range(1, total)
+		total += get_size_weight(size)
+		whole = whole and is_equal_approx(get_size_weight(size), roundf(get_size_weight(size)))
+	# Con pesos enteros (sin pantalla) se sortea un entero, como antes del hito 47, para
+	# que el azar de las partidas y las simulaciones no cambie.
+	var roll: float = (_rng.randi_range(1, roundi(total)) - 0.5) if whole else _rng.randf() * total
 	for size: String in sizes:
-		roll -= int(ContractCatalog.get_size(size)["weight"])
-		if roll <= 0:
+		roll -= get_size_weight(size)
+		if roll < 0.0:
 			return size
-	return sizes[0]
+	return sizes[sizes.size() - 1]
+
+
+## Peso de un tamaño entre las ofertas: el de data/contracts.json y, para los que exigen
+## Sala de reuniones, más con una pantalla de presentaciones en una que funcione (hito 47).
+func get_size_weight(size: String) -> float:
+	var weight: float = float(ContractCatalog.get_size(size)["weight"])
+	var room: String = ContractCatalog.get_required_room(size)
+	if not room.is_empty() and has_presentation_screen(room):
+		weight *= float(ContractCatalog.get_meetings("screen_weight_factor"))
+	return weight
+
+
+## Indica si hay una pantalla de presentaciones en una habitación de ese tipo que funciona.
+func has_presentation_screen(room_type: String) -> bool:
+	for room: Dictionary in OfficeState.rooms:
+		if room["type"] != room_type or not RoomRules.function_problems(room, OfficeState.furniture).is_empty():
+			continue
+		for item: Dictionary in OfficeState.furniture:
+			if FurnitureCatalog.is_presentation_screen(item["id"]) and (room["cells"] as Array).has(item["cell"]):
+				return true
+	return false
+
+
+# La primera oferta de un tamaño que exige Sala de reuniones la deja construir.
+func _unlock_room_for(size: String) -> void:
+	var room: String = ContractCatalog.get_required_room(size)
+	if room.is_empty() or not RoomCatalog.is_unlocked_by_offer(room) or meeting_room_unlocked:
+		return
+	meeting_room_unlocked = true
+	EventBus.notice.emit("Llegó la primera oferta %s: ya puedes construir una %s (con mesa de reuniones) para aceptarla." % [
+		ContractCatalog.get_size_name(size).to_lower(), RoomCatalog.get_display_name(room)])
+	EventBus.rooms_unlocked.emit()
 
 
 ## Indica si hay una habitación de ese tipo que funciona (lo usan los eventos, hito 44).
@@ -653,7 +706,8 @@ func _take_id() -> int:
 func export_state() -> Dictionary:
 	return {"offers": offers.duplicate(true), "contracts": contracts.duplicate(true), "reputation": reputation,
 		"history": history.duplicate(true), "delivered_count": delivered_count, "accepted_count": accepted_count, "best_reputation": best_reputation,
-		"next_id": _next_id, "rng_state": str(_rng.state), "visits": visits.duplicate(true)}
+		"next_id": _next_id, "rng_state": str(_rng.state), "visits": visits.duplicate(true),
+		"meeting_room_unlocked": meeting_room_unlocked}
 
 
 ## Restaura los proyectos desde una partida guardada. Sin datos (partidas anteriores al
@@ -702,6 +756,10 @@ func import_state(state: Dictionary) -> void:
 	delivered_count = int(state.get("delivered_count", 0))
 	# Antes del hito 28 no se contaban: al menos los que están en curso o en el historial.
 	accepted_count = int(state.get("accepted_count", contracts.size() + history.size()))
+	# Antes del hito 47: se habilita si ya hay una Sala de reuniones o una oferta o contrato
+	# que la exige.
+	meeting_room_unlocked = bool(state.get("meeting_room_unlocked", false)) or _meeting_room_in_use()
+	EventBus.rooms_unlocked.emit()
 	_next_id = int(state.get("next_id", 1))
 	var rng_state: String = String(state.get("rng_state", ""))
 	if rng_state.is_valid_int():

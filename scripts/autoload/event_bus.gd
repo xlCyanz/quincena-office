@@ -115,3 +115,8 @@ signal event_changed
 ## Llegó un evento: la escena de juego corta el salto de horas para que el jugador lo vea.
 @warning_ignore("unused_signal")
 signal event_started(card: Dictionary)
+
+## Se habilitó un tipo de habitación que no depende de la etapa (la Sala de reuniones al
+## llegar la primera oferta grande, hito 47) o se cargó una partida.
+@warning_ignore("unused_signal")
+signal rooms_unlocked

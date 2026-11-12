@@ -38,6 +38,12 @@ static func get_mandatory_count(type_id: String) -> int:
 
 
 ## Si una habitación de este tipo no se puede quitar ni deshacer.
+## Indica si solo se puede marcar desde que llegó la primera oferta que la exige (la
+## Sala de reuniones, hito 47).
+static func is_unlocked_by_offer(type_id: String) -> bool:
+	return bool(get_type(type_id).get("unlocked_by_offer", false))
+
+
 static func is_locked(type_id: String) -> bool:
 	return bool(get_type(type_id).get("locked", false))
 

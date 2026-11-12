@@ -143,7 +143,7 @@ func _check_loan_cap() -> void:
 func _check_rooms() -> void:
 	_new_game()
 	_expect(not Company.is_room_unlocked("single_office") and not Company.is_room_unlocked("server_room")
-		and Company.is_room_unlocked("work_area") and Company.is_room_unlocked("meeting_room"), "habitaciones de la etapa 3 bloqueadas")
+		and Company.is_room_unlocked("work_area") and not Company.is_room_unlocked("meeting_room"), "habitaciones de la etapa 3 bloqueadas")
 	_expect(Company.get_room_stage("server_room") == 2, "sala de servidores en Pequeña empresa")
 	var builder := Builder.new()
 	builder.apply([{"edge": Vector3i(3, 3, GridEdge.AXIS_Y), "kind": ConstructionCatalog.WALL}])

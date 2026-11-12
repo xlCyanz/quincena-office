@@ -99,6 +99,7 @@ func _ready() -> void:
 	_tool_buttons[BuildController.TOOL_WALL].button_pressed = true
 	_panel.visible = false
 	EventBus.stage_changed.connect(func(_stage: int) -> void: _refresh_room_locks())
+	EventBus.rooms_unlocked.connect(_refresh_room_locks)
 	_refresh_room_locks()
 
 
@@ -197,7 +198,7 @@ func _refresh_room_locks() -> void:
 		var button: Button = _tool_buttons[type_id]
 		var unlocked: bool = Company.is_room_unlocked(type_id)
 		button.disabled = not unlocked
-		button.tooltip_text = "" if unlocked else "Se desbloquea en %s." % Company.get_stage_name(Company.get_room_stage(type_id))
+		button.tooltip_text = Company.room_lock_reason(type_id)
 		if not unlocked and button.button_pressed:
 			select_tool(BuildController.TOOL_WALL)
 

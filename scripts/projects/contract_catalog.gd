@@ -83,6 +83,27 @@ static func get_points_per_bug(level: String) -> float:
 	return float(_contracts()["bugs"]["points_per_bug"].get(level, 30))
 
 
+## Valor de las reuniones (data/contracts.json, meetings; hito 47).
+static func get_meetings(key: String) -> Variant:
+	return _contracts().get("meetings", {}).get(key, 1.0)
+
+
+## Habitación que exige un tamaño para aceptarlo ("" si ninguna).
+static func get_required_room(size: String) -> String:
+	return String(get_size(size).get("requires_room", ""))
+
+
+## Indica si un tamaño es de clientes de élite.
+static func is_elite(size: String) -> bool:
+	return bool(get_size(size).get("elite", false))
+
+
+static func get_elite_clients() -> Array[String]:
+	var clients: Array[String] = []
+	clients.assign(_contracts().get("elite_clients", []))
+	return clients
+
+
 static func get_clients() -> Array[String]:
 	var clients: Array[String] = []
 	clients.assign(_contracts()["clients"])
