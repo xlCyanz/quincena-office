@@ -53,6 +53,43 @@ static func get_split(type_id: String) -> Array[int]:
 	return split
 
 
+static func get_peak_users(size: String) -> int:
+	return int(_products()["sizes"].get(size, {}).get("peak_users", 0))
+
+
+## Valor del ciclo de vida (lifecycle en data/products.json).
+static func get_lifecycle(key: String) -> float:
+	return float(_products()["lifecycle"][key])
+
+
+## Valor de la calidad (quality en data/products.json).
+static func get_quality(key: String) -> Variant:
+	return _products()["quality"][key]
+
+
+## Cuánto vale para la calidad el diseño hecho por alguien de ese nivel (0 a 1).
+static func get_level_value(level: String) -> float:
+	return float(_products()["quality"]["level_values"].get(level, 0.0))
+
+
+## Valor de los errores en producción (production_bugs en data/products.json).
+static func get_production_bugs(key: String) -> float:
+	return float(_products()["production_bugs"][key])
+
+
+static func get_missing_racks_factor() -> float:
+	return float(_products()["missing_racks_factor"])
+
+
+## Parte de los puntos del producto que lleva una actualización.
+static func get_update_ratio() -> float:
+	return float(_products()["update"]["points_ratio"])
+
+
+static func get_value_days() -> int:
+	return int(_products()["value_days"])
+
+
 ## Nombre del producto número index (0 el primero): los de la lista y después numerados.
 static func get_product_name(index: int) -> String:
 	var names: Array = _products().get("names", [])

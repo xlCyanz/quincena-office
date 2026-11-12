@@ -41,6 +41,7 @@ func _ready() -> void:
 	EventBus.balance_changed.connect(func(_balance: int) -> void: _notify())
 	EventBus.bank_changed.connect(_notify)
 	EventBus.office_changed.connect(_notify)
+	EventBus.products_changed.connect(_notify)
 	EventBus.day_changed.connect(func(_day: int, _month: int) -> void: check_stage())
 	EventBus.staff_changed.connect(check_objectives)
 	EventBus.projects_changed.connect(check_objectives)
@@ -86,6 +87,7 @@ func get_value_parts() -> Array[Dictionary]:
 		{"label": "Dinero", "amount": Economy.balance},
 		{"label": "Muebles y computadoras (reventa)", "amount": Bank.get_assets_value()},
 		{"label": "Terreno comprado", "amount": OfficeState.land_paid},
+		{"label": "Productos (%d días de ingreso)" % ProductCatalog.get_value_days(), "amount": Products.get_value()},
 		{"label": "Deuda con el banco", "amount": -Bank.get_seizable_debt()},
 	]
 
@@ -138,6 +140,10 @@ func count_requirement(key: String) -> int:
 			return get_complete_team_count()
 		"executives":
 			return Staff.get_executives().size()
+		"products_launched":
+			return Products.launched_count
+		"active_products":
+			return Products.get_active_count()
 	return 0
 
 

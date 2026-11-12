@@ -9,6 +9,9 @@
 #     cuatro equipos de 8 (2 diseñadores, 4 programadores, 2 QA) con su líder desde Startup,
 #     vendedores, contador, recepcionista, limpieza, un gerente desde Pequeña empresa que
 #     dirige a los líderes y un ejecutivo en Mediana empresa;
+#   - en Pequeña empresa arma una Sala de servidores (terreno al norte de la primera oficina
+#     única) y el primer equipo libre desarrolla y lanza un producto pequeño (desde el
+#     hito 42, Mediana empresa pide uno lanzado) en vez de llevar un contrato;
 #   - el CEO trabaja de 8 a 17.
 # Criterio: llega a Mediana empresa sin quebrar; dirigir 4 departamentos se nota en los
 # ingresos (con un ejecutivo, el mismo mes rinde más). Imprime un resumen por mes para
@@ -41,6 +44,7 @@ var _plan: Array[Dictionary] = []
 var _pending: Dictionary = {}
 var _team_ids: Array[int] = []
 var _stage_months: Dictionary[int, int] = {}
+var _servers_built: bool = false
 
 
 func _ready() -> void:
@@ -71,6 +75,8 @@ func _check_growth() -> void:
 	# para que la simulación dé siempre lo mismo.
 	Projects.offers.clear()
 	Projects.create_offer("small")
+	Products.set_seed(SEED)
+	_servers_built = false
 	_make_plan()
 	_build_steps = [_build_start_desks, _build_reception, _build_east, _build_north, _build_east_more]
 	var months: int = 0
@@ -92,8 +98,12 @@ func _check_growth() -> void:
 		# mes más.
 		_plan.push_front({"role": StaffCatalog.get_executive_role(), "level": "senior", "team": -1})
 		var days: int = 0
+		var shown: int = _month_rows.size()
 		while Staff.get_executives().is_empty() and days < 3 * GameConstants.DAYS_PER_MONTH:
+			var month: int = Economy.get_current_month()
 			_play_day()
+			if Economy.get_current_month() != month:
+				_record_month(month)
 			days += 1
 		_expect(not Staff.get_executives().is_empty(), "contrata un ejecutivo en %d días" % days)
 		for day: int in range(GameConstants.DAYS_PER_MONTH):
@@ -101,7 +111,8 @@ func _check_growth() -> void:
 			_play_day()
 			if Economy.get_current_month() != month:
 				_record_month(month)
-		print(_month_rows[-1])
+		for row: String in _month_rows.slice(shown):
+			print(row)
 		_expect(not Bank.game_over and Economy.balance > 0, "sigue sin quebrar con el ejecutivo: saldo %d" % Economy.balance)
 
 
@@ -123,11 +134,35 @@ func _manage_contracts() -> void:
 		if Projects.get_done_ratio(contract) >= 1.0 - Production.EPSILON \
 				and (int(contract["bugs_found"]) == 0 or today >= int(contract["deadline_day"]) - 1):
 			Projects.deliver(contract["id"])
+	_manage_product()
 	for team: Dictionary in Staff.teams:
-		if (team["members"] as Array).size() >= TEAM_READY and Projects.get_contract_of(team["id"]).is_empty():
+		if (team["members"] as Array).size() >= TEAM_READY and Projects.is_team_free(team["id"]):
 			_take_offer(team["id"], ["medium", "small"])
-	if Projects.get_contract_of(Projects.CEO_TEAM).is_empty():
+	if Projects.is_team_free(Projects.CEO_TEAM):
 		_take_offer(Projects.CEO_TEAM, ["small"])
+
+
+# Desde Pequeña empresa y hasta lanzar el primero: Sala de servidores y un producto pequeño
+# que hace el primer equipo que queda libre (con QA, sale con pocos errores).
+func _manage_product() -> void:
+	if Company.stage < ProductCatalog.get_min_stage() or Products.launched_count > 0:
+		return
+	if not _servers_built:
+		# Va al norte de la primera oficina única: espera a que esté construido el bloque norte.
+		if _built > _build_steps.find(_build_north) and Economy.balance >= _build_servers(true) + RESERVE_MONTHS * _monthly_costs():
+			_build_servers(false)
+			_servers_built = true
+		return
+	for product: Dictionary in Products.get_in_development():
+		if Products.launch_problem(product["id"]).is_empty() and int(product["bugs_found"]) == 0:
+			Products.launch(product["id"])
+		return
+	for team: Dictionary in Staff.teams:
+		if (team["members"] as Array).size() >= TEAM_READY and Projects.is_team_free(team["id"]) \
+				and Products.start_problem().is_empty():
+			var id: int = Products.start("mobile_app", "small")["id"]
+			Products.assign(id, team["id"])
+			return
 
 
 # Acepta la oferta más grande de esos tamaños (en orden) y se la da a ese equipo o al CEO.
@@ -376,13 +411,32 @@ func _build_north(quote: bool) -> int:
 # 5. Más terreno al este (x 16 a 21, hasta el borde del solar) con 12 puestos más.
 func _build_east_more(quote: bool) -> int:
 	var xs: Array = range(16, 22)
-	# El terreno del norte corrió el borde de arriba del local a y −4: las filas 0 a 5 están en 4.
-	var land: Dictionary = _builder.quote_land(Builder.SIDE_EAST, 6, 6, 4)
+	# El terreno del norte (y el de la Sala de servidores) corrió el borde de arriba del
+	# local: las filas 0 a 5 empiezan a esta distancia de él.
+	var offset: int = -OfficeState.lot_rect.position.y
+	var land: Dictionary = _builder.quote_land(Builder.SIDE_EAST, 6, 6, offset)
 	var cost: int = int(land["cost"]) + _east_block(xs, xs, true)
 	if quote:
 		return cost
-	_ok(_builder.buy_land(Builder.SIDE_EAST, 6, 6, 4), "más terreno al este")
+	_ok(_builder.buy_land(Builder.SIDE_EAST, 6, 6, offset), "más terreno al este")
 	_east_block(xs, xs, false)
+	return cost
+
+
+# 6. Sala de servidores: terreno al norte de la primera oficina única (x 3 a 4, y −6 a −5)
+# con puerta a la oficina, un aire acondicionado y un rack.
+func _build_servers(quote: bool) -> int:
+	var land: Dictionary = _builder.quote_land(Builder.SIDE_NORTH, 2, 2, 3)
+	var walls: Array[Dictionary] = [_wall(3, -5, GridEdge.AXIS_Y, ConstructionCatalog.DOOR), _wall(4, -5, GridEdge.AXIS_Y)]
+	var cost: int = int(land["cost"]) + int(_builder.quote(walls)["cost"]) + FurnitureCatalog.get_price("air_conditioner") \
+		+ FurnitureCatalog.get_price("server_rack")
+	if quote:
+		return cost
+	_ok(_builder.buy_land(Builder.SIDE_NORTH, 2, 2, 3), "terreno de la Sala de servidores")
+	_ok(_builder.apply(walls), "paredes de la Sala de servidores")
+	_ok(_builder.mark_room(OfficeState.SERVER_ROOM, Vector2i(3, -6)), "Sala de servidores")
+	_ok(_builder.place("air_conditioner", Vector2i(4, -6), 0), "aire acondicionado")
+	_ok(_builder.place("server_rack", Vector2i(4, -5), 0), "rack")
 	return cost
 
 
@@ -453,6 +507,6 @@ func _record_month(month: int) -> void:
 	for concept: String in totals:
 		if totals[concept] < 0:
 			spent -= totals[concept]
-	_month_rows.append("  mes %d: contratos +%d · gastos −%d · saldo %d · %d empleados · %d equipos · %s · %d entregados · %.1f ★ · %s" % [
-		month, income, spent, Economy.balance, Staff.employees.size(), Staff.get_active_team_count(), Company.get_stage_name(),
+	_month_rows.append("  mes %d: contratos +%d · productos +%d · gastos −%d · saldo %d · %d empleados · %d equipos · %s · %d entregados · %.1f ★ · %s" % [
+		month, income, totals.get(Products.CONCEPT_INCOME, 0), spent, Economy.balance, Staff.employees.size(), Staff.get_active_team_count(), Company.get_stage_name(),
 		Projects.delivered_count, Projects.reputation, Bank.rating])

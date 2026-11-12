@@ -200,7 +200,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `EventBus.company_value_changed`; se muestra en el `Hud` tras las estrellas («Valor $X», rojo si es negativo) y en el Banco
   arriba, tras el saldo, con su detalle. Paredes y pisos no cuentan como bienes.
 - Etapas (`Company.stage`, 0 = Emprendimiento … 4 = Corporación; `data/stages.json`, se lee al usarlo): requisitos (empleados sin el CEO,
-  contratos entregados, equipos completos = diseñador + programador + QA; productos y ejecutivos valen 0 hasta las fases 4 y 5). Se
+  contratos entregados, equipos completos = diseñador + programador + QA; productos lanzados y activos desde el hito 42). Se
   revisan cada día (`day_changed`) y nunca bajan; al subir `EventBus.stage_changed` y aviso (al cargar, en silencio). Tope por préstamo
   (`max_loan`: $10k, $30k, $30k, sin tope; `Bank.get_max_request`), habitaciones por etapa (`rooms`: oficina única y sala de servidores
   en Pequeña empresa; `Builder.quote_mark_room` las rechaza y `BuildPanel` las deshabilita) y contratos medianos con `min_stage` 2
@@ -231,6 +231,14 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`Projects.first_free_team`, `release_team` en los dos lados). Terminado avisa y queda en desarrollo hasta el lanzamiento; abandonar lo
   quita sin costo. Para el ánimo cuenta como trabajo (`Staff._contract_of`). Proyectos tiene las pestañas Contratos y Productos
   (`set_tab`); Horarios ofrece los productos en la lista de cada equipo (opciones con metadata, no ids: `add_item` con −1 pone uno automático).
+- Lanzamiento (`Products.launch`/`launch_problem`, hito 42): terminado y con sus racks libres (`get_free_racks`; los racks se reparten en orden
+  de lanzamiento, `get_supported_ids`, y sin los suyos tiene la mitad de los usuarios). Calidad 0–1 (`get_quality`): la mitad por el nivel medio de
+  quien diseñó (`design_done`/`design_skill`, `Projects.get_workers` da `level`) y la mitad por errores al lanzar (10 por 1,000 puntos = 0); el
+  ingreso va del 50 al 150 %. Cada día (`_live_day`): `curve` crece 30 días desde 5 % (vendedores +15 % de velocidad cada uno), 60 en el pico,
+  120 de caída hasta 10 %; `production_bugs` suman `bug_loss` 0.5 %/día por error (hasta 70 %); cobra «Ingreso de productos». Actualización
+  (`start_update`): proyecto `product["update"]` del 20 % de los puntos (`get_active_projects`, cuenta para el tope, `assign`/`abandon` por id de
+  producto); al terminar corrige los errores y vuelve al pico. `retire` libera los racks. Valor de la empresa + 60 días de ingreso; Mediana empresa
+  pide `products_launched` 1 y Corporación `active_products` 3 (`Company`). `test_phase4` arma la sala y un equipo hace un producto pequeño.
 - Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
   terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
@@ -291,3 +299,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 39 | Comprobación de la fase | ✅ Completado (CEO solo a Mediana empresa en ~13 meses sin préstamos ni quiebra; medianos pagan $9,000–16,500 para que un equipo de 8 con líder deje margen; un ejecutivo en Desarrollo sube los ingresos ~75 % frente al CEO con 4 departamentos; partida nueva otra vez con el CEO solo) |
 | 40 | Sala de servidores | ✅ Completado (rack $3,000 y aire acondicionado $800 de piso; funciona con los dos; capacidad = racks de la sala; $100/mes por rack el día 1 aparte del local, −10 % con contador; sección Servidores en Empresa) |
 | 41 | Desarrollo de productos | ✅ Completado (App móvil, Software en la nube y Videojuego en 3 tamaños; desde Pequeña empresa con Sala de servidores que funcione, los racks se piden al lanzar en el hito 42; comparte el tope y los equipos con los contratos; pestaña Productos en Proyectos; abandonar con confirmación) |
+| 42 | Lanzamiento y ciclo de vida | ✅ Completado (lanzar con racks libres; usuarios 30 días crecen, 60 en el pico y 120 caen hasta 10 %; calidad = nivel de quien diseñó + errores, ingreso 50–150 %; errores en producción −0.5 %/día por error; actualización del 20 % de los puntos vuelve al pico; retirar libera racks; valor +60 días de ingreso; Mediana empresa pide 1 lanzado) |

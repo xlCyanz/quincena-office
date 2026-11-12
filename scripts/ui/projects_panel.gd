@@ -54,6 +54,12 @@ var _abandon_buttons: Dictionary[int, Button] = {}
 var _confirm_abandon_button: Button
 # Producto cuyo abandono se está confirmando (0 = ninguno).
 var _confirming_abandon: int = 0
+var _launch_buttons: Dictionary[int, Button] = {}
+var _update_buttons: Dictionary[int, Button] = {}
+var _retire_buttons: Dictionary[int, Button] = {}
+var _confirm_retire_button: Button
+# Producto lanzado cuyo retiro se está confirmando (0 = ninguno).
+var _confirming_retire: int = 0
 
 
 func _ready() -> void:
@@ -193,6 +199,26 @@ func get_confirm_abandon_button() -> Button:
 	return _confirm_abandon_button
 
 
+## Botón "Lanzar" de un producto terminado, o null.
+func get_launch_button(product_id: int) -> Button:
+	return _launch_buttons.get(product_id)
+
+
+## Botón "Actualizar" de un producto lanzado, o null.
+func get_update_button(product_id: int) -> Button:
+	return _update_buttons.get(product_id)
+
+
+## Botón "Retirar" de un producto lanzado, o null.
+func get_retire_button(product_id: int) -> Button:
+	return _retire_buttons.get(product_id)
+
+
+## Botón que confirma el retiro pedido, o null.
+func get_confirm_retire_button() -> Button:
+	return _confirm_retire_button
+
+
 ## Barra de avance de una fase de un producto en desarrollo, o null.
 func get_product_bar(product_id: int, phase: String) -> ProgressBar:
 	return _product_bars.get(product_id, {}).get(phase)
@@ -274,6 +300,10 @@ func _refresh() -> void:
 	_owner_choices.clear()
 	_abandon_buttons.clear()
 	_confirm_abandon_button = null
+	_launch_buttons.clear()
+	_update_buttons.clear()
+	_retire_buttons.clear()
+	_confirm_retire_button = null
 	if _tab == TAB_PRODUCTS:
 		_refresh_products()
 		return
@@ -418,14 +448,24 @@ func _refresh_products() -> void:
 	_list.add_child(HSeparator.new())
 
 	var developing: Array[Dictionary] = Products.get_in_development()
-	if Products.get_product(_confirming_abandon).is_empty():
+	if Products.get_project(_confirming_abandon).is_empty():
 		_confirming_abandon = 0
+	if Products.get_product(_confirming_retire).is_empty():
+		_confirming_retire = 0
 	_add_section("En desarrollo (%d) · proyectos en curso %d de %d" % [developing.size(), Projects.get_project_count(),
 		Projects.get_contract_limit()])
 	if developing.is_empty():
 		_list.add_child(_muted_label("Ningún producto en desarrollo."))
 	for product: Dictionary in developing:
 		_add_product(product)
+
+	var launched: Array[Dictionary] = Products.get_launched()
+	_add_section("Lanzados (%d) · racks %d de %d · %s al día" % [launched.size(), Products.get_used_racks(),
+		OfficeState.get_server_capacity(), MoneyFormat.format(Products.get_total_daily_income())])
+	if launched.is_empty():
+		_list.add_child(_muted_label("Ningún producto lanzado. Un producto terminado se lanza con sus racks libres."))
+	for product: Dictionary in launched:
+		_add_launched(product)
 
 
 func _add_product(product: Dictionary) -> void:
@@ -435,6 +475,81 @@ func _add_product(product: Dictionary) -> void:
 	var days: int = GameClock.get_day_count() - int(product["started_day"])
 	info.text = "%s · %s" % [Products.describe_title(product), "empezado hoy" if days == 0 else "hace %d %s" % [days, "día" if days == 1 else "días"]]
 	_list.add_child(info)
+	_add_project_work(product_id, product)
+	if Production.is_finished(product):
+		var actions := HBoxContainer.new()
+		_list.add_child(actions)
+		var launch := Button.new()
+		launch.text = "Lanzar (calidad %d %%)" % roundi(Products.get_quality(product) * 100.0)
+		var problem: String = Products.launch_problem(product_id)
+		launch.disabled = not problem.is_empty()
+		launch.pressed.connect(func() -> void: _status_label.text = Products.launch(product_id)["message"])
+		actions.add_child(launch)
+		_launch_buttons[product_id] = launch
+		if not problem.is_empty():
+			_list.add_child(_muted_label(problem))
+	_list.add_child(HSeparator.new())
+
+
+func _add_launched(product: Dictionary) -> void:
+	var product_id: int = product["id"]
+	var info := Label.new()
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.text = "%s · %s" % [Products.describe_title(product), Products.describe_phase(product)]
+	_list.add_child(info)
+	_list.add_child(_muted_label("%s usuarios · %s al día · calidad %d %%" % [MoneyFormat.format(Products.get_users(product)).trim_prefix("$"),
+		MoneyFormat.format(Products.get_daily_income(product)), roundi(float(product["quality"]) * 100.0)]))
+	var bugs: int = int(product["production_bugs"])
+	if bugs > 0:
+		_list.add_child(_muted_label("%d %s en producción: pierde %d %% de los usuarios hasta que una actualización %s." % [bugs,
+			"error" if bugs == 1 else "errores", roundi(float(product["bug_loss"]) * 100.0), "lo corrija" if bugs == 1 else "los corrija"]))
+	if not Products.get_supported_ids().has(product_id):
+		_list.add_child(_muted_label("Sin racks suficientes en la Sala de servidores: tiene la mitad de los usuarios."))
+	if product.has("update"):
+		_list.add_child(_muted_label("Actualización en curso (%s puntos):" % MoneyFormat.format(int(product["update"]["total_points"])).trim_prefix("$")))
+		_add_project_work(product_id, product["update"])
+	else:
+		var actions := HBoxContainer.new()
+		_list.add_child(actions)
+		var update := Button.new()
+		update.text = "Actualizar"
+		var problem: String = Products.update_problem(product_id)
+		update.disabled = not problem.is_empty()
+		update.pressed.connect(func() -> void: _status_label.text = Products.start_update(product_id)["message"])
+		actions.add_child(update)
+		_update_buttons[product_id] = update
+		if _confirming_retire == product_id:
+			var question := _muted_label("¿Retirarlo? Deja de dar ingreso.")
+			question.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			actions.add_child(question)
+			_confirm_retire_button = Button.new()
+			_confirm_retire_button.text = "Sí, retirar"
+			_confirm_retire_button.pressed.connect(func() -> void:
+				_confirming_retire = 0
+				_status_label.text = Products.retire(product_id)["message"])
+			actions.add_child(_confirm_retire_button)
+			var keep := Button.new()
+			keep.text = "No"
+			keep.pressed.connect(func() -> void:
+				_confirming_retire = 0
+				_refresh())
+			actions.add_child(keep)
+		else:
+			var retire := Button.new()
+			retire.text = "Retirar"
+			retire.pressed.connect(func() -> void:
+				_confirming_retire = product_id
+				_refresh())
+			actions.add_child(retire)
+			_retire_buttons[product_id] = retire
+		if not problem.is_empty() and Projects.get_project_count() >= Projects.get_contract_limit():
+			_list.add_child(_muted_label("Para actualizarlo hace falta lugar en el tope de proyectos."))
+	_list.add_child(HSeparator.new())
+
+
+# Quién lleva un proyecto de producto (desarrollo o actualización), su avance, su estado y
+# el botón Abandonar con su confirmación.
+func _add_project_work(product_id: int, project: Dictionary) -> void:
 	var owner_row := HBoxContainer.new()
 	_list.add_child(owner_row)
 	var owner_label := Label.new()
@@ -452,30 +567,32 @@ func _add_product(product: Dictionary) -> void:
 			owners.append(int(team["id"]))
 	for index: int in range(owners.size()):
 		choice.set_item_metadata(index, owners[index])
-	choice.select(maxi(0, owners.find(int(product["team_id"]))))
+	choice.select(maxi(0, owners.find(int(project["team_id"]))))
 	choice.item_selected.connect(func(index: int) -> void:
 		_status_label.text = Products.assign(product_id, int(choice.get_item_metadata(index)))["message"])
 	owner_row.add_child(choice)
 	_owner_choices[product_id] = choice
-	_product_bars[product_id] = _add_phase_rows(product)
-	_list.add_child(_muted_label(Projects.describe_bugs(product) + "."))
+	_product_bars[product_id] = _add_phase_rows(project)
+	_list.add_child(_muted_label(Projects.describe_bugs(project) + "."))
+	var is_update: bool = project.has("product_id")
 	var state: String
-	var pending: int = int(product["bugs_found"])
-	if Production.is_finished(product) and pending > 0:
+	var pending: int = int(project["bugs_found"])
+	if Production.is_finished(project) and pending > 0:
 		state = "Terminado, con %d %s por corregir: los programadores siguen." % [pending, "error" if pending == 1 else "errores"]
-	elif Production.is_finished(product):
-		state = "Terminado: listo para lanzar (próximamente). Si el equipo tiene QA, sigue buscando errores."
-	elif int(product["team_id"]) == Projects.NO_TEAM:
+	elif Production.is_finished(project):
+		state = "Terminado: listo para lanzar. Si el equipo tiene QA, sigue buscando errores."
+	elif int(project["team_id"]) == Projects.NO_TEAM:
 		state = "Nadie lo lleva: elige quién lo lleva."
 	else:
-		var rate: float = Projects.get_hourly_rate(product)
+		var rate: float = Projects.get_hourly_rate(project)
 		state = "Ahora rinde %s puntos por hora." % String.num(rate, 1).trim_suffix(".0") if rate > 0.0 \
 			else "Ahora nadie está trabajando en él."
 	_list.add_child(_muted_label(state))
 	var actions := HBoxContainer.new()
 	_list.add_child(actions)
 	if _confirming_abandon == product_id:
-		var question := _muted_label("¿Abandonarlo? Se pierde todo lo hecho.")
+		var question := _muted_label("¿Abandonar la actualización? Se pierde lo hecho." if is_update
+			else "¿Abandonarlo? Se pierde todo lo hecho.")
 		question.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		actions.add_child(question)
 		_confirm_abandon_button = Button.new()
@@ -492,13 +609,12 @@ func _add_product(product: Dictionary) -> void:
 		actions.add_child(keep)
 	else:
 		var abandon := Button.new()
-		abandon.text = "Abandonar"
+		abandon.text = "Abandonar la actualización" if is_update else "Abandonar"
 		abandon.pressed.connect(func() -> void:
 			_confirming_abandon = product_id
 			_refresh())
 		actions.add_child(abandon)
 		_abandon_buttons[product_id] = abandon
-	_list.add_child(HSeparator.new())
 
 
 func _add_delivery_actions(contract: Dictionary) -> void:

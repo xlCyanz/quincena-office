@@ -637,7 +637,7 @@ func import_state(state: Dictionary) -> void:
 
 
 ## Quienes trabajan en un contrato en una hora (contada como Staff.get_absolute_hour):
-## una lista de {"key", "phase", "rate"} (key como en Staff.is_expected; phase = "" si
+## una lista de {"key", "phase", "level", "rate", "bug_chance"} (key como en Staff.is_expected; phase = "" si
 ## es generalista).
 func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 	var weekday: int = Staff.get_weekday_at(at)
@@ -648,7 +648,7 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 		if Staff.is_ceo_producing(at):
 			var computer: String = Workstations.computer_of(OfficeState.furniture, "ceo")
 			var ceo_level: String = String(StaffCatalog.get_production("ceo_level"))
-			workers.append({"key": "ceo", "phase": "", "rate": Production.get_rate(ceo_level, 100.0,
+			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": Production.get_rate(ceo_level, 100.0,
 				Production.get_computer_bonus(computer)), "bug_chance": get_bug_chance(ceo_level, 100.0)})
 		return workers
 	var team: Dictionary = Staff.get_team(team_id)
@@ -664,7 +664,7 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 			continue
 		var computer: String = Workstations.computer_of(OfficeState.furniture, key)
 		var department: float = Staff.get_department_factor(StaffCatalog.get_role_department(employee["role"]))
-		workers.append({"key": key, "phase": phase, "rate": factor * department * Production.get_rate(employee["level"],
+		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * Production.get_rate(employee["level"],
 			float(employee["energy"]), Production.get_computer_bonus(computer), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))})
 	return workers

@@ -60,7 +60,7 @@ func _check_start() -> void:
 	var labels: Array[String] = []
 	for part: Dictionary in Company.get_value_parts():
 		labels.append(part["label"])
-	_expect(labels.size() == 4 and labels[0] == "Dinero" and labels[3] == "Deuda con el banco", "partes: %s" % [labels])
+	_expect(labels.size() == 5 and labels[0] == "Dinero" and labels[3].begins_with("Productos") and labels[4] == "Deuda con el banco", "partes: %s" % [labels])
 
 
 func _check_furniture() -> void:
@@ -125,7 +125,7 @@ func _check_overdue() -> void:
 	_expect(late > installment, "cuota atrasada con recargo: %d" % late)
 	_expect(Company.get_value() == value - maintenance - (late - (1000 - principal_part)), "el atraso cuenta como deuda (con recargo): %d → %d" % [
 		value, Company.get_value()])
-	_expect(-Company.get_value_parts()[3]["amount"] == Bank.get_debt() + late, "la deuda suma capital y atrasos")
+	_expect(-Company.get_value_parts()[4]["amount"] == Bank.get_debt() + late, "la deuda suma capital y atrasos")
 
 
 func _check_save() -> void:

@@ -122,8 +122,9 @@ func _fake(role: String) -> Dictionary:
 func _check_stage() -> void:
 	_new_game()
 	var requirements: Array[Dictionary] = Company.get_requirements(3)
-	_expect(requirements.size() == 1 and requirements[0]["key"] == "employees" and int(requirements[0]["needed"]) == 40,
-		"Mediana empresa pide solo 40 empleados: %s" % [requirements])
+	# Desde el hito 42 también pide un producto lanzado (lo prueba test_launch).
+	_expect(requirements.size() == 2 and requirements[0]["key"] == "employees" and int(requirements[0]["needed"]) == 40
+		and requirements[1]["key"] == "products_launched", "Mediana empresa pide 40 empleados y un producto lanzado: %s" % [requirements])
 	Company.stage = 2
 	var opened: Dictionary = Staff.open_vacancy(EXECUTIVE, "senior", 9000, false)
 	_expect(not opened["ok"] and String(opened["message"]).contains("Mediana empresa"), "en Pequeña empresa no hay ejecutivos: %s" % opened["message"])

@@ -228,8 +228,8 @@ func _signature() -> String:
 	var owners: Array[String] = []
 	for contract: Dictionary in Projects.contracts:
 		owners.append("%d:%d" % [contract["id"], contract["team_id"]])
-	for product: Dictionary in Products.get_in_development():
-		owners.append("p%d:%d" % [product["id"], product["team_id"]])
+	for project: Dictionary in Products.get_active_projects():
+		owners.append("p%d:%d:%s" % [project.get("product_id", project.get("id", 0)), project["team_id"], project.has("product_id")])
 	# Si el líder está presente cambia lo que se muestra solo al empezar o terminar su turno.
 	var presence: Array[bool] = [Staff.leaders_required()]
 	for team: Dictionary in Staff.teams:
@@ -439,10 +439,11 @@ func _project_choice(team_id: int) -> OptionButton:
 		choice.set_item_metadata(choice.item_count - 1, {"kind": "contract", "id": contract["id"]})
 		if not current_contract.is_empty() and contract["id"] == current_contract["id"]:
 			choice.select(choice.item_count - 1)
-	for product: Dictionary in Products.get_in_development():
-		choice.add_item("Producto: %s" % Products.describe_title(product))
-		choice.set_item_metadata(choice.item_count - 1, {"kind": "product", "id": product["id"]})
-		if not current_product.is_empty() and product["id"] == current_product["id"]:
+	for project: Dictionary in Products.get_active_projects():
+		choice.add_item("Producto: %s" % Products.describe_project(project))
+		var product_id: int = int(project.get("product_id", project.get("id", 0)))
+		choice.set_item_metadata(choice.item_count - 1, {"kind": "product", "id": product_id})
+		if not current_product.is_empty() and current_product == project:
 			choice.select(choice.item_count - 1)
 	choice.item_selected.connect(func(index: int) -> void:
 		var picked: Dictionary = choice.get_item_metadata(index)
@@ -452,7 +453,8 @@ func _project_choice(team_id: int) -> OptionButton:
 				_status_label.text = Projects.assign(previous["id"], Projects.NO_TEAM)["message"]
 			var previous_product: Dictionary = Products.get_product_of(team_id)
 			if not previous_product.is_empty():
-				_status_label.text = Products.assign(previous_product["id"], Projects.NO_TEAM)["message"]
+				var previous_id: int = int(previous_product.get("product_id", previous_product.get("id", 0)))
+				_status_label.text = Products.assign(previous_id, Projects.NO_TEAM)["message"]
 		elif picked["kind"] == "product":
 			_status_label.text = Products.assign(picked["id"], team_id)["message"]
 		else:
