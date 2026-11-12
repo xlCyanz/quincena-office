@@ -1,6 +1,8 @@
-# Menú Personal (diseño, 12.3), por ahora con vacantes y candidatos (5.2): publicar
+# Menú Personal (diseño, 12.3) con vacantes, candidatos y empleados (5.2): publicar
 # una vacante (cargo, nivel, sueldo ofrecido y publicidad), ver las abiertas con sus
-# candidatos, cerrarlas y descartar candidatos. Contratar llega en el hito 11.
+# candidatos, cerrarlas, descartar, entrevistar y hacer ofertas, y ver los empleados
+# con los puestos de trabajo libres. La oferta de cada candidato empieza en el sueldo
+# de su vacante y se sube o se baja de a salary_step.
 #
 # No pausa el tiempo: los candidatos llegan mientras está abierto. Ocupa el lado
 # izquierdo para que la oficina siga a la vista. Se construye en código; su botón va
@@ -35,6 +37,12 @@ var _list: VBoxContainer
 var _salary: int = 0
 var _vacancy_close_buttons: Dictionary[int, Button] = {}
 var _discard_buttons: Dictionary[int, Button] = {}
+var _interview_buttons: Dictionary[int, Button] = {}
+var _offer_buttons: Dictionary[int, Button] = {}
+var _offer_step_buttons: Dictionary[int, Array] = {}
+var _counter_buttons: Dictionary[int, Button] = {}
+## Sueldo que se le va a ofrecer a cada candidato (por id).
+var _offers: Dictionary[int, int] = {}
 
 
 func _ready() -> void:
@@ -126,7 +134,6 @@ func _ready() -> void:
 	rows.add_child(_status_label)
 
 	rows.add_child(HSeparator.new())
-	_add_section(rows, "Vacantes abiertas")
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -139,6 +146,7 @@ func _ready() -> void:
 	_reset_salary()
 	_panel.visible = false
 	EventBus.staff_changed.connect(_refresh)
+	EventBus.office_changed.connect(_refresh)
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _refresh())
 	_refresh()
 
@@ -203,7 +211,34 @@ func get_discard_button(candidate_id: int) -> Button:
 	return _discard_buttons.get(candidate_id)
 
 
-## Todo el texto de la lista de vacantes (para las pruebas).
+## Botón "Entrevistar" de un candidato, o null.
+func get_interview_button(candidate_id: int) -> Button:
+	return _interview_buttons.get(candidate_id)
+
+
+## Botón "Ofrecer" de un candidato, o null.
+func get_offer_button(candidate_id: int) -> Button:
+	return _offer_buttons.get(candidate_id)
+
+
+## Botones − y + de la oferta a un candidato (vacío si no está en la lista).
+func get_offer_step_buttons(candidate_id: int) -> Array[Button]:
+	var buttons: Array[Button] = []
+	buttons.assign(_offer_step_buttons.get(candidate_id, []))
+	return buttons
+
+
+## Botón para aceptar la contraoferta de un candidato, o null si no hizo ninguna.
+func get_counter_button(candidate_id: int) -> Button:
+	return _counter_buttons.get(candidate_id)
+
+
+## Sueldo que se le ofrecería ahora a un candidato.
+func get_offer(candidate_id: int) -> int:
+	return _offers.get(candidate_id, 0)
+
+
+## Todo el texto de la lista de empleados y vacantes (para las pruebas).
 func get_list_text() -> String:
 	var texts: Array[String] = []
 	for label: Node in _list.find_children("*", "Label", true, false):
@@ -262,11 +297,40 @@ func _refresh() -> void:
 		child.queue_free()
 	_vacancy_close_buttons.clear()
 	_discard_buttons.clear()
+	_interview_buttons.clear()
+	_offer_buttons.clear()
+	_offer_step_buttons.clear()
+	_counter_buttons.clear()
+	_add_employees()
+	_list.add_child(HSeparator.new())
+	_add_section(_list, "Vacantes abiertas")
 	if Staff.vacancies.is_empty():
 		_list.add_child(_muted_label("No hay vacantes abiertas."))
-		return
 	for vacancy: Dictionary in Staff.vacancies:
 		_add_vacancy(vacancy)
+	# Olvida las ofertas de los candidatos que ya no están.
+	for candidate_id: int in _offers.keys():
+		if not _offer_buttons.has(candidate_id):
+			_offers.erase(candidate_id)
+
+
+func _add_employees() -> void:
+	var free: int = Staff.get_free_workstations().size()
+	_add_section(_list, "Empleados (%d) · puestos libres: %d" % [Staff.employees.size(), free])
+	if Staff.employees.is_empty():
+		_list.add_child(_muted_label("Todavía no hay empleados. Para contratar hace falta un puesto de trabajo libre: escritorio con computadora y silla delante, dentro de un Área de trabajo que funcione."))
+	for employee: Dictionary in Staff.employees:
+		var lines: Array[String] = ["%s, %d años · %s" % [employee["name"], employee["age"], Staff.describe_employee(employee)],
+			Staff.describe_skills(employee)]
+		var known: String = Staff.describe_known_traits(employee)
+		if not known.is_empty():
+			lines.append(known)
+		if not Staff.has_working_station(employee):
+			lines.append("Su puesto de trabajo ya no funciona.")
+		var info := Label.new()
+		info.text = "\n".join(lines)
+		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_list.add_child(info)
 
 
 func _add_vacancy(vacancy: Dictionary) -> void:
@@ -305,16 +369,84 @@ func _add_candidate(candidate: Dictionary) -> void:
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var days_left: int = Staff.candidate_days_left(candidate)
 	var leaving: String = "se va hoy" if days_left == 0 else ("se va mañana" if days_left == 1 else "se va en %d días" % days_left)
-	info.text = "%s, %d años · pide %s · %s\n%s" % [candidate["name"], candidate["age"],
-		MoneyFormat.format(candidate["asked_salary"]), leaving, Staff.describe_skills(candidate)]
+	var lines: Array[String] = ["%s, %d años · pide %s · %s" % [candidate["name"], candidate["age"],
+		MoneyFormat.format(candidate["asked_salary"]), leaving], Staff.describe_skills(candidate)]
+	var known: String = Staff.describe_known_traits(candidate)
+	if not known.is_empty():
+		lines.append(known)
+	var candidate_id: int = candidate["id"]
+	if Staff.get_interviewed_now().get("id", -1) == candidate_id:
+		lines.append("En entrevista con el CEO hasta las %02d:00." % (int(Staff.interview["ends_at"]) % GameConstants.HOURS_PER_DAY))
+	var counter: int = int(candidate.get("counter_offer", 0))
+	if counter > 0:
+		lines.append("Contraoferta: aceptaría %s al mes." % MoneyFormat.format(counter))
+	info.text = "\n".join(lines)
 	row.add_child(info)
+
+	var actions := HBoxContainer.new()
+	_list.add_child(actions)
+	var interview_button := Button.new()
+	interview_button.text = "Entrevistar"
+	var problem: String = Staff.interview_problem(candidate_id)
+	interview_button.disabled = not problem.is_empty()
+	interview_button.tooltip_text = problem if not problem.is_empty() else "Ocupa %d horas del CEO y revela un rasgo y los valores reales." % int(StaffCatalog.get_hiring("interview_hours"))
+	interview_button.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id)["message"])
+	actions.add_child(interview_button)
+	_interview_buttons[candidate_id] = interview_button
+
+	if not _offers.has(candidate_id):
+		_offers[candidate_id] = int(Staff.get_vacancy(_vacancy_of(candidate_id))["salary"])
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	var down := Button.new()
+	down.text = "−"
+	down.custom_minimum_size = Vector2(36, 0)
+	down.disabled = _offers[candidate_id] <= step
+	down.pressed.connect(func() -> void: _change_offer(candidate_id, -1))
+	actions.add_child(down)
+	var offer_label := Label.new()
+	offer_label.text = MoneyFormat.format(_offers[candidate_id])
+	offer_label.custom_minimum_size = Vector2(80, 0)
+	offer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	actions.add_child(offer_label)
+	var up := Button.new()
+	up.text = "+"
+	up.custom_minimum_size = Vector2(36, 0)
+	up.pressed.connect(func() -> void: _change_offer(candidate_id, 1))
+	actions.add_child(up)
+	_offer_step_buttons[candidate_id] = [down, up]
+	var offer_button := Button.new()
+	offer_button.text = "Ofrecer"
+	offer_button.pressed.connect(func() -> void: _status_label.text = Staff.make_offer(candidate_id, _offers[candidate_id])["message"])
+	actions.add_child(offer_button)
+	_offer_buttons[candidate_id] = offer_button
+	if counter > 0:
+		var counter_button := Button.new()
+		counter_button.text = "Aceptar %s" % MoneyFormat.format(counter)
+		counter_button.pressed.connect(func() -> void: _status_label.text = Staff.accept_counter_offer(candidate_id)["message"])
+		actions.add_child(counter_button)
+		_counter_buttons[candidate_id] = counter_button
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(spacer)
 	var discard := Button.new()
 	discard.text = "Descartar"
-	discard.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var candidate_id: int = candidate["id"]
 	discard.pressed.connect(func() -> void: Staff.discard_candidate(candidate_id))
-	row.add_child(discard)
+	actions.add_child(discard)
 	_discard_buttons[candidate_id] = discard
+
+
+func _change_offer(candidate_id: int, direction: int) -> void:
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	_offers[candidate_id] = maxi(step, _offers[candidate_id] + direction * step)
+	_refresh()
+
+
+func _vacancy_of(candidate_id: int) -> int:
+	for vacancy: Dictionary in Staff.vacancies:
+		for candidate: Dictionary in vacancy["candidates"]:
+			if candidate["id"] == candidate_id:
+				return vacancy["id"]
+	return 0
 
 
 func _muted_label(text: String) -> Label:

@@ -17,8 +17,9 @@ signal day_changed(day: int, month: int)
 @warning_ignore("unused_signal")
 signal balance_changed(balance: int)
 
-## Cambió la oficina (pisos, paredes, puertas o muebles). La emite Builder después
-## de cada compra o venta, para que se redibuje y se recalculen los caminos.
+## Cambió la oficina (pisos, paredes, puertas o muebles). La emiten Builder después
+## de cada compra o venta y Staff al asignar un puesto, para que se redibuje y se
+## recalculen los caminos.
 @warning_ignore("unused_signal")
 signal office_changed
 

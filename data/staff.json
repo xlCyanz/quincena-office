@@ -1,5 +1,5 @@
 {
-	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real.",
+	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real. Al ofrecer un sueldo menor que el que piden, desde counter_offer_ratio de lo pedido hacen una contraoferta y por debajo rechazan y se van. La entrevista ocupa interview_hours horas del CEO dentro de su horario.",
 	"levels": {
 		"intern": { "name": "Pasante", "main_skill_range": [10, 30], "age_range": [19, 24] },
 		"junior": { "name": "Junior", "main_skill_range": [25, 45], "age_range": [21, 30] },
@@ -32,6 +32,8 @@
 		"max_waiting": 5,
 		"candidate_days": 3,
 		"asked_salary_ratio": [0.9, 1.2],
-		"salary_step": 50
+		"salary_step": 50,
+		"counter_offer_ratio": 0.85,
+		"interview_hours": 2
 	}
 }

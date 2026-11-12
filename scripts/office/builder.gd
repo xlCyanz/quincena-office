@@ -230,6 +230,9 @@ func quote_rotate(cell: Vector2i) -> Dictionary:
 	var index: int = OfficeState.find_furniture_at(cell)
 	if index < 0:
 		return _fail(0, "Ahí no hay ningún mueble.")
+	var station_problem: String = _station_problem(index)
+	if not station_problem.is_empty():
+		return _fail(0, station_problem)
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	var item: Dictionary = candidate[index].duplicate()
 	item["rotation"] = posmod(int(item["rotation"]) + 1, 4)
@@ -246,11 +249,17 @@ func rotate(cell: Vector2i) -> Dictionary:
 
 
 ## Vender lo que hay en cell: si es un escritorio con computadora, primero la
-## computadora; si no, el mueble. La silla del CEO no se vende.
+## computadora; si no, el mueble. La silla del CEO no se vende, ni nada del puesto de
+## un empleado.
 func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
 	var index: int = OfficeState.find_furniture_at(cell)
 	if index < 0:
 		return _fail(0, "Ahí no hay ningún mueble.")
+	if OfficeState.furniture[index]["assigned_to"] == "ceo":
+		return _fail(0, "La silla del CEO no se puede vender.")
+	var station_problem: String = _station_problem(index)
+	if not station_problem.is_empty():
+		return _fail(0, station_problem)
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	var item: Dictionary = candidate[index].duplicate()
 	if not String(item["computer"]).is_empty():
@@ -260,8 +269,6 @@ func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
 		candidate[index] = item
 		return {"ok": true, "cost": -refund, "message": "Venta de %s: +$%d" % [computer_name, refund],
 			"furniture": candidate}
-	if not String(item["assigned_to"]).is_empty():
-		return _fail(0, "La silla del CEO no se puede vender.")
 	candidate.remove_at(index)
 	var resale: int = FurnitureCatalog.get_resale(item["id"])
 	var item_name: String = FurnitureCatalog.get_item(item["id"])["name"]
@@ -293,6 +300,17 @@ func quote_install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 
 func install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 	return _commit(quote_install_computer(computer_id, cell))
+
+
+# Los muebles del puesto de un empleado (silla, escritorio y computadora) no se venden
+# ni se giran mientras lo ocupa: primero hay que despedirlo (hito 13).
+func _station_problem(index: int) -> String:
+	var owner: String = String(OfficeState.furniture[index]["assigned_to"])
+	if owner.is_empty():
+		owner = Workstations.owner_of(OfficeState.furniture, OfficeState.rooms, index)
+	if owner.is_empty() or owner == "ceo":
+		return ""
+	return "Es parte del puesto de %s: no se puede vender ni girar." % Staff.get_person_name(owner)
 
 
 func _fail(cost: int, message: String) -> Dictionary:
