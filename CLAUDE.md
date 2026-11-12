@@ -97,7 +97,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9) y en la 16.3 (fase 2, hitos 10–19).
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19) y en la 17.3 (fase 3, hitos 20–29).
 
 ## Estado actual
 
@@ -123,3 +123,13 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 17 | Errores y pruebas | ✅ Completado (ocultos no se muestran; sin QA llega ~90 %, con QA ~10 % al terminar y 0 tras revisar; la penalidad se cobra en el hito 18) |
 | 18 | Entrega y reputación | ✅ Completado (entrega en cualquier momento proporcional a lo hecho; cancelación del cliente sorteada; la reputación aún no cambia los candidatos) |
 | 19 | Ánimo y renuncias | ✅ Completado (meta diaria de ánimo y estrés; 3 días mal → aviso de 5 días; aumento ≥10 % retiene; pedidos de aumento ~1 cada 2 meses; ánimo bajo 50 rinde hasta 70 % y estrés ≥70 duplica errores; la ficha muestra «Rinde N %»; el aviso del Hud se parte en líneas sin tapar dinero ni reloj) |
+| 20 | Menú Banco | Pendiente (fase 3) |
+| 21 | Calificación de crédito | Pendiente (fase 3) |
+| 22 | Préstamos | Pendiente (fase 3) |
+| 23 | Mora y embargo | Pendiente (fase 3) |
+| 24 | Préstamo de emergencia | Pendiente (fase 3) |
+| 25 | Compra de terreno | Pendiente (fase 3) |
+| 26 | Valor de la empresa | Pendiente (fase 3) |
+| 27 | Etapas y menú Empresa | Pendiente (fase 3) |
+| 28 | Objetivos guiados | Pendiente (fase 3) |
+| 29 | Comprobación de la fase | Pendiente (fase 3) |

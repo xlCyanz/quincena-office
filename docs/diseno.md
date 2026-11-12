@@ -76,6 +76,12 @@ Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece se
   - [16.4 Orden y dependencias](#164-orden-y-dependencias)
   - [16.5 Riesgos de esta fase](#165-riesgos-de-esta-fase)
   - [16.6 Fases siguientes](#166-fases-siguientes)
+* [17. Plan de desarrollo: fase 3](#17-plan-de-desarrollo-fase-3)
+  - [17.1 Alcance](#171-alcance)
+  - [17.2 Decisiones técnicas](#172-decisiones-técnicas)
+  - [17.3 Hitos](#173-hitos)
+  - [17.4 Orden y dependencias](#174-orden-y-dependencias)
+  - [17.5 Riesgos de esta fase](#175-riesgos-de-esta-fase)
 
 ## 1. Visión general
 
@@ -765,3 +771,69 @@ La fase 2 cierra el ciclo básico del juego: contratar empleados, ponerlos a tra
 | 4 | Organización | Líderes de equipo, gerentes, ejecutivos y departamentos con el rendimiento del CEO; ascensos por experiencia; horas extra y agenda semanal; recepcionista con visitas, contador y limpieza; competencia por empleados |
 | 5 | Productos y eventos | Productos propios con ciclo de vida y sala de servidores; eventos con tarjetas y cuenta atrás; ambiente y decoración con efecto; salir a bolsa |
 | 6 | Arte y sonido | Sprites finales generados con la herramienta de arte, animaciones de los personajes, sonido y pulido de la interfaz |
+
+## 17. Plan de desarrollo: fase 3
+
+La fase 3 agrega el banco y el crecimiento de la empresa: pedir préstamos y pagarlos, el riesgo de embargo (la única forma de perder), comprar terreno, y medir el progreso con el valor de la empresa, las etapas y los objetivos guiados. Al terminarla, el juego tiene una forma de perder y una escalera de metas. Se construye en diez hitos, numerados después de los de la fase 2.
+
+### 17.1 Alcance
+
+| Entra en la fase 3 | Queda para fases siguientes |
+| --- | --- |
+| Menú Banco: saldo, movimientos e ingresos y gastos del mes (8.1) | Contador: mejores tasas y aviso de cuota (fase 4) |
+| Calificación de crédito de la A a la E (8.3 y 13.6) | Líderes, gerentes, ejecutivos y departamentos (fase 4) |
+| Préstamos: solicitud, cuota mensual, pago anticipado y refinanciación (8.2) | Productos propios y sala de servidores (fase 5) |
+| Préstamo de emergencia el día de nómina | Eventos con tarjetas y cuenta atrás (fase 5) |
+| Mora, embargo de muebles y fin de la partida (8.4) | Salir a bolsa (fase 5) |
+| Compra de terreno junto al local (3.1) | Los desbloqueos de etapa que dependen de esos sistemas |
+| Valor de la empresa siempre visible (9.3) | |
+| Las cinco etapas y el menú Empresa (9.1 y 12.3) | |
+| Objetivos guiados con recompensa (9.4) | |
+
+### 17.2 Decisiones técnicas
+
+- **Sistemas nuevos (autoload):** `Bank` (calificación, préstamos, mora y embargo) y `Company` (valor, etapas y objetivos), después de `Projects` y antes de `SaveManager`. Se comunican con los demás por `EventBus`. Todo cobro o pago sigue pasando por `Economy` con su concepto.
+- **Datos fuera del código:** tasas, límites, plazos, mora y reventa en `data/bank.json` (sección 13.6); requisitos y desbloqueos de etapa en `data/stages.json` (9.1); objetivos, sus condiciones y recompensas en `data/objectives.json`; el precio del terreno en `data/construction.json`.
+- **Calificación:** se calcula cada día 1 con los ingresos de contratos de los últimos 30 días, el valor de los bienes, los meses de antigüedad y el historial de pagos (cuotas a tiempo y atrasadas). Una empresa nueva empieza en C con un límite fijo de $5,000 hasta tener ingresos; después el límite es el múltiplo de su letra por el ingreso mensual. Cada atraso baja una letra en el momento.
+- **Préstamos:** interés simple mensual: total = monto × (1 + tasa × meses) y cuota = total / meses, cobrada el día 1 junto al mantenimiento. La suma de lo que se debe nunca pasa el límite. El pago anticipado cobra el capital que falta más el interés del mes en curso. Refinanciar, una vez por préstamo, alarga el plazo con la tasa un punto más alta. Las etapas ponen un tope extra al monto (préstamos pequeños en Emprendimiento, grandes desde Mediana empresa), provisional en `data/bank.json`.
+- **Mora y embargo:** una cuota que no alcanza queda atrasada, cobra el 5% de recargo y se paga sola apenas alcance el saldo, como la nómina debida. Con 2 cuotas atrasadas seguidas el banco avisa y no presta más; con 3, embarga: suma la reventa de los muebles (50% del precio) y, si cubre la deuda, se los lleva empezando por la decoración y dejando los puestos de trabajo para el final; si no la cubre, la partida termina.
+- **Fin de la partida:** una pantalla con las estadísticas (días jugados, empleados contratados, contratos entregados, mejor reputación) y un botón al menú principal. Se borra el autoguardado para no volver al momento del embargo; las ranuras manuales quedan.
+- **Préstamo de emergencia:** si el día de nómina no alcanza el dinero y el banco todavía presta, el tiempo se pausa y aparece una ventana con el monto (lo que falta para la nómina), la tasa del 12% y la cuota, con Aceptar y Rechazar. Aceptar paga la nómina y crea el préstamo; rechazar deja la deuda de nómina como en la fase 2. El plazo es fijo y provisional (3 meses) y no cuenta para el límite.
+- **Terreno:** el local deja de ser un rectángulo: pasa a ser un conjunto de casillas dentro del solar. La compra se elige en Construir (lado, ancho × fondo y posición a lo largo del lado), con vista previa y precio antes de confirmar. El terreno nuevo trae piso básico, el contorno de paredes se corre al nuevo borde y el borde compartido queda abierto. El mantenimiento sube solo porque se cobra por m².
+- **Valor de la empresa:** dinero + reventa de los muebles (50%) + terreno comprado al precio pagado − deuda con el banco (capital pendiente de los préstamos, cuotas atrasadas y recargos). Los productos se suman en la fase 5. Se muestra arriba a la izquierda, junto al dinero y la reputación.
+- **Etapas:** se revisan cada día y nunca bajan. Las cinco existen desde ya, pero la 4 y la 5 piden productos y ejecutivos, así que no se alcanzan hasta las fases 4 y 5. Un equipo cuenta como completo si tiene al menos un diseñador, un programador y un QA. Los contratos medianos llegan desde Startup o con un vendedor (reemplaza la regla de 2 estrellas); los grandes siguen pidiendo 4 estrellas y Sala de reuniones hasta que la etapa 4 sea alcanzable.
+- **Objetivos:** una lista corta (hasta 3 visibles) a la izquierda, plegable, que se pliega sola al abrir Personal, Proyectos o Equipos. Cada objetivo tiene una condición, un texto y una recompensa de dinero, de reputación o de ambas. Al cumplirse avisa, cobra la recompensa con el concepto «Objetivo cumplido» y entra el siguiente de la lista.
+- **Menús:** la barra de abajo suma Banco y Empresa. Banco y Empresa ocupan el lado izquierdo como Personal, Proyectos y Equipos: abrir uno cierra los otros.
+- **Guardado:** `Bank` y `Company` implementan `export_state()` e `import_state()` tolerantes a claves ausentes, para que las partidas de la fase 2 carguen sin préstamos, en etapa calculada y con los objetivos ya cumplidos marcados sin recompensa.
+
+### 17.3 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 20. Menú Banco | Menú Banco con el saldo, los movimientos (fecha, concepto y monto) y los ingresos y gastos del mes por concepto | Tras comprar un mueble y cobrar un contrato, ambos movimientos aparecen con su fecha y los totales del mes cuadran con `Economy` |
+| 21. Calificación de crédito | Nota de la A a la E con ingresos, bienes, antigüedad e historial; límite de préstamo según la letra (13.6). Se ve en el Banco con lo que la sube y la baja | Una empresa nueva está en C con límite de $5,000; con ingresos y pagos puntuales sube; un atraso la baja una letra |
+| 22. Préstamos | Pedir un préstamo eligiendo monto y plazo (3 a 24 meses) con vista previa de tasa, cuota y total; cuota el día 1; pago anticipado; refinanciar una vez | $10,000 a 10 meses en C cuesta $14,500 en cuotas de $1,450 cobradas el día 1; no se puede pedir más que el límite; el pago anticipado ahorra intereses; refinanciar no se puede dos veces |
+| 23. Mora y embargo | Cuotas atrasadas con recargo del 5%, aviso a las 2 y embargo a las 3: el banco se lleva muebles (decoración primero) o, si no alcanzan, termina la partida con la pantalla de fin | Una cuota sin pagar cobra el 5% y baja la letra; con 2 el banco no presta; con 3 y muebles suficientes la deuda queda saldada y siguen los puestos de trabajo; sin muebles aparece la pantalla de fin y se borra el autoguardado |
+| 24. Préstamo de emergencia | Ventana que pausa el tiempo el día de nómina sin dinero, con monto, tasa del 12%, cuota, Aceptar y Rechazar | El día 15 sin dinero aparece la ventana con el tiempo en pausa; aceptar paga la nómina y crea el préstamo al 12%; rechazar deja la deuda de nómina; con 2 cuotas atrasadas no se ofrece |
+| 25. Compra de terreno | Herramienta Terreno en Construir: lado, ancho × fondo y posición, vista previa y precio; el local crece y el contorno se corre | Comprar 4 × 3 al este cuesta $1,800, el local suma 12 m² y el mantenimiento sube $60 al mes; no se puede comprar fuera del solar ni sin tocar el local; los caminos llegan al terreno nuevo |
+| 26. Valor de la empresa | Valor calculado (9.3) y visible arriba a la izquierda, con el detalle en el Banco | Comprar un mueble baja el valor la mitad de su precio; pedir un préstamo no cambia el valor; comprar terreno tampoco (se cuenta a lo pagado); cada cuota baja el valor solo en su interés |
+| 27. Etapas y menú Empresa | Las cinco etapas con requisitos y desbloqueos (data/stages.json); menú Empresa con la etapa, el progreso hacia la siguiente, la reputación y los ingresos y gastos del mes | Con 5 empleados y 3 contratos entregados la empresa pasa a Startup con un aviso y llegan contratos medianos sin vendedor; despedir después no la baja de etapa |
+| 28. Objetivos guiados | Lista plegable de objetivos con recompensa de dinero, reputación o ambas (data/objectives.json) | Al contratar al primer programador el objetivo se marca, cobra su recompensa una sola vez y aparece el siguiente; una partida de la fase 2 carga con sus objetivos ya cumplidos marcados |
+| 29. Comprobación de la fase | Simulación sin ventana de varios meses: CEO solo, primer equipo con préstamo y una empresa que deja de pagar. Ajuste de los valores de `data/bank.json` y `data/stages.json` | La simulación cuadra con la tabla 13.8; un préstamo razonable se paga con el primer equipo; dejar de pagar lleva al embargo en el tercer mes; todas las pruebas anteriores siguen pasando |
+
+### 17.4 Orden y dependencias
+
+- **Banco:** el 20, el 21 y el 22 van en cadena; la calificación necesita los movimientos y los préstamos necesitan el límite.
+- **Riesgo:** el 23 y el 24 van después del 22, porque necesitan préstamos y cuotas.
+- **Terreno:** el 25 es independiente del banco y puede ir en cualquier momento después del 20.
+- **Progreso:** el 26 necesita la deuda (22) y el terreno (25); el 27 y el 28 van después del 26, porque el menú Empresa y algunos objetivos usan el valor.
+- **Cierre:** el 29 va al final.
+
+### 17.5 Riesgos de esta fase
+
+- **Local no rectangular:** hoy el local es un rectángulo (`lot_rect`). Pasar a un conjunto de casillas toca la construcción, las paredes del contorno, las habitaciones, la cámara y el guardado; conviene hacerlo al empezar el hito 25 con pruebas de las fases 1 y 2 corriendo.
+- **Embargo y empleados:** si el banco se lleva un puesto de trabajo ocupado, el empleado queda sin puesto; debe tratarse igual que vender el mueble y no dejar asignaciones colgadas.
+- **Ventana que pausa:** la ventana de emergencia no puede quedar abierta mientras el tiempo salta con la oficina vacía ni al cargar una partida.
+- **Barra de menús:** con Banco y Empresa son nueve botones; deben caber en 1280 px de ancho.
+- **Balance:** los valores de 9.1 y 13.6 son una propuesta. El hito 29 los ajusta antes de cerrar la fase.
+- **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 2.
