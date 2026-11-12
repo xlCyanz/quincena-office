@@ -173,6 +173,18 @@ static func get_overtime(key: String) -> Variant:
 
 
 ## Días de la semana con que empieza el turno de un equipo nuevo.
+## Plantillas de turno con que empieza la partida: [{"name", "schedule"}].
+static func get_default_templates() -> Array[Dictionary]:
+	var templates: Array[Dictionary] = []
+	for data: Dictionary in _staff_data()["teams"]["templates"]:
+		var days: Array[int] = []
+		for day: Variant in data["days"]:
+			days.append(int(day))
+		templates.append({"name": String(data["name"]),
+			"schedule": WorkSchedule.make_shift(int(data["start_hour"]), days).to_dict()})
+	return templates
+
+
 static func get_default_team_days() -> Array[int]:
 	var days: Array[int] = []
 	for day: Variant in _staff_data()["teams"]["default_days"]:

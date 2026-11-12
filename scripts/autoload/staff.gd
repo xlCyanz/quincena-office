@@ -85,10 +85,23 @@
 # termina suma a "overtime_pay" y "night_pay" (dinero con decimales); la nómina las pasa a
 # "owed" y guarda qué parte es de cada concepto en "owed_overtime" y "owed_night", que se
 # cobran como «Horas extra» y «Recargo nocturno» (data/staff.json, overtime).
+#
+# Plantillas y agenda (hito 35): una plantilla de turno es {"id", "name", "schedule"}
+# (shift_templates). Un equipo con "template_id" sigue su plantilla: cambiarla cambia el
+# turno de todos sus equipos; con NO_TEMPLATE tiene turno propio. El "schedule" del
+# equipo siempre es su turno vigente. get_agenda da quién trabaja cada hora de un día y
+# marca los huecos (AGENDA_GAP: un equipo trabajando sin su líder presente).
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
 const CONCEPT_PAYROLL: String = "Nómina"
+## template_id de un equipo con turno propio.
+const NO_TEMPLATE: int = 0
+## Estados de una hora en la agenda.
+const AGENDA_OFF: String = "off"
+const AGENDA_WORK: String = "work"
+const AGENDA_LUNCH: String = "lunch"
+const AGENDA_GAP: String = "gap"
 const CONCEPT_OVERTIME: String = "Horas extra"
 const CONCEPT_NIGHT: String = "Recargo nocturno"
 ## Cargo que cuenta contratos aceptados en lugar de trabajados para ascender.
@@ -110,6 +123,8 @@ var ceo_at_work: bool = true
 ## Día (GameClock.get_day_count) del último despido; -1000 si no hubo.
 var last_firing_day: int = NO_FIRING
 var teams: Array[Dictionary] = []
+## Plantillas de turno: {"id", "name", "schedule"}.
+var shift_templates: Array[Dictionary] = []
 ## Empleados contratados en toda la partida (para la pantalla de fin).
 var hired_count: int = 0
 ## La nómina de hoy no alcanzó y espera la respuesta al préstamo de emergencia (hito 24):
@@ -118,6 +133,7 @@ var payroll_held: bool = false
 
 var _next_id: int = 1
 var _next_team_id: int = 1
+var _next_template_id: int = 1
 # Hora (como _absolute_hour) en que terminó la última entrevista; no se guarda.
 var _last_interview_end: int = NO_FIRING
 var _rng := RandomNumberGenerator.new()
@@ -140,6 +156,7 @@ func new_game() -> void:
 	ceo_at_work = true
 	last_firing_day = NO_FIRING
 	teams.clear()
+	_reset_templates()
 	hired_count = 0
 	payroll_held = false
 	_next_id = 1
@@ -922,11 +939,16 @@ func has_own_schedule(employee: Dictionary) -> bool:
 
 ## Crea un equipo vacío con el turno por defecto y lo devuelve.
 func create_team() -> Dictionary:
-	var schedule: WorkSchedule = WorkSchedule.make_shift(int(StaffCatalog.get_teams("default_start_hour")),
-		StaffCatalog.get_default_team_days())
+	var schedule: Dictionary = WorkSchedule.make_shift(int(StaffCatalog.get_teams("default_start_hour")),
+		StaffCatalog.get_default_team_days()).to_dict()
+	# Un equipo nuevo usa la primera plantilla, si hay.
+	var template_id: int = NO_TEMPLATE
+	if not shift_templates.is_empty():
+		template_id = shift_templates[0]["id"]
+		schedule = (shift_templates[0]["schedule"] as Dictionary).duplicate(true)
 	var members: Array[int] = []
 	var team: Dictionary = {"id": _next_team_id, "name": "%s %d" % [StaffCatalog.get_teams("name_prefix"), _next_team_id],
-		"members": members, "leader_id": 0, "schedule": schedule.to_dict()}
+		"members": members, "leader_id": 0, "schedule": schedule, "template_id": template_id}
 	_next_team_id += 1
 	teams.append(team)
 	EventBus.staff_changed.emit()
@@ -1114,8 +1136,177 @@ func set_team_shift(team_id: int, start_hour: int, days: Array[int], overtime: i
 		return {"ok": false, "message": problem}
 	var schedule: WorkSchedule = WorkSchedule.make_shift(start_hour, days, overtime)
 	team["schedule"] = schedule.to_dict()
+	# Un turno elegido a mano ya no sigue la plantilla.
+	team["template_id"] = NO_TEMPLATE
 	_schedules_changed()
 	return {"ok": true, "message": "Turno de %s: %s." % [team["name"], schedule.describe()]}
+
+
+## Plantilla con ese id, o vacío.
+func get_template(template_id: int) -> Dictionary:
+	for template: Dictionary in shift_templates:
+		if template["id"] == template_id:
+			return template
+	return {}
+
+
+## Plantilla que sigue un equipo, o vacío si tiene turno propio.
+func get_template_of(team: Dictionary) -> Dictionary:
+	return get_template(int(team.get("template_id", NO_TEMPLATE)))
+
+
+## Equipos que siguen una plantilla.
+func get_teams_with_template(template_id: int) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	for team: Dictionary in teams:
+		if int(team.get("template_id", NO_TEMPLATE)) == template_id:
+			found.append(team)
+	return found
+
+
+## Crea una plantilla nueva con el turno por defecto y la devuelve.
+func create_template() -> Dictionary:
+	var template: Dictionary = {"id": _next_template_id,
+		"name": "%s %d" % [StaffCatalog.get_teams("template_prefix"), _next_template_id],
+		"schedule": WorkSchedule.make_shift(int(StaffCatalog.get_teams("default_start_hour")),
+			StaffCatalog.get_default_team_days()).to_dict()}
+	_next_template_id += 1
+	shift_templates.append(template)
+	EventBus.staff_changed.emit()
+	return template
+
+
+## Cambia el nombre de una plantilla. Devuelve {"ok", "message"}.
+func rename_template(template_id: int, new_name: String) -> Dictionary:
+	var template: Dictionary = get_template(template_id)
+	if template.is_empty():
+		return {"ok": false, "message": "Esa plantilla ya no está."}
+	var clean: String = new_name.strip_edges()
+	var max_length: int = int(StaffCatalog.get_teams("max_template_name"))
+	if clean.is_empty():
+		return {"ok": false, "message": "La plantilla necesita un nombre."}
+	if clean.length() > max_length:
+		return {"ok": false, "message": "El nombre puede tener hasta %d letras." % max_length}
+	template["name"] = clean
+	EventBus.staff_changed.emit()
+	return {"ok": true, "message": "La plantilla se llama ahora %s." % clean}
+
+
+## Borra una plantilla: sus equipos se quedan con el turno que tenían, como turno propio.
+func delete_template(template_id: int) -> Dictionary:
+	var template: Dictionary = get_template(template_id)
+	if template.is_empty():
+		return {"ok": false, "message": "Esa plantilla ya no está."}
+	var users: Array[Dictionary] = get_teams_with_template(template_id)
+	for team: Dictionary in users:
+		team["template_id"] = NO_TEMPLATE
+	shift_templates.erase(template)
+	EventBus.staff_changed.emit()
+	return {"ok": true, "message": "Borraste %s%s." % [template["name"],
+		"" if users.is_empty() else "; sus equipos se quedan con ese turno como propio"]}
+
+
+## Cambia el turno de una plantilla y el de todos los equipos que la siguen.
+func set_template_shift(template_id: int, start_hour: int, days: Array[int], overtime: int = 0) -> Dictionary:
+	var template: Dictionary = get_template(template_id)
+	if template.is_empty():
+		return {"ok": false, "message": "Esa plantilla ya no está."}
+	var problem: String = shift_problem(start_hour, days, overtime)
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	var schedule: WorkSchedule = WorkSchedule.make_shift(start_hour, days, overtime)
+	template["schedule"] = schedule.to_dict()
+	var users: Array[Dictionary] = get_teams_with_template(template_id)
+	for team: Dictionary in users:
+		team["schedule"] = schedule.to_dict()
+	_schedules_changed()
+	var count: String = "" if users.is_empty() else " Cambia el turno de %d %s." % [users.size(),
+		"equipo" if users.size() == 1 else "equipos"]
+	return {"ok": true, "message": "%s: %s.%s" % [template["name"], schedule.describe(), count]}
+
+
+## Hace que un equipo siga una plantilla, o NO_TEMPLATE para que se quede con su turno
+## como propio. Devuelve {"ok", "message"}.
+func set_team_template(team_id: int, template_id: int) -> Dictionary:
+	var team: Dictionary = get_team(team_id)
+	if team.is_empty():
+		return {"ok": false, "message": "Ese equipo ya no está."}
+	if template_id == NO_TEMPLATE:
+		team["template_id"] = NO_TEMPLATE
+		EventBus.staff_changed.emit()
+		return {"ok": true, "message": "%s tiene turno propio: %s." % [team["name"], WorkSchedule.from_dict(team["schedule"]).describe()]}
+	var template: Dictionary = get_template(template_id)
+	if template.is_empty():
+		return {"ok": false, "message": "Esa plantilla ya no está."}
+	team["template_id"] = template_id
+	team["schedule"] = (template["schedule"] as Dictionary).duplicate(true)
+	_schedules_changed()
+	return {"ok": true, "message": "%s sigue la plantilla %s: %s." % [team["name"], template["name"],
+		WorkSchedule.from_dict(team["schedule"]).describe()]}
+
+
+## Agenda de un día de la semana: una fila por equipo y por persona con horario propio,
+## {"kind" ("team" o "employee"), "id", "label", "cells"}, con cells = 24 estados
+## (AGENDA_OFF, AGENDA_WORK, AGENDA_LUNCH o AGENDA_GAP) de las horas que empiezan ese día.
+func get_agenda(weekday: int) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for team: Dictionary in teams:
+		var schedule: WorkSchedule = WorkSchedule.from_dict(team["schedule"])
+		var cells: Array[String] = []
+		for hour: int in range(GameConstants.HOURS_PER_DAY):
+			var state: String = _agenda_state(schedule, weekday, hour)
+			if state == AGENDA_WORK and _is_leader_gap(team, weekday, hour):
+				state = AGENDA_GAP
+			cells.append(state)
+		rows.append({"kind": "team", "id": team["id"], "label": team["name"], "cells": cells})
+	for employee: Dictionary in employees:
+		if not has_own_schedule(employee):
+			continue
+		var schedule: WorkSchedule = get_schedule(employee)
+		var cells: Array[String] = []
+		for hour: int in range(GameConstants.HOURS_PER_DAY):
+			cells.append(_agenda_state(schedule, weekday, hour))
+		rows.append({"kind": "employee", "id": employee["id"], "label": employee["name"], "cells": cells})
+	return rows
+
+
+## Huecos de un día para el jugador: "Equipo 1 sin líder de 22:00 a 24:00".
+func get_agenda_gaps(weekday: int) -> Array[String]:
+	var gaps: Array[String] = []
+	for row: Dictionary in get_agenda(weekday):
+		var cells: Array = row["cells"]
+		var hour: int = 0
+		while hour < cells.size():
+			if cells[hour] != AGENDA_GAP:
+				hour += 1
+				continue
+			var start: int = hour
+			while hour < cells.size() and cells[hour] == AGENDA_GAP:
+				hour += 1
+			gaps.append("%s sin líder de %d:00 a %d:00" % [row["label"], start, hour])
+	return gaps
+
+
+func _agenda_state(schedule: WorkSchedule, weekday: int, hour: int) -> String:
+	if schedule.is_lunch(weekday, hour):
+		return AGENDA_LUNCH
+	return AGENDA_WORK if schedule.is_working(weekday, hour) else AGENDA_OFF
+
+
+# Hueco: desde la etapa de los líderes, un equipo con miembros trabaja sin su líder.
+func _is_leader_gap(team: Dictionary, weekday: int, hour: int) -> bool:
+	if not leaders_required() or (team["members"] as Array).is_empty():
+		return false
+	return not is_leader_present(team, weekday * GameConstants.HOURS_PER_DAY + hour)
+
+
+# Vuelve a las plantillas de data/staff.json.
+func _reset_templates() -> void:
+	shift_templates.clear()
+	_next_template_id = 1
+	for data: Dictionary in StaffCatalog.get_default_templates():
+		shift_templates.append({"id": _next_template_id, "name": data["name"], "schedule": data["schedule"]})
+		_next_template_id += 1
 
 
 ## Por qué no vale un turno, o "" si vale.
@@ -1602,6 +1793,7 @@ func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
 		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
+		"shift_templates": shift_templates.duplicate(true), "next_template_id": _next_template_id,
 		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held}
 
 
@@ -1652,6 +1844,19 @@ func import_state(state: Dictionary) -> void:
 		if interview["by"] != "ceo" and get_employee_by_key(interview["by"]).is_empty():
 			interview = {}
 	_drop_missing_interview()
+	# Antes del hito 35 no había plantillas: empieza con las de data/staff.json.
+	if state.has("shift_templates"):
+		shift_templates.clear()
+		var top: int = 0
+		for saved: Dictionary in state["shift_templates"]:
+			var template_id: int = int(saved["id"])
+			top = maxi(top, template_id)
+			shift_templates.append({"id": template_id, "name": String(saved.get("name", "%s %d" % [
+				StaffCatalog.get_teams("template_prefix"), template_id])),
+				"schedule": WorkSchedule.from_dict(saved.get("schedule", {})).to_dict()})
+		_next_template_id = maxi(int(state.get("next_template_id", top + 1)), top + 1)
+	else:
+		_reset_templates()
 	teams.clear()
 	for saved: Dictionary in state.get("teams", []):
 		var members: Array[int] = []
@@ -1669,8 +1874,13 @@ func import_state(state: Dictionary) -> void:
 		var leader: Dictionary = get_employee(leader_id)
 		if leader.is_empty() or not is_leader(leader) or not get_team_of(leader_id).is_empty():
 			leader_id = 0
+		# Un equipo de una plantilla que ya no está se queda con su turno como propio.
+		var template: Dictionary = get_template(int(saved.get("template_id", NO_TEMPLATE)))
+		if not template.is_empty():
+			schedule = template["schedule"]
 		teams.append({"id": team_id, "name": String(saved.get("name", "%s %d" % [StaffCatalog.get_teams("name_prefix"), team_id])),
-			"members": members, "leader_id": leader_id, "schedule": WorkSchedule.from_dict(schedule).to_dict()})
+			"members": members, "leader_id": leader_id, "schedule": WorkSchedule.from_dict(schedule).to_dict(),
+			"template_id": NO_TEMPLATE if template.is_empty() else int(template["id"])})
 	_next_team_id = int(state.get("next_team_id", 1))
 	payroll_held = bool(state.get("payroll_held", false))
 	_last_interview_end = NO_FIRING

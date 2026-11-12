@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32), `test_departments` (33) y `test_overtime` (34)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32), `test_departments` (33), `test_overtime` (34) y `test_agenda` (35)
 
 ## Convenciones de código
 
@@ -77,8 +77,8 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   Aceptar cobra el anticipo (30 %, si trae). El menú Proyectos (`ProjectsPanel`) no pausa.
 - Equipos (`Staff.teams`): `{id, name, members, schedule}`; un empleado está como mucho en un equipo. El turno es hora de entrada
   y días (mínimo 1 de descanso); dura 9 h (8 + almuerzo). El contrato guarda quién lo lleva (`team_id`: equipo, `Projects.CEO_TEAM`
-  o `NO_TEAM`); un equipo lleva uno a la vez y el tope de contratos es equipos con miembros + 1 (el CEO). Menú Equipos (`TeamsPanel`).
-  Personal, Proyectos, Equipos, Banco y Empresa ocupan el lado izquierdo: abrir uno cierra los otros.
+  o `NO_TEAM`); un equipo lleva uno a la vez y el tope de contratos es equipos con miembros + 1 (el CEO). Menú Horarios (`TeamsPanel`, antes Equipos).
+  Personal, Proyectos, Horarios, Banco y Empresa ocupan el lado izquierdo: abrir uno cierra los otros.
 - Producción (`Production`, funciones puras; `Projects._produce` al terminar cada hora): puntos/h por nivel (13.3) × energía
   (100 % desde 50, baja hasta 50 % en 0) × ánimo (100 % desde 50, baja hasta 70 % en 0) × (1 + `production_bonus` de la computadora). Cada uno suma en la fase de su cargo; si
   está cerrada o llena ayuda al 50 % en la primera con lugar. Una fase abre con la anterior al 50 % y nunca pasa su %. El CEO es
@@ -127,6 +127,11 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   cobra como «Horas extra» y «Recargo nocturno». Meta de estrés +5 por hora extra; con horas de noche, ánimo −10. Horario propio
   (`own_schedule`, `Staff.set_own_schedule`/`clear_own_schedule`, fila en la ficha): reemplaza el del equipo o el cargo. `ShiftEditor` son los
   controles de turno de Equipos y la ficha.
+- Plantillas y agenda (`Staff.shift_templates`: `{id, name, schedule}`; empiezan Diurno, Tarde y Noche de `teams.templates`): un equipo
+  sigue una (`template_id`) o tiene turno propio (`NO_TEMPLATE`); su `schedule` siempre es el vigente. `set_template_shift` cambia la plantilla
+  y todos sus equipos; `set_team_shift` suelta la plantilla; borrar una deja a sus equipos con su turno. `Staff.get_agenda(día)` da 24 estados por
+  equipo y persona con horario propio (`AGENDA_GAP` = equipo con miembros trabajando sin su líder, desde Startup); `get_agenda_gaps` los textos.
+  Horarios tiene tres vistas (`set_view`): Equipos, Plantillas y Agenda (un día a la vez).
 - Banco (`Bank`, `data/bank.json`): calificación A–E por puntaje = base 50 (C) + ingresos de contratos del mes pasado (hasta +20, con $25,000)
   + bienes (reventa de muebles y computadoras, hasta +10) + antigüedad (+2/mes, hasta +10) + pagos a tiempo (+2, hasta +10)
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
@@ -220,3 +225,4 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 32 | Gerentes y organigrama | ✅ Completado (ascender un líder o contratarlo desde Pequeña empresa; Oficina única con escritorio y silla, una persona por oficina; el jugador asigna los líderes en el organigrama; +10 % solo con el gerente presente; el estrés baja siempre) |
 | 33 | Departamentos y ejecutivos | ✅ Completado (desde Mediana empresa, que pide solo 40 empleados; ascender un gerente o contratarlo; el ejecutivo rinde siempre, sin depender de estar presente; el CEO con 3+ departamentos rinde menos; Administración solo entrevista, el jugador elige quién) |
 | 34 | Horas extra y turno de noche | ✅ Completado (0–4 h extra al final del turno a 1.5×; +20 % de 22 a 6; se pagan por hora de horario en la nómina siguiente con su concepto; estrés +5 por hora extra y ánimo −10 de noche; horario propio desde la ficha, también sin equipo) |
+| 35 | Agenda semanal | ✅ Completado (Equipos pasa a Horarios con vistas Equipos, Plantillas y Agenda; Diurno, Tarde y Noche editables; cada equipo sigue una plantilla o tiene turno propio; agenda de un día con huecos sin líder desde Startup; la recepción se marca en el hito 36) |

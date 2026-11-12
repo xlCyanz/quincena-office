@@ -286,8 +286,8 @@ func _check_panel() -> void:
 	var panel: TeamsPanel = game.get_node("TeamsPanel")
 	var projects_panel: ProjectsPanel = game.get_node("ProjectsPanel")
 	var build_panel: BuildPanel = game.get_node("BuildPanel")
-	_expect(panel.get_open_button().get_parent() == build_panel.get_menu_bar() and panel.get_open_button().text == "Equipos",
-		"botón Equipos en la barra")
+	_expect(panel.get_open_button().get_parent() == build_panel.get_menu_bar() and panel.get_open_button().text == "Horarios",
+		"botón Horarios en la barra")
 	await _click(projects_panel.get_open_button())
 	await _click(panel.get_open_button())
 	_expect(panel.is_open() and not projects_panel.is_open() and not GameClock.is_paused, "Equipos se abre, cierra Proyectos y no pausa")
