@@ -1,7 +1,7 @@
-# Menú Banco (diseño, 8.1 y 12.3): el saldo de la cuenta empresarial, los ingresos y
-# gastos por concepto del mes actual o del anterior (con «<» y «>») y el historial de
-# movimientos, los más nuevos arriba. Los préstamos y la calificación llegan en los
-# hitos 21 y 22.
+# Menú Banco (diseño, 8.1, 8.3 y 12.3): el saldo de la cuenta empresarial, la
+# calificación de crédito con lo que suma cada factor, el interés y el límite (hito 21),
+# los ingresos y gastos por concepto del mes actual o del anterior (con «<» y «>») y el
+# historial de movimientos, los más nuevos arriba. Los préstamos llegan en el hito 22.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos y Equipos (abrir
 # uno cierra los otros; lo hace la escena de juego). Se construye en código; su botón va
@@ -33,6 +33,8 @@ var _next_button: Button
 var _month_rows: VBoxContainer
 var _movement_rows: VBoxContainer
 var _empty_label: Label
+var _credit_label: Label
+var _credit_rows: VBoxContainer
 # Mes que se muestra en el resumen (el actual o el anterior).
 var _shown_month: int = 1
 # Mes actual en el último refresco: si se miraba ese mes y empieza otro, se sigue al nuevo.
@@ -85,6 +87,19 @@ func _ready() -> void:
 	content.add_theme_constant_override("separation", 6)
 	scroll.add_child(content)
 
+	# Calificación de crédito.
+	_credit_label = Label.new()
+	_credit_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_credit_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
+	content.add_child(_credit_label)
+	_credit_rows = VBoxContainer.new()
+	content.add_child(_credit_rows)
+	var credit_hint := Label.new()
+	credit_hint.text = "Se recalcula el día 1 de cada mes. Sube con ingresos, bienes, antigüedad y pagos a tiempo (nómina y mantenimiento); cada atraso resta en el momento."
+	credit_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	credit_hint.add_theme_color_override("font_color", MUTED_COLOR)
+	content.add_child(credit_hint)
+
 	# Resumen del mes con selector.
 	var month_header := HBoxContainer.new()
 	content.add_child(month_header)
@@ -118,6 +133,7 @@ func _ready() -> void:
 	_panel.visible = false
 	EventBus.balance_changed.connect(func(_balance: int) -> void: _refresh())
 	EventBus.day_changed.connect(func(_day: int, _month: int) -> void: _refresh())
+	EventBus.bank_changed.connect(_refresh)
 
 
 ## Pone el botón "Banco" en la barra de menús.
@@ -162,6 +178,14 @@ func get_balance_text() -> String:
 	return _balance_label.text
 
 
+## Texto de la calificación: título y una línea por factor.
+func get_credit_text() -> String:
+	var lines: Array[String] = [_credit_label.text]
+	for row: Node in _credit_rows.get_children():
+		lines.append(_row_text(row))
+	return "\n".join(lines)
+
+
 ## Texto del resumen del mes: título y una línea por concepto y por total.
 func get_month_text() -> String:
 	var lines: Array[String] = [_month_label.text]
@@ -200,8 +224,39 @@ func _refresh() -> void:
 	_month_label.text = "Mes %d (%s)" % [_shown_month, "este mes" if _shown_month == current else "mes anterior"]
 	_previous_button.disabled = _shown_month <= maxi(1, current - 1)
 	_next_button.disabled = _shown_month >= current
+	_refresh_credit()
 	_refresh_month()
 	_refresh_movements()
+
+
+func _refresh_credit() -> void:
+	_credit_label.text = "Crédito: %s (%d puntos) · interés %s al mes · presta hasta %s" % [
+		Bank.rating, Bank.score, _percent(Bank.get_monthly_rate()), MoneyFormat.format(Bank.get_limit())]
+	_clear(_credit_rows)
+	for part: Dictionary in Bank.get_score_parts():
+		var label: String = part["label"] if String(part["detail"]).is_empty() else "%s (%s)" % [part["label"], part["detail"]]
+		var points: int = part["points"]
+		var row := HBoxContainer.new()
+		var name_label := Label.new()
+		name_label.text = "   " + label
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(name_label)
+		var points_label := Label.new()
+		points_label.text = ("+%d" % points) if points >= 0 else ("−%d" % -points)
+		points_label.custom_minimum_size = Vector2(AMOUNT_WIDTH, 0)
+		points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		if points < 0:
+			points_label.add_theme_color_override("font_color", Hud.NEGATIVE_COLOR)
+		elif points == 0:
+			points_label.add_theme_color_override("font_color", MUTED_COLOR)
+		row.add_child(points_label)
+		_credit_rows.add_child(row)
+
+
+# 0.045 → "4.5 %"; 0.02 → "2 %".
+static func _percent(rate: float) -> String:
+	var value: float = snappedf(rate * 100.0, 0.1)
+	return ("%d %%" % roundi(value)) if is_equal_approx(value, roundf(value)) else ("%.1f %%" % value)
 
 
 func _refresh_month() -> void:

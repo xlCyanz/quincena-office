@@ -39,6 +39,8 @@ func new_game() -> void:
 	Staff.new_game()
 	GameClock.new_game()
 	Projects.new_game()
+	# Al final: la calificación inicial mira los muebles del local inicial.
+	Bank.new_game()
 
 
 ## Ids de las ranuras manuales: "slot_1" … "slot_5".
@@ -84,6 +86,7 @@ func save_game(slot: String) -> bool:
 		"office": OfficeState.export_state(),
 		"staff": Staff.export_state(),
 		"projects": Projects.export_state(),
+		"bank": Bank.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
@@ -111,6 +114,8 @@ func load_game(slot: String) -> bool:
 	Projects.import_state(data.get("projects", {}))
 	Economy.import_state(data["economy"])
 	GameClock.import_state(data["clock"])
+	# Las partidas de antes del hito 21 no tienen banco: se calcula con lo que hay.
+	Bank.import_state(data.get("bank", {}))
 	_pending_scene_state = data.get("scene", {})
 	return true
 

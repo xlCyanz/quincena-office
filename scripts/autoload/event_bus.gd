@@ -39,3 +39,13 @@ signal notice(text: String)
 ## el jugador mandó al CEO a casa). La emite Staff.
 @warning_ignore("unused_signal")
 signal presence_changed
+
+## Se hizo (on_time = true) o no se pudo hacer a tiempo (false) un pago obligatorio:
+## la nómina, el mantenimiento y, desde el hito 22, las cuotas. Lo escucha Bank para el
+## historial de la calificación de crédito.
+@warning_ignore("unused_signal")
+signal payment_recorded(concept: String, on_time: bool)
+
+## Cambió algo del banco (calificación, límite o, más adelante, préstamos). La emite Bank.
+@warning_ignore("unused_signal")
+signal bank_changed

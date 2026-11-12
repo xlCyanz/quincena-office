@@ -1,0 +1,21 @@
+{
+	"_comentario": "Banco (diseño, 8.3 y 13.6). Calificación de crédito: un puntaje que empieza en base_score (C) y suma ingresos de contratos del mes pasado (hasta income_points_max puntos con income_for_max_points dólares o más, en línea recta), bienes (reventa de muebles y computadoras, hasta assets_points_max con assets_for_max_points), antigüedad (age_points_per_month por mes completo, hasta age_points_max) y pagos puntuales (on_time_points cada uno, hasta on_time_points_max); cada atraso suma late_points. El puntaje va de 0 a 100 y da la letra: la primera de ratings cuyo min_score alcanza. Se recalcula el día 1 de cada mes y en el momento de un atraso. Cada letra tiene su interés mensual (monthly_rate) y su límite de préstamo: limit_multiple × ingreso del mes pasado, nunca menos de min_limit. Pagos: la nómina pagada completa y el mantenimiento sin dejar el saldo negativo son puntuales; la nómina sin pagar y el mantenimiento que deja saldo negativo son atrasos (desde el hito 22 cuentan también las cuotas).",
+	"base_score": 50,
+	"ratings": [
+		{ "letter": "A", "min_score": 75, "monthly_rate": 0.02, "limit_multiple": 6 },
+		{ "letter": "B", "min_score": 60, "monthly_rate": 0.03, "limit_multiple": 4 },
+		{ "letter": "C", "min_score": 45, "monthly_rate": 0.045, "limit_multiple": 3 },
+		{ "letter": "D", "min_score": 30, "monthly_rate": 0.06, "limit_multiple": 2 },
+		{ "letter": "E", "min_score": 0, "monthly_rate": 0.08, "limit_multiple": 1 }
+	],
+	"min_limit": 5000,
+	"income_points_max": 20,
+	"income_for_max_points": 10000,
+	"assets_points_max": 10,
+	"assets_for_max_points": 10000,
+	"age_points_per_month": 2,
+	"age_points_max": 10,
+	"on_time_points": 2,
+	"on_time_points_max": 20,
+	"late_points": -15
+}

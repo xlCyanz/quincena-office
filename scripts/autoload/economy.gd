@@ -95,6 +95,7 @@ func _on_day_changed(day: int, month: int) -> void:
 	if day == 1:
 		# Lee el tamaño del local del estado de la oficina (solo lectura).
 		charge(get_maintenance(OfficeState.lot_rect.get_area()), CONCEPT_MAINTENANCE)
+		EventBus.payment_recorded.emit(CONCEPT_MAINTENANCE, balance >= 0)
 
 
 func _add_movement(concept: String, amount: int) -> void:

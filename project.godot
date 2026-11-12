@@ -23,6 +23,7 @@ Economy="*res://scripts/autoload/economy.gd"
 OfficeState="*res://scripts/autoload/office_state.gd"
 Staff="*res://scripts/autoload/staff.gd"
 Projects="*res://scripts/autoload/projects.gd"
+Bank="*res://scripts/autoload/bank.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 
 [display]

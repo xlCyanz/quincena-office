@@ -811,7 +811,9 @@ func _run_payroll() -> void:
 		employee["carry"] = 0
 	var total: int = get_total_owed()
 	if _pay_debt_if_possible():
+		EventBus.payment_recorded.emit(CONCEPT_PAYROLL, true)
 		return
+	EventBus.payment_recorded.emit(CONCEPT_PAYROLL, false)
 	for employee: Dictionary in employees:
 		_change_mood(employee, StaffCatalog.get_payroll("unpaid_mood"))
 	EventBus.staff_changed.emit()
