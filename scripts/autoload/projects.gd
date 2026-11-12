@@ -580,6 +580,62 @@ func _pick_size() -> String:
 	return sizes[0]
 
 
+## Indica si hay una habitación de ese tipo que funciona (lo usan los eventos, hito 44).
+func has_working_room(room_type: String) -> bool:
+	return _has_working_room(room_type)
+
+
+## Puntos por hora que suma un proyecto (contrato o producto) con todo su equipo presente,
+## descansado y de buen ánimo; los eventos lo usan para quitar horas de trabajo.
+func get_nominal_rate(project: Dictionary) -> float:
+	var team_id: int = int(project.get("team_id", NO_TEAM))
+	if team_id == CEO_TEAM:
+		var computer: String = Workstations.computer_of(OfficeState.furniture, "ceo")
+		return Production.get_rate(String(StaffCatalog.get_production("ceo_level")), 100.0, Production.get_computer_bonus(computer))
+	var team: Dictionary = Staff.get_team(team_id)
+	if team.is_empty():
+		return 0.0
+	var total: float = 0.0
+	for member: Variant in team["members"]:
+		var employee: Dictionary = Staff.get_employee(int(member))
+		if employee.is_empty() or Production.get_role_phase(employee["role"]).is_empty():
+			continue
+		var computer: String = Workstations.computer_of(OfficeState.furniture, Staff.employee_key(int(member)))
+		total += Production.get_rate(employee["level"], 100.0, Production.get_computer_bonus(computer))
+	return total
+
+
+## Quita puntos ya hechos de un proyecto (contrato o producto), de la última fase hacia la
+## primera, sin bajar de 0. Devuelve los puntos quitados.
+static func remove_work(project: Dictionary, points: float) -> float:
+	var left: float = points
+	var phases: Array[String] = ContractCatalog.PHASES.duplicate()
+	phases.reverse()
+	for phase: String in phases:
+		var take: float = minf(float(project["progress"][phase]), left)
+		project["progress"][phase] = float(project["progress"][phase]) - take
+		left -= take
+	return points - left
+
+
+## Cambia el trabajo, el pago y el plazo de un contrato en curso (un cliente cambia los
+## requisitos, hito 44).
+func change_scope(contract_id: int, points_factor: float, pay_factor: float, extra_days: int) -> void:
+	var contract: Dictionary = get_contract(contract_id)
+	if contract.is_empty():
+		return
+	var total: int = 0
+	for phase: String in ContractCatalog.PHASES:
+		contract["points"][phase] = roundi(int(contract["points"][phase]) * points_factor)
+		total += int(contract["points"][phase])
+	contract["total_points"] = total
+	var step: int = int(ContractCatalog.get_offers("pay_step"))
+	contract["pay"] = roundi(int(contract["pay"]) * pay_factor / step) * step
+	contract["days"] = int(contract["days"]) + extra_days
+	contract["deadline_day"] = int(contract["deadline_day"]) + extra_days
+	EventBus.projects_changed.emit()
+
+
 func _has_working_room(room_type: String) -> bool:
 	for room: Dictionary in OfficeState.rooms:
 		if room["type"] == room_type and RoomRules.function_problems(room, OfficeState.furniture).is_empty():

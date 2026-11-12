@@ -1,11 +1,25 @@
 {
-	"_comentario": "Eventos (diseño 10 y 19.2; hito 43). Cada hora de juego que pasa con el reloj andando (no en pausa ni en construcción, que pausa) y sin otra tarjeta abierta sale un evento con probabilidad 1 / (mean_days[etapa] × 24): en promedio uno cada mean_days días según la etapa (índice de data/stages.json). Se elige entre los que cumplen sus conditions, con su weight. El jugador tiene answer_seconds segundos reales con el reloj andando (a cualquier velocidad; en pausa la cuenta se detiene); si no elige, se toma una opción al azar. conditions: min_employees (contratados sin el CEO), min_stage, min_reputation, offer_room (que quepa una oferta en la bandeja). Cada opción tiene label y effects: money (amount, con el concepto «Evento»), mood, energy o stress (amount a todos los empleados, de 0 a 100), reputation (amount) y offer (pay_factor: llega una oferta con ese pago). En el texto, {employee} es el nombre de un empleado al azar. kind (good o bad) es para el balance: más o menos mitad y mitad. El hito 44 agrega la lista completa de 10.2 con su prevención.",
+	"_comentario": "Eventos (diseño 10.2 y 19.2; hitos 43 y 44). Cada hora de juego que pasa con el reloj andando (no en pausa ni en construcción, que pausa) y sin otra tarjeta abierta sale un evento con probabilidad 1 / (mean_days[etapa] × 24): en promedio uno cada mean_days días según la etapa (índice de data/stages.json). Se elige entre los que cumplen sus conditions y tienen sobre qué caer (target), con su weight multiplicado por el factor de cada weight_if cuyas conditions se cumplen. El jugador tiene answer_seconds segundos reales con el reloj andando; si no elige, se toma una opción al azar. conditions (del evento, de una opción o de un weight_if): min_employees (contratados sin el CEO), min_stage, min_reputation, offer_room (que quepa una oferta), has_role / no_role (algún empleado con ese cargo), no_furniture (ningún mueble con ese id), working_room (una habitación de ese tipo que funciona), launched_product, tired (energía media bajo tired_below). Una opción con conditions solo se ofrece si se cumplen. target: employee ({employee}), two_employees ({employee} y {employee2}), product ({product}, un producto lanzado), contract ({client}, un contrato sin terminar), weak_leader_team ({team}, un equipo con miembros sin líder o con liderazgo bajo good_leader_from), programmer_team ({team}, el primer equipo con un programador o el CEO), computer ({employee}, alguien con computadora, y su equipo), delivery ({client} y {amount}: ratio del pago de una entrega de los últimos within_days días), tax ({amount}: ratio de los ingresos de contratos del mes pasado, mínimo min_fine, la mitad con el mueble halved_by). effects: money (amount, concepto «Evento»), mood, energy o stress (amount a todos), mood_some (amount a los dos del target; count para el texto), reputation, offer (pay_factor), overtime (hours: horas extra de los empleados de producción a sueldo/30/8 × factor), lose_work (hours de trabajo perdidas a la velocidad normal; scope ceo, target_team o all), product_loss (amount de usuarios perdidos; scope target o all; una actualización los recupera), contract_change (points_factor, pay_factor, extra_days), withhold (days: el cliente retiene el monto del target y lo paga a los days días, «Pago retenido» y «Pago atrasado»), fine (la multa del target), replace_computer (el precio de la computadora del target), clean_all. kind (good o bad) es para el balance: los buenos pesan más para que salgan más o menos mitad y mitad.",
 	"answer_seconds": 120,
 	"mean_days": [5, 4, 3, 2, 1.5],
+	"tired_below": 50,
+	"good_leader_from": 60,
 	"events": [
 		{
-			"id": "birthday", "kind": "good", "weight": 1, "title": "Cumpleaños en la oficina",
+			"id": "friday_deploy", "kind": "bad", "weight": 1, "title": "Despliegue de viernes",
+			"text": "Un programador subió cambios a las 5 de la tarde y {product} dejó de funcionar.",
+			"target": "product",
+			"conditions": { "has_role": "programmer" },
+			"weight_if": [{ "conditions": { "tired": true }, "factor": 2 }],
+			"options": [
+				{ "label": "Todos se quedan a arreglarlo", "effects": [{ "type": "overtime", "hours": 3 }, { "type": "stress", "amount": 5 }] },
+				{ "label": "Se arregla el lunes", "effects": [{ "type": "product_loss", "amount": 0.15, "scope": "target" }] }
+			]
+		},
+		{
+			"id": "birthday", "kind": "good", "weight": 3, "title": "Cumpleaños en la oficina",
 			"text": "Hoy cumple años {employee}. El equipo pregunta si habrá bizcocho.",
+			"target": "employee",
 			"conditions": { "min_employees": 1 },
 			"options": [
 				{ "label": "Comprar bizcocho", "effects": [{ "type": "money", "amount": -150 }, { "type": "mood", "amount": 8 }] },
@@ -13,16 +27,55 @@
 			]
 		},
 		{
+			"id": "ac_war", "kind": "bad", "weight": 1, "title": "Guerra por el aire acondicionado",
+			"text": "{employee} quiere el aire a 18 grados y {employee2} lo quiere apagado. Ya no se hablan.",
+			"target": "two_employees",
+			"conditions": { "min_employees": 2 },
+			"options": [
+				{ "label": "Mediar", "effects": [{ "type": "lose_work", "hours": 2, "scope": "ceo" }] },
+				{ "label": "Dejarlo pasar", "effects": [{ "type": "mood_some", "amount": -10, "count": 2 }] }
+			]
+		},
+		{
 			"id": "coffee", "kind": "bad", "weight": 1, "title": "Se acabó el café",
 			"text": "La cafetera está vacía y el pedido llega mañana. Hay caras largas en la oficina.",
 			"conditions": { "min_employees": 1 },
+			"weight_if": [{ "conditions": { "working_room": "break_room" }, "factor": 0.3 }],
 			"options": [
 				{ "label": "Compra de emergencia", "effects": [{ "type": "money", "amount": -200 }] },
 				{ "label": "Esperar al pedido", "effects": [{ "type": "energy", "amount": -20 }] }
 			]
 		},
 		{
-			"id": "referral", "kind": "good", "weight": 1, "title": "Un cliente recomienda la empresa",
+			"id": "useless_meeting", "kind": "bad", "weight": 1, "title": "La reunión que pudo ser un correo",
+			"text": "{team} pasó la mañana en una reunión sin agenda. Nadie sabe qué se decidió.",
+			"target": "weak_leader_team",
+			"options": [
+				{ "label": "La próxima vez, un correo", "effects": [{ "type": "lose_work", "hours": 2, "scope": "target_team" }] }
+			]
+		},
+		{
+			"id": "scope_change", "kind": "bad", "weight": 1, "title": "El cliente cambia los requisitos",
+			"text": "{client} quiere cambiar varias pantallas a mitad del proyecto.",
+			"target": "contract",
+			"options": [
+				{ "label": "Aceptar", "effects": [{ "type": "contract_change", "points_factor": 1.2, "pay_factor": 1.0, "extra_days": 0 }] },
+				{ "label": "Negociar", "effects": [{ "type": "contract_change", "points_factor": 1.2, "pay_factor": 1.15, "extra_days": 3 }] },
+				{ "label": "Negarse", "effects": [{ "type": "reputation", "amount": -0.2 }] }
+			]
+		},
+		{
+			"id": "late_payment", "kind": "bad", "weight": 1, "title": "El cliente se atrasa con el pago",
+			"text": "{client} dice que su banco tuvo problemas y retiene {amount} de la entrega.",
+			"target": "delivery",
+			"target_args": { "within_days": 7, "ratio": 0.3 },
+			"options": [
+				{ "label": "Esperar", "effects": [{ "type": "withhold", "days": 15 }] },
+				{ "label": "Mandar al contador a cobrar", "conditions": { "has_role": "accountant" }, "effects": [{ "type": "withhold", "days": 3 }] }
+			]
+		},
+		{
+			"id": "referral", "kind": "good", "weight": 3, "title": "Un cliente recomienda la empresa",
 			"text": "Un cliente satisfecho habló bien de ustedes y otro quiere contratarlos.",
 			"conditions": { "offer_room": true },
 			"options": [
@@ -30,12 +83,77 @@
 			]
 		},
 		{
-			"id": "award", "kind": "good", "weight": 0.5, "title": "Premio de la industria",
+			"id": "blackout", "kind": "bad", "weight": 1, "title": "Apagón",
+			"text": "Se fue la luz en todo el sector y no se guardó nada de lo que se hizo hoy.",
+			"conditions": { "no_furniture": "backup_battery" },
+			"options": [
+				{ "label": "Comprar baterías de respaldo pronto", "effects": [{ "type": "lose_work", "hours": 8, "scope": "all" }] }
+			]
+		},
+		{
+			"id": "server_down", "kind": "bad", "weight": 1, "title": "Se cae el servidor",
+			"text": "Los productos no responden. {team} puede dejar lo que hace para levantarlo.",
+			"target": "programmer_team",
+			"conditions": { "launched_product": true },
+			"weight_if": [{ "conditions": { "tired": true }, "factor": 2 }],
+			"options": [
+				{ "label": "Levantarlo ya", "effects": [{ "type": "lose_work", "hours": 4, "scope": "target_team" }] },
+				{ "label": "Esperar al proveedor", "effects": [{ "type": "product_loss", "amount": 0.1, "scope": "all" }] }
+			]
+		},
+		{
+			"id": "broken_computer", "kind": "bad", "weight": 1, "title": "Se daña una computadora",
+			"text": "La computadora de {employee} no enciende.",
+			"target": "computer",
+			"options": [
+				{ "label": "Repararla", "effects": [{ "type": "money", "amount": -100 }, { "type": "lose_work", "hours": 4, "scope": "target_team" }] },
+				{ "label": "Comprar otra", "effects": [{ "type": "replace_computer" }] }
+			]
+		},
+		{
+			"id": "tax", "kind": "bad", "weight": 0.5, "title": "Inspección de impuestos",
+			"text": "Llegó un inspector a revisar las cuentas de la empresa.",
+			"target": "tax",
+			"target_args": { "ratio": 0.1, "min_fine": 500, "halved_by": "filing_cabinet" },
+			"weight_if": [{ "conditions": { "no_role": "accountant" }, "factor": 2 }],
+			"options": [
+				{ "label": "El contador lo tiene todo en orden", "conditions": { "has_role": "accountant" }, "effects": [] },
+				{ "label": "Pagar la multa", "conditions": { "no_role": "accountant" }, "effects": [{ "type": "fine" }] }
+			]
+		},
+		{
+			"id": "competitor", "kind": "bad", "weight": 1, "title": "Un competidor lanza algo parecido",
+			"text": "Otra empresa sacó un producto como {product}, más barato. Una actualización puede recuperar a los usuarios.",
+			"target": "product",
+			"options": [
+				{ "label": "Habrá que mejorar", "effects": [{ "type": "product_loss", "amount": 0.25, "scope": "target" }] }
+			]
+		},
+		{
+			"id": "award", "kind": "good", "weight": 2, "title": "Premio de la industria",
 			"text": "Una revista del sector nombra a la empresa entre las promesas del año.",
 			"conditions": { "min_reputation": 2.0 },
 			"options": [
 				{ "label": "Ir a recibirlo", "effects": [{ "type": "reputation", "amount": 0.3 }, { "type": "money", "amount": -100 }] },
 				{ "label": "Que lo manden por correo", "effects": [{ "type": "reputation", "amount": 0.1 }] }
+			]
+		},
+		{
+			"id": "broken_bathroom", "kind": "bad", "weight": 1, "title": "Baño dañado",
+			"text": "Se rompió una tubería del baño y hay agua en el piso.",
+			"conditions": { "working_room": "bathroom" },
+			"options": [
+				{ "label": "Llamar al plomero", "effects": [{ "type": "money", "amount": -400 }] },
+				{ "label": "Poner un cartel de «No funciona»", "effects": [{ "type": "mood", "amount": -8 }] }
+			]
+		},
+		{
+			"id": "dirty_office", "kind": "bad", "weight": 1, "title": "Oficina sucia",
+			"text": "Hay tazas por todas partes y la basura se desborda. Nadie quiere limpiar.",
+			"conditions": { "min_employees": 1, "no_role": "cleaner" },
+			"options": [
+				{ "label": "Contratar limpieza por un día", "effects": [{ "type": "money", "amount": -300 }, { "type": "clean_all" }] },
+				{ "label": "Aguantar", "effects": [{ "type": "mood", "amount": -8 }] }
 			]
 		}
 	]

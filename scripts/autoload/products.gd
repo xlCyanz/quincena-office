@@ -296,6 +296,16 @@ func get_active_count() -> int:
 	return get_launched().filter(func(product: Dictionary) -> bool: return get_users(product) > 0).size()
 
 
+## Le quita usuarios a un producto lanzado (un evento: servidor caído o un competidor):
+## suma a bug_loss, que una actualización devuelve a 0.
+func add_user_loss(product_id: int, amount: float) -> void:
+	var product: Dictionary = get_product(product_id)
+	if product.is_empty() or product["state"] != STATE_LAUNCHED:
+		return
+	product["bug_loss"] = minf(ProductCatalog.get_production_bugs("max_loss"), float(product["bug_loss"]) + amount)
+	EventBus.products_changed.emit()
+
+
 ## Racks que usan los productos lanzados.
 func get_used_racks() -> int:
 	var used: int = 0

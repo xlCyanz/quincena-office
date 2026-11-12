@@ -245,7 +245,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   que solo corren con el reloj andando (`advance_countdown`, a cualquier velocidad); al acabarse elige al azar. Efectos: money (concepto «Evento»,
   `Economy.charge`), mood/energy/stress a todos (`Staff.change_all`), reputation, offer (`Projects.create_bonus_offer`). `EventCard` a la
   derecha bajo el reloj, plegable; `EventBus.event_started` corta el salto de horas (`main.gd`). Las pruebas con el reloj detenido no reciben
-  eventos. Hito 43: Cumpleaños, Se acabó el café, Un cliente recomienda la empresa y Premio de la industria; consola `qo.event("id")`.
+  eventos. Consola `qo.event("id")`.
+- Lista de eventos (hito 44, los 16 de 10.2; la cabecera de `data/events.json` explica cada clave): condiciones también por opción y
+  `weight_if` (factor si se cumplen); has_role/no_role, no_furniture, working_room, launched_product, tired. `target` (empleado, dos, producto,
+  contrato, equipo con líder flojo, equipo con programador, computadora, entrega reciente, multa) se elige al abrir y queda en `card["target"]`;
+  los montos (horas extra, multa, computadora, retenido) se calculan al abrir. Efectos nuevos: lose_work (`Projects.get_nominal_rate` × horas
+  con `Projects.remove_work`, de la última fase hacia atrás), product_loss (`Products.add_user_loss`, una actualización lo recupera),
+  contract_change (`Projects.change_scope`), withhold («Pago retenido» y `Events.scheduled` lo devuelve como «Pago atrasado»), mood_some,
+  clean_all. Prevención: contador (sin multa, cobra en 3 días), archivero (multa a la mitad), baterías (sin apagón), personal de limpieza (sin
+  oficina sucia), líder con liderazgo ≥60 (sin reunión inútil), Sala de descanso (café ×0.3). Muebles: inodoro, lavamanos, cafetera, baterías y archivero.
 - Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
   terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
@@ -308,3 +316,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 41 | Desarrollo de productos | ✅ Completado (App móvil, Software en la nube y Videojuego en 3 tamaños; desde Pequeña empresa con Sala de servidores que funcione, los racks se piden al lanzar en el hito 42; comparte el tope y los equipos con los contratos; pestaña Productos en Proyectos; abandonar con confirmación) |
 | 42 | Lanzamiento y ciclo de vida | ✅ Completado (lanzar con racks libres; usuarios 30 días crecen, 60 en el pico y 120 caen hasta 10 %; calidad = nivel de quien diseñó + errores, ingreso 50–150 %; errores en producción −0.5 %/día por error; actualización del 20 % de los puntos vuelve al pico; retirar libera racks; valor +60 días de ingreso; Mediana empresa pide 1 lanzado) |
 | 43 | Eventos | ✅ Completado (sorteo cada hora: uno cada 5/4/3/2/1.5 días según la etapa, uno a la vez, por condiciones y peso; tarjeta plegable a la derecha con 2 minutos reales que se detienen en pausa y construcción, al acabarse elige al azar; efectos de dinero, ánimo, energía, estrés, reputación y oferta; 4 eventos de prueba, la lista completa en el hito 44) |
+| 44 | Lista de eventos | ✅ Completado (los 16 de 10.2; multa 10 % de los ingresos del mes pasado, mínimo $500, la mitad con archivero y nada con contador; pago atrasado retiene 30 % de una entrega de la última semana, 15 días o 3 con contador; baterías anulan el apagón; oficina sucia solo sin limpieza; reunión inútil con líder bajo 60; inodoro, lavamanos y cafetera nuevos para Baño y Sala de descanso; los buenos pesan más) |

@@ -19,7 +19,7 @@ const _HELP_skip_days: String = "skip_days(días): adelanta el reloj esos días 
 const _HELP_set_mood: String = "set_mood(valor): fija el ánimo (0–100) de todos los empleados."
 const _HELP_set_stress: String = "set_stress(valor): fija el estrés (0–100) de todos los empleados."
 const _HELP_set_energy: String = "set_energy(valor): fija la energía (0–100) de todos los empleados."
-const _HELP_event: String = "event(id): abre la tarjeta de ese evento (birthday, coffee, referral, award…)."
+const _HELP_event: String = "event(id): abre la tarjeta de ese evento (blackout, tax, dirty_office, scope_change… ver data/events.json)."
 
 
 ## Lista de comandos disponibles.

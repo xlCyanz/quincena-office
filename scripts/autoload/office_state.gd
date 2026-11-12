@@ -253,6 +253,18 @@ func clean_room(room_index: int, amount: float) -> void:
 		rooms[room_index]["dirt"] = maxf(0.0, get_room_dirt(rooms[room_index]) - amount)
 
 
+## Deja todas las habitaciones limpias (limpieza externa de un evento, hito 44).
+func clean_all() -> void:
+	for room: Dictionary in rooms:
+		room["dirt"] = 0.0
+	EventBus.dirt_changed.emit()
+
+
+## Indica si hay al menos un mueble de ese tipo en la oficina.
+func has_furniture(id: String) -> bool:
+	return furniture.any(func(item: Dictionary) -> bool: return item["id"] == id)
+
+
 ## Habitación más sucia (la primera si empatan), o -1 si todas están limpias.
 func get_dirtiest_room() -> int:
 	var best: int = -1

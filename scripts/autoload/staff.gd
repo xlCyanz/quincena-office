@@ -879,9 +879,11 @@ func get_stress_target(employee: Dictionary) -> int:
 
 
 ## Suma (o resta) a todos los empleados en "mood", "energy" o "stress" (de 0 a 100); lo
-## usan los eventos (hito 43).
-func change_all(key: String, amount: int) -> void:
+## usan los eventos (hito 43). Con ids, solo a esos empleados.
+func change_all(key: String, amount: int, ids: Array[int] = []) -> void:
 	for employee: Dictionary in employees:
+		if not ids.is_empty() and not ids.has(int(employee["id"])):
+			continue
 		if employee[key] is float:
 			employee[key] = clampf(float(employee[key]) + amount, 0.0, 100.0)
 		else:
