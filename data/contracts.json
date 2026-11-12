@@ -1,0 +1,37 @@
+{
+	"_comentario": "Contratos de clientes (diseño, 7.1 y 13.4). sizes: trabajo total en puntos, plazo en días y pago en dólares (el pago crece con los puntos dentro de su rango, con un poco de azar); min_reputation = estrellas para que lleguen; with_salesperson = llegan también con un vendedor aunque falte reputación; requires_room = habitación que tiene que funcionar para aceptarlo. weight = qué tan seguido llega cada tamaño entre los permitidos. types: reparto del trabajo en diseño, programación y pruebas (%). offers: a arrival_hour llega una oferta con probabilidad chance, más chance_per_salesperson por vendedor (lo que pasa de 1 es una oferta segura); caducan a los expire_days días; la bandeja guarda max_offers; con advance_chance la oferta trae un anticipo de advance_ratio del pago que se cobra al aceptar. Penalidades: late_penalty_per_day del pago por día de atraso hasta late_penalty_max y bug_penalty_each por error hasta bug_penalty_max (se aplican en el hito 18). La empresa empieza con start_reputation estrellas.",
+	"sizes": {
+		"small": { "name": "Pequeño", "points": [150, 300], "days": [7, 12], "pay": [1200, 2400], "min_reputation": 1, "weight": 6 },
+		"medium": { "name": "Mediano", "points": [800, 1500], "days": [20, 30], "pay": [7000, 13000], "min_reputation": 2, "with_salesperson": true, "weight": 3 },
+		"large": { "name": "Grande", "points": [4000, 8000], "days": [45, 75], "pay": [38000, 76000], "min_reputation": 4, "requires_room": "meeting_room", "weight": 1 }
+	},
+	"types": {
+		"website": { "name": "Sitio web", "split": [35, 45, 20] },
+		"mobile_app": { "name": "App móvil", "split": [25, 55, 20] },
+		"online_store": { "name": "Tienda en línea", "split": [25, 50, 25] },
+		"internal_system": { "name": "Sistema interno", "split": [15, 60, 25] }
+	},
+	"offers": {
+		"arrival_hour": 9,
+		"chance": 0.5,
+		"chance_per_salesperson": 0.25,
+		"expire_days": 5,
+		"max_offers": 6,
+		"advance_chance": 0.5,
+		"advance_ratio": 0.3,
+		"pay_variation": 0.05,
+		"pay_step": 50,
+		"late_penalty_per_day": 0.05,
+		"late_penalty_max": 0.5,
+		"bug_penalty_each": 0.02,
+		"bug_penalty_max": 0.3,
+		"start_reputation": 1
+	},
+	"clients": [
+		"Panadería La Espiga", "Clínica Santa Lucía", "Ferretería El Tornillo", "Colegio San Martín",
+		"Transportes Rápidos del Sur", "Hotel Mirador", "Café Montaña", "Gimnasio Fuerza Total",
+		"Inmobiliaria Horizonte", "Librería El Faro", "Restaurante Sazón Criollo", "Veterinaria Patitas",
+		"Constructora Pilares", "Agencia Viajes Brújula", "Óptica Visión Clara", "Floristería Primavera",
+		"Taller Mecánico Pistón", "Farmacia Bienestar", "Estudio Jurídico Balanza", "Cooperativa Agro Verde"
+	]
+}

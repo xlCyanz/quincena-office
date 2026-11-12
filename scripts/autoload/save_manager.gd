@@ -38,6 +38,7 @@ func new_game() -> void:
 	OfficeState.new_game()
 	Staff.new_game()
 	GameClock.new_game()
+	Projects.new_game()
 
 
 ## Ids de las ranuras manuales: "slot_1" … "slot_5".
@@ -82,6 +83,7 @@ func save_game(slot: String) -> bool:
 		"economy": Economy.export_state(),
 		"office": OfficeState.export_state(),
 		"staff": Staff.export_state(),
+		"projects": Projects.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
@@ -106,6 +108,7 @@ func load_game(slot: String) -> bool:
 	OfficeState.import_state(data["office"])
 	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
 	Staff.import_state(data.get("staff", {}))
+	Projects.import_state(data.get("projects", {}))
 	Economy.import_state(data["economy"])
 	GameClock.import_state(data["clock"])
 	_pending_scene_state = data.get("scene", {})

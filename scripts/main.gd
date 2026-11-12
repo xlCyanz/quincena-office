@@ -33,6 +33,7 @@ var _ceo_button: Button
 @onready var _hud: Hud = $Hud
 @onready var _settings_panel: SettingsPanel = $SettingsPanel
 @onready var _staff_panel: StaffPanel = $StaffPanel
+@onready var _projects_panel: ProjectsPanel = $ProjectsPanel
 @onready var _employee_card: EmployeeCard = $EmployeeCard
 
 
@@ -61,6 +62,14 @@ func _ready() -> void:
 	_add_frame_button(_build_panel.get_menu_bar())
 	_staff_panel.attach_button(_build_panel.get_menu_bar())
 	_staff_panel.employee_selected.connect(_employee_card.open_employee)
+	_projects_panel.attach_button(_build_panel.get_menu_bar())
+	# Personal y Proyectos ocupan el mismo lado: abrir uno cierra el otro.
+	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
+		if active:
+			_projects_panel.set_open(false))
+	_projects_panel.projects_mode_changed.connect(func(active: bool) -> void:
+		if active:
+			_staff_panel.set_open(false))
 	_add_ceo_button(_build_panel.get_menu_bar())
 	_employee_card.status_provider = describe_employee_activity
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
@@ -197,6 +206,7 @@ func _on_office_changed() -> void:
 func _on_build_mode_changed(active: bool) -> void:
 	if active:
 		_staff_panel.set_open(false)
+		_projects_panel.set_open(false)
 	_build_controller.set_active(active)
 	_hud.set_controls_enabled(not active)
 	_office_grid.set_rooms_visible(active)
@@ -213,6 +223,7 @@ func _on_build_mode_changed(active: bool) -> void:
 func _on_settings_mode_changed(active: bool) -> void:
 	if active:
 		_staff_panel.set_open(false)
+		_projects_panel.set_open(false)
 	_build_panel.get_menu_bar().visible = not active
 	_hud.set_controls_enabled(not active)
 	_set_menu_pause(active)
@@ -274,7 +285,7 @@ func _add_ceo_button(menu_bar: Container) -> void:
 	_ceo_button.focus_mode = Control.FOCUS_NONE
 	_ceo_button.pressed.connect(func() -> void: Staff.set_ceo_at_work(not Staff.ceo_at_work))
 	menu_bar.add_child(_ceo_button)
-	menu_bar.move_child(_ceo_button, _staff_panel.get_open_button().get_index() + 1)
+	menu_bar.move_child(_ceo_button, _projects_panel.get_open_button().get_index() + 1)
 	_update_ceo_button()
 
 

@@ -27,6 +27,10 @@ signal office_changed
 @warning_ignore("unused_signal")
 signal staff_changed
 
+## Cambiaron las ofertas o los contratos. La emite Projects.
+@warning_ignore("unused_signal")
+signal projects_changed
+
 ## Un aviso para el jugador (por ejemplo, la nómina pagada). Lo muestra el Hud.
 @warning_ignore("unused_signal")
 signal notice(text: String)
