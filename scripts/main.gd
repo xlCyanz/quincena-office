@@ -22,6 +22,7 @@ var pathfinder := OfficePathfinder.new()
 
 # Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
 var _was_paused_before_menu: bool = false
+var _was_paused_before_emergency: bool = false
 # Dónde se apretó el botón izquierdo (para distinguir un clic de un arrastre).
 var _press_position := Vector2.INF
 var _ceo_button: Button
@@ -37,6 +38,7 @@ var _ceo_button: Button
 @onready var _teams_panel: TeamsPanel = $TeamsPanel
 @onready var _bank_panel: BankPanel = $BankPanel
 @onready var _game_over_screen: GameOverScreen = $GameOverScreen
+@onready var _emergency_dialog: EmergencyLoanDialog = $EmergencyLoanDialog
 @onready var _employee_card: EmployeeCard = $EmployeeCard
 
 
@@ -93,7 +95,12 @@ func _ready() -> void:
 	EventBus.presence_changed.connect(_update_routines)
 	EventBus.game_over.connect(_on_game_over)
 	_game_over_screen.menu_requested.connect(_on_quit_requested)
+	EventBus.emergency_loan_offered.connect(_on_emergency_loan_offered)
+	_emergency_dialog.closed.connect(_on_emergency_dialog_closed)
 	GameClock.start()
+	# Una partida guardada con el préstamo de emergencia sin responder vuelve a preguntar.
+	if not Bank.emergency_offer.is_empty():
+		_on_emergency_loan_offered(Bank.emergency_offer)
 
 
 func _exit_tree() -> void:
@@ -263,7 +270,8 @@ func _set_menu_pause(active: bool) -> void:
 
 
 func _is_menu_open() -> bool:
-	return _build_panel.is_build_mode() or _settings_panel.is_open() or _game_over_screen.is_open()
+	return (_build_panel.is_build_mode() or _settings_panel.is_open() or _game_over_screen.is_open()
+		or _emergency_dialog.is_open())
 
 
 func _on_save_requested(slot: String) -> void:
@@ -284,6 +292,24 @@ func _on_game_over(stats: Dictionary) -> void:
 	_employee_card.close()
 	_hud.set_controls_enabled(false)
 	_game_over_screen.show_stats(stats)
+
+
+# El banco ofrece el préstamo de emergencia: se corta el salto de tiempo, se pausa y se
+# pregunta.
+func _on_emergency_loan_offered(offer: Dictionary) -> void:
+	GameClock.interrupt()
+	if not _emergency_dialog.is_open():
+		_was_paused_before_emergency = GameClock.is_paused
+	GameClock.set_paused(true)
+	_employee_card.close()
+	_emergency_dialog.show_offer(offer)
+
+
+# Respondida la oferta, el tiempo vuelve a como estaba y, si la oficina sigue vacía,
+# sigue el salto hasta la próxima llegada.
+func _on_emergency_dialog_closed() -> void:
+	GameClock.set_paused(_was_paused_before_emergency)
+	_on_character_left_office()
 
 
 func _on_quit_requested() -> void:

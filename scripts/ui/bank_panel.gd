@@ -416,6 +416,10 @@ func _refresh_loans() -> void:
 			MoneyFormat.format(int(loan["amount"])), _percent(float(loan["rate"])), " (refinanciado)" if bool(loan["refinanced"]) else "",
 			MoneyFormat.format(Bank.get_installment(loan)) if left > 0 else "—", left, "cuota" if left == 1 else "cuotas",
 			MoneyFormat.format(Bank.get_remaining_principal(loan))]
+		if bool(loan.get("emergency", false)):
+			info.text = "De emergencia: " + info.text
+			if GameClock.get_day_count() < int(loan.get("first_due_day", 0)):
+				info.text += " · primera cuota el %s" % Bank.describe_day(int(loan["first_due_day"]))
 		if int(loan.get("overdue", 0)) > 0:
 			info.text += " · atrasado %s" % MoneyFormat.format(int(loan["overdue"]))
 			info.add_theme_color_override("font_color", Hud.NEGATIVE_COLOR)

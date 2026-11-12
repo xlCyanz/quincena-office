@@ -9,6 +9,8 @@ var speed_index: int = 0
 
 ## Si está en pausa no avanza nada. Al quitar la pausa se recupera la velocidad que había.
 var is_paused: bool = false
+# Un salto de horas en curso debe cortarse (ver interrupt).
+var _interrupted: bool = false
 
 # Días completos desde el inicio de la partida (0 = día 1 del mes 1).
 var _day_count: int = 0
@@ -56,10 +58,20 @@ func advance(real_seconds: float) -> void:
 ## (1 = el inicio de la próxima hora). Avisa de cada hora y cada día intermedios, para
 ## que nada que dependa de ellos (por ejemplo, la nómina) se pierda. Se usa cuando la
 ## oficina queda vacía, para saltar hasta la próxima hora de entrada.
+## Se corta si algo llama a interrupt() en medio (por ejemplo, una ventana que pausa).
 func fast_forward_hours(hours: int) -> void:
 	_seconds_into_hour = 0.0
+	_interrupted = false
 	for i: int in range(hours):
+		if _interrupted:
+			break
 		_next_hour()
+	_interrupted = false
+
+
+## Corta el salto de fast_forward_hours en curso después de la hora actual.
+func interrupt() -> void:
+	_interrupted = true
 
 
 func _next_hour() -> void:

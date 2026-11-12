@@ -23,6 +23,8 @@ func _ready() -> void:
 	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
+	# Estas pruebas son de la nómina sin préstamo de emergencia (hito 24): se rechaza.
+	EventBus.emergency_loan_offered.connect(func(_offer: Dictionary) -> void: Bank.reject_emergency())
 	_check_new_company()
 	_check_rise()
 	_check_late()

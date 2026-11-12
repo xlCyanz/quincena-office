@@ -38,13 +38,15 @@ func _ready() -> void:
 func new_game() -> void:
 	_pending_scene_state = {}
 	_game_over = false
-	Economy.new_game()
 	OfficeState.new_game()
 	Staff.new_game()
 	GameClock.new_game()
 	Projects.new_game()
-	# Al final: la calificación inicial mira los muebles del local inicial.
+	# Después del local: la calificación inicial mira los muebles del local inicial.
 	Bank.new_game()
+	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
+	# de esta partida, no las de la anterior.
+	Economy.new_game()
 
 
 ## Ids de las ranuras manuales: "slot_1" … "slot_5".
@@ -117,10 +119,12 @@ func load_game(slot: String) -> bool:
 	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
 	Staff.import_state(data.get("staff", {}))
 	Projects.import_state(data.get("projects", {}))
-	Economy.import_state(data["economy"])
 	GameClock.import_state(data["clock"])
 	# Las partidas de antes del hito 21 no tienen banco: se calcula con lo que hay.
 	Bank.import_state(data.get("bank", {}))
+	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
+	# de esta partida, no las de la anterior.
+	Economy.import_state(data["economy"])
 	_pending_scene_state = data.get("scene", {})
 	return true
 

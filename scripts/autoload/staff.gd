@@ -75,6 +75,9 @@ var last_firing_day: int = NO_FIRING
 var teams: Array[Dictionary] = []
 ## Empleados contratados en toda la partida (para la pantalla de fin).
 var hired_count: int = 0
+## La nómina de hoy no alcanzó y espera la respuesta al préstamo de emergencia (hito 24):
+## todavía no baja el ánimo ni cuenta como atraso.
+var payroll_held: bool = false
 
 var _next_id: int = 1
 var _next_team_id: int = 1
@@ -87,6 +90,7 @@ func _ready() -> void:
 	EventBus.hour_changed.connect(_on_hour_changed)
 	EventBus.day_changed.connect(_on_day_changed)
 	EventBus.balance_changed.connect(func(_balance: int) -> void: _pay_debt_if_possible())
+	EventBus.emergency_loan_resolved.connect(_on_emergency_loan_resolved)
 
 
 ## Prepara el personal de una partida nueva: sin vacantes y con una semilla al azar.
@@ -98,6 +102,7 @@ func new_game() -> void:
 	last_firing_day = NO_FIRING
 	teams.clear()
 	hired_count = 0
+	payroll_held = false
 	_next_id = 1
 	_next_team_id = 1
 	_last_interview_end = NO_FIRING
@@ -816,11 +821,36 @@ func _run_payroll() -> void:
 	if _pay_debt_if_possible():
 		EventBus.payment_recorded.emit(CONCEPT_PAYROLL, true)
 		return
+	# Antes de castigar se pregunta si alguien la cubre (el préstamo de emergencia).
+	# Se marca antes de preguntar: la respuesta puede llegar dentro de la misma señal.
+	var response: Dictionary = {"held": false}
+	payroll_held = true
+	EventBus.payroll_short.emit(total - Economy.balance, response)
+	if bool(response["held"]):
+		return
+	payroll_held = false
+	_payroll_unpaid(total)
+
+
+# La nómina quedó sin pagar: es un atraso y baja el ánimo de todos.
+func _payroll_unpaid(total: int) -> void:
 	EventBus.payment_recorded.emit(CONCEPT_PAYROLL, false)
 	for employee: Dictionary in employees:
 		_change_mood(employee, StaffCatalog.get_payroll("unpaid_mood"))
 	EventBus.staff_changed.emit()
 	EventBus.notice.emit("No alcanza el dinero para la nómina: se deben %s. Se pagará apenas alcance." % MoneyFormat.format(total))
+
+
+# Respuesta al préstamo de emergencia: aceptado, la nómina ya se pagó con él y cuenta a
+# tiempo; rechazado, queda debida como cualquier nómina que no alcanza.
+func _on_emergency_loan_resolved(_accepted: bool) -> void:
+	if not payroll_held:
+		return
+	payroll_held = false
+	if get_total_owed() == 0:
+		EventBus.payment_recorded.emit(CONCEPT_PAYROLL, true)
+	else:
+		_payroll_unpaid(get_total_owed())
 
 
 # Paga toda la deuda de nómina si alcanza el saldo. Devuelve true si pagó.
@@ -1008,7 +1038,7 @@ func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
 		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
-		"rng_state": str(_rng.state), "hired_count": hired_count}
+		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -1057,6 +1087,7 @@ func import_state(state: Dictionary) -> void:
 		teams.append({"id": team_id, "name": String(saved.get("name", "%s %d" % [StaffCatalog.get_teams("name_prefix"), team_id])),
 			"members": members, "schedule": WorkSchedule.from_dict(schedule).to_dict()})
 	_next_team_id = int(state.get("next_team_id", 1))
+	payroll_held = bool(state.get("payroll_held", false))
 	_last_interview_end = NO_FIRING
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))

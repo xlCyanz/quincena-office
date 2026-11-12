@@ -55,3 +55,18 @@ signal bank_changed
 ## escena de juego.
 @warning_ignore("unused_signal")
 signal game_over(stats: Dictionary)
+
+## La nómina de hoy no alcanza: shortfall es lo que falta. La emite Staff antes de
+## castigar; quien ofrece cubrirla (Bank, con el préstamo de emergencia) pone
+## response["held"] = true y Staff espera a emergency_loan_resolved.
+@warning_ignore("unused_signal")
+signal payroll_short(shortfall: int, response: Dictionary)
+
+## El banco ofrece un préstamo de emergencia (Bank.emergency_offer). La escena de juego
+## pausa el tiempo y abre la ventana.
+@warning_ignore("unused_signal")
+signal emergency_loan_offered(offer: Dictionary)
+
+## El jugador aceptó o rechazó el préstamo de emergencia. La emite Bank.
+@warning_ignore("unused_signal")
+signal emergency_loan_resolved(accepted: bool)
