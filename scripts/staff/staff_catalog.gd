@@ -55,6 +55,34 @@ static func get_salary(role: String, level: String) -> int:
 	return int(salaries[get_level_ids().find(level)])
 
 
+## Horario por defecto de un cargo: {"days", "start_hour", "end_hour"} (ver WorkSchedule).
+static func get_role_schedule(role: String) -> Dictionary:
+	return WorkSchedule.from_dict(_staff_data()["roles"][role].get("schedule", {})).to_dict()
+
+
+## Color de camisa de un cargo (arte provisional).
+static func get_shirt_color(role: String) -> Color:
+	return Color(String(_staff_data()["roles"].get(role, {}).get("shirt_color", "888888")))
+
+
+## Valor de la jornada (data/staff.json, workday): lunch_hour, start_energy, …
+static func get_workday(key: String) -> Variant:
+	return _staff_data()["workday"][key]
+
+
+## Hora a la que llega solo el CEO (data/staff.json, ceo.arrival_hour).
+static func get_ceo_arrival_hour() -> int:
+	return int(_staff_data()["ceo"]["arrival_hour"])
+
+
+## Días de la semana (0 = lunes) en que el CEO llega solo.
+static func get_ceo_arrival_days() -> Array[int]:
+	var days: Array[int] = []
+	for day: Variant in _staff_data()["ceo"]["arrival_days"]:
+		days.append(int(day))
+	return days
+
+
 ## Rango [mínimo, máximo] de la habilidad principal en un nivel.
 static func get_main_skill_range(level: String) -> Vector2i:
 	return _pair(_staff_data()["levels"][level]["main_skill_range"])

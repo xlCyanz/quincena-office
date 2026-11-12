@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10) y `test_hiring` (11)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11) y `test_workday` (12)
 
 ## Convenciones de código
 
@@ -55,6 +55,11 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
 - Un puesto de trabajo (`Workstations`) es una silla delante del frente de un escritorio con computadora, ambos dentro
   de un Área de trabajo que funciona; cada escritorio sirve a una sola silla. Sus muebles no se venden ni giran mientras está ocupado.
+- Jornada: `Staff.is_expected(key, día, hora)` dice quién debe estar en la oficina; `main.gd` se lo pasa cada hora a los
+  personajes (`OfficeCharacter`, base de `Ceo` y `Employee`). Cada empleado tiene el horario de su cargo (`data/staff.json`);
+  todos salen a almorzar a las 12. El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el
+  jugador lo manda a casa (`Staff.ceo_at_work`, botón «CEO: irse a casa»). Con la oficina vacía el tiempo salta a la próxima llegada.
+  Un clic en un empleado abre su ficha (`EmployeeCard`).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -71,7 +76,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 1 | Cuadrícula y cámara | ✅ Completado |
 | 2 | Reloj | ✅ Completado |
 | 3 | Inicio de partida | ✅ Completado (menú y estado; paredes, muebles y CEO de la oficina inicial se añaden en sus hitos) |
-| 4 | CEO | ✅ Completado (escritorio y silla iniciales dibujados fijos; horario lun–vie 8–17) |
+| 4 | CEO | ✅ Completado (escritorio y silla iniciales dibujados fijos; desde el hito 12 sin horario) |
 | 5 | Construcción: pisos y paredes | ✅ Completado (precios provisionales en `data/construction.json`; paredes bajas) |
 | 6 | Muebles | ✅ Completado (planta pequeña a $40 provisional; la silla del CEO no se vende) |
 | 7 | Habitaciones | ✅ Completado (tipos y requisitos en `data/rooms.json`; los muebles que aún no existen se listan como faltantes) |
@@ -79,7 +84,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 9 | Guardado | ✅ Completado (autoguardado al pasar a las 00:00 y ranuras manuales 1–5 desde Ajustes) |
 | 10 | Vacantes y candidatos | ✅ Completado (programador, diseñador, QA y vendedor; llegan a las 9:00, esperan 3 días; contratar es el hito 11) |
 | 11 | Contratación | ✅ Completado (oferta ≥ lo pedido acepta, desde el 85 % contraoferta, debajo rechaza y se va; entrevista de 2 h del CEO en su horario; la vacante se cierra al contratar; el empleado aún no se dibuja) |
-| 12 | Jornada de los empleados | Pendiente (fase 2) |
+| 12 | Jornada de los empleados | ✅ Completado (horario por cargo; almuerzo 12–13 fuera; energía −6/h trabajando y +4/h fuera; ánimo 70 y estrés 20 fijos hasta el hito 19; ficha solo informativa) |
 | 13 | Nómina y despidos | Pendiente (fase 2) |
 | 14 | Ofertas de contratos | Pendiente (fase 2) |
 | 15 | Equipos y turnos | Pendiente (fase 2) |

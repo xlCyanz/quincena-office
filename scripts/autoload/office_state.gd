@@ -31,8 +31,6 @@ var furniture: Array[Dictionary] = []
 ## Casilla del borde del local por la que se entra y se sale.
 var entrance := Vector2i.ZERO
 
-## Horario del CEO: {"days": Array, "start_hour": int, "end_hour": int} (ver WorkSchedule).
-var ceo_schedule: Dictionary = {}
 
 
 ## Indica si hay una partida cargada (nueva o guardada).
@@ -76,7 +74,6 @@ func new_game() -> void:
 	for item: Dictionary in data.get("furniture", []):
 		furniture.append(_furniture_from_data(item))
 	entrance = _to_cell(data.get("entrance", [0, 0]))
-	ceo_schedule = WorkSchedule.from_dict(data.get("ceo_schedule", {})).to_dict()
 
 
 ## Solar de tamaño GameConstants.MAX_SITE_SIZE con el local en el centro.
@@ -191,7 +188,6 @@ func export_state() -> Dictionary:
 		"rooms": saved_rooms,
 		"furniture": saved_furniture,
 		"entrance": [entrance.x, entrance.y],
-		"ceo_schedule": ceo_schedule.duplicate(true),
 	}
 
 
@@ -217,7 +213,6 @@ func import_state(state: Dictionary) -> void:
 	for item: Dictionary in state.get("furniture", []):
 		furniture.append(_furniture_from_data(item))
 	entrance = _to_cell(state.get("entrance", [0, 0]))
-	ceo_schedule = WorkSchedule.from_dict(state.get("ceo_schedule", {})).to_dict()
 
 
 func _furniture_from_data(item: Dictionary) -> Dictionary:

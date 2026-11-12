@@ -12,6 +12,8 @@ extends CanvasLayer
 
 ## Se abrió (true) o se cerró (false) el panel.
 signal staff_mode_changed(active: bool)
+## Se pidió ver la ficha de un empleado.
+signal employee_selected(employee_id: int)
 
 const PANEL_WIDTH: float = 560.0
 const MARGIN: float = 16.0
@@ -41,6 +43,7 @@ var _interview_buttons: Dictionary[int, Button] = {}
 var _offer_buttons: Dictionary[int, Button] = {}
 var _offer_step_buttons: Dictionary[int, Array] = {}
 var _counter_buttons: Dictionary[int, Button] = {}
+var _card_buttons: Dictionary[int, Button] = {}
 ## Sueldo que se le va a ofrecer a cada candidato (por id).
 var _offers: Dictionary[int, int] = {}
 
@@ -233,6 +236,11 @@ func get_counter_button(candidate_id: int) -> Button:
 	return _counter_buttons.get(candidate_id)
 
 
+## Botón "Ficha" de un empleado, o null.
+func get_card_button(employee_id: int) -> Button:
+	return _card_buttons.get(employee_id)
+
+
 ## Sueldo que se le ofrecería ahora a un candidato.
 func get_offer(candidate_id: int) -> int:
 	return _offers.get(candidate_id, 0)
@@ -301,6 +309,7 @@ func _refresh() -> void:
 	_offer_buttons.clear()
 	_offer_step_buttons.clear()
 	_counter_buttons.clear()
+	_card_buttons.clear()
 	_add_employees()
 	_list.add_child(HSeparator.new())
 	_add_section(_list, "Vacantes abiertas")
@@ -327,10 +336,20 @@ func _add_employees() -> void:
 			lines.append(known)
 		if not Staff.has_working_station(employee):
 			lines.append("Su puesto de trabajo ya no funciona.")
+		var row := HBoxContainer.new()
+		_list.add_child(row)
 		var info := Label.new()
 		info.text = "\n".join(lines)
 		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_list.add_child(info)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(info)
+		var card_button := Button.new()
+		card_button.text = "Ficha"
+		card_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var employee_id: int = employee["id"]
+		card_button.pressed.connect(func() -> void: employee_selected.emit(employee_id))
+		row.add_child(card_button)
+		_card_buttons[employee_id] = card_button
 
 
 func _add_vacancy(vacancy: Dictionary) -> void:

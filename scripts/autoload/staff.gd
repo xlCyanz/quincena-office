@@ -19,9 +19,17 @@
 # asignado a su silla con assigned_to = employee_key(id) y la vacante se cierra. Un
 # empleado guarda los datos del candidato más "salary" (lo acordado) y "hired_day".
 #
-# La entrevista ocupa interview_hours horas del CEO dentro de su horario; solo hay una a
-# la vez. interview es {"candidate_id", "ends_at"} (ends_at en horas desde el inicio de
-# la partida, ver _absolute_hour) o vacío.
+# La entrevista ocupa interview_hours horas del CEO mientras está en la oficina; solo hay
+# una a la vez. interview es {"candidate_id", "ends_at"} (ends_at en horas desde el inicio
+# de la partida, ver _absolute_hour) o vacío.
+#
+# Jornada (hito 12): cada empleado tiene un horario ("schedule", el de su cargo por
+# defecto) y las barras "energy", "mood" y "stress" (0–100). Todos salen a almorzar a
+# la hora de almuerzo. La energía baja por cada hora de su horario y sube por cada hora
+# fuera; ánimo y estrés quedan fijos hasta el hito 19. El CEO no tiene horario: llega
+# solo a su hora en días hábiles y se queda hasta que el jugador lo manda a casa
+# (ceo_at_work). is_expected dice quién tiene que estar en la oficina a cada hora; los
+# personajes de la escena solo lo siguen.
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -31,6 +39,8 @@ const NO_STATION_MESSAGE: String = "No hay ningún puesto de trabajo libre: hace
 var vacancies: Array[Dictionary] = []
 var employees: Array[Dictionary] = []
 var interview: Dictionary = {}
+## El CEO está trabajando (en la oficina o almorzando) hasta que el jugador lo manda a casa.
+var ceo_at_work: bool = true
 
 var _next_id: int = 1
 var _rng := RandomNumberGenerator.new()
@@ -45,6 +55,7 @@ func new_game() -> void:
 	vacancies.clear()
 	employees.clear()
 	interview = {}
+	ceo_at_work = true
 	_next_id = 1
 	_rng.randomize()
 	EventBus.staff_changed.emit()
@@ -157,14 +168,96 @@ func interview_problem(candidate_id: int) -> String:
 		return "Ya lo entrevistaste."
 	if not interview.is_empty():
 		return "El CEO ya está en una entrevista."
-	var schedule: WorkSchedule = WorkSchedule.from_dict(OfficeState.ceo_schedule)
 	var hours: int = int(StaffCatalog.get_hiring("interview_hours"))
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()
-	if not schedule.is_working(weekday, hour) or not schedule.is_working(weekday, hour + hours - 1):
-		return "El CEO entrevista dentro de su horario (%02d:00–%02d:00) y la entrevista dura %d horas." % [
-			schedule.start_hour, schedule.end_hour, hours]
+	for offset: int in range(hours):
+		if hour + offset >= GameConstants.HOURS_PER_DAY or not is_expected("ceo", weekday, hour + offset):
+			return "El CEO tiene que estar en la oficina las %d horas de la entrevista, sin cruzar el almuerzo (%02d:00) ni la medianoche." % [
+				hours, int(StaffCatalog.get_workday("lunch_hour"))]
 	return ""
+
+
+## Manda al CEO a casa (false) o a la oficina (true). Si se va, su entrevista se corta.
+func set_ceo_at_work(value: bool) -> void:
+	if value == ceo_at_work:
+		return
+	ceo_at_work = value
+	if not value:
+		interview = {}
+	EventBus.presence_changed.emit()
+	EventBus.staff_changed.emit()
+
+
+## Indica si alguien ("ceo" o employee_key(id)) tiene que estar en la oficina en esa
+## hora de ese día de la semana. Para el CEO se toma ceo_at_work tal como está ahora.
+func is_expected(key: String, weekday: int, hour: int) -> bool:
+	if hour == int(StaffCatalog.get_workday("lunch_hour")):
+		return false
+	if key == "ceo":
+		return ceo_at_work
+	var employee: Dictionary = get_employee_by_key(key)
+	return not employee.is_empty() and get_schedule(employee).is_working(weekday, hour)
+
+
+## Lo mismo que is_expected, para la hora actual.
+func is_expected_now(key: String) -> bool:
+	return is_expected(key, GameClock.get_weekday(), GameClock.get_hour())
+
+
+## Indica si alguien está fuera solo por el almuerzo (su jornada sigue después).
+func is_at_lunch(key: String) -> bool:
+	var hour: int = GameClock.get_hour()
+	if hour != int(StaffCatalog.get_workday("lunch_hour")):
+		return false
+	if key == "ceo":
+		return ceo_at_work
+	var employee: Dictionary = get_employee_by_key(key)
+	return not employee.is_empty() and get_schedule(employee).is_working(GameClock.get_weekday(), hour)
+
+
+## Horas enteras desde ahora hasta la primera en que alguien tiene que estar en la
+## oficina (contando que el CEO llega solo a su hora). -1 si nadie va a venir.
+func hours_until_anyone_expected() -> int:
+	var hours_per_day: int = GameConstants.HOURS_PER_DAY
+	var at_work: bool = ceo_at_work
+	var arrival_hour: int = StaffCatalog.get_ceo_arrival_hour()
+	var arrival_days: Array[int] = StaffCatalog.get_ceo_arrival_days()
+	var lunch: int = int(StaffCatalog.get_workday("lunch_hour"))
+	var start: int = _absolute_hour()
+	for offset: int in range(1, GameConstants.DAYS_PER_WEEK * hours_per_day + 2):
+		var total: int = start + offset
+		@warning_ignore("integer_division")
+		var weekday: int = (total / hours_per_day) % GameConstants.DAYS_PER_WEEK
+		var hour: int = total % hours_per_day
+		if hour == arrival_hour and arrival_days.has(weekday):
+			at_work = true
+		if at_work and hour != lunch:
+			return offset
+		for employee: Dictionary in employees:
+			if is_expected(employee_key(employee["id"]), weekday, hour):
+				return offset
+	return -1
+
+
+## Horario de un empleado.
+func get_schedule(employee: Dictionary) -> WorkSchedule:
+	return WorkSchedule.from_dict(employee["schedule"])
+
+
+## Empleado con ese id, o vacío.
+func get_employee(employee_id: int) -> Dictionary:
+	for employee: Dictionary in employees:
+		if employee["id"] == employee_id:
+			return employee
+	return {}
+
+
+## Empleado con esa clave de assigned_to, o vacío.
+func get_employee_by_key(key: String) -> Dictionary:
+	if not key.begins_with(EMPLOYEE_PREFIX):
+		return {}
+	return get_employee(key.trim_prefix(EMPLOYEE_PREFIX).to_int())
 
 
 ## Candidato que está en entrevista ahora, o vacío.
@@ -277,10 +370,31 @@ static func describe_employee(employee: Dictionary) -> String:
 
 
 func _on_hour_changed(hour: int) -> void:
+	_update_energy()
+	if not ceo_at_work and hour == StaffCatalog.get_ceo_arrival_hour() \
+			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
+		set_ceo_at_work(true)
 	if not interview.is_empty() and _absolute_hour() >= int(interview["ends_at"]):
 		_finish_interview()
 	if hour == int(StaffCatalog.get_hiring("arrival_hour")):
 		_process_arrivals(GameClock.get_day_count())
+
+
+# La energía de cada empleado cambia según si la hora que acaba de terminar era de
+# trabajo o de descanso.
+func _update_energy() -> void:
+	if employees.is_empty():
+		return
+	var ended: int = _absolute_hour() - 1
+	@warning_ignore("integer_division")
+	var weekday: int = (ended / GameConstants.HOURS_PER_DAY) % GameConstants.DAYS_PER_WEEK
+	var hour: int = posmod(ended, GameConstants.HOURS_PER_DAY)
+	var work: int = int(StaffCatalog.get_workday("energy_per_work_hour"))
+	var rest: int = int(StaffCatalog.get_workday("energy_per_rest_hour"))
+	for employee: Dictionary in employees:
+		var change: int = work if is_expected(employee_key(employee["id"]), weekday, hour) else rest
+		employee["energy"] = clampi(int(employee["energy"]) + change, 0, 100)
+	EventBus.staff_changed.emit()
 
 
 # Horas enteras desde el inicio de la partida.
@@ -319,6 +433,10 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 	employee.erase("counter_offer")
 	employee["salary"] = salary
 	employee["hired_day"] = GameClock.get_day_count()
+	employee["schedule"] = StaffCatalog.get_role_schedule(employee["role"])
+	employee["energy"] = int(StaffCatalog.get_workday("start_energy"))
+	employee["mood"] = int(StaffCatalog.get_workday("start_mood"))
+	employee["stress"] = int(StaffCatalog.get_workday("start_stress"))
 	employees.append(employee)
 	OfficeState.furniture[station["chair"]]["assigned_to"] = employee_key(employee["id"])
 	for index: int in range(vacancies.size()):
@@ -410,7 +528,8 @@ func _take_id() -> int:
 ## porque JSON guarda los números como decimales y perdería precisión.
 func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
-		"interview": interview.duplicate(), "next_id": _next_id, "rng_state": str(_rng.state)}
+		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "next_id": _next_id,
+		"rng_state": str(_rng.state)}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -431,6 +550,10 @@ func import_state(state: Dictionary) -> void:
 		var employee: Dictionary = _import_person(saved)
 		employee["salary"] = int(saved.get("salary", employee["asked_salary"]))
 		employee["hired_day"] = int(saved.get("hired_day", 0))
+		var schedule: Dictionary = saved.get("schedule", StaffCatalog.get_role_schedule(employee["role"]))
+		employee["schedule"] = WorkSchedule.from_dict(schedule).to_dict()
+		for bar: String in ["energy", "mood", "stress"]:
+			employee[bar] = int(saved.get(bar, StaffCatalog.get_workday("start_" + bar)))
 		employees.append(employee)
 	var saved_interview: Dictionary = state.get("interview", {})
 	interview = {}
@@ -438,6 +561,7 @@ func import_state(state: Dictionary) -> void:
 		interview = {"candidate_id": int(saved_interview["candidate_id"]),
 			"ends_at": int(saved_interview.get("ends_at", 0))}
 	_drop_missing_interview()
+	ceo_at_work = bool(state.get("ceo_at_work", true))
 	_next_id = int(state.get("next_id", 1))
 	var rng_state: String = String(state.get("rng_state", ""))
 	if rng_state.is_valid_int():

@@ -1,5 +1,5 @@
 {
-	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Bordes [x, y, eje]: eje \"x\" = el borde entre [x, y] y [x+1, y]; eje \"y\" = el borde entre [x, y] y [x, y+1] (así [-1, y, \"x\"] es el borde oeste del local). exterior_walls pone pared en todo el borde del local; doors reemplaza esas paredes por puertas. Muebles: cell = casilla de anclaje (la de menor x e y), rotation = 0 a 3 (hacia dónde mira el frente: 0 = -y, 1 = +x, 2 = +y, 3 = -x), assigned_to = quién lo usa, computer = la computadora instalada en un escritorio. entrance = casilla junto a la puerta de entrada. ceo_schedule: days 0 = lunes … 6 = domingo; trabaja desde start_hour hasta end_hour (sin incluirla).",
+	"_comentario": "Oficina con la que empieza toda partida nueva. Casillas en coordenadas de cuadrícula [x, y] dentro del local de 6x8. Bordes [x, y, eje]: eje \"x\" = el borde entre [x, y] y [x+1, y]; eje \"y\" = el borde entre [x, y] y [x, y+1] (así [-1, y, \"x\"] es el borde oeste del local). exterior_walls pone pared en todo el borde del local; doors reemplaza esas paredes por puertas. Muebles: cell = casilla de anclaje (la de menor x e y), rotation = 0 a 3 (hacia dónde mira el frente: 0 = -y, 1 = +x, 2 = +y, 3 = -x), assigned_to = quién lo usa, computer = la computadora instalada en un escritorio. entrance = casilla junto a la puerta de entrada. El CEO no tiene horario: su llegada está en data/staff.json (ceo).",
 	"floor": "ceramic",
 	"floor_areas": [
 		{ "type": "wood", "position": [0, 0], "size": [3, 3] }
@@ -24,10 +24,5 @@
 		{ "id": "executive_desk", "cell": [1, 0], "rotation": 2, "computer": "basic_computer" },
 		{ "id": "basic_chair", "cell": [1, 1], "rotation": 0, "assigned_to": "ceo" }
 	],
-	"entrance": [3, 7],
-	"ceo_schedule": {
-		"days": [0, 1, 2, 3, 4],
-		"start_hour": 8,
-		"end_hour": 17
-	}
+	"entrance": [3, 7]
 }

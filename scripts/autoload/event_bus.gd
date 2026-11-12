@@ -23,6 +23,11 @@ signal balance_changed(balance: int)
 @warning_ignore("unused_signal")
 signal office_changed
 
-## Cambiaron las vacantes o sus candidatos. La emite Staff.
+## Cambiaron las vacantes, sus candidatos o los empleados. La emite Staff.
 @warning_ignore("unused_signal")
 signal staff_changed
+
+## Cambió quién tiene que estar en la oficina fuera del cambio de hora (por ejemplo,
+## el jugador mandó al CEO a casa). La emite Staff.
+@warning_ignore("unused_signal")
+signal presence_changed

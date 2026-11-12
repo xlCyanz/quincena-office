@@ -15,6 +15,9 @@ var _day_count: int = 0
 var _hour: int = GameConstants.START_HOUR
 # Segundos reales acumulados dentro de la hora actual, ya multiplicados por la velocidad.
 var _seconds_into_hour: float = 0.0
+# El primer fotograma después de start() trae en su delta lo que tardó en cargar la
+# escena; ese tiempo no es de juego y se descarta.
+var _skip_next_frame: bool = false
 
 
 func _ready() -> void:
@@ -23,11 +26,15 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _skip_next_frame:
+		_skip_next_frame = false
+		return
 	advance(delta)
 
 
 ## Hace que el reloj corra con los fotogramas. Lo llama la escena de juego al abrirse.
 func start() -> void:
+	_skip_next_frame = true
 	set_process(true)
 
 

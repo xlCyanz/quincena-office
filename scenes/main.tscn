@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="6_hud"]
 [ext_resource type="Script" path="res://scripts/ui/settings_panel.gd" id="7_settings"]
 [ext_resource type="Script" path="res://scripts/ui/staff_panel.gd" id="8_staff"]
+[ext_resource type="Script" path="res://scripts/ui/employee_card.gd" id="9_card"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -28,6 +29,9 @@ script = ExtResource("6_hud")
 
 [node name="StaffPanel" type="CanvasLayer" parent="."]
 script = ExtResource("8_staff")
+
+[node name="EmployeeCard" type="CanvasLayer" parent="."]
+script = ExtResource("9_card")
 
 [node name="SettingsPanel" type="CanvasLayer" parent="."]
 script = ExtResource("7_settings")

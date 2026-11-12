@@ -231,13 +231,17 @@ func _check_interview() -> void:
 		"revela los valores reales: %s" % skills)
 	_expect(not Staff.interview_problem(first["id"]).is_empty(), "no se entrevista dos veces")
 
-	# Fuera del horario del CEO no se entrevista: a las 16:00 la entrevista pasaría de las 17:00.
-	GameClock.fast_forward_hours(16 - GameClock.get_hour())
-	_expect(Staff.interview_problem(second["id"]).contains("horario"), "16:00 es tarde: %s" % Staff.interview_problem(second["id"]))
-	GameClock.fast_forward_hours(15)
-	_expect(GameClock.get_hour() == 7 and Staff.interview_problem(second["id"]).contains("horario"), "7:00 es temprano")
-	GameClock.fast_forward_hours(1)
-	_expect(Staff.start_interview(second["id"])["ok"], "a las 8:00 sí")
+	# La entrevista no cruza el almuerzo: a las 11:00 terminaría a las 13:00.
+	_expect(GameClock.get_hour() == 11, "son las 11: %d" % GameClock.get_hour())
+	_expect(Staff.interview_problem(second["id"]).contains("almuerzo"), "11:00 cruza el almuerzo: %s" % Staff.interview_problem(second["id"]))
+	GameClock.fast_forward_hours(2)
+	_expect(Staff.start_interview(second["id"])["ok"], "a las 13:00 sí")
+	# Si el CEO se va a casa, la entrevista se corta y no puede empezar otra.
+	Staff.set_ceo_at_work(false)
+	_expect(Staff.interview.is_empty() and not second["interviewed"], "mandar al CEO a casa corta la entrevista")
+	_expect(not Staff.interview_problem(second["id"]).is_empty(), "sin el CEO no se entrevista")
+	Staff.set_ceo_at_work(true)
+	_expect(Staff.start_interview(second["id"])["ok"], "con el CEO de vuelta sí")
 	Staff.discard_candidate(second["id"])
 	_expect(Staff.interview.is_empty(), "descartar al entrevistado termina la entrevista")
 

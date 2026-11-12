@@ -4,6 +4,8 @@
 class_name WorkSchedule
 extends RefCounted
 
+const DAY_NAMES: Array[String] = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
+
 var days: Array[int] = []
 var start_hour: int = 0
 var end_hour: int = 0
@@ -39,3 +41,21 @@ func hours_until_next_work(weekday: int, hour: int) -> int:
 		if is_working(day, total % GameConstants.HOURS_PER_DAY):
 			return offset
 	return -1
+
+
+## Texto para el jugador: "lun–vie 8:00–17:00" o "lun, mié 9:00–13:00".
+func describe() -> String:
+	if days.is_empty():
+		return "sin horario"
+	var sorted: Array[int] = days.duplicate()
+	sorted.sort()
+	var consecutive: bool = sorted[-1] - sorted[0] == sorted.size() - 1
+	var day_text: String
+	if consecutive and sorted.size() > 2:
+		day_text = "%s–%s" % [DAY_NAMES[sorted[0]], DAY_NAMES[sorted[-1]]]
+	else:
+		var names: Array[String] = []
+		for day: int in sorted:
+			names.append(DAY_NAMES[day])
+		day_text = ", ".join(names)
+	return "%s %d:00–%d:00" % [day_text, start_hour, end_hour]
