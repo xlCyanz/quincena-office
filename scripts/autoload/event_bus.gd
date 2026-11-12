@@ -86,3 +86,12 @@ signal objective_completed(objective_id: String)
 ## Cambió la lista de objetivos visibles (se cumplió uno o se cargó una partida).
 @warning_ignore("unused_signal")
 signal objectives_changed
+
+## Se aceptó un contrato (hito 30: los vendedores lo cuentan para ascender). La emite Projects.
+@warning_ignore("unused_signal")
+signal contract_accepted
+
+## Se entregó un contrato; worker_keys son los empleados que sumaron puntos en él
+## (claves de Staff.employee_key). La emite Projects.
+@warning_ignore("unused_signal")
+signal contract_delivered(worker_keys: Array)

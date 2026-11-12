@@ -18,6 +18,8 @@
 # Producción (hito 16): al terminar cada hora, quienes llevan un contrato y trabajaron
 # esa hora suman puntos a sus fases (ver Production). progress guarda puntos con
 # decimales.
+# "worked_by" anota a los empleados que sumaron puntos; al entregar se avisa con
+# EventBus.contract_delivered para que Staff les cuente el contrato (hito 30).
 #
 # Errores (hito 17): al programar se generan errores ocultos ("bugs_hidden", el jugador
 # no los ve); en la fase de pruebas se encuentran ("bugs_found") y los programadores los
@@ -150,8 +152,10 @@ func accept(offer_id: int) -> Dictionary:
 	contract["fix_progress"] = 0.0
 	contract["cancel_day"] = NO_CANCEL_DAY
 	contract["team_id"] = _first_free_team()
+	contract["worked_by"] = []
 	contracts.append(contract)
 	accepted_count += 1
+	EventBus.contract_accepted.emit()
 	var message: String = "Contrato aceptado: %s para %s, %d días; %s." % [
 		ContractCatalog.get_type_name(offer["type"]), offer["client"], offer["days"], describe_owner(contract)]
 	if int(offer["advance"]) > 0:
@@ -238,6 +242,7 @@ func deliver(contract_id: int) -> Dictionary:
 	if int(preview["paid"]) > 0:
 		Economy.earn(int(preview["paid"]), CONCEPT_DELIVERY)
 	delivered_count += 1
+	EventBus.contract_delivered.emit((contract.get("worked_by", []) as Array).duplicate())
 	var message: String = "Entregaste %s %s: cobras %s. %s" % [describe_title(contract), preview["result"],
 		MoneyFormat.format(preview["paid"]), _change_reputation(float(preview["reputation_change"]))]
 	_finish(contract, "Entregado " + String(preview["result"]), int(preview["paid"]), float(preview["reputation_change"]), message)
@@ -466,6 +471,11 @@ func import_state(state: Dictionary) -> void:
 			contract[key] = int(saved.get(key, 0))
 		contract["fix_progress"] = float(saved.get("fix_progress", 0.0))
 		contract["cancel_day"] = int(saved.get("cancel_day", NO_CANCEL_DAY))
+		# Antes del hito 30 no se anotaba quién trabajó.
+		var worked_by: Array = []
+		for key: Variant in saved.get("worked_by", []):
+			worked_by.append(String(key))
+		contract["worked_by"] = worked_by
 		# Las partidas del hito 14 tenían un solo contrato, el del CEO.
 		var team_id: int = int(saved.get("team_id", CEO_TEAM))
 		contract["team_id"] = team_id if team_id <= CEO_TEAM or not Staff.get_team(team_id).is_empty() else NO_TEAM
@@ -556,12 +566,23 @@ func _produce() -> void:
 		if workers.is_empty():
 			continue
 		var was_finished: bool = Production.is_finished(contract)
-		_handle_bugs(contract, Production.apply(contract, workers))
+		var done: Array[Dictionary] = Production.apply(contract, workers)
+		_handle_bugs(contract, done)
+		_note_workers(contract, done)
 		changed = true
 		if not was_finished and Production.is_finished(contract):
 			EventBus.notice.emit("Terminado: %s. Listo para entregar." % describe_title(contract))
 	if changed:
 		EventBus.projects_changed.emit()
+
+
+# Anota en el contrato a los empleados que sumaron puntos (cuenta para sus ascensos).
+func _note_workers(contract: Dictionary, done: Array[Dictionary]) -> void:
+	var worked_by: Array = contract.get_or_add("worked_by", [])
+	for item: Dictionary in done:
+		var key: String = item["worker"]["key"]
+		if key != "ceo" and float(item["amount"]) > 0.0 and not worked_by.has(key):
+			worked_by.append(key)
 
 
 # Con lo que hizo cada uno en la hora: la programación genera errores ocultos y las

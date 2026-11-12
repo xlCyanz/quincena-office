@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28) y `test_phase3` (29)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29) y `test_promotions` (30)
 
 ## Convenciones de código
 
@@ -99,6 +99,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   «Liquidación por renuncia»). `Staff.give_raise` (aumento ≥10 % lo retiene, +25 de ánimo; lo ganado antes queda en `carry`).
   Bajo el 110 % y desde 30 días del último aumento, 2 %/día pide +10 % (`raise_request`, 3 días): aceptar +10, negar o dejarlo pasar −15.
   La ficha muestra avisos, pedido (Dar el aumento / Negar) y la fila Aumento; su contenido se desplaza si no entra.
+- Ascensos (`Staff.promote`, `get_promotion_progress`; `data/staff.json`, promotion): `projects_worked` cuenta los contratos entregados en
+  los que sumó puntos (el contrato anota `worked_by`; `EventBus.contract_delivered`); los vendedores cuentan los aceptados mientras estaban
+  (`EventBus.contract_accepted`). Con 3/30, 8/90 y 15/180 (contratos/días desde `hired_day`) la ficha muestra la fila Ascender con un sueldo
+  mayor que el actual (sugerido el del nivel nuevo); la habilidad principal sube al mínimo del nivel y cuenta como aumento (`_apply_raise`).
 - Banco (`Bank`, `data/bank.json`): calificación A–E por puntaje = base 50 (C) + ingresos de contratos del mes pasado (hasta +20, con $25,000)
   + bienes (reventa de muebles y computadoras, hasta +10) + antigüedad (+2/mes, hasta +10) + pagos a tiempo (+2, hasta +10)
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
@@ -187,3 +191,4 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 27 | Etapas y menú Empresa | ✅ Completado (se revisan cada día y nunca bajan; el CEO no cuenta como empleado; tope por préstamo $10k/$30k/$30k/sin tope; oficina única y sala de servidores desde Pequeña empresa; medianos desde Startup o con vendedor; líderes, gerentes, productos y ejecutivos en fases siguientes) |
 | 28 | Objetivos guiados | ✅ Completado (15 objetivos hasta Pequeña empresa, $300–$5,000 y algunos con ★; 3 visibles; se pliega con los paneles izquierdos y vuelve como estaba) |
 | 29 | Comprobación de la fase | ✅ Completado (CEO solo ~$4,000/mes; primer equipo ~$9,000/mes contra $3,600 de sueldos y paga su préstamo; dejar de pagar embarga en la 3.ª cuota; plazos según los puntos; A más difícil) |
+| 30 | Ascensos | ✅ Completado (cuentan los contratos entregados en que sumó puntos; cancelados no; vendedores por contratos aceptados; sueldo nuevo mayor que el actual; el progreso solo se ve en la ficha) |

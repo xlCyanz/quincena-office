@@ -55,6 +55,21 @@ static func get_salary(role: String, level: String) -> int:
 	return int(salaries[get_level_ids().find(level)])
 
 
+## Lo que pide ascender a un nivel: {"projects", "days"}, o vacío si nadie asciende a él.
+static func get_promotion(level: String) -> Dictionary:
+	var promotion: Dictionary = _staff_data().get("promotion", {}).get(level, {})
+	if promotion.is_empty():
+		return {}
+	return {"projects": int(promotion.get("projects", 0)), "days": int(promotion.get("days", 0))}
+
+
+## Nivel siguiente (de Pasante a Senior), o "" si ya es el más alto.
+static func get_next_level(level: String) -> String:
+	var levels: Array[String] = get_level_ids()
+	var index: int = levels.find(level)
+	return levels[index + 1] if index >= 0 and index + 1 < levels.size() else ""
+
+
 ## Horario por defecto de un cargo: {"days", "start_hour", "end_hour"} (ver WorkSchedule).
 static func get_role_schedule(role: String) -> Dictionary:
 	return WorkSchedule.from_dict(_staff_data()["roles"][role].get("schedule", {})).to_dict()

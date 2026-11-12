@@ -2,8 +2,10 @@
 # haciendo, barras de energía, ánimo y estrés, habilidades, rasgos conocidos y sueldo.
 # Tiene el botón Despedir (hito 13), que pide confirmar con el costo, y desde el hito 19
 # avisa si renuncia o pide aumento: un pedido se acepta o se niega, y la fila Aumento
-# sube el sueldo cuando el jugador quiera (de a salary_step). Ascenso, equipo y horario
-# llegan en sus hitos.
+# sube el sueldo cuando el jugador quiera (de a salary_step). Desde el hito 30 muestra
+# cómo va hacia el nivel siguiente y, cuando cumple, la fila Ascender con el sueldo
+# nuevo (mayor que el actual; sugerido el de su nivel nuevo). Equipo y horario llegan
+# en sus hitos.
 #
 # Se abre con un clic en el empleado o desde Personal, no pausa el tiempo y se
 # actualiza sola. Va a la derecha, debajo del reloj; si no entra en la pantalla, el
@@ -52,6 +54,14 @@ var _raise_plus: Button
 var _raise_button: Button
 ## Aumento elegido en la fila Aumento (se reinicia al abrir la ficha).
 var _raise_amount: int = 0
+var _promotion_label: Label
+var _promote_row: HBoxContainer
+var _promote_minus: Button
+var _promote_salary_label: Label
+var _promote_plus: Button
+var _promote_button: Button
+## Sueldo elegido para el ascenso (0 = el sugerido; se reinicia al abrir la ficha).
+var _promote_salary: int = 0
 
 
 func _ready() -> void:
@@ -159,6 +169,29 @@ func _ready() -> void:
 		if not employee.is_empty():
 			Staff.give_raise(_employee_id, int(employee["salary"]) + _raise_amount))
 	raise_row.add_child(_raise_button)
+	_promotion_label = Label.new()
+	_promotion_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rows.add_child(_promotion_label)
+	_promote_row = HBoxContainer.new()
+	rows.add_child(_promote_row)
+	_promote_minus = Button.new()
+	_promote_minus.text = "−"
+	_promote_minus.pressed.connect(func() -> void: _change_promote_salary(-1))
+	_promote_row.add_child(_promote_minus)
+	_promote_salary_label = Label.new()
+	_promote_salary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_promote_salary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_promote_row.add_child(_promote_salary_label)
+	_promote_plus = Button.new()
+	_promote_plus.text = "+"
+	_promote_plus.pressed.connect(func() -> void: _change_promote_salary(1))
+	_promote_row.add_child(_promote_plus)
+	_promote_button = Button.new()
+	_promote_button.text = "Ascender"
+	_promote_button.pressed.connect(func() -> void:
+		Staff.promote(_employee_id, _promote_salary)
+		_promote_salary = 0)
+	_promote_row.add_child(_promote_button)
 	# Los avisos y el aumento van antes de las habilidades: es lo urgente.
 	rows.move_child(_details, rows.get_child_count() - 1)
 
@@ -193,6 +226,7 @@ func _ready() -> void:
 func open_employee(employee_id: int) -> void:
 	_employee_id = employee_id
 	_raise_amount = 0
+	_promote_salary = 0
 	_cancel_fire()
 	_panel.visible = true
 	_refresh()
@@ -249,6 +283,29 @@ func get_raise_amount() -> int:
 	return _raise_amount
 
 
+## Botones de la fila Ascender: «−», «+» y «Ascender» (la fila solo se ve si cumple).
+func get_promote_minus_button() -> Button:
+	return _promote_minus
+
+
+func get_promote_plus_button() -> Button:
+	return _promote_plus
+
+
+func get_promote_button() -> Button:
+	return _promote_button
+
+
+## Indica si se ve la fila Ascender.
+func is_promote_visible() -> bool:
+	return _promote_row.visible
+
+
+## Sueldo elegido para el ascenso.
+func get_promote_salary() -> int:
+	return _promote_salary
+
+
 ## Desplaza la ficha hasta que se vea un control (para las pruebas y los botones de abajo).
 func reveal(control: Control) -> void:
 	_scroll.ensure_control_visible(control)
@@ -268,6 +325,9 @@ func get_text() -> String:
 	if _alert.visible:
 		texts.append(_alert.text)
 	texts.append(_raise_label.text)
+	texts.append(_promotion_label.text)
+	if _promote_row.visible:
+		texts.append(_promote_salary_label.text)
 	if _confirm_row.visible:
 		texts.append(_confirm_label.text)
 	return "\n".join(texts)
@@ -308,6 +368,7 @@ func _refresh() -> void:
 	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
 	_details.text = "\n".join(details)
 	_refresh_raise(employee)
+	_refresh_promotion(employee)
 	_fit.call_deferred()
 	if _confirm_row.visible:
 		_confirm_label.text = "¿Despedir a %s? Cuesta %s y baja el ánimo de sus compañeros." % [
@@ -361,6 +422,42 @@ func _refresh_raise(employee: Dictionary) -> void:
 	_request_row.visible = not request.is_empty()
 	_raise_minus.disabled = _raise_amount <= step
 	_raise_label.text = "Aumento +%s → %s" % [MoneyFormat.format(_raise_amount), MoneyFormat.format(salary + _raise_amount)]
+
+
+# Cómo va hacia el nivel siguiente y la fila Ascender cuando cumple.
+func _refresh_promotion(employee: Dictionary) -> void:
+	var progress: Dictionary = Staff.get_promotion_progress(employee)
+	var next_level: String = progress["next_level"]
+	var salary: int = employee["salary"]
+	var ready: bool = bool(progress["ready"])
+	_promote_row.visible = ready
+	if next_level.is_empty():
+		_promotion_label.text = "Ascenso: ya está en el nivel más alto."
+		return
+	var level_name: String = StaffCatalog.get_level_name(next_level)
+	var counted: String = "ventas cerradas" if employee["role"] == Staff.SALES_ROLE else "contratos trabajados"
+	var needs: String = "%s %d/%d · días en la empresa %d/%d" % [counted,
+		mini(int(progress["projects"]), int(progress["projects_needed"])), progress["projects_needed"],
+		mini(int(progress["days"]), int(progress["days_needed"])), progress["days_needed"]]
+	if not ready:
+		_promotion_label.text = "Ascenso a %s: %s." % [level_name, needs]
+		return
+	_promotion_label.text = "Puede ascender a %s (%s). Sueldo de ese nivel: %s." % [level_name, needs,
+		MoneyFormat.format(StaffCatalog.get_salary(employee["role"], next_level))]
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	if _promote_salary <= salary:
+		_promote_salary = maxi(salary + step, StaffCatalog.get_salary(employee["role"], next_level))
+	_promote_minus.disabled = _promote_salary - step <= salary
+	_promote_salary_label.text = "Sueldo nuevo %s" % MoneyFormat.format(_promote_salary)
+
+
+func _change_promote_salary(direction: int) -> void:
+	var employee: Dictionary = Staff.get_employee(_employee_id)
+	if employee.is_empty():
+		return
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	_promote_salary = maxi(int(employee["salary"]) + step, _promote_salary + direction * step)
+	_refresh()
 
 
 func _change_raise(direction: int) -> void:

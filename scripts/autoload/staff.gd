@@ -53,10 +53,18 @@
 # ningún equipo sigue con el de su cargo. Cada turno dura teams.shift_hours horas desde
 # la entrada y deja al menos teams.min_rest_days de descanso por semana. El proyecto de
 # cada equipo lo guarda el contrato (Projects).
+#
+# Ascensos (hito 30): "projects_worked" cuenta los contratos entregados en los que el
+# empleado sumó puntos (EventBus.contract_delivered); los vendedores cuentan en cambio
+# los contratos aceptados mientras estaban (EventBus.contract_accepted). Con eso y los
+# días en la empresa (data/staff.json, promotion) el jugador puede ascenderlo al nivel
+# siguiente con un sueldo mayor (promote); el ascenso cuenta como aumento.
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
 const CONCEPT_PAYROLL: String = "Nómina"
+## Cargo que cuenta contratos aceptados en lugar de trabajados para ascender.
+const SALES_ROLE: String = "salesperson"
 const CONCEPT_FIRING: String = "Despido"
 const CONCEPT_RESIGNATION: String = "Liquidación por renuncia"
 ## quit_day de quien no avisó que renuncia.
@@ -91,6 +99,8 @@ func _ready() -> void:
 	EventBus.day_changed.connect(_on_day_changed)
 	EventBus.balance_changed.connect(func(_balance: int) -> void: _pay_debt_if_possible())
 	EventBus.emergency_loan_resolved.connect(_on_emergency_loan_resolved)
+	EventBus.contract_delivered.connect(_on_contract_delivered)
+	EventBus.contract_accepted.connect(_on_contract_accepted)
 
 
 ## Prepara el personal de una partida nueva: sin vacantes y con una semilla al azar.
@@ -359,12 +369,24 @@ func give_raise(employee_id: int, new_salary: int) -> Dictionary:
 	var salary: int = employee["salary"]
 	if new_salary <= salary:
 		return {"ok": false, "message": "El sueldo nuevo tiene que ser mayor que %s." % MoneyFormat.format(salary)}
+	var messages: Array[String] = ["%s gana ahora %s al mes." % [employee["name"], MoneyFormat.format(new_salary)]]
+	messages.append_array(_apply_raise(employee, new_salary))
+	var message: String = " ".join(messages)
+	EventBus.staff_changed.emit()
+	EventBus.notice.emit(message)
+	return {"ok": true, "message": message}
+
+
+# Cambia el sueldo (lo ganado hasta hoy queda con el anterior) y resuelve el pedido de
+# aumento y el aviso de renuncia. Devuelve lo que pasó con ellos, para el aviso.
+func _apply_raise(employee: Dictionary, new_salary: int) -> Array[String]:
+	var salary: int = employee["salary"]
 	var today: int = GameClock.get_day_count()
 	employee["carry"] = get_earned(employee)
 	employee["paid_until"] = today
 	employee["salary"] = new_salary
 	employee["last_raise_day"] = today
-	var messages: Array[String] = ["%s gana ahora %s al mes." % [employee["name"], MoneyFormat.format(new_salary)]]
+	var messages: Array[String] = []
 	var request: Dictionary = employee["raise_request"]
 	if not request.is_empty() and new_salary >= salary + int(request["amount"]):
 		employee["raise_request"] = {}
@@ -379,10 +401,81 @@ func give_raise(employee_id: int, new_salary: int) -> Dictionary:
 		else:
 			messages.append("No le alcanza para quedarse: pide al menos %d%% más." % roundi(
 				StaffCatalog.get_morale("retain_raise_ratio") * 100.0))
+	return messages
+
+
+## Cómo va un empleado hacia el nivel siguiente: {"next_level", "projects",
+## "projects_needed", "days", "days_needed", "ready"}. next_level es "" si ya es Senior.
+func get_promotion_progress(employee: Dictionary) -> Dictionary:
+	var next_level: String = StaffCatalog.get_next_level(employee["level"])
+	var needs: Dictionary = StaffCatalog.get_promotion(next_level) if not next_level.is_empty() else {}
+	var projects: int = int(employee.get("projects_worked", 0))
+	var days: int = GameClock.get_day_count() - int(employee["hired_day"])
+	var progress: Dictionary = {"next_level": next_level, "projects": projects, "days": days,
+		"projects_needed": int(needs.get("projects", 0)), "days_needed": int(needs.get("days", 0))}
+	progress["ready"] = not needs.is_empty() and projects >= int(progress["projects_needed"]) \
+		and days >= int(progress["days_needed"])
+	return progress
+
+
+## Por qué no se puede ascender a un empleado con ese sueldo, o "" si se puede.
+func promote_problem(employee_id: int, new_salary: int) -> String:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty():
+		return "Ese empleado ya no está."
+	var progress: Dictionary = get_promotion_progress(employee)
+	if String(progress["next_level"]).is_empty():
+		return "Ya está en el nivel más alto."
+	if not bool(progress["ready"]):
+		return "Todavía no cumple lo que pide el ascenso."
+	if new_salary <= int(employee["salary"]):
+		return "El sueldo nuevo tiene que ser mayor que %s." % MoneyFormat.format(employee["salary"])
+	return ""
+
+
+## Asciende a un empleado al nivel siguiente con un sueldo mayor que el actual: rinde y
+## comete errores como su nivel nuevo y su habilidad principal sube al menos al mínimo
+## del nivel. Cuenta como aumento (retiene y acepta pedidos). Devuelve {"ok", "message"}.
+func promote(employee_id: int, new_salary: int) -> Dictionary:
+	var problem: String = promote_problem(employee_id, new_salary)
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	var employee: Dictionary = get_employee(employee_id)
+	var level: String = StaffCatalog.get_next_level(employee["level"])
+	employee["level"] = level
+	var skill: String = StaffCatalog.get_main_skill(employee["role"])
+	var raise_by: int = maxi(0, StaffCatalog.get_main_skill_range(level).x - int(employee["skills"][skill]))
+	employee["skills"][skill] = int(employee["skills"][skill]) + raise_by
+	employee["skill_low"][skill] = mini(int(employee["skill_low"][skill]) + raise_by,
+		100 - StaffCatalog.get_skill_range_width())
+	var messages: Array[String] = ["%s asciende a %s %s y gana %s al mes." % [employee["name"],
+		StaffCatalog.get_role_name(employee["role"]), StaffCatalog.get_level_name(level), MoneyFormat.format(new_salary)]]
+	messages.append_array(_apply_raise(employee, new_salary))
 	var message: String = " ".join(messages)
 	EventBus.staff_changed.emit()
 	EventBus.notice.emit(message)
 	return {"ok": true, "message": message}
+
+
+func _on_contract_delivered(worker_keys: Array) -> void:
+	var changed: bool = false
+	for key: Variant in worker_keys:
+		var employee: Dictionary = get_employee_by_key(String(key))
+		if not employee.is_empty() and employee["role"] != SALES_ROLE:
+			employee["projects_worked"] = int(employee["projects_worked"]) + 1
+			changed = true
+	if changed:
+		EventBus.staff_changed.emit()
+
+
+func _on_contract_accepted() -> void:
+	var changed: bool = false
+	for employee: Dictionary in employees:
+		if employee["role"] == SALES_ROLE:
+			employee["projects_worked"] = int(employee["projects_worked"]) + 1
+			changed = true
+	if changed:
+		EventBus.staff_changed.emit()
 
 
 ## Niega el aumento que pidió un empleado (le baja el ánimo).
@@ -1107,6 +1200,7 @@ func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
 	employee["bad_days"] = int(saved.get("bad_days", 0))
 	employee["quit_day"] = int(saved.get("quit_day", NO_QUIT))
 	employee["min_energy"] = int(saved.get("min_energy", employee["energy"]))
+	employee["projects_worked"] = int(saved.get("projects_worked", 0))
 	employee["last_raise_day"] = int(saved.get("last_raise_day", employee.get("hired_day", 0)))
 	var request: Dictionary = saved.get("raise_request", {})
 	employee["raise_request"] = {} if not request.has("amount") else {"amount": int(request["amount"]),
