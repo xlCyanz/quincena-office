@@ -772,8 +772,10 @@ func import_state(state: Dictionary) -> void:
 
 ## Quienes trabajan en un contrato en una hora (contada como Staff.get_absolute_hour):
 ## una lista de {"key", "phase", "level", "rate", "bug_chance"} (key como en Staff.is_expected; phase = "" si
-## es generalista).
-func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
+## es generalista). shared sirve para pedir varios contratos en la misma hora: guarda ahí
+## lo que es igual para todos (puestos, bonos y factores de departamento) y no lo vuelve a
+## calcular; vacío = calcular todo.
+func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Array[Dictionary]:
 	var weekday: int = Staff.get_weekday_at(at)
 	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
 	var workers: Array[Dictionary] = []
@@ -790,9 +792,13 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 		return workers
 	# Desde Startup, sin su líder presente el equipo rinde menos (Staff.get_team_factor).
 	var factor: float = Staff.get_team_factor(team, at)
-	var stations: Dictionary[String, bool] = Staff.get_working_station_keys()
-	var bonuses: Dictionary[String, float] = Workstations.bonuses_by_owner(OfficeState.furniture)
-	var departments: Dictionary[String, float] = {}
+	if shared.is_empty():
+		shared["stations"] = Staff.get_working_station_keys()
+		shared["bonuses"] = Workstations.bonuses_by_owner(OfficeState.furniture)
+		shared["departments"] = {}
+	var stations: Dictionary = shared["stations"]
+	var bonuses: Dictionary = shared["bonuses"]
+	var departments: Dictionary = shared["departments"]
 	for member: Variant in team["members"]:
 		var employee: Dictionary = Staff.get_employee(int(member))
 		var key: String = Staff.employee_key(int(member))
@@ -840,8 +846,9 @@ func get_hourly_rate(contract: Dictionary) -> float:
 func _produce() -> void:
 	var ended: int = Staff.get_absolute_hour() - 1
 	var changed: bool = false
+	var shared: Dictionary = {}
 	for contract: Dictionary in contracts:
-		var workers: Array[Dictionary] = get_workers(contract, ended)
+		var workers: Array[Dictionary] = get_workers(contract, ended, shared)
 		if workers.is_empty():
 			continue
 		var was_finished: bool = Production.is_finished(contract)

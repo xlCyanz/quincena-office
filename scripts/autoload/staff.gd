@@ -110,6 +110,8 @@ const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
 const CONCEPT_PAYROLL: String = "Nómina"
 ## template_id de un equipo con turno propio.
 const NO_TEMPLATE: int = 0
+# Clave de _get_team_map que ningún empleado usa (los ids empiezan en 1).
+const NO_TEAM_KEY: int = -1
 ## Estados de una hora en la agenda.
 const AGENDA_OFF: String = "off"
 const AGENDA_WORK: String = "work"
@@ -161,8 +163,13 @@ var _last_interview_end: int = NO_FIRING
 var _rng := RandomNumberGenerator.new()
 # Ambiente por habitación y muebles (ver _ambiance_detail).
 var _ambiance_cache: Dictionary[int, Dictionary] = {}
+# Mientras _update_morale recorre a todos: puestos, escritorios y hash de los muebles
+# buscados una sola vez (ver _seat_lookup). Vacío el resto del tiempo.
+var _seat_lookup_cache: Dictionary = {}
 # Horarios ya leídos por el hash de su diccionario (ver _cached_schedule).
 var _schedule_cache: Dictionary[int, WorkSchedule] = {}
+# id → posición en employees (get_employee); se comprueba al usarla y se rehace si no coincide.
+var _employee_index: Dictionary[int, int] = {}
 
 
 func _ready() -> void:
@@ -354,7 +361,14 @@ func is_expected(key: String, weekday: int, hour: int) -> bool:
 	var employee: Dictionary = get_employee_by_key(key)
 	if employee.is_empty():
 		return false
-	var schedule: WorkSchedule = _cached_schedule(employee)
+	return _is_working_at(employee, weekday, hour)
+
+
+# Lo mismo que is_expected para un empleado que ya se tiene a mano (y su equipo, si se
+# buscaron todos con _get_team_map).
+func _is_working_at(employee: Dictionary, weekday: int, hour: int, team_map: Dictionary[int, Dictionary] = {}) -> bool:
+	var schedule: WorkSchedule = _cached_schedule(employee) if team_map.is_empty() \
+		else _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
 	return schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour)
 
 
@@ -961,6 +975,7 @@ func _update_morale() -> void:
 	var today: int = GameClock.get_day_count()
 	var mood_step: int = int(StaffCatalog.get_morale("mood_step"))
 	var stress_step: int = int(StaffCatalog.get_morale("stress_step"))
+	_build_seat_lookup()
 	for employee: Dictionary in employees.duplicate():
 		if not employee.has("quit_day"):
 			_add_morale_fields(employee, employee.duplicate())
@@ -991,6 +1006,7 @@ func _update_morale() -> void:
 			continue
 		_maybe_get_offer(employee, today)
 		_maybe_ask_raise(employee, today)
+	_seat_lookup_cache = {}
 	EventBus.staff_changed.emit()
 
 
@@ -1035,11 +1051,14 @@ func get_schedule(employee: Dictionary) -> WorkSchedule:
 # Lo mismo que get_schedule, solo para leer: se guarda un WorkSchedule por cada horario
 # distinto (el hash de su diccionario) porque se pide por cada empleado cada hora.
 func _cached_schedule(employee: Dictionary) -> WorkSchedule:
+	return _cached_schedule_in(employee, {} if bool(employee.get("own_schedule", false)) else get_team_of(employee["id"]))
+
+
+# Lo mismo que _cached_schedule con su equipo ya buscado (ver _get_team_map).
+func _cached_schedule_in(employee: Dictionary, team: Dictionary) -> WorkSchedule:
 	var data: Dictionary = employee["schedule"]
-	if not bool(employee.get("own_schedule", false)):
-		var team: Dictionary = get_team_of(employee["id"])
-		if not team.is_empty():
-			data = team["schedule"]
+	if not bool(employee.get("own_schedule", false)) and not team.is_empty():
+		data = team["schedule"]
 	var key: int = data.hash()
 	if not _schedule_cache.has(key):
 		if _schedule_cache.size() >= SCHEDULE_CACHE_SIZE:
@@ -1506,6 +1525,20 @@ func get_team_of(employee_id: int) -> Dictionary:
 	return {}
 
 
+# Equipo de cada empleado que está en uno (como get_team_of), para revisar a todos de una
+# vez sin recorrer los equipos por cada uno. Lleva la clave NO_TEAM_KEY para no quedar vacío.
+func _get_team_map() -> Dictionary[int, Dictionary]:
+	var result: Dictionary[int, Dictionary] = {NO_TEAM_KEY: {}}
+	for team: Dictionary in teams:
+		for member: Variant in team["members"]:
+			if not result.has(int(member)):
+				result[int(member)] = team
+		var leader: int = int(team.get("leader_id", 0))
+		if leader != 0 and not result.has(leader):
+			result[leader] = team
+	return result
+
+
 ## Equipos que tienen al menos un miembro (cada uno puede llevar un contrato).
 func get_active_team_count() -> int:
 	var count: int = 0
@@ -1543,10 +1576,16 @@ func _schedules_changed() -> void:
 
 ## Empleado con ese id, o vacío.
 func get_employee(employee_id: int) -> Dictionary:
-	for employee: Dictionary in employees:
-		if employee["id"] == employee_id:
-			return employee
-	return {}
+	# Se pide muchas veces por hora: se busca en el índice y, si no coincide (alguien
+	# entró o salió), se rehace.
+	var index: int = _employee_index.get(employee_id, -1)
+	if index >= 0 and index < employees.size() and employees[index]["id"] == employee_id:
+		return employees[index]
+	_employee_index.clear()
+	for position: int in range(employees.size()):
+		_employee_index[int(employees[position]["id"])] = position
+	index = _employee_index.get(employee_id, -1)
+	return employees[index] if index >= 0 else {}
 
 
 ## Empleado con esa clave de assigned_to, o vacío.
@@ -1792,8 +1831,8 @@ func _update_dirt() -> void:
 	var hour: int = posmod(ended, GameConstants.HOURS_PER_DAY)
 	var cleaner_role: String = String(StaffCatalog.get_cleaning("role"))
 	var cleaners: Array[Dictionary] = []
-	var keys: Array[String] = ["ceo"]
 	var stations: Dictionary[String, bool] = get_working_station_keys()
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
 	var seats: Dictionary[String, Dictionary] = {}
 	for item: Dictionary in OfficeState.furniture:
 		var owner: String = String(item["assigned_to"])
@@ -1801,23 +1840,27 @@ func _update_dirt() -> void:
 			seats[owner] = item
 	for employee: Dictionary in employees:
 		if employee["role"] == cleaner_role:
-			if stations.has(employee_key(employee["id"])) and is_expected(employee_key(employee["id"]), weekday, hour):
+			if stations.has(employee_key(employee["id"])) and _is_working_at(employee, weekday, hour, team_map):
 				cleaners.append(employee)
-		else:
-			keys.append(employee_key(employee["id"]))
 	var changed: bool = false
 	var was_dirty: Array[bool] = []
 	for room: Dictionary in OfficeState.rooms:
 		was_dirty.append(OfficeState.is_room_dirty(room))
 	# Personas-hora por habitación: se suman y se ensucia cada habitación una vez.
+	var room_map: Dictionary[Vector2i, int] = OfficeState.get_room_index_map()
 	var people: Dictionary[int, int] = {}
-	for key: String in keys:
-		if not is_expected(key, weekday, hour):
+	var seat: Dictionary = seats.get("ceo", {})
+	if is_expected("ceo", weekday, hour) and not seat.is_empty():
+		var ceo_room: int = room_map.get(seat["cell"], -1)
+		if ceo_room >= 0:
+			people[ceo_room] = people.get(ceo_room, 0) + 1
+	for employee: Dictionary in employees:
+		if employee["role"] == cleaner_role or not _is_working_at(employee, weekday, hour, team_map):
 			continue
-		var seat: Dictionary = seats.get(key, {})
+		seat = seats.get(employee_key(employee["id"]), {})
 		if seat.is_empty():
 			continue
-		var room_index: int = OfficeState.get_room_index_at(seat["cell"])
+		var room_index: int = room_map.get(seat["cell"], -1)
 		if room_index >= 0:
 			people[room_index] = people.get(room_index, 0) + 1
 	for room_index: int in people:
@@ -1848,10 +1891,10 @@ func get_cleaning_room(employee: Dictionary) -> int:
 ## Indica si la habitación del puesto de alguien está sucia.
 ## Habitación donde está la silla de alguien, o vacío.
 func get_workplace_room(key: String) -> Dictionary:
-	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
+	var seat: Dictionary = _seat_of(key)
 	if seat.is_empty():
 		return {}
-	var room_index: int = OfficeState.get_room_index_at(seat["cell"])
+	var room_index: int = _room_map().get(seat["cell"], -1)
 	return OfficeState.rooms[room_index] if room_index >= 0 else {}
 
 
@@ -1864,7 +1907,9 @@ func get_ambiance(key: String) -> int:
 # Ambiance.get_detail de una habitación con los muebles de ahora, guardado mientras la
 # habitación y los muebles no cambien (las metas de ánimo y estrés lo piden por persona).
 func _ambiance_detail(room: Dictionary) -> Dictionary:
-	var key: int = [room.hash(), OfficeState.furniture.hash()].hash()
+	var furniture_hash: int = int(_seat_lookup_cache["furniture_hash"]) if not _seat_lookup_cache.is_empty() \
+		else OfficeState.furniture.hash()
+	var key: int = [room.hash(), furniture_hash].hash()
 	if not _ambiance_cache.has(key):
 		if _ambiance_cache.size() >= AMBIANCE_CACHE_SIZE:
 			_ambiance_cache.clear()
@@ -1872,9 +1917,42 @@ func _ambiance_detail(room: Dictionary) -> Dictionary:
 	return _ambiance_cache[key]
 
 
+# El mueble asignado a alguien (OfficeState.find_furniture_assigned_to), del recorrido de
+# _update_morale si está en curso.
+func _seat_of(key: String) -> Dictionary:
+	if _seat_lookup_cache.is_empty():
+		return OfficeState.find_furniture_assigned_to(key)
+	return _seat_lookup_cache["seats"].get(key, {})
+
+
+# Arma _seat_lookup_cache: el primer mueble asignado a cada uno, el escritorio de cada
+# puesto ocupado y el hash de los muebles. Lo que cambia mientras se recorre (alguien que
+# se va libera su silla) no lo usa nadie más: el ambiente no mira quién ocupa qué.
+func _build_seat_lookup() -> void:
+	var furniture: Array[Dictionary] = OfficeState.furniture
+	var seats: Dictionary[String, Dictionary] = {}
+	for item: Dictionary in furniture:
+		var owner: String = String(item["assigned_to"])
+		if not owner.is_empty() and not seats.has(owner):
+			seats[owner] = item
+	var desks: Dictionary[String, Dictionary] = {}
+	for station: Dictionary in Workstations.find_all(furniture, OfficeState.rooms):
+		var owner: String = String(furniture[station["chair"]]["assigned_to"])
+		if not desks.has(owner):
+			desks[owner] = furniture[station["desk"]]
+	_seat_lookup_cache = {"seats": seats, "desks": desks, "furniture_hash": furniture.hash(),
+		"room_map": OfficeState.get_room_index_map()}
+
+
+# OfficeState.get_room_index_map, del recorrido de _update_morale si está en curso.
+func _room_map() -> Dictionary:
+	return _seat_lookup_cache["room_map"] if not _seat_lookup_cache.is_empty() else OfficeState.get_room_index_map()
+
+
 ## Lo que suma a la meta de ánimo el escritorio del puesto de alguien (el amplio, hito 46).
 func get_desk_mood(key: String) -> int:
-	var desk: Dictionary = Workstations.station_desk_of(OfficeState.furniture, OfficeState.rooms, key)
+	var desk: Dictionary = _seat_lookup_cache["desks"].get(key, {}) if not _seat_lookup_cache.is_empty() \
+		else Workstations.station_desk_of(OfficeState.furniture, OfficeState.rooms, key)
 	return 0 if desk.is_empty() else FurnitureCatalog.get_mood_bonus(desk["id"])
 
 
@@ -1891,10 +1969,10 @@ func _work_energy_of(seat: Dictionary) -> int:
 
 
 func works_in_dirty_room(key: String) -> bool:
-	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
+	var seat: Dictionary = _seat_of(key)
 	if seat.is_empty():
 		return false
-	var room_index: int = OfficeState.get_room_index_at(seat["cell"])
+	var room_index: int = _room_map().get(seat["cell"], -1)
 	return room_index >= 0 and OfficeState.is_room_dirty(OfficeState.rooms[room_index])
 
 
@@ -1996,9 +2074,10 @@ func _update_energy() -> void:
 	var rest: int = int(StaffCatalog.get_workday("energy_per_rest_hour"))
 	var pay_factor: float = float(StaffCatalog.get_overtime("pay_factor"))
 	var night_bonus: float = float(StaffCatalog.get_overtime("night_bonus"))
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
 	for employee: Dictionary in employees:
 		# Lo mismo que is_expected, con el horario a mano para las horas extra.
-		var schedule: WorkSchedule = _cached_schedule(employee)
+		var schedule: WorkSchedule = _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
 		var working: bool = schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour)
 		if working:
 			var hour_pay: float = get_hour_pay(employee)

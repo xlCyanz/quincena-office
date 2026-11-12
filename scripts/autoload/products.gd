@@ -482,8 +482,9 @@ func _import_project(saved: Dictionary) -> Dictionary:
 func _produce() -> void:
 	var ended: int = Staff.get_absolute_hour() - 1
 	var changed: bool = false
+	var shared: Dictionary = {}
 	for project: Dictionary in get_active_projects():
-		var workers: Array[Dictionary] = Projects.get_workers(project, ended)
+		var workers: Array[Dictionary] = Projects.get_workers(project, ended, shared)
 		if workers.is_empty():
 			continue
 		var was_finished: bool = Production.is_finished(project)

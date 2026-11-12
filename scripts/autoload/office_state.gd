@@ -38,6 +38,11 @@ var rooms: Array[Dictionary] = []
 ## instalada en un escritorio y monitor su segundo monitor ("" si no tiene; puede faltar). Comprar, girar y vender lo hace Builder.
 var furniture: Array[Dictionary] = []
 
+# Casilla → índice de habitación (get_room_index_map), con el hash de las casillas de
+# las habitaciones con que se armó.
+var _room_map: Dictionary[Vector2i, int] = {}
+var _room_map_key: int = 0
+
 ## Lo que se pagó por el terreno comprado (cuenta en el valor de la empresa).
 var land_paid: int = 0
 
@@ -223,6 +228,24 @@ static func get_room_dirt(room: Dictionary) -> float:
 ## Índice de la habitación que contiene una casilla, o -1.
 func get_room_index_at(cell: Vector2i) -> int:
 	return RoomRules.room_index_at(rooms, cell)
+
+
+## Índice de habitación de cada casilla que está en alguna (para buscar muchas de una
+## vez). Se guarda mientras las casillas de las habitaciones no cambien; la suciedad no
+## cuenta. No modificar el resultado.
+func get_room_index_map() -> Dictionary[Vector2i, int]:
+	var parts: Array = []
+	for room: Dictionary in rooms:
+		parts.append(room["cells"])
+	var key: int = parts.hash()
+	if key != _room_map_key or (_room_map.is_empty() and not rooms.is_empty()):
+		_room_map = {}
+		# Al revés, para que con casillas repetidas gane la primera como en room_index_at.
+		for index: int in range(rooms.size() - 1, -1, -1):
+			for cell: Vector2i in rooms[index]["cells"]:
+				_room_map[cell] = index
+		_room_map_key = key
+	return _room_map
 
 
 ## Indica si una habitación está tan sucia que baja el ánimo de quienes trabajan ahí.
