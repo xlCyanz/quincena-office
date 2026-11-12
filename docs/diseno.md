@@ -82,6 +82,12 @@ Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece se
   - [17.3 Hitos](#173-hitos)
   - [17.4 Orden y dependencias](#174-orden-y-dependencias)
   - [17.5 Riesgos de esta fase](#175-riesgos-de-esta-fase)
+* [18. Plan de desarrollo: fase 4](#18-plan-de-desarrollo-fase-4)
+  - [18.1 Alcance](#181-alcance)
+  - [18.2 Decisiones técnicas](#182-decisiones-técnicas)
+  - [18.3 Hitos](#183-hitos)
+  - [18.4 Orden y dependencias](#184-orden-y-dependencias)
+  - [18.5 Riesgos de esta fase](#185-riesgos-de-esta-fase)
 
 ## 1. Visión general
 
@@ -837,3 +843,71 @@ La fase 3 agrega el banco y el crecimiento de la empresa: pedir préstamos y pag
 - **Barra de menús:** con Banco y Empresa son nueve botones; deben caber en 1280 px de ancho.
 - **Balance:** los valores de 9.1 y 13.6 son una propuesta. El hito 29 los ajusta antes de cerrar la fase.
 - **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 2.
+
+## 18. Plan de desarrollo: fase 4
+
+La fase 4 agrega la organización de la empresa: líderes de equipo, gerentes, ejecutivos y departamentos que reparten el trabajo del CEO; ascensos por experiencia; horas extra, turnos de noche y la agenda semanal; los roles de apoyo (recepcionista, contador y limpieza) y la competencia por los buenos empleados. Al terminarla, crecer obliga a delegar y la empresa puede llegar a Mediana empresa. Se construye en diez hitos, numerados después de los de la fase 3.
+
+### 18.1 Alcance
+
+| Entra en la fase 4 | Queda para fases siguientes |
+| --- | --- |
+| Ascensos por experiencia: Pasante → Junior → SemiSenior → Senior (5) | Productos propios y sala de servidores que funciona (fase 5) |
+| Líderes de equipo y supervisión real (4 y 6) | Eventos con tarjetas y cuenta atrás (fase 5) |
+| Gerentes y organigrama (4) | Ambiente y decoración con efecto (fase 5) |
+| Departamentos, rendimiento del CEO y ejecutivos (4.1) | Salir a bolsa (fase 5) |
+| Horas extra, turno de noche y horario individual (6 y 6.2) | Rasgos con efecto en el trabajo |
+| Agenda semanal y plantillas de turno (6 y 12.3) | Arte final y sonido (fase 6) |
+| Recepcionista y visitas de clientes (5.1) | |
+| Contador y limpieza (5.1) | |
+| Competencia por empleados (5.3) | |
+
+### 18.2 Decisiones técnicas
+
+- **Sistemas:** la organización vive en `Staff` (cargos, líderes, gerentes, ejecutivos y departamentos) con sus funciones puras aparte (`Organization`), como `Production` y `Embargo`. Las visitas de clientes van en `Projects`; la suciedad, en `OfficeState`. Todo se comunica por `EventBus` y todo pago pasa por `Economy`.
+- **Datos fuera del código:** cargos de apoyo y de dirección, sueldos, umbrales de ascenso, horas extra, turno de noche, suciedad y competencia en `data/staff.json`; los muebles nuevos (mostrador, sofá de espera y zafacón) en `data/furniture.json`; los cambios de etapa en `data/stages.json`.
+- **Cargos sin niveles:** recepcionista, contador, limpieza, líder de equipo, gerente y ejecutivo tienen un sueldo fijo de 13.2 y no ascienden por nivel; solo se les sube el sueldo. El ánimo compara su sueldo con ese fijo.
+- **Ascensos:** cada empleado cuenta los contratos en que trabajó (sumó puntos) y los días en la empresa; los vendedores cuentan los contratos aceptados mientras estaban. Al cumplir los dos umbrales (3 y 30 para Junior, 8 y 90 para SemiSenior, 15 y 180 para Senior) la ficha ofrece Ascender con un sueldo que el jugador elige (sugerido: el de su nuevo nivel). Ascender cuenta como aumento para el ánimo; dejarlo pasar no castiga hasta que exista el rasgo «ambicioso».
+- **Líderes de equipo:** se desbloquean en Startup. Un Senior asciende a líder de un equipo sin líder; cobra $4,200, no suma puntos y ocupa un puesto en el Área de trabajo. Un equipo tiene como mucho un líder y 10 miembros. El líder cuenta como presente solo mientras está en la oficina en el turno del equipo. Desde Startup, un equipo sin líder presente rinde al 75 %; en Emprendimiento rinde al 100 % aunque no tenga líder.
+- **Gerentes:** se desbloquean en Pequeña empresa. Se contratan con su vacante, necesitan una Oficina única libre (con escritorio ejecutivo y silla) y dirigen hasta 5 líderes. Los equipos de esos líderes rinden +10 % y su meta de estrés baja 10. Un sexto líder necesita un gerente que lo dirija.
+- **Departamentos:** Desarrollo (programadores y QA), Diseño, Ventas (vendedores y recepcionistas) y Administración (contadores y limpieza). Un departamento existe desde que tiene un empleado. Los que no tienen ejecutivo los dirige el CEO, y cada uno rinde según cuántos dirige (100 %, 85 %, 70 % y 55 % con 1 a 4). Ese factor multiplica la producción en Desarrollo y Diseño, la probabilidad de ofertas en Ventas y el efecto de contador y limpieza en Administración.
+- **Ejecutivos:** se desbloquean en Mediana empresa, que en esta fase pide solo 40 empleados (el requisito de producto vuelve en la fase 5). Un ejecutivo cuesta $9,000, necesita su Oficina única y dirige un departamento: lo devuelve al 100 % y le suma hasta +10 % según su liderazgo. El ejecutivo de Administración puede hacer las entrevistas en lugar del CEO.
+- **Horas extra:** el turno de un equipo o el horario individual suma de 0 a 4 horas extra por día. Se pagan a 1.5 veces la hora normal en la nómina siguiente («Horas extra») y gastan más energía y suben el estrés.
+- **Turno de noche:** las horas trabajadas entre las 22 y las 6 cobran un extra del sueldo (provisional 20 %) y bajan la meta de ánimo.
+- **Horario individual:** cualquier empleado puede tener un horario propio que reemplaza el de su equipo, con al menos un día de descanso.
+- **Agenda:** el menú Equipos pasa a llamarse Horarios: plantillas de turno con nombre, equipos y una agenda semanal que muestra quién trabaja a cada hora y marca los huecos (equipo sin líder, nadie en la recepción).
+- **Recepcionista y visitas:** desde Startup, una parte de las ofertas llega como visita de un cliente a la Recepción (con mostrador). Si hay un recepcionista presente, la oferta entra en la bandeja; si no, el cliente espera unas horas (más con sofá de espera) y se va, y la oferta se pierde.
+- **Contador:** baja el mantenimiento y la tasa de los préstamos nuevos (provisional −10 % y −1 punto), y avisa tres días antes de cada cuota o nómina que no va a alcanzar.
+- **Limpieza:** cada habitación junta suciedad por las horas que la gente pasa en ella (menos con zafacón). Sobre un umbral, la meta de ánimo de quienes trabajan ahí baja. El personal de limpieza la quita en su turno.
+- **Competencia:** a veces otra empresa le hace una oferta a un empleado SemiSenior o Senior (más si gana menos que su nivel, menos si es «leal», más si es «ambicioso»). Avisa como la renuncia: se queda con un aumento que iguale la oferta y, si no, se va al terminar el plazo.
+- **Guardado:** los datos nuevos se exportan e importan tolerando claves ausentes; una partida de la fase 3 carga sin líderes, sin horas extra y con la oficina limpia.
+
+### 18.3 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 30. Ascensos | Contratos trabajados y días en la empresa por empleado; en la ficha, el progreso al siguiente nivel y Ascender con el sueldo elegido | Un Pasante con 3 contratos y 30 días puede ascender a Junior: produce 16 puntos por jornada y su sueldo cambia en la nómina; antes de los umbrales no puede |
+| 31. Líderes de equipo | Ascender un Senior a líder de un equipo; supervisión real según su presencia; tope de 10 miembros | En Startup, un equipo sin líder presente rinde 75 % y con líder 100 %; en Emprendimiento rinde 100 %; un líder fuera de turno no cuenta |
+| 32. Gerentes y organigrama | Vacante de gerente con su Oficina única; asignar hasta 5 líderes; organigrama en Personal | Sin Oficina única libre no se contrata; los equipos de sus líderes rinden 110 % y bajan el estrés; un sexto líder sin gerente no se puede nombrar |
+| 33. Departamentos y ejecutivos | Departamentos por cargo, rendimiento del CEO según los que dirige, ejecutivos con su oficina; Mediana empresa con 40 empleados | Con 3 departamentos a cargo del CEO cada uno rinde 70 %; con un ejecutivo en Desarrollo ese vuelve al 100 % más su ventaja y los otros dos suben a 85 % |
+| 34. Horas extra y turno de noche | Horas extra en el turno (0–4), pago a 1.5×, turno de noche con recargo, horario individual | Un turno de 2 horas extra cobra 2 × 1.5 horas por día trabajado en la nómina; un turno de 22 a 6 cobra el recargo; el horario individual cambia la hora de llegada de esa persona |
+| 35. Agenda semanal | Menú Horarios con plantillas de turno con nombre, equipos y la agenda de la semana con huecos marcados | Cambiar una plantilla cambia el turno de todos sus equipos; la agenda marca la hora en que un equipo no tiene líder presente |
+| 36. Recepcionista y visitas | Muebles de recepción, cargo de recepcionista, clientes que llegan, esperan y se van | Con recepcionista presente la visita deja su oferta; sin él, el cliente se va y la oferta se pierde; con sofá espera más |
+| 37. Contador y limpieza | Cargo de contador con sus descuentos y avisos; suciedad por habitación, zafacón y personal de limpieza | Con contador el mantenimiento baja 10 % y un préstamo nuevo cuesta 1 punto menos; una habitación sucia baja el ánimo y la limpieza la deja en 0 |
+| 38. Competencia por empleados | Ofertas de otras empresas a buenos empleados, con aviso y retención por aumento | Un Senior mal pagado recibe ofertas más seguido que uno bien pagado; con un aumento que iguala se queda; si no, se va en el plazo |
+| 39. Comprobación de la fase | Simulación sin ventana de una empresa que crece hasta Mediana empresa con líderes, gerente y un ejecutivo; ajuste de `data/staff.json` y `data/stages.json` | La simulación llega a Mediana empresa sin quebrar con una política simple; dirigir 4 departamentos se nota en los ingresos; todas las pruebas anteriores siguen pasando |
+
+### 18.4 Orden y dependencias
+
+- **Escalera de cargos:** el 30 va primero, porque un líder es un Senior ascendido. El 31, el 32 y el 33 van en cadena: gerentes dirigen líderes y los ejecutivos completan los departamentos.
+- **Tiempo:** el 34 y el 35 van después del 31, porque la agenda marca los huecos de líder.
+- **Apoyo:** el 36 y el 37 dependen del 33 (Ventas y Administración); pueden ir en cualquier orden entre sí.
+- **Cierre:** el 38 usa los aumentos y avisos de la fase 2; el 39 va al final.
+
+### 18.5 Riesgos de esta fase
+
+- **Balance:** el rendimiento de los departamentos y la regla del líder bajan la producción de las empresas que crecen. El hito 39 revisa que el primer equipo de la fase 3 siga pagando su préstamo.
+- **Muchos personajes:** Mediana empresa son más de 40 personas caminando; hay que probar el rendimiento con 50 personajes antes del hito 39.
+- **Oficinas:** gerentes y ejecutivos necesitan una Oficina única con su escritorio; vender ese mueble o perder la habitación debe dejarlos sin oficina igual que un puesto de trabajo, sin asignaciones colgadas.
+- **Barra de menús:** Equipos pasa a Horarios para no sumar un botón.
+- **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 3.

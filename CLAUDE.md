@@ -151,7 +151,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19) y en la 17.3 (fase 3, hitos 20–29).
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29) y en la 18.3 (fase 4, hitos 30–39).
 
 ## Estado actual
 
