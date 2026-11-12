@@ -1,5 +1,5 @@
 # Prueba sin ventana del hito 25: compra de terreno.
-# Criterio: comprar 4 × 3 al este cuesta $900, el local suma 12 m² y el mantenimiento
+# Criterio: comprar 4 × 3 al este cuesta $2,010, el local suma 12 m² y el mantenimiento
 # sube $60 al mes; no se puede comprar fuera del solar ni sin tocar el local; los
 # caminos llegan al terreno nuevo.
 # Ejecutar con:
@@ -79,10 +79,10 @@ func _check_east() -> void:
 	var balance: int = Economy.balance
 	var maintenance: int = Economy.get_maintenance(area)
 	var quote: Dictionary = builder.quote_land(Builder.SIDE_EAST, 4, 3, 0)
-	_expect(quote["ok"] and quote["cost"] == 900 and (quote["new_cells"] as Array).size() == 12, "4 × 3 al este cuesta $900: %s" % quote)
-	_expect(String(quote["message"]).contains("$900") and String(quote["message"]).contains("+$60"), "vista previa: %s" % quote["message"])
+	_expect(quote["ok"] and quote["cost"] == 2010 and (quote["new_cells"] as Array).size() == 12, "4 × 3 al este cuesta $2,010: %s" % quote)
+	_expect(String(quote["message"]).contains("$2,010") and String(quote["message"]).contains("$1,800 + cerámica $210") and String(quote["message"]).contains("+$60"), "vista previa: %s" % quote["message"])
 	var result: Dictionary = builder.buy_land(Builder.SIDE_EAST, 4, 3, 0)
-	_expect(result["ok"] and Economy.balance == balance - 900 and _sum(Builder.CONCEPT_LAND) == -900, "comprado: %s" % result)
+	_expect(result["ok"] and Economy.balance == balance - 2010 and _sum(Builder.CONCEPT_LAND) == -2010, "comprado: %s" % result)
 	_expect(OfficeState.lot.get_area() == area + 12, "el local suma 12 m²: %d" % OfficeState.lot.get_area())
 	_expect(Economy.get_maintenance(OfficeState.lot.get_area()) - maintenance == 60, "el mantenimiento sube $60")
 	# El terreno nuevo: al este del local (x 6 a 8, filas 0 a 3), con cerámica.
@@ -121,12 +121,12 @@ func _check_refused() -> void:
 	_expect(not quote["ok"] and String(quote["message"]).contains("entrada"), "no tapa la entrada: %s" % quote["message"])
 	quote = builder.quote_land(Builder.SIDE_EAST, 0, 3, 0)
 	_expect(not quote["ok"], "medida mínima 1 × 1")
-	Economy.charge(Economy.balance - 50, "Prueba")
+	Economy.charge(Economy.balance - 100, "Prueba")
 	quote = builder.quote_land(Builder.SIDE_EAST, 1, 1, 0)
 	_expect(quote["ok"] == false and String(quote["message"]).contains("No alcanza"), "sin dinero: %s" % quote["message"])
 	var area: int = OfficeState.lot.get_area()
 	builder.buy_land(Builder.SIDE_EAST, 1, 1, 0)
-	_expect(OfficeState.lot.get_area() == area and Economy.balance == 50, "si no se puede, no cambia nada")
+	_expect(OfficeState.lot.get_area() == area and Economy.balance == 100, "si no se puede, no cambia nada")
 	# Los otros lados: oeste y norte crecen hacia coordenadas negativas.
 	_new_game()
 	quote = builder.quote_land(Builder.SIDE_WEST, 2, 1, 5)
@@ -144,7 +144,7 @@ func _check_notch() -> void:
 	builder.buy_land(Builder.SIDE_EAST, 3, 2, 0)
 	var quote: Dictionary = builder.quote_land(Builder.SIDE_EAST, 8, 2, 0)
 	var cells: Array[Vector2i] = quote["new_cells"]
-	_expect(quote["ok"] and cells.size() == 10 and quote["cost"] == 750 and cells.has(Vector2i(6, 3)) and cells.has(Vector2i(7, 7)),
+	_expect(quote["ok"] and cells.size() == 10 and quote["cost"] == 1675 and cells.has(Vector2i(6, 3)) and cells.has(Vector2i(7, 7)),
 		"rellena el hueco y cobra 10 m²: %s" % quote)
 	builder.buy_land(Builder.SIDE_EAST, 8, 2, 0)
 	_expect(OfficeState.lot.get_area() == 48 + 6 + 10 and OfficeState.lot.get_bounds() == Rect2i(0, 0, 8, 8), "local de 8 × 8")
@@ -201,9 +201,9 @@ func _check_panel() -> void:
 	_expect(panel.is_land_row_visible(), "la herramienta Terreno muestra su fila")
 	panel.get_land_button(Builder.SIDE_EAST).pressed.emit()
 	_expect(panel.get_land() == {"side": Builder.SIDE_EAST, "width": 4, "depth": 3, "offset": 0}, "4 × 3 al este: %s" % panel.get_land())
-	_expect(not status.is_empty() and status[-1].contains("$900"), "vista previa con el precio: %s" % [status])
+	_expect(not status.is_empty() and status[-1].contains("$2,010"), "vista previa con el precio: %s" % [status])
 	panel.get_land_button("depth+").pressed.emit()
-	_expect(panel.get_land()["depth"] == 4 and status[-1].contains("$1,200"), "fondo 4: %s" % status[-1])
+	_expect(panel.get_land()["depth"] == 4 and status[-1].contains("$2,680"), "fondo 4: %s" % status[-1])
 	panel.get_land_button("depth-").pressed.emit()
 	panel.get_land_button("offset-").pressed.emit()
 	_expect(panel.get_land()["offset"] == -1, "posición −1")

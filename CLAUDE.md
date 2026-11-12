@@ -38,7 +38,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
-  terreno (`Builder.quote_land`/`buy_land`, herramienta Terreno: lado, ancho × fondo y posición; $75/m² con cerámica, en
+  terreno (`Builder.quote_land`/`buy_land`, herramienta Terreno: lado, ancho × fondo y posición; $150/m² más la cerámica a mitad de precio, en
   `data/construction.json`): se apoya en la casilla más lejana de cada fila, así rellena huecos y cobra solo lo nuevo; no sale del
   solar ni tapa la entrada; el borde compartido se abre y el contorno nuevo lleva pared. Una habitación puede crecer hacia el
   terreno nuevo pero no juntarse con otro espacio. El mantenimiento se cobra por `lot.get_area()`.
@@ -161,7 +161,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 22 | Préstamos | ✅ Completado (varios préstamos; tope por etapa en el hito 27; la cuota sin dinero deja saldo negativo hasta la mora del hito 23) |
 | 23 | Mora y embargo | ✅ Completado (5 % de recargo por cuota; meses seguidos debiendo globales; al pagar todo vuelve a 0; el sobrante se devuelve; lo del CEO no se embarga; préstamo de emergencia en el hito 24) |
 | 24 | Préstamo de emergencia | ✅ Completado (días 15 y 30; aceptar = nómina a tiempo sin golpe; monto = lo que falta redondeado a $100; primera cuota el primer día 1 con ≥15 días; no se refinancia) |
-| 25 | Compra de terreno | ✅ Completado (local como conjunto de casillas; cerámica incluida en $75/m²; no tapa la entrada; rellena huecos cobrando solo lo nuevo; controles −/+ con vista previa; una habitación no se junta con otro espacio) |
+| 25 | Compra de terreno | ✅ Completado (local como conjunto de casillas; $150/m² + cerámica a mitad de precio; no tapa la entrada; rellena huecos cobrando solo lo nuevo; controles −/+ con vista previa; una habitación no se junta con otro espacio) |
 | 26 | Valor de la empresa | ✅ Completado (dinero + reventa + terreno a lo pagado − deuda; paredes y pisos no suman; en el Hud tras las estrellas y en el Banco con detalle) |
 | 27 | Etapas y menú Empresa | Pendiente (fase 3) |
 | 28 | Objetivos guiados | Pendiente (fase 3) |

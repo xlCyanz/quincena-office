@@ -450,8 +450,9 @@ func quote_land(side: String, width: int, depth: int, offset: int) -> Dictionary
 	var plan: Dictionary = plan_land(OfficeState.lot, side, width, depth, offset)
 	var cells: Array[Vector2i] = plan["cells"]
 	var new_cells: Array[Vector2i] = plan["new_cells"]
-	var price: int = int(ConstructionCatalog.get_land().get("price_per_m2", 0))
-	var cost: int = new_cells.size() * price
+	var land_cost: int = new_cells.size() * ConstructionCatalog.get_land_price()
+	var floor_cost: int = ConstructionCatalog.get_land_floor_cost(new_cells.size())
+	var cost: int = land_cost + floor_cost
 	var result: Dictionary = {"ok": false, "cost": cost, "message": "", "cells": cells, "new_cells": new_cells}
 	if width < 1 or depth < 1:
 		result["message"] = "El terreno tiene que medir al menos 1 × 1."
@@ -492,8 +493,10 @@ func quote_land(side: String, width: int, depth: int, offset: int) -> Dictionary
 				result["message"] = "Así la %s se juntaría con el resto de la oficina: compra el terreno solo junto a ella o junto al resto." % (
 					RoomCatalog.get_display_name(room["type"]))
 				return result
-	var message: String = "Terreno de %d m² por %s (mantenimiento +%s al mes)." % [new_cells.size(), MoneyFormat.format(cost),
-		MoneyFormat.format(Economy.get_maintenance(new_cells.size()))]
+	var floor_type: String = String(ConstructionCatalog.get_land().get("floor", ConstructionCatalog.BARE_FLOOR))
+	var message: String = "Terreno de %d m² por %s (%s + %s %s) · mantenimiento +%s al mes." % [new_cells.size(),
+		MoneyFormat.format(cost), MoneyFormat.format(land_cost), ConstructionCatalog.get_display_name(floor_type).to_lower(),
+		MoneyFormat.format(floor_cost), MoneyFormat.format(Economy.get_maintenance(new_cells.size()))]
 	if not lost.is_empty():
 		var names: Array[String] = []
 		for type_id: String in lost:

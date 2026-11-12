@@ -69,6 +69,19 @@ static func get_land() -> Dictionary:
 	return _catalog().get("land", {})
 
 
+## Precio del terreno por m², sin el piso.
+static func get_land_price() -> int:
+	return int(get_land().get("price_per_m2", 0))
+
+
+## Lo que cuesta el piso con que llegan area m² de terreno: su precio por
+## floor_price_ratio (la mitad), redondeado.
+static func get_land_floor_cost(area: int) -> int:
+	var land: Dictionary = get_land()
+	var floor_type: String = String(land.get("floor", BARE_FLOOR))
+	return roundi(area * get_price(floor_type) * float(land.get("floor_price_ratio", 1.0)))
+
+
 static func _catalog() -> Dictionary:
 	if _data.is_empty():
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(CATALOG_PATH))
