@@ -16,6 +16,8 @@ const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 var ceo: Ceo
 ## Personaje de cada empleado, por id.
 var employees: Dictionary[int, Employee] = {}
+# Despedidos que todavía caminan hacia la salida; desaparecen al salir.
+var _departing: Array[Employee] = []
 var pathfinder := OfficePathfinder.new()
 
 # Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
@@ -133,8 +135,19 @@ func _sync_employees() -> void:
 		character.update_routine(Staff.is_expected_now(character.person_key))
 	for employee_id: int in employees.keys():
 		if Staff.get_employee(employee_id).is_empty():
-			employees[employee_id].queue_free()
+			var leaving: Employee = employees[employee_id]
 			employees.erase(employee_id)
+			_departing.append(leaving)
+			leaving.update_routine(false)
+	_remove_departed()
+
+
+# Quita a los despedidos que ya salieron del local.
+func _remove_departed() -> void:
+	for leaving: Employee in _departing.duplicate():
+		if leaving.activity == OfficeCharacter.Activity.AWAY:
+			_departing.erase(leaving)
+			leaving.queue_free()
 
 
 func _seat_of(key: String) -> Vector2i:
@@ -146,13 +159,15 @@ func get_characters() -> Array[OfficeCharacter]:
 	var characters: Array[OfficeCharacter] = [ceo]
 	for employee_id: int in employees:
 		characters.append(employees[employee_id])
+	characters.append_array(_departing)
 	return characters
 
 
 # Cada personaje entra o sale según si le toca estar en la oficina ahora.
 func _update_routines() -> void:
 	for character: OfficeCharacter in get_characters():
-		character.update_routine(Staff.is_expected_now(character.person_key))
+		var leaving: bool = character is Employee and _departing.has(character)
+		character.update_routine(not leaving and Staff.is_expected_now(character.person_key))
 	_update_ceo_button()
 
 
@@ -242,6 +257,7 @@ func is_office_empty() -> bool:
 
 # Cuando se va el último, la oficina queda vacía: el tiempo salta hasta que llegue alguien.
 func _on_character_left_office() -> void:
+	_remove_departed()
 	if not is_office_empty():
 		return
 	var hours: int = Staff.hours_until_anyone_expected()

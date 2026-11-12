@@ -334,6 +334,8 @@ func _add_employees() -> void:
 		var known: String = Staff.describe_known_traits(employee)
 		if not known.is_empty():
 			lines.append(known)
+		if int(employee["owed"]) > 0:
+			lines.append("Se le deben %s de nómina." % MoneyFormat.format(employee["owed"]))
 		if not Staff.has_working_station(employee):
 			lines.append("Su puesto de trabajo ya no funciona.")
 		var row := HBoxContainer.new()

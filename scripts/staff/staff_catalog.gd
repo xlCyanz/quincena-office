@@ -70,6 +70,11 @@ static func get_workday(key: String) -> Variant:
 	return _staff_data()["workday"][key]
 
 
+## Valor de la nómina y los despidos (data/staff.json, payroll).
+static func get_payroll(key: String) -> int:
+	return int(_staff_data()["payroll"][key])
+
+
 ## Hora a la que llega solo el CEO (data/staff.json, ceo.arrival_hour).
 static func get_ceo_arrival_hour() -> int:
 	return int(_staff_data()["ceo"]["arrival_hour"])

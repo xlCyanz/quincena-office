@@ -1,5 +1,5 @@
 {
-	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real. Al ofrecer un sueldo menor que el que piden, desde counter_offer_ratio de lo pedido hacen una contraoferta y por debajo rechazan y se van. La entrevista ocupa interview_hours horas del CEO mientras está en la oficina. Cada cargo tiene su horario por defecto (schedule: days 0 = lunes … 6 = domingo, de start_hour a end_hour sin incluirla) y un color de camisa. workday: todos salen a almorzar de lunch_hour a lunch_hour + 1; la energía (0–100) cambia por cada hora trabajada o fuera; ánimo y estrés quedan fijos hasta el hito 19. ceo: llega solo a arrival_hour en arrival_days y se queda hasta que el jugador lo manda a casa.",
+	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real. Al ofrecer un sueldo menor que el que piden, desde counter_offer_ratio de lo pedido hacen una contraoferta y por debajo rechazan y se van. La entrevista ocupa interview_hours horas del CEO mientras está en la oficina. Cada cargo tiene su horario por defecto (schedule: days 0 = lunes … 6 = domingo, de start_hour a end_hour sin incluirla) y un color de camisa. workday: todos salen a almorzar de lunch_hour a lunch_hour + 1; la energía (0–100) cambia por cada hora trabajada o fuera; ánimo y estrés quedan fijos hasta el hito 19. ceo: llega solo a arrival_hour en arrival_days y se queda hasta que el jugador lo manda a casa. payroll: los días de nómina (GameConstants.PAYROLL_DAYS) se paga a cada empleado lo ganado desde su último pago (sueldo / 30 por día); si no alcanza no se paga nada, queda debiéndose y cada nómina sin pagar cambia el ánimo de todos en unpaid_mood. Despedir cobra lo ganado y lo debido; cada compañero cambia su ánimo en fire_mood, o en fire_streak_mood si hubo otro despido en los últimos fire_streak_days días.",
 	"levels": {
 		"intern": { "name": "Pasante", "main_skill_range": [10, 30], "age_range": [19, 24] },
 		"junior": { "name": "Junior", "main_skill_range": [25, 45], "age_range": [21, 30] },
@@ -43,6 +43,12 @@
 		"start_stress": 20,
 		"energy_per_work_hour": -6,
 		"energy_per_rest_hour": 4
+	},
+	"payroll": {
+		"unpaid_mood": -20,
+		"fire_mood": -5,
+		"fire_streak_mood": -10,
+		"fire_streak_days": 7
 	},
 	"ceo": {
 		"arrival_hour": 8,

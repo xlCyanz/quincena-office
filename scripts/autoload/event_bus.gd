@@ -27,6 +27,10 @@ signal office_changed
 @warning_ignore("unused_signal")
 signal staff_changed
 
+## Un aviso para el jugador (por ejemplo, la nómina pagada). Lo muestra el Hud.
+@warning_ignore("unused_signal")
+signal notice(text: String)
+
 ## Cambió quién tiene que estar en la oficina fuera del cambio de hora (por ejemplo,
 ## el jugador mandó al CEO a casa). La emite Staff.
 @warning_ignore("unused_signal")

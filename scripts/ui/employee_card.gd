@@ -1,7 +1,7 @@
 # Ficha de empleado (diseño, 12.4): nombre, cargo, nivel, equipo, horario, qué está
 # haciendo, barras de energía, ánimo y estrés, habilidades, rasgos conocidos y sueldo.
-# Por ahora solo informa: los botones de aumento, ascenso, equipo, horario y despido
-# llegan en sus hitos.
+# Tiene el botón Despedir (hito 13), que pide confirmar con el costo; los de aumento,
+# ascenso, equipo y horario llegan en sus hitos.
 #
 # Se abre con un clic en el empleado o desde Personal, no pausa el tiempo y se
 # actualiza sola. Va a la derecha, debajo del reloj. Lo que el empleado está haciendo
@@ -30,6 +30,10 @@ var _details: Label
 var _bars: Dictionary[String, ProgressBar] = {}
 var _bar_values: Dictionary[String, Label] = {}
 var _employee_id: int = 0
+var _fire_button: Button
+var _confirm_row: HBoxContainer
+var _confirm_label: Label
+var _confirm_button: Button
 
 
 func _ready() -> void:
@@ -94,6 +98,28 @@ func _ready() -> void:
 	_details.add_theme_color_override("font_color", MUTED_COLOR)
 	rows.add_child(_details)
 
+	_fire_button = Button.new()
+	_fire_button.text = "Despedir"
+	_fire_button.pressed.connect(_ask_fire)
+	rows.add_child(_fire_button)
+	_confirm_row = HBoxContainer.new()
+	rows.add_child(_confirm_row)
+	_confirm_label = Label.new()
+	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_confirm_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_confirm_row.add_child(_confirm_label)
+	_confirm_button = Button.new()
+	_confirm_button.text = "Sí, despedir"
+	_confirm_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_confirm_button.pressed.connect(func() -> void: Staff.fire(_employee_id))
+	_confirm_row.add_child(_confirm_button)
+	var cancel := Button.new()
+	cancel.text = "No"
+	cancel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cancel.pressed.connect(_cancel_fire)
+	_confirm_row.add_child(cancel)
+	_confirm_row.visible = false
+
 	_panel.visible = false
 	EventBus.staff_changed.connect(_refresh)
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _refresh())
@@ -102,6 +128,7 @@ func _ready() -> void:
 ## Abre la ficha de un empleado (o la cambia a otro).
 func open_employee(employee_id: int) -> void:
 	_employee_id = employee_id
+	_cancel_fire()
 	_panel.visible = true
 	_refresh()
 
@@ -119,6 +146,16 @@ func get_employee_id() -> int:
 	return _employee_id
 
 
+## Botón Despedir (pide confirmación).
+func get_fire_button() -> Button:
+	return _fire_button
+
+
+## Botón que confirma el despido (solo visible después de pulsar Despedir).
+func get_confirm_fire_button() -> Button:
+	return _confirm_button
+
+
 ## Valor de una barra ("energy", "mood" o "stress").
 func get_bar_value(bar: String) -> float:
 	return _bars[bar].value
@@ -130,6 +167,8 @@ func get_text() -> String:
 	for bar: String in BARS:
 		texts.append("%s %s" % [BARS[bar], _bar_values[bar].text])
 	texts.append(_details.text)
+	if _confirm_row.visible:
+		texts.append(_confirm_label.text)
 	return "\n".join(texts)
 
 
@@ -151,6 +190,7 @@ func _refresh() -> void:
 		"%s, %d años" % [Staff.describe_employee(employee), employee["age"]],
 		"Equipo: sin equipo",
 		"Horario: %s · almuerzo %d:00–%d:00" % [Staff.get_schedule(employee).describe(), lunch, lunch + 1],
+		_describe_pay(employee),
 		"Ahora: %s" % (String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"),
 	])
 	for bar: String in BARS:
@@ -161,3 +201,25 @@ func _refresh() -> void:
 	var known: String = Staff.describe_known_traits(employee)
 	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
 	_details.text = "\n".join(details)
+	if _confirm_row.visible:
+		_confirm_label.text = "¿Despedir a %s? Cuesta %s y baja el ánimo de sus compañeros." % [
+			employee["name"], MoneyFormat.format(Staff.get_firing_cost(employee))]
+
+
+func _describe_pay(employee: Dictionary) -> String:
+	var text: String = "Ganado desde el último pago: %s" % MoneyFormat.format(Staff.get_earned(employee))
+	var owed: int = int(employee["owed"])
+	if owed > 0:
+		text += " · se le deben %s" % MoneyFormat.format(owed)
+	return text
+
+
+func _ask_fire() -> void:
+	_fire_button.visible = false
+	_confirm_row.visible = true
+	_refresh()
+
+
+func _cancel_fire() -> void:
+	_fire_button.visible = true
+	_confirm_row.visible = false

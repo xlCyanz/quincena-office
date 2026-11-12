@@ -1,6 +1,7 @@
 # Interfaz superpuesta mínima (diseño, 12.2): arriba a la izquierda el dinero y arriba
-# a la derecha el reloj, con la fecha, la cuenta atrás de la próxima nómina, la pausa y
-# las velocidades. El botón Construir está en BuildPanel, abajo al centro. Se construye
+# a la derecha el reloj, con la fecha, la cuenta atrás de la próxima nómina (o lo que
+# se debe de ella), la pausa y las velocidades. Arriba al centro aparecen unos segundos
+# los avisos de EventBus.notice. El botón Construir está en BuildPanel, abajo al centro. Se construye
 # en código; los botones avisan con señales y la escena de juego decide qué hacer.
 class_name Hud
 extends CanvasLayer
@@ -17,6 +18,8 @@ const MONEY_FONT_SIZE: int = 24
 const PANEL_COLOR := Color(0.12, 0.12, 0.14, 0.88)
 const PANEL_PADDING: float = 8.0
 const PANEL_RADIUS: int = 6
+## Segundos reales que se ve un aviso.
+const NOTICE_SECONDS: float = 6.0
 
 var _balance_label: Label
 var _date_label: Label
@@ -25,6 +28,9 @@ var _payroll_label: Label
 var _pause_button: Button
 var _speed_buttons: Array[Button] = []
 var _controls_enabled: bool = true
+var _notice_panel: PanelContainer
+var _notice_label: Label
+var _notice_timer: Timer
 
 
 func _ready() -> void:
@@ -68,6 +74,21 @@ func _ready() -> void:
 	clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	clock_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 
+	# Avisos, arriba al centro.
+	_notice_panel = make_panel()
+	root.add_child(_notice_panel)
+	_notice_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, int(MARGIN))
+	_notice_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_notice_label = Label.new()
+	_notice_panel.add_child(_notice_label)
+	_notice_panel.visible = false
+	_notice_timer = Timer.new()
+	_notice_timer.one_shot = true
+	_notice_timer.ignore_time_scale = true
+	_notice_timer.timeout.connect(func() -> void: _notice_panel.visible = false)
+	add_child(_notice_timer)
+	EventBus.notice.connect(show_notice)
+
 	EventBus.balance_changed.connect(_on_balance_changed)
 	_on_balance_changed(Economy.balance)
 	_update_clock()
@@ -97,6 +118,18 @@ func get_balance_text() -> String:
 	return _balance_label.text
 
 
+## Muestra un aviso arriba al centro durante NOTICE_SECONDS (reemplaza al anterior).
+func show_notice(text: String) -> void:
+	_notice_label.text = text
+	_notice_panel.visible = true
+	_notice_timer.start(NOTICE_SECONDS)
+
+
+## Texto del aviso visible, o "" si no hay.
+func get_notice_text() -> String:
+	return _notice_label.text if _notice_panel.visible else ""
+
+
 func get_clock_text() -> String:
 	return "%s %s · %s" % [_date_label.text, _time_label.text, _payroll_label.text]
 
@@ -114,13 +147,16 @@ func _update_clock() -> void:
 		GameClock.get_month()]
 	_time_label.text = "%02d:%02d" % [GameClock.get_hour(), GameClock.get_minute()]
 	var days: int = days_until_payroll(GameClock.get_day())
-	match days:
-		0:
-			_payroll_label.text = "Nómina: hoy"
-		1:
-			_payroll_label.text = "Nómina: mañana"
-		_:
-			_payroll_label.text = "Nómina en %d días" % days
+	var owed: int = Staff.get_total_owed()
+	_payroll_label.add_theme_color_override("font_color", NEGATIVE_COLOR if owed > 0 else Color(1.0, 1.0, 1.0, 0.75))
+	if owed > 0:
+		_payroll_label.text = "Nómina pendiente: %s" % MoneyFormat.format(owed)
+	elif days == 0:
+		_payroll_label.text = "Nómina: hoy"
+	elif days == 1:
+		_payroll_label.text = "Nómina: mañana"
+	else:
+		_payroll_label.text = "Nómina en %d días" % days
 	_pause_button.set_pressed_no_signal(GameClock.is_paused)
 	_pause_button.disabled = not _controls_enabled
 	for index: int in range(_speed_buttons.size()):

@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11) y `test_workday` (12)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12) y `test_payroll` (13)
 
 ## Convenciones de código
 
@@ -60,6 +60,9 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   todos salen a almorzar a las 12. El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el
   jugador lo manda a casa (`Staff.ceo_at_work`, botón «CEO: irse a casa»). Con la oficina vacía el tiempo salta a la próxima llegada.
   Un clic en un empleado abre su ficha (`EmployeeCard`).
+- Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
+  Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
+  lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -85,7 +88,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 10 | Vacantes y candidatos | ✅ Completado (programador, diseñador, QA y vendedor; llegan a las 9:00, esperan 3 días; contratar es el hito 11) |
 | 11 | Contratación | ✅ Completado (oferta ≥ lo pedido acepta, desde el 85 % contraoferta, debajo rechaza y se va; entrevista de 2 h del CEO en su horario; la vacante se cierra al contratar; el empleado aún no se dibuja) |
 | 12 | Jornada de los empleados | ✅ Completado (horario por cargo; almuerzo 12–13 fuera; energía −6/h trabajando y +4/h fuera; ánimo 70 y estrés 20 fijos hasta el hito 19; ficha solo informativa) |
-| 13 | Nómina y despidos | Pendiente (fase 2) |
+| 13 | Nómina y despidos | ✅ Completado (primera nómina proporcional; sin dinero queda deuda y −20 de ánimo; despido −5 a compañeros, −10 si hubo otro en 7 días; botón en la ficha con confirmación) |
 | 14 | Ofertas de contratos | Pendiente (fase 2) |
 | 15 | Equipos y turnos | Pendiente (fase 2) |
 | 16 | Producción | Pendiente (fase 2) |

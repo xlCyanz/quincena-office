@@ -30,10 +30,20 @@
 # solo a su hora en días hábiles y se queda hasta que el jugador lo manda a casa
 # (ceo_at_work). is_expected dice quién tiene que estar en la oficina a cada hora; los
 # personajes de la escena solo lo siguen.
+#
+# Nómina y despidos (hito 13): cada empleado gana sueldo / 30 por día. "paid_until" es
+# el último día (GameClock.get_day_count) que ya tiene pagado o anotado como deuda, y
+# "owed" lo que se le debe de nóminas que no alcanzaron. Los días de nómina se paga a
+# todos lo ganado más lo debido, todo o nada; si no alcanza, queda como deuda, baja el
+# ánimo de todos y se paga solo apenas alcance el saldo. Despedir cobra lo ganado y lo
+# debido (aunque el saldo quede negativo) y baja el ánimo de los compañeros.
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
+const CONCEPT_PAYROLL: String = "Nómina"
+const CONCEPT_FIRING: String = "Despido"
 const EMPLOYEE_PREFIX: String = "employee_"
+const NO_FIRING: int = -1000
 const NO_STATION_MESSAGE: String = "No hay ningún puesto de trabajo libre: hace falta un escritorio con computadora y una silla delante, dentro de un Área de trabajo que funcione."
 
 var vacancies: Array[Dictionary] = []
@@ -41,6 +51,8 @@ var employees: Array[Dictionary] = []
 var interview: Dictionary = {}
 ## El CEO está trabajando (en la oficina o almorzando) hasta que el jugador lo manda a casa.
 var ceo_at_work: bool = true
+## Día (GameClock.get_day_count) del último despido; -1000 si no hubo.
+var last_firing_day: int = NO_FIRING
 
 var _next_id: int = 1
 var _rng := RandomNumberGenerator.new()
@@ -48,6 +60,8 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	EventBus.hour_changed.connect(_on_hour_changed)
+	EventBus.day_changed.connect(_on_day_changed)
+	EventBus.balance_changed.connect(func(_balance: int) -> void: _pay_debt_if_possible())
 
 
 ## Prepara el personal de una partida nueva: sin vacantes y con una semilla al azar.
@@ -56,6 +70,7 @@ func new_game() -> void:
 	employees.clear()
 	interview = {}
 	ceo_at_work = true
+	last_firing_day = NO_FIRING
 	_next_id = 1
 	_rng.randomize()
 	EventBus.staff_changed.emit()
@@ -240,6 +255,52 @@ func hours_until_anyone_expected() -> int:
 	return -1
 
 
+## Lo que un empleado ganó desde su último pago, hasta hoy incluido (sin la deuda).
+func get_earned(employee: Dictionary) -> int:
+	var days: int = GameClock.get_day_count() - int(employee["paid_until"])
+	return maxi(0, roundi(int(employee["salary"]) * days / float(GameConstants.DAYS_PER_MONTH)))
+
+
+## Lo que cuesta despedir a un empleado hoy: lo ganado más lo que se le debe.
+func get_firing_cost(employee: Dictionary) -> int:
+	return get_earned(employee) + int(employee["owed"])
+
+
+## Lo que se debe de nóminas sin pagar, sumando a todos.
+func get_total_owed() -> int:
+	var total: int = 0
+	for employee: Dictionary in employees:
+		total += int(employee["owed"])
+	return total
+
+
+## Despide a un empleado: cobra lo ganado y lo debido, libera su puesto y baja el
+## ánimo de los demás (más si hubo otro despido hace poco). Devuelve {"ok", "message"}.
+func fire(employee_id: int) -> Dictionary:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty():
+		return {"ok": false, "message": "Ese empleado ya no está."}
+	var cost: int = get_firing_cost(employee)
+	# Primero deja de ser empleado: así su deuda no se cuenta en la nómina pendiente.
+	employees.erase(employee)
+	Economy.charge(cost, CONCEPT_FIRING)
+	var key: String = employee_key(employee_id)
+	for item: Dictionary in OfficeState.furniture:
+		if item["assigned_to"] == key:
+			item["assigned_to"] = ""
+	var today: int = GameClock.get_day_count()
+	var streak: bool = today - last_firing_day <= StaffCatalog.get_payroll("fire_streak_days")
+	var mood_change: int = StaffCatalog.get_payroll("fire_streak_mood" if streak else "fire_mood")
+	for other: Dictionary in employees:
+		_change_mood(other, mood_change)
+	last_firing_day = today
+	var message: String = "Despediste a %s: %s." % [employee["name"], MoneyFormat.format(cost)]
+	EventBus.office_changed.emit()
+	EventBus.staff_changed.emit()
+	EventBus.notice.emit(message)
+	return {"ok": true, "message": message}
+
+
 ## Horario de un empleado.
 func get_schedule(employee: Dictionary) -> WorkSchedule:
 	return WorkSchedule.from_dict(employee["schedule"])
@@ -380,6 +441,46 @@ func _on_hour_changed(hour: int) -> void:
 		_process_arrivals(GameClock.get_day_count())
 
 
+func _on_day_changed(day: int, _month: int) -> void:
+	if GameConstants.PAYROLL_DAYS.has(day):
+		_run_payroll()
+
+
+# Anota lo ganado por cada uno hasta hoy como deuda y trata de pagarla toda. Si no
+# alcanza, la deuda queda y baja el ánimo de todos.
+func _run_payroll() -> void:
+	if employees.is_empty():
+		return
+	var today: int = GameClock.get_day_count()
+	for employee: Dictionary in employees:
+		employee["owed"] = int(employee["owed"]) + get_earned(employee)
+		employee["paid_until"] = today
+	var total: int = get_total_owed()
+	if _pay_debt_if_possible():
+		return
+	for employee: Dictionary in employees:
+		_change_mood(employee, StaffCatalog.get_payroll("unpaid_mood"))
+	EventBus.staff_changed.emit()
+	EventBus.notice.emit("No alcanza el dinero para la nómina: se deben %s. Se pagará apenas alcance." % MoneyFormat.format(total))
+
+
+# Paga toda la deuda de nómina si alcanza el saldo. Devuelve true si pagó.
+func _pay_debt_if_possible() -> bool:
+	var total: int = get_total_owed()
+	if total <= 0 or not Economy.can_afford(total):
+		return false
+	for employee: Dictionary in employees:
+		employee["owed"] = 0
+	Economy.spend(total, CONCEPT_PAYROLL)
+	EventBus.staff_changed.emit()
+	EventBus.notice.emit("Nómina pagada: %s." % MoneyFormat.format(total))
+	return true
+
+
+func _change_mood(employee: Dictionary, change: int) -> void:
+	employee["mood"] = clampi(int(employee["mood"]) + change, 0, 100)
+
+
 # La energía de cada empleado cambia según si la hora que acaba de terminar era de
 # trabajo o de descanso.
 func _update_energy() -> void:
@@ -437,6 +538,9 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 	employee["energy"] = int(StaffCatalog.get_workday("start_energy"))
 	employee["mood"] = int(StaffCatalog.get_workday("start_mood"))
 	employee["stress"] = int(StaffCatalog.get_workday("start_stress"))
+	# Gana desde el día de su contratación (incluido).
+	employee["paid_until"] = GameClock.get_day_count() - 1
+	employee["owed"] = 0
 	employees.append(employee)
 	OfficeState.furniture[station["chair"]]["assigned_to"] = employee_key(employee["id"])
 	for index: int in range(vacancies.size()):
@@ -528,7 +632,8 @@ func _take_id() -> int:
 ## porque JSON guarda los números como decimales y perdería precisión.
 func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
-		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "next_id": _next_id,
+		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
+		"next_id": _next_id,
 		"rng_state": str(_rng.state)}
 
 
@@ -554,6 +659,8 @@ func import_state(state: Dictionary) -> void:
 		employee["schedule"] = WorkSchedule.from_dict(schedule).to_dict()
 		for bar: String in ["energy", "mood", "stress"]:
 			employee[bar] = int(saved.get(bar, StaffCatalog.get_workday("start_" + bar)))
+		employee["paid_until"] = int(saved.get("paid_until", employee["hired_day"] - 1))
+		employee["owed"] = int(saved.get("owed", 0))
 		employees.append(employee)
 	var saved_interview: Dictionary = state.get("interview", {})
 	interview = {}
@@ -562,6 +669,7 @@ func import_state(state: Dictionary) -> void:
 			"ends_at": int(saved_interview.get("ends_at", 0))}
 	_drop_missing_interview()
 	ceo_at_work = bool(state.get("ceo_at_work", true))
+	last_firing_day = int(state.get("last_firing_day", NO_FIRING))
 	_next_id = int(state.get("next_id", 1))
 	var rng_state: String = String(state.get("rng_state", ""))
 	if rng_state.is_valid_int():
