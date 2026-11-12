@@ -18,6 +18,11 @@
 # Producción (hito 16): al terminar cada hora, quienes llevan un contrato y trabajaron
 # esa hora suman puntos a sus fases (ver Production). progress guarda puntos con
 # decimales.
+#
+# Errores (hito 17): al programar se generan errores ocultos ("bugs_hidden", el jugador
+# no los ve); en la fase de pruebas se encuentran ("bugs_found") y los programadores los
+# corrigen ("bugs_fixed"; "fix_progress" son los puntos gastados en el que están
+# corrigiendo). Con las pruebas completas, QA sigue revisando hasta la entrega.
 extends Node
 
 const CONCEPT_ADVANCE: String = "Anticipo de contrato"
@@ -25,6 +30,8 @@ const CONCEPT_ADVANCE: String = "Anticipo de contrato"
 const CEO_TEAM: int = 0
 ## team_id de un contrato que no lleva nadie.
 const NO_TEAM: int = -1
+## Contadores de errores de un contrato.
+const BUG_KEYS: Array[String] = ["bugs_hidden", "bugs_found", "bugs_fixed"]
 
 var offers: Array[Dictionary] = []
 var contracts: Array[Dictionary] = []
@@ -116,6 +123,9 @@ func accept(offer_id: int) -> Dictionary:
 	contract["accepted_day"] = today
 	contract["deadline_day"] = today + int(offer["days"])
 	contract["progress"] = {"design": 0.0, "programming": 0.0, "testing": 0.0}
+	for key: String in BUG_KEYS:
+		contract[key] = 0
+	contract["fix_progress"] = 0.0
 	contract["team_id"] = _first_free_team()
 	contracts.append(contract)
 	var message: String = "Contrato aceptado: %s para %s, %d días; %s." % [
@@ -334,6 +344,9 @@ func import_state(state: Dictionary) -> void:
 		for phase: String in ContractCatalog.PHASES:
 			progress[phase] = float(saved.get("progress", {}).get(phase, 0.0))
 		contract["progress"] = progress
+		for key: String in BUG_KEYS:
+			contract[key] = int(saved.get(key, 0))
+		contract["fix_progress"] = float(saved.get("fix_progress", 0.0))
 		# Las partidas del hito 14 tenían un solo contrato, el del CEO.
 		var team_id: int = int(saved.get("team_id", CEO_TEAM))
 		contract["team_id"] = team_id if team_id <= CEO_TEAM or not Staff.get_team(team_id).is_empty() else NO_TEAM
@@ -359,8 +372,9 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 	if team_id == CEO_TEAM:
 		if Staff.is_ceo_producing(at):
 			var computer: String = Workstations.computer_of(OfficeState.furniture, "ceo")
-			workers.append({"key": "ceo", "phase": "", "rate": Production.get_rate(
-				String(StaffCatalog.get_production("ceo_level")), 100.0, Production.get_computer_bonus(computer))})
+			var ceo_level: String = String(StaffCatalog.get_production("ceo_level"))
+			workers.append({"key": "ceo", "phase": "", "rate": Production.get_rate(ceo_level, 100.0,
+				Production.get_computer_bonus(computer)), "bug_chance": get_bug_chance(ceo_level, 100.0)})
 		return workers
 	var team: Dictionary = Staff.get_team(team_id)
 	if team.is_empty():
@@ -373,8 +387,26 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 			continue
 		var computer: String = Workstations.computer_of(OfficeState.furniture, key)
 		workers.append({"key": key, "phase": phase, "rate": Production.get_rate(employee["level"],
-			float(employee["energy"]), Production.get_computer_bonus(computer))})
+			float(employee["energy"]), Production.get_computer_bonus(computer)),
+			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]))})
 	return workers
+
+
+## Errores por punto de programación de alguien de ese nivel con esa energía.
+static func get_bug_chance(level: String, energy: float) -> float:
+	var chance: float = 1.0 / ContractCatalog.get_points_per_bug(level)
+	if energy < float(ContractCatalog.get_bugs("tired_below")):
+		chance *= float(ContractCatalog.get_bugs("tired_multiplier"))
+	return chance
+
+
+## "Errores: 3 encontrados · 1 por corregir · 2 corregidos" (los ocultos no se ven).
+static func describe_bugs(contract: Dictionary) -> String:
+	var found: int = int(contract.get("bugs_found", 0))
+	var fixed: int = int(contract.get("bugs_fixed", 0))
+	if found + fixed == 0:
+		return "Errores: ninguno encontrado"
+	return "Errores: %d encontrados · %d por corregir · %d corregidos" % [found + fixed, found, fixed]
 
 
 ## Puntos por hora que suma ahora un contrato con quienes deberían estar trabajando
@@ -391,17 +423,44 @@ func _produce() -> void:
 	var ended: int = Staff.get_absolute_hour() - 1
 	var changed: bool = false
 	for contract: Dictionary in contracts:
-		if Production.is_finished(contract):
-			continue
 		var workers: Array[Dictionary] = get_workers(contract, ended)
 		if workers.is_empty():
 			continue
-		Production.apply(contract, workers)
+		var was_finished: bool = Production.is_finished(contract)
+		_handle_bugs(contract, Production.apply(contract, workers))
 		changed = true
-		if Production.is_finished(contract):
+		if not was_finished and Production.is_finished(contract):
 			EventBus.notice.emit("Terminado: %s. Listo para entregar." % describe_title(contract))
 	if changed:
 		EventBus.projects_changed.emit()
+
+
+# Con lo que hizo cada uno en la hora: la programación genera errores ocultos y las
+# pruebas (o la revisión de QA) encuentran algunos: cada error oculto se encuentra con
+# probabilidad cobertura × puntos de pruebas / puntos de pruebas del contrato.
+func _handle_bugs(contract: Dictionary, done: Array[Dictionary]) -> void:
+	var testing_total: float = maxf(1.0, float(contract["points"]["testing"]))
+	for item: Dictionary in done:
+		var worker: Dictionary = item["worker"]
+		var amount: float = float(item["amount"])
+		if item["kind"] == "work" and item["phase"] == "programming":
+			contract["bugs_hidden"] = int(contract["bugs_hidden"]) + _roll(amount * float(worker["bug_chance"]))
+		elif item["phase"] == "testing" and int(contract["bugs_hidden"]) > 0:
+			var coverage: float = float(ContractCatalog.get_bugs("qa_coverage" if worker["phase"] == "testing" else "other_coverage"))
+			var chance: float = minf(1.0, coverage * amount / testing_total)
+			var found: int = 0
+			for bug: int in range(int(contract["bugs_hidden"])):
+				if _rng.randf() < chance:
+					found += 1
+			contract["bugs_hidden"] = int(contract["bugs_hidden"]) - found
+			contract["bugs_found"] = int(contract["bugs_found"]) + found
+
+
+# Cuántas veces pasa algo que en promedio pasa expected veces: la parte entera siempre
+# y la fracción con esa probabilidad.
+func _roll(expected: float) -> int:
+	var whole: int = floori(expected)
+	return whole + (1 if _rng.randf() < expected - whole else 0)
 
 
 # Quién lleva un contrato nuevo: el primer equipo con miembros que no lleva ninguno; si

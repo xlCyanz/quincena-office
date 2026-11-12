@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15) y `test_production` (16)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16) y `test_bugs` (17)
 
 ## Convenciones de código
 
@@ -75,6 +75,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   (100 % desde 50, baja hasta 50 % en 0) × (1 + `production_bonus` de la computadora). Cada uno suma en la fase de su cargo; si
   está cerrada o llena ayuda al 50 % en la primera con lugar. Una fase abre con la anterior al 50 % y nunca pasa su %. El CEO es
   generalista (SemiSenior) y no rinde en entrevistas ni dormido (de 22 a su llegada). `progress` guarda puntos con decimales.
+- Errores (`data/contracts.json`, bugs): programar genera `bugs_hidden` (1 cada 20/30/45/70 puntos por nivel, el doble cansado);
+  cada punto de pruebas encuentra cada oculto con probabilidad cobertura × puntos / pruebas del contrato (QA 3, otros 0.2) y
+  pasan a `bugs_found`; programadores o CEO los corrigen a 3 puntos (`bugs_fixed`) antes de programar. Con pruebas al 100 % QA
+  sigue revisando. El azar sale de `Projects._rng`; `Production.apply` devuelve qué hizo cada uno.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -104,6 +108,6 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 14 | Ofertas de contratos | ✅ Completado (primera oferta pequeña el día 1; tope de contratos = equipos, 1 sin equipos hasta el hito 15; penalidades solo se muestran hasta el hito 18) |
 | 15 | Equipos y turnos | ✅ Completado (turno = entrada + días, 8 h fijas; almuerzo a la 4.ª hora; sin plantillas ni agenda; sin equipo = horario del cargo; el CEO lleva un contrato propio; sin recargo nocturno ni líderes) |
 | 16 | Producción | ✅ Completado (CEO 24/día con jornada de 8 h, hasta 39 si se queda hasta las 22; equipo de 3 Junior 48/día; sin efecto de habilidad, ánimo ni líder) |
-| 17 | Errores y pruebas | Pendiente (fase 2) |
+| 17 | Errores y pruebas | ✅ Completado (ocultos no se muestran; sin QA llega ~90 %, con QA ~10 % al terminar y 0 tras revisar; la penalidad se cobra en el hito 18) |
 | 18 | Entrega y reputación | Pendiente (fase 2) |
 | 19 | Ánimo y renuncias | Pendiente (fase 2) |

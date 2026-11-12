@@ -218,9 +218,13 @@ func _add_contract(contract: Dictionary) -> void:
 		value.custom_minimum_size = Vector2(PHASE_VALUE_WIDTH, 0)
 		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row.add_child(value)
+	_list.add_child(_muted_label(Projects.describe_bugs(contract) + "."))
 	var state: String
-	if Production.is_finished(contract):
-		state = "Terminado: listo para entregar."
+	var pending: int = int(contract["bugs_found"])
+	if Production.is_finished(contract) and pending > 0:
+		state = "Terminado, con %d %s por corregir: los programadores siguen." % [pending, "error" if pending == 1 else "errores"]
+	elif Production.is_finished(contract):
+		state = "Terminado: listo para entregar. Si el equipo tiene QA, sigue buscando errores."
 	elif int(contract["team_id"]) == Projects.NO_TEAM:
 		state = "Nadie lo lleva: dáselo a un equipo en el menú Equipos."
 	else:

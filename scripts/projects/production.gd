@@ -8,6 +8,9 @@
 # de su especialidad si tiene lugar; si no, ayuda en la primera fase con lugar rindiendo
 # helper_factor. Un generalista (el CEO, phase = "") rinde completo en la primera fase con
 # lugar. Lo que no cabe se pierde.
+#
+# Errores (hito 17): Production solo corrige los encontrados y dice quién hizo qué; el
+# azar de generarlos y encontrarlos lo pone Projects con su semilla.
 class_name Production
 extends RefCounted
 
@@ -85,11 +88,14 @@ static func is_finished(contract: Dictionary) -> bool:
 
 
 ## Suma una hora de trabajo al contrato. workers es una lista de {"phase", "rate"}
-## (phase = "" para un generalista). Devuelve los puntos sumados por fase.
-static func apply(contract: Dictionary, workers: Array[Dictionary]) -> Dictionary:
-	var added: Dictionary = {}
-	for phase: String in ContractCatalog.PHASES:
-		added[phase] = 0.0
+## (phase = "" para un generalista). Devuelve lo que hizo cada uno: una lista de
+## {"worker", "phase", "amount", "kind"} con kind "work" (avance de una fase), "review"
+## (QA revisando con las pruebas completas) o "fix" (corrigiendo errores encontrados).
+##
+## Antes de avanzar, los programadores y el generalista corrigen los errores encontrados
+## (bugs_found), a fix_cost puntos cada uno.
+static func apply(contract: Dictionary, workers: Array[Dictionary]) -> Array[Dictionary]:
+	var done: Array[Dictionary] = []
 	# Primero los especialistas en el orden de las fases: así la hora de diseño abre
 	# lugar para la de programación en la misma hora.
 	var ordered: Array[Dictionary] = workers.duplicate()
@@ -99,15 +105,44 @@ static func apply(contract: Dictionary, workers: Array[Dictionary]) -> Dictionar
 	for worker: Dictionary in ordered:
 		var phase: String = worker["phase"]
 		var rate: float = float(worker["rate"])
+		if phase.is_empty() or phase == "programming":
+			var fixing: float = _fix(contract, rate)
+			if fixing > 0.0:
+				done.append({"worker": worker, "phase": "programming", "amount": fixing, "kind": "fix"})
+				rate -= fixing
+		if rate <= EPSILON:
+			continue
 		if not phase.is_empty() and get_room(contract, phase) > 0.0:
-			added[phase] += _add(contract, phase, rate)
+			done.append({"worker": worker, "phase": phase, "amount": _add(contract, phase, rate), "kind": "work"})
+			continue
+		# Con las pruebas completas, QA sigue buscando errores.
+		if phase == "testing" and get_ratio(contract, phase) >= 1.0 - EPSILON:
+			done.append({"worker": worker, "phase": phase, "amount": rate, "kind": "review"})
 			continue
 		var factor: float = 1.0 if phase.is_empty() else helper_factor
 		for other: String in ContractCatalog.PHASES:
 			if get_room(contract, other) > 0.0:
-				added[other] += _add(contract, other, rate * factor)
+				done.append({"worker": worker, "phase": other, "amount": _add(contract, other, rate * factor), "kind": "work"})
 				break
-	return added
+	return done
+
+
+# Gasta hasta rate puntos en corregir errores encontrados. Devuelve lo gastado.
+static func _fix(contract: Dictionary, rate: float) -> float:
+	var found: int = int(contract.get("bugs_found", 0))
+	if found <= 0:
+		return 0.0
+	var cost: float = float(ContractCatalog.get_bugs("fix_cost"))
+	var progress: float = float(contract.get("fix_progress", 0.0))
+	var spent: float = minf(rate, found * cost - progress)
+	progress += spent
+	var fixed: int = mini(floori((progress + EPSILON) / cost), found)
+	progress -= fixed * cost
+	found -= fixed
+	contract["bugs_found"] = found
+	contract["bugs_fixed"] = int(contract.get("bugs_fixed", 0)) + fixed
+	contract["fix_progress"] = 0.0 if found == 0 else maxf(progress, 0.0)
+	return spent
 
 
 static func _add(contract: Dictionary, phase: String, amount: float) -> float:

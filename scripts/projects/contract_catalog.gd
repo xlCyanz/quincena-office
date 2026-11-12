@@ -55,6 +55,16 @@ static func get_offers(key: String) -> Variant:
 	return _contracts()["offers"][key]
 
 
+## Valor de los errores (data/contracts.json, bugs).
+static func get_bugs(key: String) -> Variant:
+	return _contracts()["bugs"][key]
+
+
+## Puntos de programación por error, en promedio, de un nivel.
+static func get_points_per_bug(level: String) -> float:
+	return float(_contracts()["bugs"]["points_per_bug"].get(level, 30))
+
+
 static func get_clients() -> Array[String]:
 	var clients: Array[String] = []
 	clients.assign(_contracts()["clients"])
