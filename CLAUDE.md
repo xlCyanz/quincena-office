@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20) y `test_credit` (21)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21) y `test_loans` (22)
 
 ## Convenciones de código
 
@@ -98,6 +98,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
   `EventBus.payment_recorded`: nómina (Staff) y mantenimiento (Economy; atraso si deja saldo negativo). Límite = múltiplo de
   la letra × ingreso del mes pasado, mínimo $5,000. `EventBus.bank_changed` refresca el Banco. Lee su JSON al usarlo.
+  Préstamos (`Bank.loans`: base, rate, months, paid, refinanced): interés simple con la tasa de la letra al pedirlo, cuota =
+  total / meses el día 1 siguiente (la última cierra el redondeo); varios mientras el capital pendiente (`get_debt`) no pase el
+  límite; monto desde $1,000 de a $500, plazo 3–24. Saldar = capital pendiente + 1 mes de interés. Refinanciar una vez: +3 a +12
+  meses (tope 24) a tasa +1 punto, repartiendo el capital pendiente. Hasta el hito 23 la cuota sin dinero se cobra igual (atraso).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -132,7 +136,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 19 | Ánimo y renuncias | ✅ Completado (meta diaria de ánimo y estrés; 3 días mal → aviso de 5 días; aumento ≥10 % retiene; pedidos de aumento ~1 cada 2 meses; ánimo bajo 50 rinde hasta 70 % y estrés ≥70 duplica errores; la ficha muestra «Rinde N %»; el aviso del Hud se parte en líneas sin tapar dinero ni reloj) |
 | 20 | Menú Banco | ✅ Completado (resumen por concepto del mes actual y el anterior; historial de 200 sin filtro; préstamos y calificación en sus hitos) |
 | 21 | Calificación de crédito | ✅ Completado (puntaje con base C; historial = nómina y mantenimiento hasta el hito 22; límite mínimo $5,000; el contador llega en la fase 4) |
-| 22 | Préstamos | Pendiente (fase 3) |
+| 22 | Préstamos | ✅ Completado (varios préstamos; tope por etapa en el hito 27; la cuota sin dinero deja saldo negativo hasta la mora del hito 23) |
 | 23 | Mora y embargo | Pendiente (fase 3) |
 | 24 | Préstamo de emergencia | Pendiente (fase 3) |
 | 25 | Compra de terreno | Pendiente (fase 3) |

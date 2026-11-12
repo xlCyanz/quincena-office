@@ -1,7 +1,11 @@
 # Menú Banco (diseño, 8.1, 8.3 y 12.3): el saldo de la cuenta empresarial, la
 # calificación de crédito con lo que suma cada factor, el interés y el límite (hito 21),
 # los ingresos y gastos por concepto del mes actual o del anterior (con «<» y «>») y el
-# historial de movimientos, los más nuevos arriba. Los préstamos llegan en el hito 22.
+# historial de movimientos, los más nuevos arriba.
+#
+# Préstamos (hito 22): cada préstamo activo con su cuota, lo que falta y los botones
+# Saldar (con confirmación) y Refinanciar (eligiendo cuántos meses alargar), y la
+# solicitud con monto y plazo de a pasos y la vista previa de tasa, cuota y total.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos y Equipos (abrir
 # uno cierra los otros; lo hace la escena de juego). Se construye en código; su botón va
@@ -35,6 +39,28 @@ var _movement_rows: VBoxContainer
 var _empty_label: Label
 var _credit_label: Label
 var _credit_rows: VBoxContainer
+var _loan_rows: VBoxContainer
+var _amount_label: Label
+var _months_label: Label
+var _amount_minus: Button
+var _amount_plus: Button
+var _months_minus: Button
+var _months_plus: Button
+var _quote_label: Label
+var _request_button: Button
+var _loan_status: Label
+var _prepay_buttons: Dictionary[int, Button] = {}
+var _refinance_buttons: Dictionary[int, Button] = {}
+var _confirm_button: Button
+var _extra_minus: Button
+var _extra_plus: Button
+# Solicitud en curso.
+var _amount: int = 0
+var _months: int = 12
+# Préstamo con una acción esperando confirmación (0 = ninguno) y cuál: "prepay" o "refinance".
+var _pending_loan: int = 0
+var _pending_action: String = ""
+var _refinance_extra: int = 0
 # Mes que se muestra en el resumen (el actual o el anterior).
 var _shown_month: int = 1
 # Mes actual en el último refresco: si se miraba ese mes y empieza otro, se sigue al nuevo.
@@ -95,10 +121,37 @@ func _ready() -> void:
 	_credit_rows = VBoxContainer.new()
 	content.add_child(_credit_rows)
 	var credit_hint := Label.new()
-	credit_hint.text = "Se recalcula el día 1 de cada mes. Sube con ingresos, bienes, antigüedad y pagos a tiempo (nómina y mantenimiento); cada atraso resta en el momento."
+	credit_hint.text = "Se recalcula el día 1 de cada mes. Sube con ingresos, bienes, antigüedad y pagos a tiempo (nómina, mantenimiento y cuotas); cada atraso resta en el momento."
 	credit_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	credit_hint.add_theme_color_override("font_color", MUTED_COLOR)
 	content.add_child(credit_hint)
+
+	# Préstamos.
+	var loans_title := Label.new()
+	loans_title.text = "Préstamos"
+	loans_title.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
+	content.add_child(loans_title)
+	_loan_rows = VBoxContainer.new()
+	content.add_child(_loan_rows)
+	var amount_row := HBoxContainer.new()
+	content.add_child(amount_row)
+	_amount_minus = _step_button(amount_row, "−", func() -> void: _change_amount(-1))
+	_amount_label = _value_label(amount_row)
+	_amount_plus = _step_button(amount_row, "+", func() -> void: _change_amount(1))
+	_months_minus = _step_button(amount_row, "−", func() -> void: _change_months(-1))
+	_months_label = _value_label(amount_row)
+	_months_plus = _step_button(amount_row, "+", func() -> void: _change_months(1))
+	_quote_label = Label.new()
+	_quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(_quote_label)
+	_request_button = Button.new()
+	_request_button.text = "Pedir préstamo"
+	_request_button.pressed.connect(func() -> void: _show_result(Bank.request_loan(_amount, _months)))
+	content.add_child(_request_button)
+	_loan_status = Label.new()
+	_loan_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_loan_status.add_theme_color_override("font_color", MUTED_COLOR)
+	content.add_child(_loan_status)
 
 	# Resumen del mes con selector.
 	var month_header := HBoxContainer.new()
@@ -148,6 +201,9 @@ func set_open(open: bool) -> void:
 	if open:
 		_shown_month = Economy.get_current_month()
 		_last_current = _shown_month
+		_amount = 0
+		_pending_loan = 0
+		_loan_status.text = ""
 		_refresh()
 	bank_mode_changed.emit(open)
 
@@ -176,6 +232,64 @@ func get_shown_month() -> int:
 
 func get_balance_text() -> String:
 	return _balance_label.text
+
+
+## Controles de la solicitud de préstamo.
+func get_amount_buttons() -> Array[Button]:
+	return [_amount_minus, _amount_plus]
+
+
+func get_months_buttons() -> Array[Button]:
+	return [_months_minus, _months_plus]
+
+
+func get_request_button() -> Button:
+	return _request_button
+
+
+func get_request() -> Vector2i:
+	return Vector2i(_amount, _months)
+
+
+## Vista previa de la solicitud y mensaje del último intento.
+func get_quote_text() -> String:
+	return _quote_label.text
+
+
+func get_loan_status() -> String:
+	return _loan_status.text
+
+
+## Texto de los préstamos activos (una entrada por renglón).
+func get_loans_text() -> String:
+	var lines: Array[String] = []
+	_collect_labels(_loan_rows, lines)
+	return "\n".join(lines)
+
+
+static func _collect_labels(node: Node, lines: Array[String]) -> void:
+	for child: Node in node.get_children():
+		if child is Label:
+			lines.append((child as Label).text)
+		_collect_labels(child, lines)
+
+
+func get_prepay_button(loan_id: int) -> Button:
+	return _prepay_buttons.get(loan_id)
+
+
+func get_refinance_button(loan_id: int) -> Button:
+	return _refinance_buttons.get(loan_id)
+
+
+## Botón que confirma saldar o refinanciar (visible después de pulsar uno de ellos).
+func get_confirm_button() -> Button:
+	return _confirm_button
+
+
+## Botones −/+ de los meses que se alarga al refinanciar.
+func get_extra_buttons() -> Array[Button]:
+	return [_extra_minus, _extra_plus]
 
 
 ## Texto de la calificación: título y una línea por factor.
@@ -225,6 +339,7 @@ func _refresh() -> void:
 	_previous_button.disabled = _shown_month <= maxi(1, current - 1)
 	_next_button.disabled = _shown_month >= current
 	_refresh_credit()
+	_refresh_loans()
 	_refresh_month()
 	_refresh_movements()
 
@@ -251,6 +366,156 @@ func _refresh_credit() -> void:
 			points_label.add_theme_color_override("font_color", MUTED_COLOR)
 		row.add_child(points_label)
 		_credit_rows.add_child(row)
+
+
+func _refresh_loans() -> void:
+	_clear(_loan_rows)
+	_prepay_buttons.clear()
+	_refinance_buttons.clear()
+	_confirm_button = null
+	_extra_minus = null
+	_extra_plus = null
+	if Bank.loans.is_empty():
+		var none := Label.new()
+		none.text = "No tienes préstamos."
+		none.add_theme_color_override("font_color", MUTED_COLOR)
+		_loan_rows.add_child(none)
+	if Bank.get_loan(_pending_loan).is_empty():
+		_pending_loan = 0
+	for loan: Dictionary in Bank.loans:
+		var box := VBoxContainer.new()
+		_loan_rows.add_child(box)
+		var info := Label.new()
+		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var left: int = Bank.get_remaining_months(loan)
+		info.text = "%s al %s mensual%s · cuota %s · %d %s · capital pendiente %s" % [
+			MoneyFormat.format(int(loan["amount"])), _percent(float(loan["rate"])), " (refinanciado)" if bool(loan["refinanced"]) else "",
+			MoneyFormat.format(Bank.get_installment(loan)), left, "cuota" if left == 1 else "cuotas",
+			MoneyFormat.format(Bank.get_remaining_principal(loan))]
+		box.add_child(info)
+		var buttons := HBoxContainer.new()
+		box.add_child(buttons)
+		var loan_id: int = loan["id"]
+		var prepay := Button.new()
+		prepay.text = "Saldar (%s)" % MoneyFormat.format(Bank.get_prepay_cost(loan))
+		prepay.pressed.connect(func() -> void: _ask(loan_id, "prepay"))
+		buttons.add_child(prepay)
+		_prepay_buttons[loan_id] = prepay
+		var refinance := Button.new()
+		refinance.text = "Refinanciar"
+		refinance.disabled = Bank.get_max_refinance_extra(loan) == 0
+		refinance.tooltip_text = Bank.refinance_problem(loan, int(Bank.get_config("refinance_min_extra")))
+		refinance.pressed.connect(func() -> void: _ask(loan_id, "refinance"))
+		buttons.add_child(refinance)
+		_refinance_buttons[loan_id] = refinance
+		if _pending_loan == loan_id:
+			_add_confirm(box, loan)
+	# Solicitud.
+	var step: int = int(Bank.get_config("loan_amount_step"))
+	var min_amount: int = int(Bank.get_config("loan_min_amount"))
+	var available: int = floori(float(Bank.get_available()) / step) * step
+	if _amount <= 0:
+		_amount = clampi(available, min_amount, maxi(min_amount, available))
+	_amount_label.text = "Monto %s" % MoneyFormat.format(_amount)
+	_months_label.text = "Plazo %d meses" % _months
+	_amount_minus.disabled = _amount - step < min_amount
+	_amount_plus.disabled = _amount + step > available
+	_months_minus.disabled = _months <= int(Bank.get_config("loan_min_months"))
+	_months_plus.disabled = _months >= int(Bank.get_config("loan_max_months"))
+	var problem: String = Bank.loan_problem(_amount, _months)
+	var terms: Dictionary = Bank.quote(_amount, _months, Bank.get_monthly_rate())
+	_quote_label.text = "Tasa %s mensual · cuota %s · total %s (intereses %s)" % [_percent(Bank.get_monthly_rate()),
+		MoneyFormat.format(int(terms["installment"])), MoneyFormat.format(int(terms["total"])), MoneyFormat.format(int(terms["interest"]))]
+	if not problem.is_empty():
+		_quote_label.text += "\n" + problem
+	_request_button.disabled = not problem.is_empty()
+
+
+# Fila de confirmación debajo de un préstamo: saldar o refinanciar.
+func _add_confirm(box: VBoxContainer, loan: Dictionary) -> void:
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	var text := Label.new()
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_confirm_button = Button.new()
+	_confirm_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if _pending_action == "prepay":
+		var cost: int = Bank.get_prepay_cost(loan)
+		text.text = "¿Saldar por %s? Ahorras %s de intereses." % [MoneyFormat.format(cost),
+			MoneyFormat.format(maxi(0, Bank.get_remaining_total(loan) - cost))]
+		_confirm_button.text = "Sí, saldar"
+		_confirm_button.disabled = not Economy.can_afford(cost)
+		_confirm_button.pressed.connect(func() -> void: _show_result(Bank.prepay(loan["id"])))
+	else:
+		_extra_minus = _step_button(row, "−", func() -> void: _change_extra(-1))
+		var terms: Dictionary = Bank.preview_refinance(loan, _refinance_extra)
+		text.text = "+%d meses: %d cuotas de %s al %s" % [_refinance_extra, terms.get("months", 0),
+			MoneyFormat.format(int(terms.get("installment", 0))), _percent(float(terms.get("rate", 0.0)))]
+		_extra_plus = _step_button(row, "+", func() -> void: _change_extra(1))
+		_extra_minus.disabled = _refinance_extra <= int(Bank.get_config("refinance_min_extra"))
+		_extra_plus.disabled = _refinance_extra >= Bank.get_max_refinance_extra(loan)
+		_confirm_button.text = "Refinanciar"
+		_confirm_button.pressed.connect(func() -> void: _show_result(Bank.refinance(loan["id"], _refinance_extra)))
+	row.add_child(text)
+	row.move_child(text, 0)
+	row.add_child(_confirm_button)
+	var cancel := Button.new()
+	cancel.text = "No"
+	cancel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cancel.pressed.connect(func() -> void:
+		_pending_loan = 0
+		_refresh())
+	row.add_child(cancel)
+
+
+func _ask(loan_id: int, action: String) -> void:
+	_pending_loan = loan_id
+	_pending_action = action
+	_refinance_extra = int(Bank.get_config("refinance_min_extra"))
+	_refresh()
+
+
+func _change_extra(direction: int) -> void:
+	_refinance_extra = clampi(_refinance_extra + direction, int(Bank.get_config("refinance_min_extra")),
+		maxi(int(Bank.get_config("refinance_min_extra")), Bank.get_max_refinance_extra(Bank.get_loan(_pending_loan))))
+	_refresh()
+
+
+func _change_amount(direction: int) -> void:
+	var step: int = int(Bank.get_config("loan_amount_step"))
+	_amount = maxi(int(Bank.get_config("loan_min_amount")), _amount + direction * step)
+	_refresh()
+
+
+func _change_months(direction: int) -> void:
+	_months = clampi(_months + direction, int(Bank.get_config("loan_min_months")), int(Bank.get_config("loan_max_months")))
+	_refresh()
+
+
+func _show_result(result: Dictionary) -> void:
+	_loan_status.text = result["message"]
+	if result["ok"]:
+		_pending_loan = 0
+		_amount = 0
+	_refresh()
+
+
+static func _step_button(parent: Container, text: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(32, 0)
+	button.pressed.connect(action)
+	parent.add_child(button)
+	return button
+
+
+static func _value_label(parent: Container) -> Label:
+	var label := Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(label)
+	return label
 
 
 # 0.045 → "4.5 %"; 0.02 → "2 %".
