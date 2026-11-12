@@ -72,9 +72,9 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `Economy.month_totals`, totales por concepto del mes actual y el anterior). Menú Banco (`BankPanel`): saldo, resumen del
   mes con «<»/«>» y movimientos, los nuevos arriba; no pausa. Los botones de la barra miden `Hud.MENU_BUTTON_SIZE`.
   `SaveManager.new_game()` prepara una partida nueva; la oficina inicial está en `data/starting_office.json` y, con
-  `SaveManager.start_with_demo` (true por defecto), `StartingCompany.apply()` la convierte en la empresa de `data/starting_company.json`:
+  `SaveManager.start_with_demo` (false por defecto: el CEO solo; true para probar), `StartingCompany.apply()` la convierte en la empresa de `data/starting_company.json`:
   Mediana empresa, local de 22×18, 40 empleados en 6 equipos con líder, 2 gerentes, 2 ejecutivos, apoyo y 7 contratos en curso
-  (`Staff.hire_directly`, `Projects.create_offer`). `test_all` lo pone en false: las partes empiezan con el CEO solo.
+  (`Staff.hire_directly`, `Projects.create_offer`). `test_starting_company` y `test_dev_tools` lo ponen en true un momento.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
 - Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `Company`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
@@ -219,6 +219,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Comprobación de la fase 3 (`test_phase3`): simula con una política simple (aceptar lo que se pueda, entregar lo terminado, el CEO
   de 8 a 17) un CEO solo 3 meses, el primer equipo con $5,000 a 12 meses durante 6 y una empresa que deja de pagar; imprime un resumen
   por mes. Sirve para ajustar `data/bank.json`, `data/stages.json` y `data/contracts.json`.
+- Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
+  terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
+  2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
+  si alguien se va, le da a cada equipo el contrato más grande y al CEO solo pequeños; guarda 1.5 meses de gastos. Llega a Mediana
+  empresa (~mes 13) e imprime un resumen por mes; compara 3 meses con el CEO dirigiendo 4 departamentos contra un ejecutivo.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -271,3 +276,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 36 | Recepcionista y visitas | ✅ Completado (mostrador $600 con silla delante, uno por mostrador; recepcionista $700 desde Startup; visitas solo con Recepción armada, 40 % de las ofertas; esperan 3 h o 6 con sofá $300; atendidas al terminar una hora con recepcionista; el cliente se ve en la Recepción) |
 | 37 | Contador y limpieza | ✅ Completado (contador $1,300 desde Startup: −10 % mantenimiento y −1 punto a préstamos nuevos por el factor de Administración, avisos 3 días antes si el saldo no alcanza; suciedad +1 por persona-hora, zafacón la mitad, desde 50 ánimo −10; personal de limpieza $500 con armario en un Cuarto de limpieza, −25/h a la habitación más sucia) |
 | 38 | Competencia por empleados | ✅ Completado (SemiSenior, Senior y dirección; 1 %/día Senior, ×3 mal pagado, ×0.3 bien pagado, leal ×0.25, ambicioso ×2; oferta +15–30 % con 5 días; igualar retiene, «Dejar ir» o el plazo lo sacan) |
+| 39 | Comprobación de la fase | ✅ Completado (CEO solo a Mediana empresa en ~13 meses sin préstamos ni quiebra; medianos pagan $9,000–16,500 para que un equipo de 8 con líder deje margen; un ejecutivo en Desarrollo sube los ingresos ~75 % frente al CEO con 4 departamentos; partida nueva otra vez con el CEO solo) |

@@ -568,12 +568,12 @@ Se pagan en dos mitades, los días 15 y 30. El CEO no tiene sueldo por el moment
 
 ### 13.4 Contratos
 
-Pagan unos $8 por punto de trabajo; los grandes, algo más.
+Pagan unos $8 por punto de trabajo los pequeños y unos $11 los medianos (ajustado en el hito 39 para que crecer con equipos deje margen); los grandes, unos $9.5.
 
 | Tamaño | Trabajo total | Plazo | Pago |
 | --- | --- | --- | --- |
 | Pequeño | 150 a 300 puntos | 7 a 12 días | $1,200 a $2,400 |
-| Mediano | 800 a 1,500 puntos | 20 a 30 días | $7,000 a $13,000 |
+| Mediano | 800 a 1,500 puntos | 20 a 30 días | $9,000 a $16,500 |
 | Grande | 4,000 a 8,000 puntos | 45 a 75 días | $38,000 a $76,000 |
 
 - **Atraso:** 5% del pago por cada día, hasta un máximo del 50%.

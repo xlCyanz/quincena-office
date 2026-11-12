@@ -18,8 +18,8 @@ const FORMAT_VERSION: int = 1
 var save_dir: String = DEFAULT_SAVE_DIR
 
 ## Con true una partida nueva empieza con la empresa de data/starting_company.json
-## (40 empleados); las pruebas lo ponen en false para empezar con el CEO solo.
-var start_with_demo: bool = true
+## (40 empleados, para probar); por defecto se empieza con el CEO solo.
+var start_with_demo: bool = false
 
 ## Lo pone la escena de juego mientras está abierta: devuelve el estado de la escena
 ## (cámara y CEO). Sin escena abierta no hay autoguardado.
