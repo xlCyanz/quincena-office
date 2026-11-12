@@ -198,7 +198,7 @@ func _check_accept() -> void:
 	var contract: Dictionary = Projects.contracts[0]
 	_expect(int(contract["deadline_day"]) == GameClock.get_day_count() + int(contract["days"])
 		and Projects.contract_days_left(contract) == int(contract["days"]), "el plazo corre desde hoy")
-	_expect(contract["progress"] == {"design": 0, "programming": 0, "testing": 0}, "sin avance")
+	_expect(contract["progress"] == {"design": 0.0, "programming": 0.0, "testing": 0.0}, "sin avance")
 	# Tope: uno por equipo, y sin equipos uno solo.
 	var problem: String = Projects.accept_problem(without["id"])
 	_expect(problem.contains("tope es 1"), "no se acepta un segundo contrato: %s" % problem)

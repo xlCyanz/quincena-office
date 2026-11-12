@@ -88,6 +88,21 @@ static func get_payroll(key: String) -> int:
 	return int(_staff_data()["payroll"][key])
 
 
+## Valor de la producción (data/staff.json, production).
+static func get_production(key: String) -> Variant:
+	return _staff_data()["production"][key]
+
+
+## Puntos por hora de trabajo de un nivel (diseño, 13.3).
+static func get_points_per_hour(level: String) -> float:
+	return float(_staff_data()["production"]["points_per_hour"].get(level, 0.0))
+
+
+## Hora a la que el CEO se queda dormido si sigue en la oficina.
+static func get_ceo_sleep_hour() -> int:
+	return int(_staff_data()["ceo"]["sleep_hour"])
+
+
 ## Hora a la que llega solo el CEO (data/staff.json, ceo.arrival_hour).
 static func get_ceo_arrival_hour() -> int:
 	return int(_staff_data()["ceo"]["arrival_hour"])

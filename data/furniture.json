@@ -1,5 +1,5 @@
 {
-	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa.",
+	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3).",
 	"resale_ratio": 0.5,
 	"items": {
 		"simple_desk": {
@@ -43,7 +43,8 @@
 			"shape": "computer",
 			"height": 12,
 			"color": "2b2f36",
-			"on_desk": true
+			"on_desk": true,
+			"production_bonus": 0.0
 		}
 	}
 }

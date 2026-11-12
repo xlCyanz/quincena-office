@@ -64,6 +64,8 @@ var teams: Array[Dictionary] = []
 
 var _next_id: int = 1
 var _next_team_id: int = 1
+# Hora (como _absolute_hour) en que terminó la última entrevista; no se guarda.
+var _last_interview_end: int = NO_FIRING
 var _rng := RandomNumberGenerator.new()
 
 
@@ -83,6 +85,7 @@ func new_game() -> void:
 	teams.clear()
 	_next_id = 1
 	_next_team_id = 1
+	_last_interview_end = NO_FIRING
 	_rng.randomize()
 	EventBus.staff_changed.emit()
 
@@ -239,6 +242,23 @@ func is_at_lunch(key: String) -> bool:
 		return ceo_at_work and hour == get_ceo_lunch_hour()
 	var employee: Dictionary = get_employee_by_key(key)
 	return not employee.is_empty() and get_schedule(employee).is_lunch(GameClock.get_weekday(), hour)
+
+
+## Indica si el CEO produce en esa hora (contada como get_absolute_hour): está
+## trabajando, no almuerza, no está en una entrevista y no se quedó dormido (desde
+## sleep_hour hasta su hora de llegada).
+func is_ceo_producing(at: int) -> bool:
+	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
+	if not is_expected("ceo", get_weekday_at(at), hour) or is_ceo_asleep(hour):
+		return false
+	var hours: int = int(StaffCatalog.get_hiring("interview_hours"))
+	var ends_at: int = int(interview["ends_at"]) if not interview.is_empty() else _last_interview_end
+	return not (at >= ends_at - hours and at < ends_at)
+
+
+## Indica si a esa hora el CEO, si sigue en la oficina, está dormido.
+func is_ceo_asleep(hour: int) -> bool:
+	return hour >= StaffCatalog.get_ceo_sleep_hour() or hour < StaffCatalog.get_ceo_arrival_hour()
 
 
 ## Hora en que almuerza el CEO: la misma distancia desde su llegada que los demás.
@@ -583,6 +603,8 @@ func _on_hour_changed(hour: int) -> void:
 		set_ceo_at_work(true)
 	if not interview.is_empty() and _absolute_hour() >= int(interview["ends_at"]):
 		_finish_interview()
+	if ceo_at_work and hour == StaffCatalog.get_ceo_sleep_hour():
+		EventBus.notice.emit("El CEO se quedó dormido en la oficina: no rinde hasta las %d:00. Mándalo a casa." % StaffCatalog.get_ceo_arrival_hour())
 	if hour == int(StaffCatalog.get_hiring("arrival_hour")):
 		_process_arrivals(GameClock.get_day_count())
 
@@ -644,6 +666,17 @@ func _update_energy() -> void:
 	EventBus.staff_changed.emit()
 
 
+## Día de la semana (0 = lunes) de una hora contada como get_absolute_hour.
+static func get_weekday_at(at: int) -> int:
+	@warning_ignore("integer_division")
+	return (at / GameConstants.HOURS_PER_DAY) % GameConstants.DAYS_PER_WEEK
+
+
+## Horas enteras desde el inicio de la partida (la hora actual).
+func get_absolute_hour() -> int:
+	return _absolute_hour()
+
+
 # Horas enteras desde el inicio de la partida.
 func _absolute_hour() -> int:
 	return GameClock.get_day_count() * GameConstants.HOURS_PER_DAY + GameClock.get_hour()
@@ -651,6 +684,7 @@ func _absolute_hour() -> int:
 
 # La entrevista revela los valores reales y un rasgo (el primero que aún no se conoce).
 func _finish_interview() -> void:
+	_last_interview_end = int(interview["ends_at"])
 	var candidate: Dictionary = get_interviewed_now()
 	interview = {}
 	if candidate.is_empty():
@@ -828,6 +862,7 @@ func import_state(state: Dictionary) -> void:
 		teams.append({"id": team_id, "name": String(saved.get("name", "%s %d" % [StaffCatalog.get_teams("name_prefix"), team_id])),
 			"members": members, "schedule": WorkSchedule.from_dict(schedule).to_dict()})
 	_next_team_id = int(state.get("next_team_id", 1))
+	_last_interview_end = NO_FIRING
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))
 	_next_id = int(state.get("next_id", 1))

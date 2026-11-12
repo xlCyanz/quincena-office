@@ -1,5 +1,5 @@
 {
-	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real. Al ofrecer un sueldo menor que el que piden, desde counter_offer_ratio de lo pedido hacen una contraoferta y por debajo rechazan y se van. La entrevista ocupa interview_hours horas del CEO mientras está en la oficina. Cada cargo tiene su horario por defecto (schedule: days 0 = lunes … 6 = domingo, de start_hour a end_hour sin incluirla) y un color de camisa. workday: todos salen a almorzar una hora, lunch_offset horas después de su entrada; la energía (0–100) cambia por cada hora trabajada o fuera; ánimo y estrés quedan fijos hasta el hito 19. teams: el turno de un equipo dura shift_hours horas (8 de trabajo y 1 de almuerzo) desde la hora de entrada que elige el jugador, en sus días, dejando al menos min_rest_days de descanso por semana; un equipo nuevo empieza con default_start_hour y default_days. ceo: llega solo a arrival_hour en arrival_days y se queda hasta que el jugador lo manda a casa. payroll: los días de nómina (GameConstants.PAYROLL_DAYS) se paga a cada empleado lo ganado desde su último pago (sueldo / 30 por día); si no alcanza no se paga nada, queda debiéndose y cada nómina sin pagar cambia el ánimo de todos en unpaid_mood. Despedir cobra lo ganado y lo debido; cada compañero cambia su ánimo en fire_mood, o en fire_streak_mood si hubo otro despido en los últimos fire_streak_days días.",
+	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real. Al ofrecer un sueldo menor que el que piden, desde counter_offer_ratio de lo pedido hacen una contraoferta y por debajo rechazan y se van. La entrevista ocupa interview_hours horas del CEO mientras está en la oficina. Cada cargo tiene su horario por defecto (schedule: days 0 = lunes … 6 = domingo, de start_hour a end_hour sin incluirla) y un color de camisa. workday: todos salen a almorzar una hora, lunch_offset horas después de su entrada; la energía (0–100) cambia por cada hora trabajada o fuera; ánimo y estrés quedan fijos hasta el hito 19. teams: el turno de un equipo dura shift_hours horas (8 de trabajo y 1 de almuerzo) desde la hora de entrada que elige el jugador, en sus días, dejando al menos min_rest_days de descanso por semana; un equipo nuevo empieza con default_start_hour y default_days. production (diseño, 13.3 y 7.2): cada hora trabajada suma points_per_hour de su nivel en la fase de su especialidad (diseño, programación o pruebas); con energía menor que energy_full_from rinde menos, hasta energy_min_factor con energía 0; la computadora suma su production_bonus (data/furniture.json). Una fase se abre cuando la anterior llega a phase_open_ratio y nunca pasa del porcentaje de la anterior; quien no tiene su fase abierta ayuda en la primera fase con lugar a helper_factor. El CEO produce como ceo_level en cualquier fase (es generalista). ceo: llega solo a arrival_hour en arrival_days y se queda hasta que el jugador lo manda a casa; desde sleep_hour hasta arrival_hour se queda dormido y no produce. payroll: los días de nómina (GameConstants.PAYROLL_DAYS) se paga a cada empleado lo ganado desde su último pago (sueldo / 30 por día); si no alcanza no se paga nada, queda debiéndose y cada nómina sin pagar cambia el ánimo de todos en unpaid_mood. Despedir cobra lo ganado y lo debido; cada compañero cambia su ánimo en fire_mood, o en fire_streak_mood si hubo otro despido en los últimos fire_streak_days días.",
 	"levels": {
 		"intern": { "name": "Pasante", "main_skill_range": [10, 30], "age_range": [19, 24] },
 		"junior": { "name": "Junior", "main_skill_range": [25, 45], "age_range": [21, 30] },
@@ -57,7 +57,16 @@
 		"min_rest_days": 1,
 		"name_prefix": "Equipo"
 	},
+	"production": {
+		"points_per_hour": { "intern": 1, "junior": 2, "semi_senior": 3, "senior": 4.5 },
+		"ceo_level": "semi_senior",
+		"energy_full_from": 50,
+		"energy_min_factor": 0.5,
+		"helper_factor": 0.5,
+		"phase_open_ratio": 0.5
+	},
 	"ceo": {
+		"sleep_hour": 22,
 		"arrival_hour": 8,
 		"arrival_days": [0, 1, 2, 3, 4]
 	}

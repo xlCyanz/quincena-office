@@ -1,7 +1,7 @@
-# Menú Proyectos (diseño, 12.3): la reputación, los contratos en curso con su plazo y
-# la bandeja de ofertas con cliente, tipo, tamaño, trabajo, plazo, pago, anticipo y
-# penalidad, para aceptarlas o rechazarlas. Las barras de avance llegan con la
-# producción (hito 16).
+# Menú Proyectos (diseño, 12.3): la reputación, los contratos en curso con su plazo, quién
+# los lleva y sus tres barras de avance (diseño, programación y pruebas), y la bandeja de
+# ofertas con cliente, tipo, tamaño, trabajo, plazo, pago, anticipo y penalidad, para
+# aceptarlas o rechazarlas.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal (abrir uno cierra el otro;
 # lo hace la escena de juego). Se construye en código; su botón va en la barra de menús
@@ -20,6 +20,9 @@ const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
 const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
 const STARS: int = 5
+const PHASE_LABEL_WIDTH: float = 120.0
+const PHASE_VALUE_WIDTH: float = 150.0
+const BAR_HEIGHT: float = 14.0
 
 var _open_button: Button
 var _panel: PanelContainer
@@ -28,6 +31,7 @@ var _status_label: Label
 var _list: VBoxContainer
 var _accept_buttons: Dictionary[int, Button] = {}
 var _reject_buttons: Dictionary[int, Button] = {}
+var _bars: Dictionary[int, Dictionary] = {}
 
 
 func _ready() -> void:
@@ -124,6 +128,11 @@ func get_reject_button(offer_id: int) -> Button:
 	return _reject_buttons.get(offer_id)
 
 
+## Barra de avance de una fase de un contrato en curso, o null.
+func get_phase_bar(contract_id: int, phase: String) -> ProgressBar:
+	return _bars.get(contract_id, {}).get(phase)
+
+
 ## Todo el texto del panel (para las pruebas).
 func get_list_text() -> String:
 	var texts: Array[String] = [_reputation_label.text]
@@ -149,6 +158,7 @@ func _refresh() -> void:
 		child.queue_free()
 	_accept_buttons.clear()
 	_reject_buttons.clear()
+	_bars.clear()
 
 	_add_section("En curso (%d de %d)" % [Projects.contracts.size(), Projects.get_contract_limit()])
 	if Projects.contracts.is_empty():
@@ -178,10 +188,46 @@ func _add_contract(contract: Dictionary) -> void:
 	var info := Label.new()
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var owner_text: String = Projects.describe_owner(contract)
-	info.text = "%s · %s\n%s\n%s · Pago %s · %s" % [Projects.describe_title(contract), deadline,
-		Projects.describe_points(contract), owner_text.left(1).to_upper() + owner_text.substr(1), MoneyFormat.format(contract["pay"]),
+	info.text = "%s · %s\n%s · Pago %s · %s" % [Projects.describe_title(contract), deadline,
+		owner_text.left(1).to_upper() + owner_text.substr(1), MoneyFormat.format(contract["pay"]),
 		"anticipo cobrado %s" % MoneyFormat.format(contract["advance"]) if int(contract["advance"]) > 0 else "sin anticipo"]
 	_list.add_child(info)
+	var contract_id: int = contract["id"]
+	var bars: Dictionary[String, ProgressBar] = {}
+	_bars[contract_id] = bars
+	for phase: String in ContractCatalog.PHASES:
+		var row := HBoxContainer.new()
+		_list.add_child(row)
+		var name_label := Label.new()
+		name_label.text = ContractCatalog.PHASE_NAMES[phase].capitalize()
+		name_label.custom_minimum_size = Vector2(PHASE_LABEL_WIDTH, 0)
+		row.add_child(name_label)
+		var bar := ProgressBar.new()
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.custom_minimum_size = Vector2(0, BAR_HEIGHT)
+		bar.show_percentage = false
+		bar.max_value = maxf(1.0, float(contract["points"][phase]))
+		bar.value = float(contract["progress"][phase])
+		row.add_child(bar)
+		bars[phase] = bar
+		var value := Label.new()
+		var closed: bool = not Production.is_open(contract, phase)
+		value.text = "%d / %d%s" % [floori(float(contract["progress"][phase]) + Production.EPSILON), contract["points"][phase],
+			" (espera)" if closed else ""]
+		value.custom_minimum_size = Vector2(PHASE_VALUE_WIDTH, 0)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		row.add_child(value)
+	var state: String
+	if Production.is_finished(contract):
+		state = "Terminado: listo para entregar."
+	elif int(contract["team_id"]) == Projects.NO_TEAM:
+		state = "Nadie lo lleva: dáselo a un equipo en el menú Equipos."
+	else:
+		var rate: float = Projects.get_hourly_rate(contract)
+		state = "Ahora rinde %s puntos por hora." % String.num(rate, 1).trim_suffix(".0") if rate > 0.0 \
+			else "Ahora nadie está trabajando en él."
+	_list.add_child(_muted_label(state))
 
 
 func _add_offer(offer: Dictionary) -> void:

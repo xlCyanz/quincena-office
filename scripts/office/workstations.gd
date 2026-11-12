@@ -66,6 +66,28 @@ static func owner_of(furniture: Array[Dictionary], rooms: Array[Dictionary], ind
 	return ""
 
 
+## Computadora que usa quien se sienta en la silla de furniture[chair_index]: la del
+## escritorio cuyo frente da a esa silla, o "" si no hay.
+static func computer_for_chair(furniture: Array[Dictionary], chair_index: int) -> String:
+	var chair_cell: Vector2i = furniture[chair_index]["cell"]
+	for desk: Dictionary in furniture:
+		if String(desk.get("computer", "")).is_empty():
+			continue
+		var front: Vector2i = FurnitureCatalog.get_front(desk["rotation"])
+		for cell: Vector2i in FurnitureCatalog.get_footprint(desk["id"], desk["cell"], desk["rotation"]):
+			if cell + front == chair_cell:
+				return String(desk["computer"])
+	return ""
+
+
+## Computadora que usa who (el assigned_to de su silla), o "" si no tiene.
+static func computer_of(furniture: Array[Dictionary], who: String) -> String:
+	for index: int in range(furniture.size()):
+		if furniture[index]["assigned_to"] == who:
+			return computer_for_chair(furniture, index)
+	return ""
+
+
 # Primer escritorio libre con computadora, dentro del área de trabajo de la silla, cuyo
 # frente da a la casilla de la silla.
 static func _desk_for(furniture: Array[Dictionary], chair_cell: Vector2i,

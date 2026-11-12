@@ -1,0 +1,121 @@
+# Producción (diseño, 7.2 y 13.3): cuántos puntos rinde una persona por hora y cómo se
+# reparten entre las tres fases de un contrato. Son funciones puras: Projects arma la
+# lista de quienes trabajaron en la hora y llama a apply.
+#
+# Fases: diseño, programación y pruebas, en orden. Una fase se abre cuando la anterior
+# llega a phase_open_ratio de sus puntos, y su avance nunca pasa del porcentaje de la
+# anterior (programación no termina antes que diseño). Cada trabajador suma en la fase
+# de su especialidad si tiene lugar; si no, ayuda en la primera fase con lugar rindiendo
+# helper_factor. Un generalista (el CEO, phase = "") rinde completo en la primera fase con
+# lugar. Lo que no cabe se pierde.
+class_name Production
+extends RefCounted
+
+## Margen para comparar puntos con decimales.
+const EPSILON: float = 0.0001
+
+
+## Puntos por hora de una persona: los de su nivel, menos si está cansada (energía bajo
+## energy_full_from) y más con una computadora mejor.
+static func get_rate(level: String, energy: float, computer_bonus: float) -> float:
+	var base: float = StaffCatalog.get_points_per_hour(level)
+	return base * get_energy_factor(energy) * (1.0 + computer_bonus)
+
+
+## Cuánto rinde según la energía: 1 desde energy_full_from; debajo baja en línea recta
+## hasta energy_min_factor con energía 0.
+static func get_energy_factor(energy: float) -> float:
+	var full_from: float = float(StaffCatalog.get_production("energy_full_from"))
+	var min_factor: float = float(StaffCatalog.get_production("energy_min_factor"))
+	if energy >= full_from:
+		return 1.0
+	return lerpf(min_factor, 1.0, clampf(energy, 0.0, full_from) / full_from)
+
+
+## Bonificación de una computadora (data/furniture.json, production_bonus).
+static func get_computer_bonus(computer_id: String) -> float:
+	if computer_id.is_empty():
+		return 0.0
+	return float(FurnitureCatalog.get_item(computer_id).get("production_bonus", 0.0))
+
+
+## Fase en que trabaja un cargo: la de su habilidad principal, o "" si no es una fase
+## (los vendedores no producen puntos).
+static func get_role_phase(role: String) -> String:
+	var skill: String = StaffCatalog.get_main_skill(role)
+	return skill if ContractCatalog.PHASES.has(skill) else ""
+
+
+## Fracción hecha de una fase (0 a 1). Una fase sin puntos cuenta como hecha.
+static func get_ratio(contract: Dictionary, phase: String) -> float:
+	var total: float = float(contract["points"][phase])
+	if total <= 0.0:
+		return 1.0
+	return clampf(float(contract["progress"][phase]) / total, 0.0, 1.0)
+
+
+## Indica si una fase ya se puede trabajar (la anterior llegó a la mitad).
+static func is_open(contract: Dictionary, phase: String) -> bool:
+	var index: int = ContractCatalog.PHASES.find(phase)
+	if index <= 0:
+		return true
+	var previous: String = ContractCatalog.PHASES[index - 1]
+	return get_ratio(contract, previous) + EPSILON >= float(StaffCatalog.get_production("phase_open_ratio"))
+
+
+## Puntos que todavía caben en una fase ahora: hasta el porcentaje de la anterior.
+static func get_room(contract: Dictionary, phase: String) -> float:
+	if not is_open(contract, phase):
+		return 0.0
+	var total: float = float(contract["points"][phase])
+	var limit: float = total
+	var index: int = ContractCatalog.PHASES.find(phase)
+	if index > 0:
+		limit = total * get_ratio(contract, ContractCatalog.PHASES[index - 1])
+	var room: float = limit - float(contract["progress"][phase])
+	return room if room > EPSILON else 0.0
+
+
+## Indica si las tres fases están completas.
+static func is_finished(contract: Dictionary) -> bool:
+	for phase: String in ContractCatalog.PHASES:
+		if get_ratio(contract, phase) < 1.0 - EPSILON:
+			return false
+	return true
+
+
+## Suma una hora de trabajo al contrato. workers es una lista de {"phase", "rate"}
+## (phase = "" para un generalista). Devuelve los puntos sumados por fase.
+static func apply(contract: Dictionary, workers: Array[Dictionary]) -> Dictionary:
+	var added: Dictionary = {}
+	for phase: String in ContractCatalog.PHASES:
+		added[phase] = 0.0
+	# Primero los especialistas en el orden de las fases: así la hora de diseño abre
+	# lugar para la de programación en la misma hora.
+	var ordered: Array[Dictionary] = workers.duplicate()
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return _order(a["phase"]) < _order(b["phase"]))
+	var helper_factor: float = float(StaffCatalog.get_production("helper_factor"))
+	for worker: Dictionary in ordered:
+		var phase: String = worker["phase"]
+		var rate: float = float(worker["rate"])
+		if not phase.is_empty() and get_room(contract, phase) > 0.0:
+			added[phase] += _add(contract, phase, rate)
+			continue
+		var factor: float = 1.0 if phase.is_empty() else helper_factor
+		for other: String in ContractCatalog.PHASES:
+			if get_room(contract, other) > 0.0:
+				added[other] += _add(contract, other, rate * factor)
+				break
+	return added
+
+
+static func _add(contract: Dictionary, phase: String, amount: float) -> float:
+	var used: float = minf(amount, get_room(contract, phase))
+	contract["progress"][phase] = float(contract["progress"][phase]) + used
+	return used
+
+
+static func _order(phase: String) -> int:
+	var index: int = ContractCatalog.PHASES.find(phase)
+	return ContractCatalog.PHASES.size() if index < 0 else index

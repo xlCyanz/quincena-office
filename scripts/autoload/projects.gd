@@ -14,6 +14,10 @@
 # (puntos hechos de cada fase) y "team_id": quién lo lleva (el id de un equipo de Staff,
 # CEO_TEAM si lo lleva el CEO o NO_TEAM si nadie). Cada equipo con miembros y el CEO
 # llevan un contrato a la vez, así que el tope de contratos en curso es equipos + 1.
+#
+# Producción (hito 16): al terminar cada hora, quienes llevan un contrato y trabajaron
+# esa hora suman puntos a sus fases (ver Production). progress guarda puntos con
+# decimales.
 extends Node
 
 const CONCEPT_ADVANCE: String = "Anticipo de contrato"
@@ -111,7 +115,7 @@ func accept(offer_id: int) -> Dictionary:
 	var contract: Dictionary = offer.duplicate(true)
 	contract["accepted_day"] = today
 	contract["deadline_day"] = today + int(offer["days"])
-	contract["progress"] = {"design": 0, "programming": 0, "testing": 0}
+	contract["progress"] = {"design": 0.0, "programming": 0.0, "testing": 0.0}
 	contract["team_id"] = _first_free_team()
 	contracts.append(contract)
 	var message: String = "Contrato aceptado: %s para %s, %d días; %s." % [
@@ -221,6 +225,7 @@ static func describe_terms(offer: Dictionary) -> String:
 
 
 func _on_hour_changed(hour: int) -> void:
+	_produce()
 	if hour == int(ContractCatalog.get_offers("arrival_hour")):
 		_process_arrivals(GameClock.get_day_count())
 
@@ -327,7 +332,7 @@ func import_state(state: Dictionary) -> void:
 		contract["deadline_day"] = int(saved.get("deadline_day", contract["accepted_day"] + contract["days"]))
 		var progress: Dictionary = {}
 		for phase: String in ContractCatalog.PHASES:
-			progress[phase] = int(saved.get("progress", {}).get(phase, 0))
+			progress[phase] = float(saved.get("progress", {}).get(phase, 0.0))
 		contract["progress"] = progress
 		# Las partidas del hito 14 tenían un solo contrato, el del CEO.
 		var team_id: int = int(saved.get("team_id", CEO_TEAM))
@@ -341,6 +346,62 @@ func import_state(state: Dictionary) -> void:
 	else:
 		_rng.randomize()
 	EventBus.projects_changed.emit()
+
+
+## Quienes trabajan en un contrato en una hora (contada como Staff.get_absolute_hour):
+## una lista de {"key", "phase", "rate"} (key como en Staff.is_expected; phase = "" si
+## es generalista).
+func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
+	var weekday: int = Staff.get_weekday_at(at)
+	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
+	var workers: Array[Dictionary] = []
+	var team_id: int = int(contract["team_id"])
+	if team_id == CEO_TEAM:
+		if Staff.is_ceo_producing(at):
+			var computer: String = Workstations.computer_of(OfficeState.furniture, "ceo")
+			workers.append({"key": "ceo", "phase": "", "rate": Production.get_rate(
+				String(StaffCatalog.get_production("ceo_level")), 100.0, Production.get_computer_bonus(computer))})
+		return workers
+	var team: Dictionary = Staff.get_team(team_id)
+	if team.is_empty():
+		return workers
+	for member: Variant in team["members"]:
+		var employee: Dictionary = Staff.get_employee(int(member))
+		var key: String = Staff.employee_key(int(member))
+		var phase: String = Production.get_role_phase(employee["role"])
+		if phase.is_empty() or not Staff.is_expected(key, weekday, hour) or not Staff.has_working_station(employee):
+			continue
+		var computer: String = Workstations.computer_of(OfficeState.furniture, key)
+		workers.append({"key": key, "phase": phase, "rate": Production.get_rate(employee["level"],
+			float(employee["energy"]), Production.get_computer_bonus(computer))})
+	return workers
+
+
+## Puntos por hora que suma ahora un contrato con quienes deberían estar trabajando
+## (sin contar los topes de las fases).
+func get_hourly_rate(contract: Dictionary) -> float:
+	var total: float = 0.0
+	for worker: Dictionary in get_workers(contract, Staff.get_absolute_hour()):
+		total += float(worker["rate"])
+	return total
+
+
+# Suma la hora que acaba de terminar a cada contrato en curso.
+func _produce() -> void:
+	var ended: int = Staff.get_absolute_hour() - 1
+	var changed: bool = false
+	for contract: Dictionary in contracts:
+		if Production.is_finished(contract):
+			continue
+		var workers: Array[Dictionary] = get_workers(contract, ended)
+		if workers.is_empty():
+			continue
+		Production.apply(contract, workers)
+		changed = true
+		if Production.is_finished(contract):
+			EventBus.notice.emit("Terminado: %s. Listo para entregar." % describe_title(contract))
+	if changed:
+		EventBus.projects_changed.emit()
 
 
 # Quién lleva un contrato nuevo: el primer equipo con miembros que no lleva ninguno; si
