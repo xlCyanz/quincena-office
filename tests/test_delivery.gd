@@ -134,7 +134,8 @@ func _check_deliver() -> void:
 	# Entregas limpias suben 0.3 cada una, hasta 5.
 	for i: int in range(4):
 		Projects.deliver(_contract(0)["id"])
-	_expect(_near(Projects.reputation, 2.2) and Projects.get_allowed_sizes().has("medium"), "4 limpias: 2.2 ★ y llegan medianos")
+	# Desde el hito 27 los medianos piden la etapa Startup (o un vendedor), no 2 estrellas.
+	_expect(_near(Projects.reputation, 2.2) and not Projects.get_allowed_sizes().has("medium"), "4 limpias: 2.2 ★ (medianos desde Startup)")
 	_expect(ProjectsPanel.stars(Projects.reputation) == "★★☆☆☆" and ProjectsPanel.stars(1.9) == "★☆☆☆☆", "estrellas enteras")
 	Projects.reputation = 4.9
 	Projects.deliver(_contract(0)["id"])

@@ -95,6 +95,8 @@ func _ready() -> void:
 
 	_tool_buttons[BuildController.TOOL_WALL].button_pressed = true
 	_panel.visible = false
+	EventBus.stage_changed.connect(func(_stage: int) -> void: _refresh_room_locks())
+	_refresh_room_locks()
 
 
 ## Entra o sale del modo construcción.
@@ -178,6 +180,17 @@ func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup)
 		row.add_child(button)
 		_tool_buttons[tool] = button
 	return row
+
+
+# Los tipos de habitación de una etapa que aún no se alcanzó quedan deshabilitados (hito 27).
+func _refresh_room_locks() -> void:
+	for type_id: String in RoomCatalog.get_type_ids():
+		var button: Button = _tool_buttons[type_id]
+		var unlocked: bool = Company.is_room_unlocked(type_id)
+		button.disabled = not unlocked
+		button.tooltip_text = "" if unlocked else "Se desbloquea en %s." % Company.get_stage_name(Company.get_room_stage(type_id))
+		if not unlocked and button.button_pressed:
+			select_tool(BuildController.TOOL_WALL)
 
 
 func _on_tool_pressed(tool: String) -> void:

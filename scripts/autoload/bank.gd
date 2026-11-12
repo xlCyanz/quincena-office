@@ -258,10 +258,20 @@ func loan_problem(amount: int, months: int) -> String:
 		return "El monto mínimo es %s." % MoneyFormat.format(min_amount)
 	if months < int(get_config("loan_min_months")) or months > int(get_config("loan_max_months")):
 		return "El plazo va de %d a %d meses." % [int(get_config("loan_min_months")), int(get_config("loan_max_months"))]
+	var stage_cap: int = Company.get_max_loan()
+	if stage_cap > 0 and amount > stage_cap:
+		return "En %s el banco presta hasta %s por préstamo." % [Company.get_stage_name(), MoneyFormat.format(stage_cap)]
 	if amount > get_available():
 		return "El banco te presta hasta %s más (límite %s, debes %s)." % [
 			MoneyFormat.format(get_available()), MoneyFormat.format(get_limit()), MoneyFormat.format(get_limit_debt())]
 	return ""
+
+
+## Lo más que se puede pedir hoy en un préstamo: lo disponible del límite y, además, el
+## tope por préstamo de la etapa de la empresa (hito 27).
+func get_max_request() -> int:
+	var stage_cap: int = Company.get_max_loan()
+	return get_available() if stage_cap <= 0 else mini(get_available(), stage_cap)
 
 
 ## Pide un préstamo con la tasa de la letra actual. Devuelve {"ok", "message"}.

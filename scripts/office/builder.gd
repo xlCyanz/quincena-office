@@ -554,6 +554,9 @@ func _edges_with_land(new_lot: Lot) -> Dictionary[Vector3i, String]:
 func quote_mark_room(type_id: String, cell: Vector2i) -> Dictionary:
 	if RoomCatalog.get_type(type_id).is_empty():
 		return _fail(0, "Ese tipo de habitación no existe.")
+	if not Company.is_room_unlocked(type_id):
+		return _fail(0, "La %s se desbloquea en %s." % [RoomCatalog.get_display_name(type_id),
+			Company.get_stage_name(Company.get_room_stage(type_id))])
 	if not OfficeState.lot.has_point(cell):
 		return _fail(0, "Esa casilla está fuera del local.")
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)

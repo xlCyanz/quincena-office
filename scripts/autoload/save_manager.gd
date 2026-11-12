@@ -44,6 +44,7 @@ func new_game() -> void:
 	Projects.new_game()
 	# Después del local: la calificación inicial mira los muebles del local inicial.
 	Bank.new_game()
+	Company.new_game()
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.new_game()
@@ -93,6 +94,7 @@ func save_game(slot: String) -> bool:
 		"staff": Staff.export_state(),
 		"projects": Projects.export_state(),
 		"bank": Bank.export_state(),
+		"company": Company.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
@@ -122,6 +124,8 @@ func load_game(slot: String) -> bool:
 	GameClock.import_state(data["clock"])
 	# Las partidas de antes del hito 21 no tienen banco: se calcula con lo que hay.
 	Bank.import_state(data.get("bank", {}))
+	# Las partidas de antes del hito 27 no tienen etapa: se calcula al cargar.
+	Company.import_state(data.get("company", {}))
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.import_state(data["economy"])

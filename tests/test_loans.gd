@@ -49,6 +49,7 @@ func _new_game() -> void:
 	Staff.set_seed(SEED)
 	Projects.set_seed(SEED)
 	Bank.monthly_income = 4000
+	Company.stage = 3  # Mediana empresa: sin tope por préstamo de la etapa (hito 27).
 	_expect(Bank.rating == "C" and Bank.get_limit() == 12000, "parte en C con límite $12,000: %s %d" % [Bank.rating, Bank.get_limit()])
 
 

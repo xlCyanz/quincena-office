@@ -467,7 +467,7 @@ func _refresh_loans() -> void:
 	# Solicitud.
 	var step: int = int(Bank.get_config("loan_amount_step"))
 	var min_amount: int = int(Bank.get_config("loan_min_amount"))
-	var available: int = floori(float(Bank.get_available()) / step) * step
+	var available: int = floori(float(Bank.get_max_request()) / step) * step
 	if _amount <= 0:
 		_amount = clampi(available, min_amount, maxi(min_amount, available))
 	_amount_label.text = "Monto %s" % MoneyFormat.format(_amount)

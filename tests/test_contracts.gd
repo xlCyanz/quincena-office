@@ -88,6 +88,7 @@ func _check_new_game() -> void:
 func _check_ranges() -> void:
 	_new_game()
 	Projects.reputation = 5.0
+	Company.stage = 1  # Startup: llegan medianos sin vendedor (hito 27).
 	var seen: Dictionary[int, bool] = {}
 	var sizes_seen: Dictionary[String, int] = {}
 	var with_advance: int = 0
@@ -172,6 +173,7 @@ func _check_expiry() -> void:
 func _check_accept() -> void:
 	_new_game()
 	Projects.reputation = 5.0
+	Company.stage = 1  # Startup: llegan medianos sin vendedor (hito 27).
 	# Busca una oferta con anticipo y otra sin anticipo.
 	var with_advance: Dictionary = {}
 	var without: Dictionary = {}

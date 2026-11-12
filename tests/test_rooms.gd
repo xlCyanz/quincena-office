@@ -73,6 +73,7 @@ func _check_catalog() -> void:
 
 func _check_starting_spaces() -> void:
 	SaveManager.new_game()
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
 	_expect(spaces.size() == 2, "la oficina inicial tiene 2 espacios: %d" % spaces.size())
 	var office: Dictionary = spaces[RoomRules.space_index_at(spaces, Vector2i(0, 0))]
@@ -91,6 +92,7 @@ func _check_starting_spaces() -> void:
 
 func _check_mark_and_rules() -> void:
 	SaveManager.new_game()
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
 	var builder := Builder.new()
 	var money: int = Economy.balance
 
@@ -154,6 +156,7 @@ func _check_mark_and_rules() -> void:
 
 func _check_requirements() -> void:
 	SaveManager.new_game()
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
 	var builder := Builder.new()
 	builder.apply(_interior_room_changes())
 	builder.mark_room("work_area", Vector2i(3, 3))
@@ -177,6 +180,7 @@ func _check_requirements() -> void:
 
 func _check_walls_change_rooms() -> void:
 	SaveManager.new_game()
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
 	var builder := Builder.new()
 	var x: int = GridEdge.AXIS_X
 	var y: int = GridEdge.AXIS_Y
@@ -237,6 +241,7 @@ func _click(at: Vector2) -> void:
 
 func _check_in_game_with_mouse() -> void:
 	SaveManager.new_game()
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
 	var game: Node = GAME_SCENE.instantiate()
 	add_child(game)
 	await get_tree().process_frame

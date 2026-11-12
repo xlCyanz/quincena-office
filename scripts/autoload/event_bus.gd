@@ -74,3 +74,7 @@ signal emergency_loan_resolved(accepted: bool)
 ## Pudo cambiar el valor de la empresa (dinero, muebles, terreno o deuda). La emite Company.
 @warning_ignore("unused_signal")
 signal company_value_changed(value: int)
+
+## La empresa subió de etapa (hito 27): 0 = Emprendimiento … 4 = Corporación.
+@warning_ignore("unused_signal")
+signal stage_changed(stage: int)

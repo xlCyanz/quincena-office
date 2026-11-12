@@ -92,13 +92,14 @@ func get_team_count() -> int:
 	return Staff.get_active_team_count()
 
 
-## Tamaños de contrato que pueden llegar ahora según la reputación y los vendedores.
+## Tamaños de contrato que pueden llegar ahora según la reputación, la etapa y los vendedores.
 func get_allowed_sizes() -> Array[String]:
 	var sizes: Array[String] = []
 	var sellers: int = get_salesperson_count()
 	for size: String in ContractCatalog.get_size_ids():
 		var info: Dictionary = ContractCatalog.get_size(size)
-		if reputation >= float(info["min_reputation"]) or (bool(info.get("with_salesperson", false)) and sellers > 0):
+		var earned: bool = reputation >= float(info.get("min_reputation", 0)) and Company.stage + 1 >= int(info.get("min_stage", 1))
+		if earned or (bool(info.get("with_salesperson", false)) and sellers > 0):
 			sizes.append(size)
 	return sizes
 

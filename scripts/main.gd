@@ -37,6 +37,7 @@ var _ceo_button: Button
 @onready var _projects_panel: ProjectsPanel = $ProjectsPanel
 @onready var _teams_panel: TeamsPanel = $TeamsPanel
 @onready var _bank_panel: BankPanel = $BankPanel
+@onready var _company_panel: CompanyPanel = $CompanyPanel
 @onready var _game_over_screen: GameOverScreen = $GameOverScreen
 @onready var _emergency_dialog: EmergencyLoanDialog = $EmergencyLoanDialog
 @onready var _employee_card: EmployeeCard = $EmployeeCard
@@ -72,7 +73,8 @@ func _ready() -> void:
 	_projects_panel.attach_button(_build_panel.get_menu_bar())
 	_teams_panel.attach_button(_build_panel.get_menu_bar())
 	_bank_panel.attach_button(_build_panel.get_menu_bar())
-	# Personal, Proyectos, Equipos y Banco ocupan el mismo lado: abrir uno cierra los otros.
+	_company_panel.attach_button(_build_panel.get_menu_bar())
+	# Personal, Proyectos, Equipos, Banco y Empresa ocupan el mismo lado: abrir uno cierra los otros.
 	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_staff_panel))
@@ -85,6 +87,9 @@ func _ready() -> void:
 	_bank_panel.bank_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_bank_panel))
+	_company_panel.company_mode_changed.connect(func(active: bool) -> void:
+		if active:
+			_close_side_panels(_company_panel))
 	_add_ceo_button(_build_panel.get_menu_bar())
 	_employee_card.status_provider = describe_employee_activity
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
@@ -234,6 +239,8 @@ func _close_side_panels(keep: CanvasLayer) -> void:
 		_teams_panel.set_open(false)
 	if keep != _bank_panel:
 		_bank_panel.set_open(false)
+	if keep != _company_panel:
+		_company_panel.set_open(false)
 
 
 # El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
@@ -348,7 +355,7 @@ func _add_ceo_button(menu_bar: Container) -> void:
 	_ceo_button.focus_mode = Control.FOCUS_NONE
 	_ceo_button.pressed.connect(func() -> void: Staff.set_ceo_at_work(not Staff.ceo_at_work))
 	menu_bar.add_child(_ceo_button)
-	menu_bar.move_child(_ceo_button, _bank_panel.get_open_button().get_index() + 1)
+	menu_bar.move_child(_ceo_button, _company_panel.get_open_button().get_index() + 1)
 	_update_ceo_button()
 
 
