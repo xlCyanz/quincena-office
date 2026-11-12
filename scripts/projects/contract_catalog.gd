@@ -60,6 +60,11 @@ static func get_bugs(key: String) -> Variant:
 	return _contracts()["bugs"][key]
 
 
+## Valor de la entrega (data/contracts.json, delivery).
+static func get_delivery(key: String) -> Variant:
+	return _contracts()["delivery"][key]
+
+
 ## Puntos de programación por error, en promedio, de un nivel.
 static func get_points_per_bug(level: String) -> float:
 	return float(_contracts()["bugs"]["points_per_bug"].get(level, 30))

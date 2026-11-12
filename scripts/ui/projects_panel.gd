@@ -32,6 +32,11 @@ var _list: VBoxContainer
 var _accept_buttons: Dictionary[int, Button] = {}
 var _reject_buttons: Dictionary[int, Button] = {}
 var _bars: Dictionary[int, Dictionary] = {}
+var _deliver_buttons: Dictionary[int, Button] = {}
+var _cancel_buttons: Dictionary[int, Button] = {}
+var _confirm_cancel_button: Button
+# Contrato cuya cancelación se está confirmando (0 = ninguno).
+var _confirming_cancel: int = 0
 
 
 func _ready() -> void:
@@ -128,6 +133,21 @@ func get_reject_button(offer_id: int) -> Button:
 	return _reject_buttons.get(offer_id)
 
 
+## Botón "Entregar" de un contrato en curso, o null.
+func get_deliver_button(contract_id: int) -> Button:
+	return _deliver_buttons.get(contract_id)
+
+
+## Botón "Cancelar contrato" de un contrato en curso, o null.
+func get_cancel_button(contract_id: int) -> Button:
+	return _cancel_buttons.get(contract_id)
+
+
+## Botón que confirma la cancelación pedida, o null si no se está confirmando ninguna.
+func get_confirm_cancel_button() -> Button:
+	return _confirm_cancel_button
+
+
 ## Barra de avance de una fase de un contrato en curso, o null.
 func get_phase_bar(contract_id: int, phase: String) -> ProgressBar:
 	return _bars.get(contract_id, {}).get(phase)
@@ -141,9 +161,15 @@ func get_list_text() -> String:
 	return "\n".join(texts)
 
 
-## "★☆☆☆☆" para una reputación de 1 a 5.
+## "★☆☆☆☆ 1.6": las estrellas y el valor exacto.
+static func describe_reputation(value: float) -> String:
+	return "%s %s" % [stars(value), String.num(value, 1) if not is_equal_approx(value, roundf(value)) else str(roundi(value))]
+
+
+## "★☆☆☆☆" para una reputación de 1 a 5: solo las estrellas completas (con 1.9 se ve
+## una, porque los requisitos de las ofertas piden estrellas enteras).
 static func stars(value: float) -> String:
-	var full: int = clampi(roundi(value), 0, STARS)
+	var full: int = clampi(floori(value + 0.0001), 0, STARS)
 	return "★".repeat(full) + "☆".repeat(STARS - full)
 
 
@@ -152,13 +178,18 @@ func _refresh() -> void:
 	_open_button.text = "Proyectos (%d)" % count if count > 0 else "Proyectos"
 	if _list == null or not is_open():
 		return
-	_reputation_label.text = "Reputación %s" % stars(Projects.reputation)
+	_reputation_label.text = "Reputación %s" % describe_reputation(Projects.reputation)
 	for child: Node in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
 	_accept_buttons.clear()
 	_reject_buttons.clear()
 	_bars.clear()
+	_deliver_buttons.clear()
+	_cancel_buttons.clear()
+	_confirm_cancel_button = null
+	if Projects.get_contract(_confirming_cancel).is_empty():
+		_confirming_cancel = 0
 
 	_add_section("En curso (%d de %d)" % [Projects.contracts.size(), Projects.get_contract_limit()])
 	if Projects.contracts.is_empty():
@@ -172,6 +203,12 @@ func _refresh() -> void:
 			ContractCatalog.get_offers("arrival_hour"))))
 	for offer: Dictionary in Projects.offers:
 		_add_offer(offer)
+	if not Projects.history.is_empty():
+		_add_section("Historial")
+		for entry: Dictionary in Projects.history:
+			var change: float = float(entry["reputation_change"])
+			_list.add_child(_muted_label("Día %d · %s · %s · %s · reputación %s%s" % [int(entry["day"]) + 1, entry["title"],
+				entry["result"], MoneyFormat.format(entry["paid"]), "+" if change >= 0.0 else "−", String.num(absf(change), 2)]))
 
 
 func _add_contract(contract: Dictionary) -> void:
@@ -232,6 +269,55 @@ func _add_contract(contract: Dictionary) -> void:
 		state = "Ahora rinde %s puntos por hora." % String.num(rate, 1).trim_suffix(".0") if rate > 0.0 \
 			else "Ahora nadie está trabajando en él."
 	_list.add_child(_muted_label(state))
+	_add_delivery_actions(contract)
+
+
+func _add_delivery_actions(contract: Dictionary) -> void:
+	var contract_id: int = contract["id"]
+	# Solo con los errores conocidos: los ocultos también descontarán, pero no se ven.
+	var preview: Dictionary = Projects.preview_delivery(contract, true)
+	var change: float = float(preview["reputation_change"])
+	var penalties: Array[String] = []
+	if float(preview["late_penalty"]) > 0.0:
+		penalties.append("atraso −%d%%" % roundi(float(preview["late_penalty"]) * 100.0))
+	if float(preview["bug_penalty"]) > 0.0:
+		penalties.append("errores −%d%%" % roundi(float(preview["bug_penalty"]) * 100.0))
+	_list.add_child(_muted_label("Si entregas hoy: %s; cobras hasta %s%s · reputación hasta %s%s. Los errores que nadie encontró también descuentan." % [preview["result"],
+		MoneyFormat.format(preview["paid"]), " (%s)" % ", ".join(penalties) if not penalties.is_empty() else "",
+		"+" if change >= 0.0 else "−", String.num(absf(change), 2)]))
+	var actions := HBoxContainer.new()
+	_list.add_child(actions)
+	if _confirming_cancel == contract_id:
+		var advance: int = int(contract["advance"])
+		var question := _muted_label("¿Cancelar? %sBaja la reputación." % (
+			"Devuelves el anticipo de %s. " % MoneyFormat.format(advance) if advance > 0 else ""))
+		question.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		actions.add_child(question)
+		_confirm_cancel_button = Button.new()
+		_confirm_cancel_button.text = "Sí, cancelar"
+		_confirm_cancel_button.pressed.connect(func() -> void:
+			_confirming_cancel = 0
+			_status_label.text = Projects.cancel(contract_id)["message"])
+		actions.add_child(_confirm_cancel_button)
+		var keep := Button.new()
+		keep.text = "No"
+		keep.pressed.connect(func() -> void:
+			_confirming_cancel = 0
+			_refresh())
+		actions.add_child(keep)
+		return
+	var deliver := Button.new()
+	deliver.text = "Entregar"
+	deliver.pressed.connect(func() -> void: _status_label.text = Projects.deliver(contract_id)["message"])
+	actions.add_child(deliver)
+	_deliver_buttons[contract_id] = deliver
+	var cancel := Button.new()
+	cancel.text = "Cancelar contrato"
+	cancel.pressed.connect(func() -> void:
+		_confirming_cancel = contract_id
+		_refresh())
+	actions.add_child(cancel)
+	_cancel_buttons[contract_id] = cancel
 
 
 func _add_offer(offer: Dictionary) -> void:

@@ -141,6 +141,8 @@ func _run(roles: Array[String], seed_value: int, extra_days: int) -> Dictionary:
 	var contract: Dictionary = Projects.contracts[0]
 	contract["points"] = {"design": 200, "programming": 600, "testing": 200}
 	contract["total_points"] = 1000
+	# Plazo largo: que el cliente no lo cancele por atraso (hito 18).
+	contract["deadline_day"] = GameClock.get_day_count() + 1000
 	var finished_at: int = -1
 	for hour: int in range(GameConstants.HOURS_PER_DAY * 120):
 		GameClock.fast_forward_hours(1)

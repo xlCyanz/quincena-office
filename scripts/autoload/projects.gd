@@ -23,9 +23,18 @@
 # no los ve); en la fase de pruebas se encuentran ("bugs_found") y los programadores los
 # corrigen ("bugs_fixed"; "fix_progress" son los puntos gastados en el que están
 # corrigiendo). Con las pruebas completas, QA sigue revisando hasta la entrega.
+#
+# Entrega (hito 18): el jugador entrega cuando quiere (ver preview_delivery) o cancela
+# (devuelve el anticipo). Al atrasarse un contrato se sortea "cancel_day": ese día, a la
+# hora de llegada de las ofertas, el cliente lo cancela sin pagar nada más. history
+# guarda las últimas entregas y cancelaciones.
 extends Node
 
 const CONCEPT_ADVANCE: String = "Anticipo de contrato"
+const CONCEPT_DELIVERY: String = "Pago de contrato"
+const CONCEPT_REFUND: String = "Devolución de anticipo"
+## cancel_day de un contrato que todavía no se atrasó.
+const NO_CANCEL_DAY: int = -1
 ## team_id de un contrato que lleva el CEO trabajando solo.
 const CEO_TEAM: int = 0
 ## team_id de un contrato que no lleva nadie.
@@ -37,6 +46,10 @@ var offers: Array[Dictionary] = []
 var contracts: Array[Dictionary] = []
 ## Reputación de la empresa, de 1 a 5 estrellas (se mueve con las entregas, hito 18).
 var reputation: float = 1.0
+## Últimas entregas y cancelaciones: {"title", "result", "paid", "reputation_change", "day"}.
+var history: Array[Dictionary] = []
+## Contratos entregados en toda la partida.
+var delivered_count: int = 0
 
 var _next_id: int = 1
 var _rng := RandomNumberGenerator.new()
@@ -52,6 +65,8 @@ func _ready() -> void:
 func new_game() -> void:
 	offers.clear()
 	contracts.clear()
+	history.clear()
+	delivered_count = 0
 	reputation = float(ContractCatalog.get_offers("start_reputation"))
 	_next_id = 1
 	_rng.randomize()
@@ -126,6 +141,7 @@ func accept(offer_id: int) -> Dictionary:
 	for key: String in BUG_KEYS:
 		contract[key] = 0
 	contract["fix_progress"] = 0.0
+	contract["cancel_day"] = NO_CANCEL_DAY
 	contract["team_id"] = _first_free_team()
 	contracts.append(contract)
 	var message: String = "Contrato aceptado: %s para %s, %d días; %s." % [
@@ -146,6 +162,96 @@ func reject(offer_id: int) -> bool:
 	offers.erase(offer)
 	EventBus.projects_changed.emit()
 	return true
+
+
+## Parte del trabajo hecha (0 a 1), sumando las tres fases.
+static func get_done_ratio(contract: Dictionary) -> float:
+	var total: float = 0.0
+	var done: float = 0.0
+	for phase: String in ContractCatalog.PHASES:
+		total += float(contract["points"][phase])
+		done += minf(float(contract["progress"][phase]), float(contract["points"][phase]))
+	return 1.0 if total <= 0.0 else clampf(done / total, 0.0, 1.0)
+
+
+## Errores que le llegarían al cliente: los ocultos y los encontrados sin corregir.
+static func get_delivered_bugs(contract: Dictionary) -> int:
+	return int(contract["bugs_hidden"]) + int(contract["bugs_found"])
+
+
+## Días de atraso de un contrato hoy (0 si va a tiempo).
+func get_days_late(contract: Dictionary) -> int:
+	return maxi(0, -contract_days_left(contract))
+
+
+## Qué pasaría si se entrega hoy: {"done", "late_days", "bugs", "late_penalty",
+## "bug_penalty", "gross", "paid", "reputation_change", "result"}. gross es el pago con
+## penalidades; paid lo que se cobra ahora (gross menos el anticipo, nunca menos de 0).
+## Con known_only cuenta solo los errores encontrados sin corregir (lo que sabe el
+## jugador); la entrega de verdad cuenta también los ocultos.
+func preview_delivery(contract: Dictionary, known_only: bool = false) -> Dictionary:
+	var done: float = get_done_ratio(contract)
+	var late_days: int = get_days_late(contract)
+	var bugs: int = int(contract["bugs_found"]) if known_only else get_delivered_bugs(contract)
+	var late_penalty: float = minf(late_days * float(ContractCatalog.get_offers("late_penalty_per_day")),
+		float(ContractCatalog.get_offers("late_penalty_max")))
+	var bug_penalty: float = minf(bugs * float(ContractCatalog.get_offers("bug_penalty_each")),
+		float(ContractCatalog.get_offers("bug_penalty_max")))
+	var gross: int = roundi(int(contract["pay"]) * done * maxf(0.0, 1.0 - late_penalty - bug_penalty))
+	var change: float = 0.0
+	var result: String
+	var complete: bool = done >= 1.0 - Production.EPSILON
+	if complete and bugs == 0 and late_days == 0:
+		change = float(ContractCatalog.get_delivery("clean_reputation"))
+		result = "a tiempo y limpio"
+	else:
+		change = maxf(bugs * float(ContractCatalog.get_delivery("bug_reputation"))
+			+ late_days * float(ContractCatalog.get_delivery("late_reputation")),
+			float(ContractCatalog.get_delivery("max_reputation_loss")))
+		var parts: Array[String] = []
+		parts.append("tarde (%d %s)" % [late_days, "día" if late_days == 1 else "días"] if late_days > 0 else "a tiempo")
+		if bugs > 0:
+			parts.append("con %d %s" % [bugs, "error" if bugs == 1 else "errores"])
+		if not complete:
+			parts.append("incompleto (%d%%)" % floori(done * 100.0 + Production.EPSILON))
+		result = ", ".join(parts)
+	return {"done": done, "late_days": late_days, "bugs": bugs, "late_penalty": late_penalty, "bug_penalty": bug_penalty,
+		"gross": gross, "paid": maxi(0, gross - int(contract["advance"])), "reputation_change": change, "result": result}
+
+
+## Entrega un contrato: cobra lo que falta del pago con sus penalidades y mueve la
+## reputación. Devuelve {"ok", "message"}.
+func deliver(contract_id: int) -> Dictionary:
+	var contract: Dictionary = get_contract(contract_id)
+	if contract.is_empty():
+		return {"ok": false, "message": "Ese contrato ya no está."}
+	var preview: Dictionary = preview_delivery(contract)
+	contracts.erase(contract)
+	if int(preview["paid"]) > 0:
+		Economy.earn(int(preview["paid"]), CONCEPT_DELIVERY)
+	delivered_count += 1
+	var message: String = "Entregaste %s %s: cobras %s. %s" % [describe_title(contract), preview["result"],
+		MoneyFormat.format(preview["paid"]), _change_reputation(float(preview["reputation_change"]))]
+	_finish(contract, "Entregado " + String(preview["result"]), int(preview["paid"]), float(preview["reputation_change"]), message)
+	return {"ok": true, "message": message}
+
+
+## Cancela un contrato: se devuelve el anticipo (aunque el saldo quede negativo) y cae la
+## reputación. Devuelve {"ok", "message"}.
+func cancel(contract_id: int) -> Dictionary:
+	var contract: Dictionary = get_contract(contract_id)
+	if contract.is_empty():
+		return {"ok": false, "message": "Ese contrato ya no está."}
+	contracts.erase(contract)
+	var advance: int = int(contract["advance"])
+	if advance > 0:
+		Economy.charge(advance, CONCEPT_REFUND)
+	var change: float = float(ContractCatalog.get_delivery("cancel_reputation"))
+	var message: String = "Cancelaste %s%s. %s" % [describe_title(contract),
+		": devuelves el anticipo de %s" % MoneyFormat.format(advance) if advance > 0 else "",
+		_change_reputation(change)]
+	_finish(contract, "Cancelado por la empresa", -advance, change, message)
+	return {"ok": true, "message": message}
 
 
 ## Le da un contrato a un equipo (o al CEO, o a nadie con NO_TEAM). Un equipo lleva un
@@ -228,15 +334,18 @@ static func describe_terms(offer: Dictionary) -> String:
 	if int(offer["advance"]) > 0:
 		advance = "anticipo %d%%: %s" % [roundi(float(ContractCatalog.get_offers("advance_ratio")) * 100.0),
 			MoneyFormat.format(offer["advance"])]
-	return "Plazo %d días · Pago %s · %s · Atraso −%d%% por día (máx. %d%%)" % [offer["days"],
+	return "Plazo %d días · Pago %s · %s · Atraso −%d%% por día (máx. %d%%) · errores −%d%% c/u (máx. %d%%)" % [offer["days"],
 		MoneyFormat.format(offer["pay"]), advance,
 		roundi(float(ContractCatalog.get_offers("late_penalty_per_day")) * 100.0),
-		roundi(float(ContractCatalog.get_offers("late_penalty_max")) * 100.0)]
+		roundi(float(ContractCatalog.get_offers("late_penalty_max")) * 100.0),
+		roundi(float(ContractCatalog.get_offers("bug_penalty_each")) * 100.0),
+		roundi(float(ContractCatalog.get_offers("bug_penalty_max")) * 100.0)]
 
 
 func _on_hour_changed(hour: int) -> void:
 	_produce()
 	if hour == int(ContractCatalog.get_offers("arrival_hour")):
+		_check_late_contracts(GameClock.get_day_count())
 		_process_arrivals(GameClock.get_day_count())
 
 
@@ -326,6 +435,7 @@ func _take_id() -> int:
 ## (JSON guarda los números como decimales y perdería precisión).
 func export_state() -> Dictionary:
 	return {"offers": offers.duplicate(true), "contracts": contracts.duplicate(true), "reputation": reputation,
+		"history": history.duplicate(true), "delivered_count": delivered_count,
 		"next_id": _next_id, "rng_state": str(_rng.state)}
 
 
@@ -347,11 +457,18 @@ func import_state(state: Dictionary) -> void:
 		for key: String in BUG_KEYS:
 			contract[key] = int(saved.get(key, 0))
 		contract["fix_progress"] = float(saved.get("fix_progress", 0.0))
+		contract["cancel_day"] = int(saved.get("cancel_day", NO_CANCEL_DAY))
 		# Las partidas del hito 14 tenían un solo contrato, el del CEO.
 		var team_id: int = int(saved.get("team_id", CEO_TEAM))
 		contract["team_id"] = team_id if team_id <= CEO_TEAM or not Staff.get_team(team_id).is_empty() else NO_TEAM
 		contracts.append(contract)
 	reputation = float(state.get("reputation", ContractCatalog.get_offers("start_reputation")))
+	history.clear()
+	for saved: Dictionary in state.get("history", []):
+		history.append({"title": String(saved.get("title", "")), "result": String(saved.get("result", "")),
+			"paid": int(saved.get("paid", 0)), "reputation_change": float(saved.get("reputation_change", 0.0)),
+			"day": int(saved.get("day", 0))})
+	delivered_count = int(state.get("delivered_count", 0))
 	_next_id = int(state.get("next_id", 1))
 	var rng_state: String = String(state.get("rng_state", ""))
 	if rng_state.is_valid_int():
@@ -461,6 +578,50 @@ func _handle_bugs(contract: Dictionary, done: Array[Dictionary]) -> void:
 func _roll(expected: float) -> int:
 	var whole: int = floori(expected)
 	return whole + (1 if _rng.randf() < expected - whole else 0)
+
+
+# A la hora de llegada: a cada contrato que se acaba de atrasar se le sortea cuántos días
+# de atraso aguanta el cliente; el día que llega a ese atraso, el cliente lo cancela.
+func _check_late_contracts(today: int) -> void:
+	var limits: Array = ContractCatalog.get_delivery("client_cancel_days")
+	for contract: Dictionary in contracts.duplicate():
+		if get_days_late(contract) <= 0:
+			continue
+		if int(contract["cancel_day"]) == NO_CANCEL_DAY:
+			contract["cancel_day"] = int(contract["deadline_day"]) + _rng.randi_range(int(limits[0]), int(limits[1]))
+			EventBus.notice.emit("%s está atrasado: el cliente puede cancelarlo en cualquier momento." % describe_title(contract))
+		if today >= int(contract["cancel_day"]):
+			_client_cancel(contract)
+	EventBus.projects_changed.emit()
+
+
+# El cliente se cansó de esperar: se lleva el contrato y no paga nada más (el anticipo
+# queda en la empresa).
+func _client_cancel(contract: Dictionary) -> void:
+	contracts.erase(contract)
+	var change: float = float(ContractCatalog.get_delivery("cancel_reputation"))
+	var message: String = "%s canceló %s por el atraso: no paga nada más. %s" % [contract["client"],
+		describe_title(contract), _change_reputation(change)]
+	_finish(contract, "Cancelado por el cliente", 0, change, message)
+
+
+func _change_reputation(change: float) -> String:
+	var before: float = reputation
+	reputation = clampf(reputation + change, float(ContractCatalog.get_delivery("min_reputation")),
+		float(ContractCatalog.get_delivery("max_reputation")))
+	var applied: float = reputation - before
+	if absf(applied) < Production.EPSILON:
+		return "La reputación no cambia."
+	return "Reputación %s%s." % ["+" if applied > 0.0 else "−", String.num(absf(applied), 2)]
+
+
+# Anota el resultado en el historial y avisa.
+func _finish(contract: Dictionary, result: String, paid: int, change: float, message: String) -> void:
+	history.push_front({"title": describe_title(contract), "result": result, "paid": paid,
+		"reputation_change": change, "day": GameClock.get_day_count()})
+	history.resize(mini(history.size(), int(ContractCatalog.get_delivery("history_size"))))
+	EventBus.projects_changed.emit()
+	EventBus.notice.emit(message)
 
 
 # Quién lleva un contrato nuevo: el primer equipo con miembros que no lleva ninguno; si
