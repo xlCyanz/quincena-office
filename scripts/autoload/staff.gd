@@ -99,6 +99,11 @@
 # alcanza. Cada hora que termina, quien trabajó en su puesto ensucia la habitación de su
 # puesto (OfficeState.add_dirt) y cada persona de limpieza en su turno limpia la más sucia.
 # Una habitación sucia baja la meta de ánimo de quienes trabajan en ella.
+#
+# Competencia (hito 38, data/staff.json competition): cada día otra empresa puede hacerle
+# una oferta a un empleado SemiSenior o Senior (o de dirección): "outside_offer" =
+# {"salary", "until_day"}. Un aumento que la iguale lo retiene; si no, se va a su
+# "until_day" o cuando el jugador lo deja ir (let_go).
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -116,6 +121,7 @@ const CONCEPT_NIGHT: String = "Recargo nocturno"
 const SALES_ROLE: String = "salesperson"
 const CONCEPT_FIRING: String = "Despido"
 const CONCEPT_RESIGNATION: String = "Liquidación por renuncia"
+const CONCEPT_POACHED: String = "Liquidación por irse a otra empresa"
 ## quit_day de quien no avisó que renuncia.
 const NO_QUIT: int = -1
 const EMPLOYEE_PREFIX: String = "employee_"
@@ -488,6 +494,14 @@ func _apply_raise(employee: Dictionary, new_salary: int) -> Array[String]:
 		employee["raise_request"] = {}
 		_change_mood(employee, int(StaffCatalog.get_morale("raise_accept_mood")))
 		messages.append("Le diste el aumento que pidió.")
+	var offer: Dictionary = employee.get("outside_offer", {})
+	if not offer.is_empty():
+		if new_salary >= int(offer["salary"]):
+			employee["outside_offer"] = {}
+			_change_mood(employee, int(StaffCatalog.get_morale("retain_mood")))
+			messages.append("Igualaste la oferta de la otra empresa: se queda.")
+		else:
+			messages.append("La otra empresa le ofrece %s: con eso no se queda." % MoneyFormat.format(int(offer["salary"])))
 	if int(employee["quit_day"]) != NO_QUIT:
 		if new_salary >= salary * (1.0 + StaffCatalog.get_morale("retain_raise_ratio")) - 0.5:
 			employee["quit_day"] = NO_QUIT
@@ -759,6 +773,65 @@ func deny_raise(employee_id: int) -> bool:
 	return true
 
 
+## Probabilidad diaria de que otra empresa le haga una oferta (0 si no es SemiSenior,
+## Senior ni de dirección).
+func get_offer_chance(employee: Dictionary) -> float:
+	var level: String = employee["level"]
+	if not StaffCatalog.has_levels(employee["role"]):
+		if not (StaffCatalog.get_management("ladder") as Array).has(employee["role"]):
+			return 0.0
+		level = StaffCatalog.get_level_ids()[-1]
+	var chance: float = float((StaffCatalog.get_competition("chances") as Dictionary).get(level, 0.0))
+	var ratio: float = float(employee["salary"]) / maxf(1.0, float(get_market_salary(employee)))
+	if ratio < 1.0:
+		chance *= float(StaffCatalog.get_competition("underpaid_factor"))
+	elif ratio >= float(StaffCatalog.get_competition("well_paid_ratio")):
+		chance *= float(StaffCatalog.get_competition("well_paid_factor"))
+	var traits: Dictionary = StaffCatalog.get_competition("traits")
+	for trait_id: Variant in employee.get("traits", []):
+		chance *= float(traits.get(String(trait_id), 1.0))
+	return chance
+
+
+## Iguala la oferta de otra empresa con un aumento. Devuelve {"ok", "message"}.
+func match_offer(employee_id: int) -> Dictionary:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty() or (employee.get("outside_offer", {}) as Dictionary).is_empty():
+		return {"ok": false, "message": "No tiene ninguna oferta de otra empresa."}
+	return give_raise(employee_id, int(employee["outside_offer"]["salary"]))
+
+
+## Deja que se vaya hoy a la otra empresa (cobra lo ganado y lo debido).
+func let_go(employee_id: int) -> Dictionary:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty() or (employee.get("outside_offer", {}) as Dictionary).is_empty():
+		return {"ok": false, "message": "No tiene ninguna oferta de otra empresa."}
+	return {"ok": true, "message": _leave_for_offer(employee)}
+
+
+# Se va a la otra empresa: cobra lo ganado y lo debido.
+func _leave_for_offer(employee: Dictionary) -> String:
+	var cost: int = _remove_employee(employee, CONCEPT_POACHED)
+	EventBus.office_changed.emit()
+	var message: String = "%s se fue a otra empresa; se le pagó %s." % [employee["name"], MoneyFormat.format(cost)]
+	EventBus.notice.emit(message)
+	return message
+
+
+func _maybe_get_offer(employee: Dictionary, today: int) -> void:
+	var chance: float = get_offer_chance(employee)
+	if chance <= 0.0 or _rng.randf() >= chance:
+		return
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	var raise_range: Array = StaffCatalog.get_competition("raise_range")
+	var ratio: float = _rng.randf_range(float(raise_range[0]), float(raise_range[1]))
+	var amount: int = maxi(step, roundi(int(employee["salary"]) * ratio / step) * step)
+	var days: int = int(StaffCatalog.get_competition("days"))
+	employee["outside_offer"] = {"salary": int(employee["salary"]) + amount, "until_day": today + days}
+	EventBus.notice.emit("Otra empresa le ofrece a %s %s al mes: se va en %d días si no igualas la oferta." % [
+		employee["name"], MoneyFormat.format(int(employee["salary"]) + amount), days])
+
+
 ## Sueldo de su nivel en la tabla 13.2 (con el que se compara el suyo).
 func get_market_salary(employee: Dictionary) -> int:
 	return StaffCatalog.get_salary(employee["role"], employee["level"])
@@ -865,6 +938,11 @@ func _update_morale() -> void:
 		var bad: bool = int(employee["mood"]) < int(StaffCatalog.get_morale("quit_mood_below")) \
 			or int(employee["stress"]) > int(StaffCatalog.get_morale("quit_stress_above"))
 		employee["bad_days"] = int(employee["bad_days"]) + 1 if bad else 0
+		var offer: Dictionary = employee.get("outside_offer", {})
+		if not offer.is_empty():
+			if today >= int(offer["until_day"]):
+				_leave_for_offer(employee)
+			continue
 		if int(employee["quit_day"]) != NO_QUIT:
 			if today >= int(employee["quit_day"]):
 				_resign(employee)
@@ -874,6 +952,7 @@ func _update_morale() -> void:
 			EventBus.notice.emit("%s avisa que renuncia: se va en %d días si no le das un aumento." % [
 				employee["name"], int(StaffCatalog.get_morale("notice_days"))])
 			continue
+		_maybe_get_offer(employee, today)
 		_maybe_ask_raise(employee, today)
 	EventBus.staff_changed.emit()
 
@@ -2096,6 +2175,9 @@ func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
 		# Al contratarlo dirige el primer departamento libre.
 		employee["department"] = String(saved["department"]) if saved.has("department") else _free_department()
 	employee["last_raise_day"] = int(saved.get("last_raise_day", employee.get("hired_day", 0)))
+	var offer: Dictionary = saved.get("outside_offer", {})
+	employee["outside_offer"] = {} if not offer.has("salary") else {"salary": int(offer["salary"]),
+		"until_day": int(offer.get("until_day", 0))}
 	var request: Dictionary = saved.get("raise_request", {})
 	employee["raise_request"] = {} if not request.has("amount") else {"amount": int(request["amount"]),
 		"until_day": int(request.get("until_day", 0))}

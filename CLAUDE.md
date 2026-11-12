@@ -168,6 +168,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   de quienes trabajan ahí baja 10 (`Staff.works_in_dirty_room`). `cleaner` ($500, desde el inicio) tiene su puesto en un armario (`is_closet`) dentro
   de un Cuarto de limpieza (`Workstations.CLEANING_ROOM`, uno por armario); en su turno quita 25/h × factor a la habitación más sucia y `main.gd` lo
   manda ahí (`Staff.get_cleaning_room`). `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas de 6.
+- Competencia (`competition` en `data/staff.json`): cada medianoche (`Staff._update_morale`) otra empresa puede ofrecerle a un SemiSenior o
+  Senior, o a un líder, gerente o ejecutivo (cuentan como Senior), su sueldo +15–30 % (`outside_offer`: `{salary, until_day}`, 5 días).
+  `Staff.get_offer_chance`: Senior 1 %/día, SemiSenior 0.5 %, ×3 si gana menos que su nivel, ×0.3 desde el 110 %, leal ×0.25, ambicioso ×2.
+  Un aumento que la iguala la cierra (+25 de ánimo; `match_offer`); `let_go` o el plazo lo sacan («Liquidación por irse a otra empresa»).
+  La ficha muestra el aviso y «Igualar ($X)» / «Dejar ir».
 - Banco (`Bank`, `data/bank.json`): calificación A–E por puntaje = base 50 (C) + ingresos de contratos del mes pasado (hasta +20, con $25,000)
   + bienes (reventa de muebles y computadoras, hasta +10) + antigüedad (+2/mes, hasta +10) + pagos a tiempo (+2, hasta +10)
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
@@ -265,3 +270,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 35 | Agenda semanal | ✅ Completado (Equipos pasa a Horarios con vistas Equipos, Plantillas y Agenda; Diurno, Tarde y Noche editables; cada equipo sigue una plantilla o tiene turno propio; agenda de un día con huecos sin líder desde Startup; la recepción se marca en el hito 36) |
 | 36 | Recepcionista y visitas | ✅ Completado (mostrador $600 con silla delante, uno por mostrador; recepcionista $700 desde Startup; visitas solo con Recepción armada, 40 % de las ofertas; esperan 3 h o 6 con sofá $300; atendidas al terminar una hora con recepcionista; el cliente se ve en la Recepción) |
 | 37 | Contador y limpieza | ✅ Completado (contador $1,300 desde Startup: −10 % mantenimiento y −1 punto a préstamos nuevos por el factor de Administración, avisos 3 días antes si el saldo no alcanza; suciedad +1 por persona-hora, zafacón la mitad, desde 50 ánimo −10; personal de limpieza $500 con armario en un Cuarto de limpieza, −25/h a la habitación más sucia) |
+| 38 | Competencia por empleados | ✅ Completado (SemiSenior, Senior y dirección; 1 %/día Senior, ×3 mal pagado, ×0.3 bien pagado, leal ×0.25, ambicioso ×2; oferta +15–30 % con 5 días; igualar retiene, «Dejar ir» o el plazo lo sacan) |

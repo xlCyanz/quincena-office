@@ -47,6 +47,9 @@ var _confirm_label: Label
 var _confirm_button: Button
 var _alert: Label
 var _request_row: HBoxContainer
+var _offer_row: HBoxContainer
+var _match_button: Button
+var _let_go_button: Button
 var _accept_button: Button
 var _deny_button: Button
 var _raise_label: Label
@@ -151,6 +154,18 @@ func _ready() -> void:
 	_deny_button.text = "Negar"
 	_deny_button.pressed.connect(func() -> void: Staff.deny_raise(_employee_id))
 	_request_row.add_child(_deny_button)
+	# Oferta de otra empresa (hito 38): igualarla o dejarlo ir.
+	_offer_row = HBoxContainer.new()
+	rows.add_child(_offer_row)
+	_match_button = Button.new()
+	_match_button.pressed.connect(func() -> void: Staff.match_offer(_employee_id))
+	_offer_row.add_child(_match_button)
+	_let_go_button = Button.new()
+	_let_go_button.text = "Dejar ir"
+	_let_go_button.pressed.connect(func() -> void:
+		Staff.let_go(_employee_id)
+		close())
+	_offer_row.add_child(_let_go_button)
 
 	var raise_row := HBoxContainer.new()
 	rows.add_child(raise_row)
@@ -279,6 +294,15 @@ func get_confirm_fire_button() -> Button:
 ## Botón que acepta el aumento que pidió el empleado.
 func get_accept_raise_button() -> Button:
 	return _accept_button
+
+
+## Botones de la oferta de otra empresa: «Igualar ($X)» y «Dejar ir».
+func get_match_offer_button() -> Button:
+	return _match_button
+
+
+func get_let_go_button() -> Button:
+	return _let_go_button
 
 
 ## Botón que niega el aumento que pidió el empleado.
@@ -476,6 +500,13 @@ func _refresh_raise(employee: Dictionary) -> void:
 		var left: int = maxi(0, int(request["until_day"]) - GameClock.get_day_count())
 		alerts.append("Pide un aumento de %s (%d %s para responder)." % [
 			MoneyFormat.format(int(request["amount"])), left, "día" if left == 1 else "días"])
+	var offer: Dictionary = employee.get("outside_offer", {})
+	if not offer.is_empty():
+		var offer_left: int = maxi(0, int(offer["until_day"]) - GameClock.get_day_count())
+		alerts.append("Otra empresa le ofrece %s al mes: se va en %d %s si no igualas la oferta." % [
+			MoneyFormat.format(int(offer["salary"])), offer_left, "día" if offer_left == 1 else "días"])
+		_match_button.text = "Igualar (%s)" % MoneyFormat.format(int(offer["salary"]))
+	_offer_row.visible = not offer.is_empty()
 	if Staff.works_in_dirty_room(Staff.employee_key(employee["id"])):
 		alerts.append("Su lugar de trabajo está sucio: le baja el ánimo. Contrata personal de limpieza.")
 	_alert.text = "\n".join(alerts)

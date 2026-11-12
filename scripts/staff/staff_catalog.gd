@@ -116,6 +116,11 @@ static func get_departments(key: String) -> Variant:
 	return _staff_data()["departments"][key]
 
 
+## Valor de data/staff.json, competition (ofertas de otras empresas, hito 38).
+static func get_competition(key: String) -> Variant:
+	return _staff_data()["competition"][key]
+
+
 ## Valor de data/staff.json, accounting (contador, hito 37).
 static func get_accounting(key: String) -> Variant:
 	return _staff_data()["accounting"][key]
