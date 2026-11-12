@@ -71,6 +71,11 @@ func _visible_ids() -> Array[String]:
 # Área de trabajo de 3×3 al este de la Oficina Ejecutiva con tres puestos (escritorio
 # con computadora y silla delante). Cumple el objetivo «Arma un Área de trabajo».
 func _prepare_office() -> void:
+	_build_work_area()
+	_build_stations()
+
+
+func _build_work_area() -> void:
 	var builder := Builder.new()
 	var y: int = GridEdge.AXIS_Y
 	var walls: Array[Dictionary] = [
@@ -80,6 +85,10 @@ func _prepare_office() -> void:
 	]
 	Economy.earn(5000, "Prueba")
 	_expect(builder.apply(walls)["ok"] and builder.mark_room(Workstations.WORK_AREA, Vector2i(4, 1))["ok"], "área de trabajo")
+
+
+func _build_stations() -> void:
+	var builder := Builder.new()
 	for x: int in [3, 4, 5]:
 		_expect(builder.place("simple_desk", Vector2i(x, 0), 2)["ok"] and builder.place("basic_chair", Vector2i(x, 1), 0)["ok"]
 			and builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "puesto en x %d" % x)
@@ -206,7 +215,13 @@ func _check_ui() -> void:
 	staff.set_open(false)
 	_expect(panel.is_shown() and not panel.is_expanded(), "si la plegó él, sigue plegada")
 	panel.get_header_button().pressed.emit()
-	_prepare_office()
+	_build_work_area()
+	# La recompensa se paga mientras se avisa el gasto de las paredes: el Hud no puede
+	# quedarse con el saldo o el valor de antes de cobrarla.
+	var hud: Hud = game.get_node("Hud")
+	_expect(hud.get_balance_text() == MoneyFormat.format(Economy.balance), "Hud: saldo al día: %s" % hud.get_balance_text())
+	_expect(hud.get_value_text() == "Valor %s" % MoneyFormat.format(Company.get_value()), "Hud: valor al día: %s" % hud.get_value_text())
+	_build_stations()
 	_hire("programmer")
 	await get_tree().process_frame
 	_expect(panel.get_text().contains("• Entrega tu primer contrato") and not panel.get_text().contains("primer programador"), "se actualiza: %s" % panel.get_text())

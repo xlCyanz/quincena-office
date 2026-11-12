@@ -122,6 +122,7 @@ func _refresh() -> void:
 	for index: int in range(Company.stage + 1):
 		for item: Variant in Company.get_stage_info(index).get("unlocks", []):
 			unlocked.append(String(item))
+	unlocked.append(Company.describe_loan_cap(Company.get_max_loan()))
 	_label("Tienes: %s." % ", ".join(PackedStringArray(unlocked)), 0, MUTED_COLOR)
 
 	if Company.stage + 1 < count:
@@ -131,7 +132,7 @@ func _refresh() -> void:
 			var met: bool = requirement["met"]
 			_row("  %s %s" % ["✓" if met else "·", requirement["label"]],
 				"%d / %d" % [requirement["current"], requirement["needed"]], MET_COLOR if met else Color.WHITE)
-		var unlocks: Array = Company.get_stage_info(next).get("unlocks", [])
+		var unlocks: Array[String] = Company.get_new_unlocks(next)
 		_label("Desbloquea: %s." % ", ".join(PackedStringArray(unlocks)), 0, MUTED_COLOR)
 		_label("Las etapas se revisan cada día y nunca bajan.", 0, MUTED_COLOR)
 	else:
@@ -150,9 +151,13 @@ func _refresh() -> void:
 	_label("Este mes (mes %d)" % month, SECTION_FONT_SIZE)
 	var income: int = 0
 	var expenses: int = 0
+	var borrowed: int = 0
 	var totals: Dictionary[String, int] = Economy.get_month_totals(month)
 	for concept: String in totals:
-		if totals[concept] >= 0:
+		# Un préstamo entra a la caja pero no es un ingreso: va aparte.
+		if concept == Bank.CONCEPT_LOAN or concept == Bank.CONCEPT_EMERGENCY:
+			borrowed += totals[concept]
+		elif totals[concept] >= 0:
 			income += totals[concept]
 		else:
 			expenses -= totals[concept]
@@ -160,6 +165,8 @@ func _refresh() -> void:
 	_row("  Gastos", MoneyFormat.format(-expenses), Hud.NEGATIVE_COLOR if expenses > 0 else Color.WHITE)
 	var result: int = income - expenses
 	_row("  Resultado", ("+" if result >= 0 else "") + MoneyFormat.format(result), Hud.NEGATIVE_COLOR if result < 0 else Color.WHITE)
+	if borrowed > 0:
+		_row("  Préstamos recibidos", "+" + MoneyFormat.format(borrowed), MUTED_COLOR)
 	_label("El detalle por concepto está en el Banco.", 0, MUTED_COLOR)
 
 
@@ -179,6 +186,9 @@ func _row(concept: String, amount: String, color: Color) -> void:
 	var concept_label := Label.new()
 	concept_label.text = concept
 	concept_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Un requisito largo se parte en líneas en vez de ensanchar el panel.
+	concept_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	concept_label.custom_minimum_size.x = 1.0
 	row.add_child(concept_label)
 	var amount_label := Label.new()
 	amount_label.text = amount

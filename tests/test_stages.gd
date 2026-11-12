@@ -101,7 +101,8 @@ func _check_startup() -> void:
 	for text: String in _notices:
 		if text.contains("Startup"):
 			notice = text
-	_expect(notice.begins_with("¡La empresa pasó a Startup!") and notice.contains("contratos medianos"), "aviso: %s" % notice)
+	_expect(notice.begins_with("¡La empresa pasó a Startup!") and notice.contains("contratos medianos")
+		and notice.contains("préstamos de hasta $30,000"), "aviso: %s" % notice)
 	_expect(Projects.get_allowed_sizes() == (["small", "medium"] as Array[String]) and Projects.get_salesperson_count() == 0,
 		"llegan medianos sin vendedor: %s" % [Projects.get_allowed_sizes()])
 	# Despedir no baja de etapa.
@@ -207,23 +208,33 @@ func _check_ui() -> void:
 	_expect(panel.is_open() and not bank.is_open(), "abrir Empresa cierra el Banco")
 	Economy.earn(1000, "Contrato entregado")
 	Economy.spend(300, "Prueba")
+	Bank.request_loan(2000, 6)
 	await get_tree().process_frame
 	var text: String = panel.get_text()
-	_expect(text.begins_with("Etapa 1 de 5: Emprendimiento"), "etapa: %s" % text)
+	_expect(text.begins_with("Etapa 1 de 5: Emprendimiento") and text.contains("Tienes: Contratos pequeños, Préstamos de hasta $10,000."), "etapa: %s" % text)
 	_expect(text.contains("Siguiente etapa: Startup") and text.contains("· Empleados | 0 / 5")
 		and text.contains("· Contratos entregados | 0 / 3"), "requisitos: %s" % text)
 	_expect(text.contains("Valor | %s" % MoneyFormat.format(Company.get_value())), "valor en Empresa")
-	_expect(text.contains("Ingresos | +$1,000") and text.contains("Gastos | −$300") and text.contains("Resultado | +$700"), "mes: %s" % text)
+	_expect(text.contains("Ingresos | +$1,000") and text.contains("Gastos | −$300") and text.contains("Resultado | +$700")
+		and text.contains("Préstamos recibidos | +$2,000"), "mes (el préstamo va aparte): %s" % text)
 	Projects.delivered_count = 3
 	EventBus.projects_changed.emit()
 	await get_tree().process_frame
 	_expect(panel.get_text().contains("✓ Contratos entregados | 3 / 3"), "requisito cumplido con ✓")
 	Company.stage = 1
 	EventBus.stage_changed.emit(1)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	# En Startup se ve el requisito más largo (equipos completos): se parte en líneas.
+	var rect: Rect2 = (panel.get("_panel") as Control).get_global_rect()
+	_expect(panel.get_text().contains("Equipos completos") and rect.size.x <= CompanyPanel.PANEL_WIDTH + 1.0, "el panel no se ensancha: %.0f" % rect.size.x)
 	Company.stage = 2
 	EventBus.stage_changed.emit(2)
 	await get_tree().process_frame
 	_expect(not build.get_tool_button("single_office").disabled, "al llegar a Pequeña empresa se habilita")
-	_expect(panel.get_text().begins_with("Etapa 3 de 5: Pequeña empresa") and panel.get_text().contains("Oficinas únicas"), "panel al día")
+	text = panel.get_text()
+	_expect(text.begins_with("Etapa 3 de 5: Pequeña empresa") and text.contains("Oficinas únicas"), "panel al día")
+	_expect(text.contains("Préstamos de hasta $30,000") and not text.contains("$10,000"), "un solo tope de préstamo: %s" % text)
+	_expect(text.contains("Préstamos sin tope de etapa"), "la siguiente etapa cuenta el tope nuevo")
 	game.queue_free()
 	await get_tree().process_frame

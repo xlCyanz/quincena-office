@@ -131,7 +131,8 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   (`max_loan`: $10k, $30k, $30k, sin tope; `Bank.get_max_request`), habitaciones por etapa (`rooms`: oficina única y sala de servidores
   en Pequeña empresa; `Builder.quote_mark_room` las rechaza y `BuildPanel` las deshabilita) y contratos medianos con `min_stage` 2
   o un vendedor. Menú Empresa (`CompanyPanel`, lado izquierdo, no pausa): etapa, requisitos de la siguiente, reputación, valor e
-  ingresos y gastos del mes. Las pruebas viejas fijan `Company.stage` cuando necesitan algo bloqueado.
+  ingresos y gastos del mes (los préstamos van aparte, no son ingreso). El tope por préstamo no va en `unlocks`: lo cuenta
+  `Company.get_new_unlocks`. Las pruebas viejas fijan `Company.stage` cuando necesitan algo bloqueado.
 - Objetivos guiados (`Company.objectives_done`; `data/objectives.json`, 15 en orden): se ven los 3 primeros sin cumplir
   (`ObjectivesPanel`, izquierda bajo el dinero, plegable). Las condiciones miran el estado (habitación, cargos, empleados,
   `Projects.accepted_count`, entregados, equipos, etapa, terreno, estrellas, valor) y se revisan con las señales de esos sistemas;
@@ -139,7 +140,8 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   `SaveManager` envuelve preparar/cargar en `Company.begin_load`/`finish_load` para no revisar con el estado a medias; una
   partida sin `objectives_done` marca al cargar los que ya cumple, sin recompensa. `main.gd` pliega la lista mientras hay un
   panel izquierdo abierto y al cerrarlo vuelve como el jugador la tenía. Las pruebas que miden saldo o reputación exactos
-  marcan todos los objetivos como cumplidos en su `_new_game`.
+  marcan todos los objetivos como cumplidos en su `_new_game`. Una recompensa se paga mientras se avisa otro cambio: quien
+  escuche `balance_changed` o `company_value_changed` lee el valor actual (`Economy.balance`, `Company.get_value()`), no el de la señal.
 - Comprobación de la fase 3 (`test_phase3`): simula con una política simple (aceptar lo que se pueda, entregar lo terminado, el CEO
   de 8 a 17) un CEO solo 3 meses, el primer equipo con $5,000 a 12 meses durante 6 y una empresa que deja de pagar; imprime un resumen
   por mes. Sirve para ajustar `data/bank.json`, `data/stages.json` y `data/contracts.json`.

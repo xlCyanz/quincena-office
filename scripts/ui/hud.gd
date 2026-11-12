@@ -160,7 +160,10 @@ func get_value_text() -> String:
 	return _value_label.text
 
 
-func _update_value(value: int) -> void:
+# Se lee el valor actual y no el de la señal: una recompensa pagada mientras se avisaba
+# un cambio (hito 28) emite otro aviso adentro, y el de afuera llega después con el viejo.
+func _update_value(_value: int = 0) -> void:
+	var value: int = Company.get_value()
 	_value_label.text = "Valor %s" % MoneyFormat.format(value)
 	_value_label.add_theme_color_override("font_color", NEGATIVE_COLOR if value < 0 else VALUE_COLOR)
 
@@ -280,7 +283,9 @@ func _add_toggle(parent: Container, text: String) -> Button:
 	return button
 
 
-func _on_balance_changed(balance: int) -> void:
+# Como _update_value: se lee el saldo actual, no el de la señal (puede llegar viejo).
+func _on_balance_changed(_balance: int = 0) -> void:
+	var balance: int = Economy.balance
 	_balance_label.text = MoneyFormat.format(balance)
 	if balance < 0:
 		_balance_label.add_theme_color_override("font_color", NEGATIVE_COLOR)

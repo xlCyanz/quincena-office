@@ -170,11 +170,27 @@ func check_stage(notify: bool = true) -> void:
 	stage = reached
 	EventBus.stage_changed.emit(stage)
 	if notify:
-		var unlocks: Array = get_stage_info(stage).get("unlocks", [])
 		var text: String = "¡La empresa pasó a %s!" % get_stage_name()
+		var unlocks: Array[String] = get_new_unlocks(stage)
 		if not unlocks.is_empty():
 			text += " Desbloquea: %s." % ", ".join(PackedStringArray(unlocks)).to_lower()
 		EventBus.notice.emit(text)
+
+
+## Lo que trae una etapa al llegar: su lista unlocks más el tope por préstamo si cambia.
+func get_new_unlocks(index: int) -> Array[String]:
+	var result: Array[String] = []
+	var cap: int = int(get_stage_info(index).get("max_loan", 0))
+	if index > 0 and cap != int(get_stage_info(index - 1).get("max_loan", 0)):
+		result.append(describe_loan_cap(cap))
+	for item: Variant in get_stage_info(index).get("unlocks", []):
+		result.append(String(item))
+	return result
+
+
+## «Préstamos de hasta $10,000» o «Préstamos sin tope de etapa» (solo el límite del banco).
+static func describe_loan_cap(cap: int) -> String:
+	return "Préstamos de hasta %s" % MoneyFormat.format(cap) if cap > 0 else "Préstamos sin tope de etapa (solo el límite del banco)"
 
 
 ## Tope por préstamo de la etapa actual (0 = sin tope, solo manda el límite del banco).
