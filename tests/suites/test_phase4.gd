@@ -45,6 +45,10 @@ var _pending: Dictionary = {}
 var _team_ids: Array[int] = []
 var _stage_months: Dictionary[int, int] = {}
 var _servers_built: bool = false
+## Tamaños de contrato que toma un equipo, en orden de preferencia (test_phase5 los cambia).
+var _team_sizes: Array[String] = ["medium", "small"]
+## Meses de gastos que guarda la política (test_phase5 guarda menos).
+var _reserve_months: float = RESERVE_MONTHS
 
 
 func _ready() -> void:
@@ -131,15 +135,20 @@ func _play_day() -> void:
 func _manage_contracts() -> void:
 	var today: int = GameClock.get_day_count()
 	for contract: Dictionary in Projects.contracts.duplicate():
-		if Projects.get_done_ratio(contract) >= 1.0 - Production.EPSILON \
-				and (int(contract["bugs_found"]) == 0 or today >= int(contract["deadline_day"]) - 1):
+		if _ready_to_deliver(contract, today):
 			Projects.deliver(contract["id"])
 	_manage_product()
 	for team: Dictionary in Staff.teams:
 		if (team["members"] as Array).size() >= TEAM_READY and Projects.is_team_free(team["id"]):
-			_take_offer(team["id"], ["medium", "small"])
+			_take_offer(team["id"], _sizes_for(team))
 	if Projects.is_team_free(Projects.CEO_TEAM):
 		_take_offer(Projects.CEO_TEAM, ["small"])
+
+
+# Terminado y sin errores conocidos, o el día antes del plazo.
+func _ready_to_deliver(contract: Dictionary, today: int) -> bool:
+	return Projects.get_done_ratio(contract) >= 1.0 - Production.EPSILON \
+		and (int(contract["bugs_found"]) == 0 or today >= int(contract["deadline_day"]) - 1)
 
 
 # Desde Pequeña empresa y hasta lanzar el primero: Sala de servidores y un producto pequeño
@@ -149,7 +158,7 @@ func _manage_product() -> void:
 		return
 	if not _servers_built:
 		# Va al norte de la primera oficina única: espera a que esté construido el bloque norte.
-		if _built > _build_steps.find(_build_north) and Economy.balance >= _build_servers(true) + RESERVE_MONTHS * _monthly_costs():
+		if _built > _build_steps.find(_build_north) and Economy.balance >= _build_servers(true) + _reserve_months * _monthly_costs():
 			_build_servers(false)
 			_servers_built = true
 		return
@@ -163,6 +172,11 @@ func _manage_product() -> void:
 			var id: int = Products.start("mobile_app", "small")["id"]
 			Products.assign(id, team["id"])
 			return
+
+
+# Tamaños de contrato que toma ese equipo.
+func _sizes_for(_team: Dictionary) -> Array[String]:
+	return _team_sizes
 
 
 # Acepta la oferta más grande de esos tamaños (en orden) y se la da a ese equipo o al CEO.
@@ -203,7 +217,7 @@ func _grow() -> void:
 		_build_next(next["role"])
 		return
 	var salary: int = StaffCatalog.get_salary(next["role"], next["level"])
-	if Economy.balance < RESERVE_MONTHS * _monthly_costs(salary):
+	if Economy.balance < _reserve_months * _monthly_costs(salary):
 		return
 	var opened: Dictionary = Staff.open_vacancy(next["role"], next["level"], salary, false)
 	if opened["ok"]:
@@ -291,7 +305,7 @@ func _make_plan() -> void:
 func _build_next(role: String) -> void:
 	while _built < _build_steps.size():
 		var cost: int = int(_build_steps[_built].call(true))
-		if Economy.balance < cost + RESERVE_MONTHS * _monthly_costs():
+		if Economy.balance < cost + _reserve_months * _monthly_costs():
 			return
 		_build_steps[_built].call(false)
 		_built += 1

@@ -237,7 +237,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   ingreso va del 50 al 150 %. Cada día (`_live_day`): `curve` crece 30 días desde 5 % (vendedores +15 % de velocidad cada uno), 60 en el pico,
   120 de caída hasta 10 %; `production_bugs` suman `bug_loss` 0.5 %/día por error (hasta 70 %); cobra «Ingreso de productos». Actualización
   (`start_update`): proyecto `product["update"]` del 20 % de los puntos (`get_active_projects`, cuenta para el tope, `assign`/`abandon` por id de
-  producto); al terminar corrige los errores y vuelve al pico. `retire` libera los racks. Valor de la empresa + 60 días de ingreso; Mediana empresa
+  producto); al terminar corrige los errores y vuelve al pico. `retire` libera los racks. Valor de la empresa + `value_days` días de ingreso (540 desde el hito 49); Mediana empresa
   pide `products_launched` 1 y Corporación `active_products` 3 (`Company`). `test_phase4` arma la sala y un equipo hace un producto pequeño.
 - Eventos (`Events`, `data/events.json`, hito 43): cada hora con el reloj de la partida andando (`GameClock.is_processing()` y sin pausa;
   construcción pausa) y sin tarjeta abierta, sale uno con probabilidad 1 / (`mean_days`[etapa] × 24) entre los que cumplen `conditions`
@@ -287,6 +287,16 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`get_ipo_stats`); `main.gd` pausa, cierra los paneles y abre `IpoScreen` (estadísticas de 9.5 + empleados de hoy; «Seguir jugando»
   vuelve a la pausa de antes, «Volver al menú»). Después la partida sigue en modo libre y Empresa dice «Cotiza en bolsa desde el día X»;
   no se sale dos veces. El terreno no tiene tope propio: se compra hasta llenar el solar.
+- Comprobación de la fase 5 (`test_phase5`, extiende `test_phase4`): corre el crecimiento de la fase 4 hasta Mediana empresa y sigue
+  con su propia política (`_phase5`; los métodos que cambia llaman a `super` antes): agranda la Sala de servidores al norte, compra
+  terreno al oeste (4 oficinas únicas y la Sala de reuniones, que arma al habilitarse) y al sur (28 puestos), suma vendedores y 3 equipos,
+  3 equipos hacen productos medianos (racks al 50 %, lanzar sin errores conocidos, actualizar a los 90 días), los demás el contrato más
+  grande que lleguen a hacer a tiempo (entrega tras 4 días de revisión), retiene gente, pide prestado con A–C, responde eventos al azar
+  con el reloj «andando» (`GameClock.start`) y contrata los ejecutivos que faltan con 3 productos activos y el 60 % del valor de la bolsa.
+  Llega a la bolsa ~20 meses después de Mediana empresa con ~60 % de ingresos de productos. Ajustó `data/products.json`: medianos
+  $1,800/día y grandes $6,600 (×3; el pequeño sigue en $150) y `value_days` 540. Un equipo de 8 en contratos apenas paga su costo:
+  la ganancia del final viene de los productos. La empresa de `data/starting_company.json` no se sostiene (≈$110k/mes de nómina,
+  mucha dirección para 24 productores).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -349,3 +359,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 46 | Calidades de muebles | ✅ Completado (computadora media $1,200 +15 % y pro $2,500 +30 %; segundo monitor $300 +5 % sobre un escritorio con computadora; silla ergonómica $250 −4/h de energía en vez de −6; escritorio amplio $350 +5 a la meta de ánimo; herramienta Mejorar sube computadora o silla en su lugar cobrando la diferencia, también en puestos ocupados) |
 | 47 | Contratos grandes y Sala de reuniones | ✅ Completado (grandes desde Mediana empresa con 4 ★; de élite desde Corporación con 5 ★, pago ×1.5 y clientes propios; los dos exigen Sala de reuniones con mesa 2×2 $1,200; la sala se habilita para siempre con la primera oferta grande; pantalla de presentaciones $800 en la pared: +25 % de peso a grandes y de élite; pizarra pendiente) |
 | 48 | Corporación y salir a bolsa | ✅ Completado (Corporación con 4 ejecutivos y 3 productos activos; bolsa siendo Corporación con valor > $5,000,000, solo cierre sin dinero; botón en Empresa con confirmación y aviso al cumplirse; pantalla de cierre con estadísticas, «Seguir jugando» en modo libre o «Volver al menú»; terreno sin tope hasta llenar el solar) |
+| 49 | Comprobación de la fase | ✅ Completado (sigue la empresa de la fase 4 desde Mediana empresa; bolsa ~20 meses después sin quebrar; productos 40–70 % de los ingresos del último año (~60 %); medianos y grandes pagan ×3 y valen 540 días de ingreso; eventos y etapas sin cambios; la prueba tarda ~40 s) |

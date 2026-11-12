@@ -235,8 +235,8 @@ func _check_stage_and_value() -> void:
 			_expect(item["met"], "lanzado, se cumple")
 	_days(30)
 	var parts: Array[Dictionary] = Company.get_value_parts()
-	_expect(String(parts[3]["label"]).begins_with("Productos") and int(parts[3]["amount"]) == Products.get_daily_income(product) * 60,
-		"el valor suma 60 días de ingreso: %s" % [parts[3]])
+	_expect(String(parts[3]["label"]).begins_with("Productos") and int(parts[3]["amount"]) == Products.get_daily_income(product) * ProductCatalog.get_value_days(),
+		"el valor suma value_days días de ingreso: %s" % [parts[3]])
 	_expect(Products.get_active_count() == 1, "producto activo")
 
 
