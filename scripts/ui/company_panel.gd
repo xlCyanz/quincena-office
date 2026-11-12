@@ -1,7 +1,8 @@
 # Menú Empresa (diseño, 9.1 y 12.3; hito 27): la etapa actual y lo que desbloqueó, el
 # progreso hacia la siguiente (cada requisito con lo que hay y lo que pide), la
 # reputación, el valor de la empresa, los ingresos y gastos del mes y, desde el hito 33,
-# los departamentos con quién los dirige y cuánto rinden.
+# los departamentos con quién los dirige y cuánto rinden. Desde el hito 48, la meta
+# final: salir a bolsa (Corporación y valor), con su botón y una confirmación.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos, Equipos y
 # Banco (abrir uno cierra los otros; lo hace la escena de juego). Se construye en
@@ -26,6 +27,10 @@ const AMOUNT_WIDTH: float = 140.0
 var _open_button: Button
 var _panel: PanelContainer
 var _content: VBoxContainer
+var _ipo_button: Button
+var _confirm_ipo_button: Button
+# Se pulsó «Salir a bolsa» y se espera la confirmación.
+var _confirming_ipo: bool = false
 
 
 func _ready() -> void:
@@ -107,7 +112,7 @@ func get_text() -> String:
 		elif child is HBoxContainer:
 			var parts: Array[String] = []
 			for label: Node in child.get_children():
-				parts.append((label as Label).text.strip_edges())
+				parts.append(String(label.get("text")).strip_edges())
 			lines.append(" | ".join(parts))
 	return "\n".join(lines)
 
@@ -158,6 +163,8 @@ func _refresh() -> void:
 		if racks == 0:
 			_label("La Sala de servidores no funciona: le falta un rack o el aire acondicionado.", 0, MUTED_COLOR)
 
+	_add_ipo_section()
+
 	_label("Reputación", SECTION_FONT_SIZE)
 	_row("  Actual", ProjectsPanel.describe_reputation(Projects.reputation), Hud.REPUTATION_COLOR)
 	_row("  Mejor", "%.1f" % Projects.best_reputation, Color.WHITE)
@@ -188,6 +195,61 @@ func _refresh() -> void:
 	if borrowed > 0:
 		_row("  Préstamos recibidos", "+" + MoneyFormat.format(borrowed), MUTED_COLOR)
 	_label("El detalle por concepto está en el Banco.", 0, MUTED_COLOR)
+
+
+## Botón «Salir a bolsa» (null si el panel está cerrado o la empresa ya cotiza).
+func get_ipo_button() -> Button:
+	return _ipo_button
+
+
+## Botón «Confirmar» de la salida a bolsa (null si no se está confirmando).
+func get_confirm_ipo_button() -> Button:
+	return _confirm_ipo_button
+
+
+# Meta final (hito 48): lo que pide salir a bolsa, el botón y su confirmación.
+func _add_ipo_section() -> void:
+	_ipo_button = null
+	_confirm_ipo_button = null
+	_label("Salir a bolsa", SECTION_FONT_SIZE)
+	if Company.is_public():
+		_label("Cotiza en bolsa desde el día %d. La partida sigue en modo libre." % (Company.public_day + 1), 0, MET_COLOR)
+		return
+	var stage_met: bool = Company.stage >= Company.get_ipo_stage()
+	_row("  %s Ser %s" % ["✓" if stage_met else "·", Company.get_stage_name(Company.get_ipo_stage())],
+		"%d / %d" % [Company.stage + 1, Company.get_ipo_stage() + 1], MET_COLOR if stage_met else Color.WHITE)
+	var value: int = Company.get_value()
+	var value_met: bool = value > Company.get_ipo_value()
+	_row("  %s Valor de más de %s" % ["✓" if value_met else "·", MoneyFormat.format(Company.get_ipo_value())],
+		MoneyFormat.format(value), MET_COLOR if value_met else Color.WHITE)
+	var problem: String = Company.ipo_problem()
+	var buttons := HBoxContainer.new()
+	_content.add_child(buttons)
+	if _confirming_ipo and problem.is_empty():
+		_label("¿Salir a bolsa? Es la meta final y no se deshace: verás el cierre y la partida seguirá en modo libre.", 0, MUTED_COLOR)
+		_confirm_ipo_button = Button.new()
+		_confirm_ipo_button.text = "Confirmar"
+		_confirm_ipo_button.pressed.connect(func() -> void:
+			_confirming_ipo = false
+			Company.go_public()
+			_refresh())
+		buttons.add_child(_confirm_ipo_button)
+		var cancel := Button.new()
+		cancel.text = "Cancelar"
+		cancel.pressed.connect(func() -> void:
+			_confirming_ipo = false
+			_refresh())
+		buttons.add_child(cancel)
+		return
+	_confirming_ipo = false
+	_ipo_button = Button.new()
+	_ipo_button.text = "Salir a bolsa"
+	_ipo_button.disabled = not problem.is_empty()
+	_ipo_button.tooltip_text = problem
+	_ipo_button.pressed.connect(func() -> void:
+		_confirming_ipo = true
+		_refresh())
+	buttons.add_child(_ipo_button)
 
 
 func _label(text: String, font_size: int = 0, color: Color = Color.WHITE) -> void:

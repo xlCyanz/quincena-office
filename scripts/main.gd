@@ -30,6 +30,9 @@ var pathfinder := OfficePathfinder.new()
 # Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
 var _was_paused_before_menu: bool = false
 var _was_paused_before_emergency: bool = false
+var _was_paused_before_ipo: bool = false
+# Pantalla de cierre al salir a bolsa (hito 48); se arma en código.
+var _ipo_screen: IpoScreen
 # Dónde se apretó el botón izquierdo (para distinguir un clic de un arrastre).
 var _press_position := Vector2.INF
 var _ceo_button: Button
@@ -117,6 +120,12 @@ func _ready() -> void:
 	EventBus.presence_changed.connect(_update_routines)
 	EventBus.game_over.connect(_on_game_over)
 	_game_over_screen.menu_requested.connect(_on_quit_requested)
+	_ipo_screen = IpoScreen.new()
+	_ipo_screen.name = "IpoScreen"
+	add_child(_ipo_screen)
+	_ipo_screen.menu_requested.connect(_on_quit_requested)
+	_ipo_screen.continue_requested.connect(func() -> void: GameClock.set_paused(_was_paused_before_ipo))
+	EventBus.went_public.connect(_on_went_public)
 	EventBus.emergency_loan_offered.connect(_on_emergency_loan_offered)
 	_emergency_dialog.closed.connect(_on_emergency_dialog_closed)
 	# Un evento corta el salto de horas de la oficina vacía para que el jugador lo vea.
@@ -357,7 +366,7 @@ func _set_menu_pause(active: bool) -> void:
 
 func _is_menu_open() -> bool:
 	return (_build_panel.is_build_mode() or _settings_panel.is_open() or _game_over_screen.is_open()
-		or _emergency_dialog.is_open())
+		or _emergency_dialog.is_open() or _ipo_screen.is_open())
 
 
 func _on_save_requested(slot: String) -> void:
@@ -378,6 +387,18 @@ func _on_game_over(stats: Dictionary) -> void:
 	_employee_card.close()
 	_hud.set_controls_enabled(false)
 	_game_over_screen.show_stats(stats)
+
+
+# Salida a bolsa: se corta el salto, se pausa, se cierran los menús y queda la pantalla de
+# cierre; «Seguir jugando» vuelve a la partida como estaba (modo libre).
+func _on_went_public(stats: Dictionary) -> void:
+	GameClock.interrupt()
+	if not _ipo_screen.is_open():
+		_was_paused_before_ipo = GameClock.is_paused
+	GameClock.set_paused(true)
+	_close_side_panels(null)
+	_employee_card.close()
+	_ipo_screen.show_stats(stats)
 
 
 # El banco ofrece el préstamo de emergencia: se corta el salto de tiempo, se pausa y se

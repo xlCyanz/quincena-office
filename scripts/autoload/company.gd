@@ -21,6 +21,8 @@ extends Node
 
 const STAGES_PATH: String = "res://data/stages.json"
 const OBJECTIVES_PATH: String = "res://data/objectives.json"
+## public_day de una empresa que no cotiza en bolsa.
+const NOT_PUBLIC: int = -1
 
 ## Etapa actual: 0 = Emprendimiento … 4 = Corporación (índice en data/stages.json).
 var stage: int = 0
@@ -37,6 +39,11 @@ var _mark_silently: bool = false
 var _checking: bool = false
 # data/objectives.json leído (ver _objectives_data).
 var _objectives: Dictionary = {}
+## Día (GameClock.get_day_count) en que la empresa salió a bolsa, o NOT_PUBLIC (hito 48).
+## Después la partida sigue en modo libre.
+var public_day: int = NOT_PUBLIC
+# Ya se avisó que se puede salir a bolsa (una sola vez por partida).
+var _ipo_announced: bool = false
 
 
 func _ready() -> void:
@@ -45,6 +52,7 @@ func _ready() -> void:
 	EventBus.office_changed.connect(_notify)
 	EventBus.products_changed.connect(_notify)
 	EventBus.day_changed.connect(func(_day: int, _month: int) -> void: check_stage())
+	EventBus.stage_changed.connect(func(_stage: int) -> void: _announce_ipo())
 	EventBus.staff_changed.connect(check_objectives)
 	EventBus.projects_changed.connect(check_objectives)
 	EventBus.office_changed.connect(check_objectives)
@@ -54,6 +62,8 @@ func _ready() -> void:
 
 func new_game() -> void:
 	stage = 0
+	public_day = NOT_PUBLIC
+	_ipo_announced = false
 	objectives_done.clear()
 	_mark_silently = false
 
@@ -96,6 +106,66 @@ func get_value_parts() -> Array[Dictionary]:
 
 func _notify() -> void:
 	EventBus.company_value_changed.emit(get_value())
+	_announce_ipo()
+
+
+# --- Salir a bolsa (hito 48) ---
+
+## Indica si la empresa ya cotiza en bolsa (modo libre).
+func is_public() -> bool:
+	return public_day != NOT_PUBLIC
+
+
+## Etapa que pide salir a bolsa (índice; 4 = Corporación).
+func get_ipo_stage() -> int:
+	return int(_data().get("ipo", {}).get("min_stage", 4))
+
+
+## Valor que hay que superar para salir a bolsa.
+func get_ipo_value() -> int:
+	return int(_data().get("ipo", {}).get("min_value", 5000000))
+
+
+## Por qué todavía no se puede salir a bolsa ("" si se puede).
+func ipo_problem() -> String:
+	if is_public():
+		return "La empresa ya cotiza en bolsa."
+	if stage < get_ipo_stage():
+		return "Para salir a bolsa la empresa tiene que ser %s." % get_stage_name(get_ipo_stage())
+	var value: int = get_value()
+	if value <= get_ipo_value():
+		return "Para salir a bolsa el valor de la empresa tiene que pasar de %s (ahora %s)." % [
+			MoneyFormat.format(get_ipo_value()), MoneyFormat.format(value)]
+	return ""
+
+
+## Sale a bolsa: es la meta final. No da dinero; la partida sigue en modo libre. Avisa
+## con EventBus.went_public y las estadísticas de cierre. Devuelve {"ok", "message"}.
+func go_public() -> Dictionary:
+	var problem: String = ipo_problem()
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	public_day = GameClock.get_day_count()
+	var message: String = "¡La empresa salió a bolsa! La partida sigue en modo libre."
+	EventBus.notice.emit(message)
+	EventBus.went_public.emit(get_ipo_stats())
+	return {"ok": true, "message": message}
+
+
+## Estadísticas de la pantalla de cierre: días jugados, empleados contratados y actuales,
+## contratos entregados, productos lanzados, valor y mejor reputación.
+func get_ipo_stats() -> Dictionary:
+	return {"days": GameClock.get_day_count() + 1, "hired": Staff.hired_count, "employees": Staff.employees.size(),
+		"delivered": Projects.delivered_count, "launched": Products.launched_count, "value": get_value(),
+		"best_reputation": Projects.best_reputation}
+
+
+# La primera vez que se cumple, avisa que se puede salir a bolsa.
+func _announce_ipo() -> void:
+	if _ipo_announced or _loading or not ipo_problem().is_empty():
+		return
+	_ipo_announced = true
+	EventBus.notice.emit("La empresa ya puede salir a bolsa: es la meta final. Hazlo desde Empresa.")
 
 
 # --- Etapas (hito 27) ---
@@ -345,13 +415,17 @@ func _mark_met_silently() -> void:
 
 ## Estado para guardar.
 func export_state() -> Dictionary:
-	return {"stage": stage, "objectives_done": objectives_done.duplicate()}
+	return {"stage": stage, "objectives_done": objectives_done.duplicate(), "public_day": public_day,
+		"ipo_announced": _ipo_announced}
 
 
 ## Restaura el estado. Las partidas de antes del hito 27 calculan su etapa al cargar; las
 ## de antes del hito 28 marcan sin recompensa los objetivos que ya cumplen.
 func import_state(state: Dictionary) -> void:
 	stage = clampi(int(state.get("stage", 0)), 0, maxi(0, get_stage_count() - 1))
+	# Antes del hito 48 no se salía a bolsa.
+	public_day = int(state.get("public_day", NOT_PUBLIC))
+	_ipo_announced = bool(state.get("ipo_announced", false))
 	objectives_done.clear()
 	if state.has("objectives_done"):
 		for objective_id: Variant in state["objectives_done"]:

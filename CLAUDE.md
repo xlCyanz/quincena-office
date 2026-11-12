@@ -281,6 +281,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `EventBus.rooms_unlocked`; partidas viejas la habilitan si ya hay una sala u oferta que la pide). `Company.room_lock_reason` da el motivo
   al modo construcción. Pantalla de presentaciones (de pared, $800): en una Sala de reuniones que funciona el peso de esos tamaños ×1.25
   (`Projects.get_size_weight`, `meetings.screen_weight_factor`). La pizarra queda para más adelante.
+- Corporación y salir a bolsa (hito 48, `ipo` en `data/stages.json`): Corporación pide 4 ejecutivos y 3 productos activos. Siendo
+  Corporación con valor de más de $5,000,000 (`Company.ipo_problem`) se avisa una vez (`ipo_announced`) y el menú Empresa ofrece
+  «Salir a bolsa» con confirmación. `Company.go_public` no da dinero: guarda `public_day`, avisa y emite `EventBus.went_public(stats)`
+  (`get_ipo_stats`); `main.gd` pausa, cierra los paneles y abre `IpoScreen` (estadísticas de 9.5 + empleados de hoy; «Seguir jugando»
+  vuelve a la pausa de antes, «Volver al menú»). Después la partida sigue en modo libre y Empresa dice «Cotiza en bolsa desde el día X»;
+  no se sale dos veces. El terreno no tiene tope propio: se compra hasta llenar el solar.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -342,3 +348,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 45 | Ambiente y decoración | ✅ Completado (planta grande, cuadro, reloj, lámpara, alfombra que se pisa y pecera que baja el estrés; puntos × 10 / área − amontonar según el porcentaje de escritorios de más que 1 cada 4 m² (−15 con 50 % más), tope ±15 a la meta de ánimo; objetos de pared en una cara de pared con casilla y lado; el aire acondicionado pasa a la pared y las partidas viejas lo cuelgan solas) |
 | 46 | Calidades de muebles | ✅ Completado (computadora media $1,200 +15 % y pro $2,500 +30 %; segundo monitor $300 +5 % sobre un escritorio con computadora; silla ergonómica $250 −4/h de energía en vez de −6; escritorio amplio $350 +5 a la meta de ánimo; herramienta Mejorar sube computadora o silla en su lugar cobrando la diferencia, también en puestos ocupados) |
 | 47 | Contratos grandes y Sala de reuniones | ✅ Completado (grandes desde Mediana empresa con 4 ★; de élite desde Corporación con 5 ★, pago ×1.5 y clientes propios; los dos exigen Sala de reuniones con mesa 2×2 $1,200; la sala se habilita para siempre con la primera oferta grande; pantalla de presentaciones $800 en la pared: +25 % de peso a grandes y de élite; pizarra pendiente) |
+| 48 | Corporación y salir a bolsa | ✅ Completado (Corporación con 4 ejecutivos y 3 productos activos; bolsa siendo Corporación con valor > $5,000,000, solo cierre sin dinero; botón en Empresa con confirmación y aviso al cumplirse; pantalla de cierre con estadísticas, «Seguir jugando» en modo libre o «Volver al menú»; terreno sin tope hasta llenar el solar) |

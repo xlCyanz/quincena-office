@@ -9,13 +9,13 @@ extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 47) y la empresa inicial.
+## Partes en el orden de los hitos (1 a 48) y la empresa inicial.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "starting_company", "dev_tools",
 ]
 ## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
 const AUTOLOADS: Array[String] = [

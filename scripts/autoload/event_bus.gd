@@ -120,3 +120,8 @@ signal event_started(card: Dictionary)
 ## llegar la primera oferta grande, hito 47) o se cargó una partida.
 @warning_ignore("unused_signal")
 signal rooms_unlocked
+
+## La empresa salió a bolsa (hito 48): la escena de juego muestra la pantalla de cierre con
+## estas estadísticas (Company.get_ipo_stats).
+@warning_ignore("unused_signal")
+signal went_public(stats: Dictionary)
