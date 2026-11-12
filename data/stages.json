@@ -1,5 +1,5 @@
 {
-	"_comentario": "Etapas de la empresa (diseño 9.1 y 17.2; hito 27). Valores provisionales: el hito 29 los ajusta. requirements: lo que hace falta para llegar (employees = contratados sin el CEO; delivered = contratos entregados; complete_teams = equipos con al menos un diseñador, un programador y un QA; products_launched, active_products y executives llegan en las fases 4 y 5). max_loan = tope por préstamo en esa etapa (0 = solo el límite del banco); el panel y el aviso lo cuentan aparte, así que no va en unlocks. rooms = tipos de habitación que se desbloquean al llegar. unlocks = lo que se le cuenta al jugador. Las etapas se revisan cada día y nunca bajan.",
+	"_comentario": "Etapas de la empresa (diseño 9.1 y 17.2; hito 27). Valores provisionales: el hito 29 los ajusta. requirements: lo que hace falta para llegar (employees = contratados sin el CEO; delivered = contratos entregados; complete_teams = equipos con al menos un diseñador, un programador y un QA; executives = ejecutivos contratados; products_launched y active_products llegan en la fase 5; en la fase 4 Mediana empresa pide solo empleados). max_loan = tope por préstamo en esa etapa (0 = solo el límite del banco); el panel y el aviso lo cuentan aparte, así que no va en unlocks. rooms = tipos de habitación que se desbloquean al llegar. unlocks = lo que se le cuenta al jugador. Las etapas se revisan cada día y nunca bajan.",
 	"stages": [
 		{
 			"id": "entrepreneurship", "name": "Emprendimiento", "requirements": {}, "max_loan": 10000, "rooms": [],
@@ -15,8 +15,8 @@
 			"unlocks": ["Oficinas únicas", "Sala de servidores", "Gerentes", "Productos propios (próximamente)"]
 		},
 		{
-			"id": "medium_business", "name": "Mediana empresa", "requirements": { "employees": 40, "products_launched": 1 }, "max_loan": 0, "rooms": [],
-			"unlocks": ["Ejecutivos y contratos grandes (próximamente)"]
+			"id": "medium_business", "name": "Mediana empresa", "requirements": { "employees": 40 }, "max_loan": 0, "rooms": [],
+			"unlocks": ["Ejecutivos y departamentos", "Contratos grandes (próximamente)"]
 		},
 		{
 			"id": "corporation", "name": "Corporación", "requirements": { "executives": 4, "active_products": 3 }, "max_loan": 0, "rooms": [],

@@ -136,6 +136,8 @@ func count_requirement(key: String) -> int:
 			return Projects.delivered_count
 		"complete_teams":
 			return get_complete_team_count()
+		"executives":
+			return Staff.get_executives().size()
 	return 0
 
 

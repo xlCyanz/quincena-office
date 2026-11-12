@@ -43,6 +43,9 @@ var _salary: int = 0
 var _vacancy_close_buttons: Dictionary[int, Button] = {}
 var _discard_buttons: Dictionary[int, Button] = {}
 var _interview_buttons: Dictionary[int, Button] = {}
+var _delegate_buttons: Dictionary[int, Button] = {}
+## Lista del departamento que dirige cada ejecutivo en el organigrama (por id).
+var _department_choices: Dictionary[int, OptionButton] = {}
 var _offer_buttons: Dictionary[int, Button] = {}
 var _offer_step_buttons: Dictionary[int, Array] = {}
 var _counter_buttons: Dictionary[int, Button] = {}
@@ -225,6 +228,16 @@ func get_interview_button(candidate_id: int) -> Button:
 	return _interview_buttons.get(candidate_id)
 
 
+## Botón «Delegar» (entrevista el ejecutivo de Administración), o null si no hay.
+func get_delegate_button(candidate_id: int) -> Button:
+	return _delegate_buttons.get(candidate_id)
+
+
+## Lista del departamento de un ejecutivo en el organigrama, o null.
+func get_department_choice(executive_id: int) -> OptionButton:
+	return _department_choices.get(executive_id)
+
+
 ## Botón "Ofrecer" de un candidato, o null.
 func get_offer_button(candidate_id: int) -> Button:
 	return _offer_buttons.get(candidate_id)
@@ -340,6 +353,8 @@ func _refresh() -> void:
 	_vacancy_close_buttons.clear()
 	_discard_buttons.clear()
 	_interview_buttons.clear()
+	_delegate_buttons.clear()
+	_department_choices.clear()
 	_offer_buttons.clear()
 	_offer_step_buttons.clear()
 	_counter_buttons.clear()
@@ -394,10 +409,12 @@ func _add_employees() -> void:
 func _add_org_chart() -> void:
 	var leaders: Array[Dictionary] = Staff.get_leaders()
 	var managers: Array[Dictionary] = Staff.get_managers()
-	if leaders.is_empty() and managers.is_empty():
+	var executives: Array[Dictionary] = Staff.get_executives()
+	if leaders.is_empty() and managers.is_empty() and executives.is_empty() and not Staff.departments_apply():
 		return
 	_list.add_child(HSeparator.new())
 	_add_section(_list, "Organigrama")
+	_add_departments(executives)
 	_list.add_child(_muted_label("CEO · dirige %d de %d líderes con equipo" % [Staff.get_ceo_leaders().size(), Staff.get_leader_cap(0)]))
 	for manager: Dictionary in managers:
 		var present: bool = Staff.is_expected_now(Staff.employee_key(manager["id"]))
@@ -430,6 +447,50 @@ func _add_org_chart() -> void:
 			_refresh.call_deferred())
 		row.add_child(choice)
 		_boss_choices[leader_id] = choice
+
+
+# Departamentos (hito 33): quién dirige cada uno y cuánto rinde; cada ejecutivo elige
+# el suyo.
+func _add_departments(executives: Array[Dictionary]) -> void:
+	var departments: Array[String] = Staff.get_departments()
+	for department: String in departments:
+		var executive: Dictionary = Staff.get_executive_of(department)
+		var factor: float = Staff.get_department_factor(department)
+		var size: int = Staff.get_department_size(department)
+		_list.add_child(_muted_label("%s · %d %s · lo dirige %s · rinde %d %%" % [StaffCatalog.get_department_name(department),
+			size, "persona" if size == 1 else "personas", "el CEO" if executive.is_empty() else executive["name"],
+			roundi(factor * 100.0)]))
+	if departments.is_empty():
+		_list.add_child(_muted_label("Todavía no hay departamentos: existen desde que tienen un empleado."))
+	elif not Staff.departments_apply():
+		_list.add_child(_muted_label("Desde %s el CEO rinde menos cuantos más departamentos dirige." % Company.get_stage_name(
+			int(StaffCatalog.get_departments("from_stage")))))
+	for executive: Dictionary in executives:
+		var row := HBoxContainer.new()
+		_list.add_child(row)
+		var label := Label.new()
+		label.text = "Ejecutivo %s" % executive["name"]
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		var choice := OptionButton.new()
+		var ids: Array[String] = StaffCatalog.get_department_ids()
+		for index: int in range(ids.size()):
+			var other: Dictionary = Staff.get_executive_of(ids[index])
+			choice.add_item("Dirige %s" % StaffCatalog.get_department_name(ids[index]), index)
+			choice.set_item_disabled(index, not other.is_empty() and other != executive)
+			if executive.get("department", "") == ids[index]:
+				choice.select(index)
+		if String(executive.get("department", "")).is_empty():
+			choice.add_item("Sin departamento", ids.size())
+			choice.set_item_disabled(ids.size(), true)
+			choice.select(ids.size())
+		var executive_id: int = executive["id"]
+		choice.item_selected.connect(func(index: int) -> void:
+			if index < ids.size():
+				_status_label.text = Staff.set_executive_department(executive_id, ids[index])["message"]
+			_refresh.call_deferred())
+		row.add_child(choice)
+		_department_choices[executive_id] = choice
 
 
 ## Lista "A cargo de" de un líder en el organigrama, o null.
@@ -480,7 +541,9 @@ func _add_candidate(candidate: Dictionary) -> void:
 		lines.append(known)
 	var candidate_id: int = candidate["id"]
 	if Staff.get_interviewed_now().get("id", -1) == candidate_id:
-		lines.append("En entrevista con el CEO hasta las %02d:00." % (int(Staff.interview["ends_at"]) % GameConstants.HOURS_PER_DAY))
+		var by: String = String(Staff.interview.get("by", "ceo"))
+		lines.append("En entrevista con %s hasta las %02d:00." % ["el CEO" if by == "ceo" else Staff.get_employee_by_key(by).get("name", "?"),
+			int(Staff.interview["ends_at"]) % GameConstants.HOURS_PER_DAY])
 	var counter: int = int(candidate.get("counter_offer", 0))
 	if counter > 0:
 		lines.append("Contraoferta: aceptaría %s al mes." % MoneyFormat.format(counter))
@@ -497,6 +560,17 @@ func _add_candidate(candidate: Dictionary) -> void:
 	interview_button.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id)["message"])
 	actions.add_child(interview_button)
 	_interview_buttons[candidate_id] = interview_button
+	var interviewer: Dictionary = Staff.get_interviewer()
+	if not interviewer.is_empty():
+		var delegate := Button.new()
+		delegate.text = "Delegar"
+		var delegate_problem: String = Staff.interview_problem(candidate_id, true)
+		delegate.disabled = not delegate_problem.is_empty()
+		delegate.tooltip_text = delegate_problem if not delegate_problem.is_empty() else \
+			"Entrevista %s (ejecutivo): %d horas suyas, el CEO sigue trabajando." % [interviewer["name"], int(StaffCatalog.get_hiring("interview_hours"))]
+		delegate.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id, true)["message"])
+		actions.add_child(delegate)
+		_delegate_buttons[candidate_id] = delegate
 
 	if not _offers.has(candidate_id):
 		_offers[candidate_id] = int(Staff.get_vacancy(_vacancy_of(candidate_id))["salary"])

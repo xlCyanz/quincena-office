@@ -497,6 +497,19 @@ func _describe_boss(employee: Dictionary) -> String:
 	if Staff.is_leader(employee):
 		var manager: Dictionary = Staff.get_manager_of(employee)
 		return "Lo dirige: %s" % ("el CEO" if manager.is_empty() else "%s (gerente)" % manager["name"])
+	if Staff.is_executive(employee):
+		var department: String = employee.get("department", "")
+		if department.is_empty():
+			return "No dirige ningún departamento: elígelo en el organigrama (Personal)."
+		return "Dirige %s (rinde %d %%)" % [StaffCatalog.get_department_name(department),
+			roundi(Staff.get_department_factor(department) * 100.0)]
+	var own: String = StaffCatalog.get_role_department(employee["role"])
+	if not own.is_empty():
+		var factor: float = Staff.get_department_factor(own)
+		if not is_equal_approx(factor, 1.0):
+			var executive: Dictionary = Staff.get_executive_of(own)
+			return "Departamento: %s, lo dirige %s (rinde %d %%)" % [StaffCatalog.get_department_name(own),
+				"el CEO" if executive.is_empty() else executive["name"], roundi(factor * 100.0)]
 	if Staff.is_manager(employee):
 		var names: Array[String] = []
 		for leader: Dictionary in Staff.get_leaders_of(employee["id"]):

@@ -1,6 +1,7 @@
 # Menú Empresa (diseño, 9.1 y 12.3; hito 27): la etapa actual y lo que desbloqueó, el
 # progreso hacia la siguiente (cada requisito con lo que hay y lo que pide), la
-# reputación, el valor de la empresa y los ingresos y gastos del mes.
+# reputación, el valor de la empresa, los ingresos y gastos del mes y, desde el hito 33,
+# los departamentos con quién los dirige y cuánto rinden.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos, Equipos y
 # Banco (abrir uno cierra los otros; lo hace la escena de juego). Se construye en
@@ -137,6 +138,14 @@ func _refresh() -> void:
 		_label("Las etapas se revisan cada día y nunca bajan.", 0, MUTED_COLOR)
 	else:
 		_label("La empresa llegó a la última etapa.", SECTION_FONT_SIZE)
+
+	var departments: Array[String] = Staff.get_departments()
+	if not departments.is_empty():
+		_label("Departamentos", SECTION_FONT_SIZE)
+		for department: String in departments:
+			var executive: Dictionary = Staff.get_executive_of(department)
+			_row("  %s (%s)" % [StaffCatalog.get_department_name(department), "el CEO" if executive.is_empty() else executive["name"]],
+				"%d %%" % roundi(Staff.get_department_factor(department) * 100.0), Color.WHITE)
 
 	_label("Reputación", SECTION_FONT_SIZE)
 	_row("  Actual", ProjectsPanel.describe_reputation(Projects.reputation), Hud.REPUTATION_COLOR)

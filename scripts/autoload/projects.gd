@@ -377,11 +377,18 @@ func _process_arrivals(today: int) -> void:
 	EventBus.projects_changed.emit()
 
 
+## Ofertas que llegan por día en promedio: la base más lo de cada vendedor, que depende
+## de cómo rinde Ventas (hito 33).
+func get_offer_chance() -> float:
+	return float(ContractCatalog.get_offers("chance")) \
+		+ float(ContractCatalog.get_offers("chance_per_salesperson")) * get_salesperson_count() \
+		* Staff.get_department_factor(StaffCatalog.get_role_department(Staff.SALES_ROLE))
+
+
 # Cuántas ofertas llegan hoy: la parte entera de la probabilidad es segura y la
 # decimal es una tirada.
 func _roll_arrivals() -> int:
-	var chance: float = float(ContractCatalog.get_offers("chance")) \
-		+ float(ContractCatalog.get_offers("chance_per_salesperson")) * get_salesperson_count()
+	var chance: float = get_offer_chance()
 	var count: int = floori(chance)
 	if _rng.randf() < chance - count:
 		count += 1
@@ -526,7 +533,8 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 		if phase.is_empty() or not Staff.is_expected(key, weekday, hour) or not Staff.has_working_station(employee):
 			continue
 		var computer: String = Workstations.computer_of(OfficeState.furniture, key)
-		workers.append({"key": key, "phase": phase, "rate": factor * Production.get_rate(employee["level"],
+		var department: float = Staff.get_department_factor(StaffCatalog.get_role_department(employee["role"]))
+		workers.append({"key": key, "phase": phase, "rate": factor * department * Production.get_rate(employee["level"],
 			float(employee["energy"]), Production.get_computer_bonus(computer), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))})
 	return workers

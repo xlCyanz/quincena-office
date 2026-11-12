@@ -111,6 +111,32 @@ static func get_next_role(role: String, level: String) -> String:
 	return String(ladder[index + 1]) if index >= 0 and index + 1 < ladder.size() else ""
 
 
+## Valor de data/staff.json, departments.
+static func get_departments(key: String) -> Variant:
+	return _staff_data()["departments"][key]
+
+
+## Ids de los departamentos, en orden.
+static func get_department_ids() -> Array[String]:
+	var ids: Array[String] = []
+	ids.assign(get_departments("order"))
+	return ids
+
+
+static func get_department_name(department: String) -> String:
+	return String(get_departments("names").get(department, department))
+
+
+## Departamento de un cargo, o "" (líderes, gerentes y ejecutivos no son de ninguno).
+static func get_role_department(role: String) -> String:
+	return String(get_departments("roles").get(role, ""))
+
+
+## Cargo de ejecutivo.
+static func get_executive_role() -> String:
+	return String(get_departments("executive_role"))
+
+
 ## Cargo de gerente.
 static func get_manager_role() -> String:
 	return String(get_management("manager_role"))

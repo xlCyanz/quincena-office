@@ -159,10 +159,11 @@ func _check_unlock() -> void:
 	_expect(progress["next_role"] == MANAGER and progress["blocker"] == "stage", "un líder ascenderá a gerente desde Pequeña empresa")
 	Company.stage = 2
 	_expect(bool(Staff.get_promotion_progress(leader)["ready"]), "en Pequeña empresa con oficina libre ya puede")
-	# Un gerente no asciende más (los ejecutivos llegan en el hito 33).
+	# Un gerente sigue a ejecutivo, que se desbloquea en Mediana empresa (hito 33).
 	var manager: Dictionary = leader.duplicate(true)
 	manager["role"] = MANAGER
-	_expect(String(Staff.get_promotion_progress(manager)["next_role"]).is_empty(), "un gerente no asciende todavía")
+	var next: Dictionary = Staff.get_promotion_progress(manager)
+	_expect(next["next_role"] == "executive" and next["blocker"] == "stage", "un gerente ascenderá a ejecutivo desde Mediana empresa")
 
 
 func _check_promotion() -> void:
