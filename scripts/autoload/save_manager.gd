@@ -36,6 +36,7 @@ func new_game() -> void:
 	_pending_scene_state = {}
 	Economy.new_game()
 	OfficeState.new_game()
+	Staff.new_game()
 	GameClock.new_game()
 
 
@@ -80,6 +81,7 @@ func save_game(slot: String) -> bool:
 		"clock": GameClock.export_state(),
 		"economy": Economy.export_state(),
 		"office": OfficeState.export_state(),
+		"staff": Staff.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
@@ -102,6 +104,8 @@ func load_game(slot: String) -> bool:
 	if data.is_empty():
 		return false
 	OfficeState.import_state(data["office"])
+	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
+	Staff.import_state(data.get("staff", {}))
 	Economy.import_state(data["economy"])
 	GameClock.import_state(data["clock"])
 	_pending_scene_state = data.get("scene", {})

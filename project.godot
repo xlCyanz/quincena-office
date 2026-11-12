@@ -21,6 +21,7 @@ EventBus="*res://scripts/autoload/event_bus.gd"
 GameClock="*res://scripts/autoload/game_clock.gd"
 Economy="*res://scripts/autoload/economy.gd"
 OfficeState="*res://scripts/autoload/office_state.gd"
+Staff="*res://scripts/autoload/staff.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 
 [display]

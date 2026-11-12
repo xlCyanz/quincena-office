@@ -20,6 +20,7 @@ var _was_paused_before_menu: bool = false
 @onready var _build_panel: BuildPanel = $BuildPanel
 @onready var _hud: Hud = $Hud
 @onready var _settings_panel: SettingsPanel = $SettingsPanel
+@onready var _staff_panel: StaffPanel = $StaffPanel
 
 
 func _ready() -> void:
@@ -43,6 +44,7 @@ func _ready() -> void:
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
 	_add_frame_button(_build_panel.get_menu_bar())
+	_staff_panel.attach_button(_build_panel.get_menu_bar())
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
 	_settings_panel.settings_mode_changed.connect(_on_settings_mode_changed)
 	_settings_panel.save_requested.connect(_on_save_requested)
@@ -98,6 +100,8 @@ func _on_office_changed() -> void:
 
 # El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
 func _on_build_mode_changed(active: bool) -> void:
+	if active:
+		_staff_panel.set_open(false)
 	_build_controller.set_active(active)
 	_hud.set_controls_enabled(not active)
 	_office_grid.set_rooms_visible(active)
@@ -111,6 +115,8 @@ func _on_build_mode_changed(active: bool) -> void:
 
 
 func _on_settings_mode_changed(active: bool) -> void:
+	if active:
+		_staff_panel.set_open(false)
 	_build_panel.get_menu_bar().visible = not active
 	_hud.set_controls_enabled(not active)
 	_set_menu_pause(active)

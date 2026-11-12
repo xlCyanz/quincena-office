@@ -1,0 +1,37 @@
+{
+	"_comentario": "Cargos, niveles, sueldos y contratación (diseño, 5 y 13.2). Los sueldos son mensuales, por nivel (pasante, junior, semi_senior, senior). Las habilidades van de 1 a 100; la principal de cada cargo cae en el rango de su nivel y las demás en other_skill_range. Los candidatos muestran cada habilidad como un rango de skill_range_width puntos que contiene el valor real.",
+	"levels": {
+		"intern": { "name": "Pasante", "main_skill_range": [10, 30], "age_range": [19, 24] },
+		"junior": { "name": "Junior", "main_skill_range": [25, 45], "age_range": [21, 30] },
+		"semi_senior": { "name": "SemiSenior", "main_skill_range": [40, 65], "age_range": [25, 38] },
+		"senior": { "name": "Senior", "main_skill_range": [60, 85], "age_range": [29, 50] }
+	},
+	"roles": {
+		"programmer": { "name": "Programador", "main_skill": "programming", "salaries": [600, 1200, 2000, 3200] },
+		"designer": { "name": "Diseñador", "main_skill": "design", "salaries": [500, 1000, 1700, 2700] },
+		"qa": { "name": "QA", "main_skill": "testing", "salaries": [500, 900, 1500, 2400] },
+		"salesperson": { "name": "Vendedor", "main_skill": "sales", "salaries": [500, 1000, 1600, 2500] }
+	},
+	"skills": {
+		"programming": "Programación",
+		"design": "Diseño",
+		"testing": "Pruebas",
+		"sales": "Ventas",
+		"leadership": "Liderazgo"
+	},
+	"other_skill_range": [5, 35],
+	"skill_range_width": 20,
+	"hiring": {
+		"arrival_hour": 9,
+		"arrivals": [0, 1],
+		"arrivals_with_publicity": [1, 2],
+		"publicity_cost": 100,
+		"publicity_days": 7,
+		"high_offer_ratio": 1.2,
+		"high_offer_extra_chance": 0.5,
+		"max_waiting": 5,
+		"candidate_days": 3,
+		"asked_salary_ratio": [0.9, 1.2],
+		"salary_step": 50
+	}
+}

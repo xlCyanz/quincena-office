@@ -1,0 +1,17 @@
+{
+	"_comentario": "Nombres de los candidatos y rasgos de personalidad (diseño, 5). Los rasgos están ocultos hasta la entrevista; sus efectos llegan en hitos siguientes.",
+	"female": ["Ana", "María", "Laura", "Carmen", "Sofía", "Valentina", "Gabriela", "Daniela", "Paola", "Andrea", "Lucía", "Isabel", "Camila", "Rosa", "Patricia", "Elena", "Mariela", "Natalia", "Yolanda", "Teresa"],
+	"male": ["Carlos", "José", "Luis", "Miguel", "Juan", "Pedro", "Andrés", "Javier", "Diego", "Ricardo", "Fernando", "Manuel", "Rafael", "Héctor", "Julio", "Óscar", "Ramón", "Tomás", "Víctor", "Eduardo"],
+	"last": ["García", "Rodríguez", "Martínez", "Pérez", "Gómez", "Sánchez", "Díaz", "Hernández", "Ramírez", "Torres", "Flores", "Rivera", "Vargas", "Castillo", "Jiménez", "Reyes", "Morales", "Ortiz", "Peña", "Medina", "Guzmán", "Rosario", "Cruz", "Santos", "Núñez", "Mejía", "Almonte", "Batista", "Polanco", "Tavárez"],
+	"traits": {
+		"night_owl": "Noctámbulo",
+		"perfectionist": "Perfeccionista",
+		"coffee_addict": "Adicto al café",
+		"sociable": "Sociable",
+		"unpunctual": "Impuntual",
+		"mentor": "Mentor",
+		"ambitious": "Ambicioso",
+		"loyal": "Leal"
+	},
+	"traits_per_person": [1, 3]
+}

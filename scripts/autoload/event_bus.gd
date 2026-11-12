@@ -21,3 +21,7 @@ signal balance_changed(balance: int)
 ## de cada compra o venta, para que se redibuje y se recalculen los caminos.
 @warning_ignore("unused_signal")
 signal office_changed
+
+## Cambiaron las vacantes o sus candidatos. La emite Staff.
+@warning_ignore("unused_signal")
+signal staff_changed
