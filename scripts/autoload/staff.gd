@@ -79,10 +79,18 @@
 # (get_department_factor). Un ejecutivo trabaja en una Oficina única y guarda en
 # "department" el que dirige (uno por departamento). El de Administración puede hacer las
 # entrevistas en lugar del CEO (interview["by"]).
+#
+# Horas extra y turno de noche (hito 34): un turno o un horario propio
+# ("own_schedule" con "schedule") puede sumar horas extra. Cada hora del horario que
+# termina suma a "overtime_pay" y "night_pay" (dinero con decimales); la nómina las pasa a
+# "owed" y guarda qué parte es de cada concepto en "owed_overtime" y "owed_night", que se
+# cobran como «Horas extra» y «Recargo nocturno» (data/staff.json, overtime).
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
 const CONCEPT_PAYROLL: String = "Nómina"
+const CONCEPT_OVERTIME: String = "Horas extra"
+const CONCEPT_NIGHT: String = "Recargo nocturno"
 ## Cargo que cuenta contratos aceptados en lugar de trabajados para ascender.
 const SALES_ROLE: String = "salesperson"
 const CONCEPT_FIRING: String = "Despido"
@@ -374,9 +382,20 @@ func get_earned(employee: Dictionary) -> int:
 	return int(employee.get("carry", 0)) + maxi(0, roundi(int(employee["salary"]) * days / float(GameConstants.DAYS_PER_MONTH)))
 
 
-## Lo que cuesta despedir a un empleado hoy: lo ganado más lo que se le debe.
+## Lo que cuesta despedir a un empleado hoy: lo ganado (con horas extra y recargo
+## nocturno) más lo que se le debe.
 func get_firing_cost(employee: Dictionary) -> int:
-	return get_earned(employee) + int(employee["owed"])
+	return get_earned(employee) + get_extra_earned(employee) + int(employee["owed"])
+
+
+## Horas extra y recargo nocturno ganados desde la última nómina, sin pagar todavía.
+func get_extra_earned(employee: Dictionary) -> int:
+	return roundi(float(employee.get("overtime_pay", 0.0))) + roundi(float(employee.get("night_pay", 0.0)))
+
+
+## Lo que vale una hora normal de un empleado: sueldo / 30 / overtime.base_hours.
+static func get_hour_pay(employee: Dictionary) -> float:
+	return float(employee["salary"]) / GameConstants.DAYS_PER_MONTH / float(StaffCatalog.get_overtime("base_hours"))
 
 
 ## Lo que se debe de nóminas sin pagar, sumando a todos.
@@ -734,6 +753,8 @@ func get_mood_target(employee: Dictionary) -> int:
 		target += StaffCatalog.get_morale("owed_mood")
 	if int(employee["stress"]) >= int(StaffCatalog.get_morale("stressed_from")):
 		target += StaffCatalog.get_morale("stressed_mood")
+	if get_schedule(employee).get_night_hours() > 0:
+		target += float(StaffCatalog.get_overtime("night_mood"))
 	return clampi(roundi(target), 0, 100)
 
 
@@ -749,6 +770,7 @@ func get_stress_target(employee: Dictionary) -> int:
 	var team: Dictionary = get_team_of(employee["id"])
 	if not team.is_empty() and not get_manager_of(get_team_leader(team)).is_empty():
 		target += float(StaffCatalog.get_management("manager_stress"))
+	target += float(StaffCatalog.get_overtime("stress_per_hour")) * get_schedule(employee).overtime
 	return clampi(roundi(target), 0, 100)
 
 
@@ -854,10 +876,48 @@ static func _approach(value: int, target: int, step: int) -> int:
 	return maxi(value - step, target)
 
 
-## Horario de un empleado: el turno de su equipo o, sin equipo, el de su cargo.
+## Horario de un empleado: el propio si tiene, si no el turno de su equipo y, sin
+## equipo, el de su cargo.
 func get_schedule(employee: Dictionary) -> WorkSchedule:
+	if bool(employee.get("own_schedule", false)):
+		return WorkSchedule.from_dict(employee["schedule"])
 	var team: Dictionary = get_team_of(employee["id"])
 	return WorkSchedule.from_dict(team["schedule"] if not team.is_empty() else employee["schedule"])
+
+
+## Le da a un empleado un horario propio (reemplaza el de su equipo o su cargo):
+## hora de entrada, días y horas extra. Devuelve {"ok", "message"}.
+func set_own_schedule(employee_id: int, start_hour: int, days: Array[int], overtime: int = 0) -> Dictionary:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty():
+		return {"ok": false, "message": "Ese empleado ya no está."}
+	var problem: String = shift_problem(start_hour, days, overtime)
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	var schedule: WorkSchedule = WorkSchedule.make_shift(start_hour, days, overtime)
+	employee["schedule"] = schedule.to_dict()
+	employee["own_schedule"] = true
+	_schedules_changed()
+	return {"ok": true, "message": "Horario de %s: %s." % [employee["name"], schedule.describe()]}
+
+
+## Quita el horario propio: vuelve al turno de su equipo o al horario de su cargo.
+func clear_own_schedule(employee_id: int) -> Dictionary:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty():
+		return {"ok": false, "message": "Ese empleado ya no está."}
+	employee["own_schedule"] = false
+	employee["schedule"] = StaffCatalog.get_role_schedule(employee["role"])
+	_schedules_changed()
+	var team: Dictionary = get_team_of(employee_id)
+	return {"ok": true, "message": "%s vuelve %s: %s." % [employee["name"],
+		"al turno de " + String(team["name"]) if not team.is_empty() else "al horario de su cargo",
+		get_schedule(employee).describe()]}
+
+
+## Indica si un empleado tiene horario propio.
+func has_own_schedule(employee: Dictionary) -> bool:
+	return bool(employee.get("own_schedule", false))
 
 
 ## Crea un equipo vacío con el turno por defecto y lo devuelve.
@@ -1043,25 +1103,28 @@ func remove_from_team(employee_id: int) -> bool:
 	return true
 
 
-## Cambia el turno de un equipo: hora de entrada y días (con al menos un día de
-## descanso). Devuelve {"ok", "message"}.
-func set_team_shift(team_id: int, start_hour: int, days: Array[int]) -> Dictionary:
+## Cambia el turno de un equipo: hora de entrada, días (con al menos un día de
+## descanso) y horas extra. Devuelve {"ok", "message"}.
+func set_team_shift(team_id: int, start_hour: int, days: Array[int], overtime: int = 0) -> Dictionary:
 	var team: Dictionary = get_team(team_id)
 	if team.is_empty():
 		return {"ok": false, "message": "Ese equipo ya no está."}
-	var problem: String = shift_problem(start_hour, days)
+	var problem: String = shift_problem(start_hour, days, overtime)
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
-	var schedule: WorkSchedule = WorkSchedule.make_shift(start_hour, days)
+	var schedule: WorkSchedule = WorkSchedule.make_shift(start_hour, days, overtime)
 	team["schedule"] = schedule.to_dict()
 	_schedules_changed()
 	return {"ok": true, "message": "Turno de %s: %s." % [team["name"], schedule.describe()]}
 
 
 ## Por qué no vale un turno, o "" si vale.
-func shift_problem(start_hour: int, days: Array[int]) -> String:
+func shift_problem(start_hour: int, days: Array[int], overtime: int = 0) -> String:
 	if start_hour < 0 or start_hour >= GameConstants.HOURS_PER_DAY:
 		return "La hora de entrada tiene que estar entre 0 y 23."
+	var max_overtime: int = int(StaffCatalog.get_overtime("max_hours"))
+	if overtime < 0 or overtime > max_overtime:
+		return "Las horas extra van de 0 a %d por día." % max_overtime
 	var unique: Array[int] = []
 	for day: int in days:
 		if day < 0 or day >= GameConstants.DAYS_PER_WEEK:
@@ -1286,7 +1349,13 @@ func _run_payroll() -> void:
 		return
 	var today: int = GameClock.get_day_count()
 	for employee: Dictionary in employees:
-		employee["owed"] = int(employee["owed"]) + get_earned(employee)
+		var overtime: int = roundi(float(employee.get("overtime_pay", 0.0)))
+		var night: int = roundi(float(employee.get("night_pay", 0.0)))
+		employee["owed"] = int(employee["owed"]) + get_earned(employee) + overtime + night
+		employee["owed_overtime"] = int(employee.get("owed_overtime", 0)) + overtime
+		employee["owed_night"] = int(employee.get("owed_night", 0)) + night
+		employee["overtime_pay"] = 0.0
+		employee["night_pay"] = 0.0
 		employee["paid_until"] = today
 		employee["carry"] = 0
 	var total: int = get_total_owed()
@@ -1330,9 +1399,21 @@ func _pay_debt_if_possible() -> bool:
 	var total: int = get_total_owed()
 	if total <= 0 or not Economy.can_afford(total):
 		return false
+	var overtime: int = 0
+	var night: int = 0
 	for employee: Dictionary in employees:
+		overtime += int(employee.get("owed_overtime", 0))
+		night += int(employee.get("owed_night", 0))
 		employee["owed"] = 0
-	Economy.spend(total, CONCEPT_PAYROLL)
+		employee["owed_overtime"] = 0
+		employee["owed_night"] = 0
+	# Cada parte con su concepto: sueldos, horas extra y recargo nocturno.
+	if total - overtime - night > 0:
+		Economy.spend(total - overtime - night, CONCEPT_PAYROLL)
+	if overtime > 0:
+		Economy.spend(overtime, CONCEPT_OVERTIME)
+	if night > 0:
+		Economy.spend(night, CONCEPT_NIGHT)
 	EventBus.staff_changed.emit()
 	EventBus.notice.emit("Nómina pagada: %s." % MoneyFormat.format(total))
 	return true
@@ -1343,7 +1424,7 @@ func _change_mood(employee: Dictionary, change: int) -> void:
 
 
 # La energía de cada empleado cambia según si la hora que acaba de terminar era de
-# trabajo o de descanso.
+# trabajo o de descanso; si era de trabajo, suma sus horas extra y recargo nocturno.
 func _update_energy() -> void:
 	if employees.is_empty():
 		return
@@ -1353,8 +1434,18 @@ func _update_energy() -> void:
 	var hour: int = posmod(ended, GameConstants.HOURS_PER_DAY)
 	var work: int = int(StaffCatalog.get_workday("energy_per_work_hour"))
 	var rest: int = int(StaffCatalog.get_workday("energy_per_rest_hour"))
+	var pay_factor: float = float(StaffCatalog.get_overtime("pay_factor"))
+	var night_bonus: float = float(StaffCatalog.get_overtime("night_bonus"))
 	for employee: Dictionary in employees:
-		var change: int = work if is_expected(employee_key(employee["id"]), weekday, hour) else rest
+		var working: bool = is_expected(employee_key(employee["id"]), weekday, hour)
+		if working:
+			var schedule: WorkSchedule = get_schedule(employee)
+			var hour_pay: float = get_hour_pay(employee)
+			if schedule.is_overtime_hour(schedule.get_shift_hour(weekday, hour)):
+				employee["overtime_pay"] = float(employee.get("overtime_pay", 0.0)) + hour_pay * pay_factor
+			if WorkSchedule.is_night_hour(hour):
+				employee["night_pay"] = float(employee.get("night_pay", 0.0)) + hour_pay * night_bonus
+		var change: int = work if working else rest
 		employee["energy"] = clampi(int(employee["energy"]) + change, 0, 100)
 		employee["min_energy"] = mini(int(employee.get("min_energy", 100)), int(employee["energy"]))
 	EventBus.staff_changed.emit()
@@ -1598,6 +1689,12 @@ func import_state(state: Dictionary) -> void:
 # Los datos del hito 19 de un empleado (desde una partida guardada o nuevos).
 func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
 	employee["carry"] = int(saved.get("carry", 0))
+	employee["own_schedule"] = bool(saved.get("own_schedule", false))
+	employee["overtime_pay"] = float(saved.get("overtime_pay", 0.0))
+	employee["night_pay"] = float(saved.get("night_pay", 0.0))
+	# Lo debido de horas extra y noche nunca pasa de lo debido en total.
+	employee["owed_overtime"] = clampi(int(saved.get("owed_overtime", 0)), 0, int(employee["owed"]))
+	employee["owed_night"] = clampi(int(saved.get("owed_night", 0)), 0, int(employee["owed"]) - int(employee.get("owed_overtime", 0)))
 	employee["bad_days"] = int(saved.get("bad_days", 0))
 	employee["quit_day"] = int(saved.get("quit_day", NO_QUIT))
 	employee["min_energy"] = int(saved.get("min_energy", employee["energy"]))

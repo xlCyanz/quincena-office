@@ -4,8 +4,9 @@
 # avisa si renuncia o pide aumento: un pedido se acepta o se niega, y la fila Aumento
 # sube el sueldo cuando el jugador quiera (de a salary_step). Desde el hito 30 muestra
 # cómo va hacia el nivel siguiente y, cuando cumple, la fila Ascender con el sueldo
-# nuevo (mayor que el actual; sugerido el de su nivel nuevo). Equipo y horario llegan
-# en sus hitos.
+# nuevo (mayor que el actual; sugerido el de su nivel nuevo). Desde el hito 34 tiene
+# la fila Horario propio: un turno suyo (entrada, días y horas extra) que reemplaza el
+# de su equipo o su cargo, y muestra las horas extra y el recargo nocturno sin pagar.
 #
 # Se abre con un clic en el empleado o desde Personal, no pausa el tiempo y se
 # actualiza sola. Va a la derecha, debajo del reloj; si no entra en la pantalla, el
@@ -62,6 +63,9 @@ var _promote_plus: Button
 var _promote_button: Button
 ## Sueldo elegido para el ascenso (0 = el sugerido; se reinicia al abrir la ficha).
 var _promote_salary: int = 0
+var _own_label: Label
+var _own_button: Button
+var _shift_editor: ShiftEditor
 
 
 func _ready() -> void:
@@ -192,6 +196,23 @@ func _ready() -> void:
 		Staff.promote(_employee_id, _promote_salary)
 		_promote_salary = 0)
 	_promote_row.add_child(_promote_button)
+
+	var own_row := HBoxContainer.new()
+	rows.add_child(own_row)
+	_own_label = Label.new()
+	_own_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_own_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	own_row.add_child(_own_label)
+	_own_button = Button.new()
+	_own_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_own_button.pressed.connect(_toggle_own_schedule)
+	own_row.add_child(_own_button)
+	_shift_editor = ShiftEditor.new(40.0, true)
+	_shift_editor.changed.connect(func(start_hour: int, days: Array[int], overtime: int) -> void:
+		var result: Dictionary = Staff.set_own_schedule(_employee_id, start_hour, days, overtime)
+		if not bool(result["ok"]):
+			EventBus.notice.emit(result["message"]))
+	rows.add_child(_shift_editor)
 	# Los avisos y el aumento van antes de las habilidades: es lo urgente.
 	rows.move_child(_details, rows.get_child_count() - 1)
 
@@ -326,6 +347,7 @@ func get_text() -> String:
 		texts.append(_alert.text)
 	texts.append(_raise_label.text)
 	texts.append(_promotion_label.text)
+	texts.append(_own_label.text)
 	if _promote_row.visible:
 		texts.append(_promote_salary_label.text)
 	if _confirm_row.visible:
@@ -372,6 +394,7 @@ func _refresh() -> void:
 	_details.text = "\n".join(details)
 	_refresh_raise(employee)
 	_refresh_promotion(employee)
+	_refresh_own_schedule(employee, team)
 	_fit.call_deferred()
 	if _confirm_row.visible:
 		_confirm_label.text = "¿Despedir a %s? Cuesta %s y baja el ánimo de sus compañeros." % [
@@ -390,6 +413,39 @@ static func describe_performance(employee: Dictionary) -> String:
 	if mood < 1.0:
 		causes.append("desanimado")
 	return "Rinde %d %% (%s)" % [roundi(energy * mood * 100.0), " y ".join(causes)]
+
+
+# Fila Horario propio: el botón para tenerlo o volver al del equipo (o del cargo) y,
+# si lo tiene, sus controles.
+func _refresh_own_schedule(employee: Dictionary, team: Dictionary) -> void:
+	var own: bool = Staff.has_own_schedule(employee)
+	_own_label.text = "Horario propio" if own else ("Sigue el turno de su equipo" if not team.is_empty() else "Sigue el horario de su cargo")
+	_own_button.text = ("Usar el del equipo" if not team.is_empty() else "Usar el del cargo") if own else "Usar uno propio"
+	_shift_editor.visible = own
+	if own:
+		_shift_editor.set_schedule(Staff.get_schedule(employee))
+
+
+func _toggle_own_schedule() -> void:
+	var employee: Dictionary = Staff.get_employee(_employee_id)
+	if employee.is_empty():
+		return
+	if Staff.has_own_schedule(employee):
+		Staff.clear_own_schedule(_employee_id)
+	else:
+		# Empieza con la entrada y los días que ya tiene.
+		var schedule: WorkSchedule = Staff.get_schedule(employee)
+		Staff.set_own_schedule(_employee_id, schedule.start_hour, schedule.days, schedule.overtime)
+
+
+## Botón para tener horario propio o volver al del equipo o el cargo.
+func get_own_schedule_button() -> Button:
+	return _own_button
+
+
+## Controles del horario propio.
+func get_shift_editor() -> ShiftEditor:
+	return _shift_editor
 
 
 # Ajusta el alto: lo que pide el contenido, sin pasar de la pantalla.
@@ -530,6 +586,9 @@ func _describe_team(employee: Dictionary, team: Dictionary) -> String:
 
 func _describe_pay(employee: Dictionary) -> String:
 	var text: String = "Ganado desde el último pago: %s" % MoneyFormat.format(Staff.get_earned(employee))
+	var extra: int = Staff.get_extra_earned(employee)
+	if extra > 0:
+		text += " + %s de horas extra y noche" % MoneyFormat.format(extra)
 	var owed: int = int(employee["owed"])
 	if owed > 0:
 		text += " · se le deben %s" % MoneyFormat.format(owed)

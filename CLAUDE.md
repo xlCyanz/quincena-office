@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32) y `test_departments` (33)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32), `test_departments` (33) y `test_overtime` (34)
 
 ## Convenciones de código
 
@@ -121,6 +121,12 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   con ejecutivo, 1 + 10 % × liderazgo/100, presente o no (`Staff.get_department_factor`). Multiplica la producción de sus miembros y la parte
   del vendedor en la oferta diaria (`Projects.get_offer_chance`). El ejecutivo de Administración puede entrevistar: `interview["by"]` es "ceo" o
   su clave (`start_interview(id, by_executive)`, botón «Delegar» en Personal). Gerentes y ejecutivos no entran en equipos.
+- Horas extra y noche (`overtime` en `data/staff.json`): `WorkSchedule.overtime` (0–4) son las últimas horas de la jornada
+  (`make_shift(entrada, días, extra)`, `set_team_shift(…, extra)`). Cada hora del horario que termina (esté o no en la oficina) suma a
+  `overtime_pay` (hora = sueldo/30/8 × 1.5) y `night_pay` (+20 % de 22 a 6); la nómina las pasa a `owed` (`owed_overtime`, `owed_night`) y las
+  cobra como «Horas extra» y «Recargo nocturno». Meta de estrés +5 por hora extra; con horas de noche, ánimo −10. Horario propio
+  (`own_schedule`, `Staff.set_own_schedule`/`clear_own_schedule`, fila en la ficha): reemplaza el del equipo o el cargo. `ShiftEditor` son los
+  controles de turno de Equipos y la ficha.
 - Banco (`Bank`, `data/bank.json`): calificación A–E por puntaje = base 50 (C) + ingresos de contratos del mes pasado (hasta +20, con $25,000)
   + bienes (reventa de muebles y computadoras, hasta +10) + antigüedad (+2/mes, hasta +10) + pagos a tiempo (+2, hasta +10)
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
@@ -213,3 +219,4 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 31 | Líderes de equipo | ✅ Completado (ascender un Senior o contratarlo desde Startup; $4,200 sin niveles; no produce; sin líder presente 75 % desde Startup; quitarlo lo deja líder sin equipo; el liderazgo aún no cambia nada) |
 | 32 | Gerentes y organigrama | ✅ Completado (ascender un líder o contratarlo desde Pequeña empresa; Oficina única con escritorio y silla, una persona por oficina; el jugador asigna los líderes en el organigrama; +10 % solo con el gerente presente; el estrés baja siempre) |
 | 33 | Departamentos y ejecutivos | ✅ Completado (desde Mediana empresa, que pide solo 40 empleados; ascender un gerente o contratarlo; el ejecutivo rinde siempre, sin depender de estar presente; el CEO con 3+ departamentos rinde menos; Administración solo entrevista, el jugador elige quién) |
+| 34 | Horas extra y turno de noche | ✅ Completado (0–4 h extra al final del turno a 1.5×; +20 % de 22 a 6; se pagan por hora de horario en la nómina siguiente con su concepto; estrés +5 por hora extra y ánimo −10 de noche; horario propio desde la ficha, también sin equipo) |

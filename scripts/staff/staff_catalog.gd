@@ -167,6 +167,11 @@ static func get_teams(key: String) -> Variant:
 	return _staff_data()["teams"][key]
 
 
+## Valor de horas extra y turno de noche (data/staff.json, overtime).
+static func get_overtime(key: String) -> Variant:
+	return _staff_data()["overtime"][key]
+
+
 ## Días de la semana con que empieza el turno de un equipo nuevo.
 static func get_default_team_days() -> Array[int]:
 	var days: Array[int] = []

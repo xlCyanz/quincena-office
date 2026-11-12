@@ -2,7 +2,8 @@
 # entrada y días; la salida la marca la jornada de 8 horas más el almuerzo) y el
 # contrato que llevan. También qué contrato lleva el CEO y quién está sin equipo.
 # Desde el hito 31 cada equipo muestra su líder (un líder de equipo añadido entra como
-# líder) y, desde Startup, si rinde menos por no tener a su líder presente.
+# líder) y, desde Startup, si rinde menos por no tener a su líder presente. Desde el
+# hito 34 el turno suma horas extra (ShiftEditor) y marca a quien tiene horario propio.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal y Proyectos (abrir uno
 # cierra los otros; lo hace la escena de juego). Se construye en código y solo se
@@ -148,7 +149,8 @@ func get_list_text() -> String:
 func _signature() -> String:
 	var people: Array[String] = []
 	for employee: Dictionary in Staff.employees:
-		people.append("%d:%s:%s:%d" % [employee["id"], employee["name"], employee["role"], int(employee.get("manager_id", 0))])
+		people.append("%d:%s:%s:%d:%s" % [employee["id"], employee["name"], employee["role"], int(employee.get("manager_id", 0)),
+			Staff.get_schedule(employee).describe() if Staff.has_own_schedule(employee) else ""])
 	var owners: Array[String] = []
 	for contract: Dictionary in Projects.contracts:
 		owners.append("%d:%d" % [contract["id"], contract["team_id"]])
@@ -192,7 +194,7 @@ func _refresh() -> void:
 	for employee: Dictionary in Staff.get_employees_without_team():
 		loose.append("%s (%s)" % [employee["name"], Staff.get_schedule(employee).describe()])
 	_list.add_child(_muted_label("Nadie: todos están en un equipo." if loose.is_empty() and not Staff.employees.is_empty()
-		else ("Sin empleados todavía." if loose.is_empty() else "Con el horario de su cargo: " + ", ".join(loose) + ".")))
+		else ("Sin empleados todavía." if loose.is_empty() else "Con el horario de su cargo o el suyo: " + ", ".join(loose) + ".")))
 
 
 func _add_team(team: Dictionary) -> void:
@@ -222,38 +224,12 @@ func _add_team(team: Dictionary) -> void:
 	var shift_label := Label.new()
 	shift_label.text = "Turno: %s · almuerzo %d:00" % [schedule.describe(), schedule.get_lunch_hour()]
 	_list.add_child(shift_label)
-	var shift_row := HBoxContainer.new()
-	_list.add_child(shift_row)
-	shift_row.add_child(_row_label("Entrada"))
-	var earlier := Button.new()
-	earlier.text = "−"
-	earlier.custom_minimum_size = Vector2(36, 0)
-	earlier.pressed.connect(func() -> void: _set_shift(team_id, posmod(schedule.start_hour - 1, GameConstants.HOURS_PER_DAY), schedule.days))
-	shift_row.add_child(earlier)
-	controls["earlier"] = earlier
-	var later := Button.new()
-	later.text = "+"
-	later.custom_minimum_size = Vector2(36, 0)
-	later.pressed.connect(func() -> void: _set_shift(team_id, (schedule.start_hour + 1) % GameConstants.HOURS_PER_DAY, schedule.days))
-	shift_row.add_child(later)
-	controls["later"] = later
-	var days_row := HBoxContainer.new()
-	_list.add_child(days_row)
-	for day: int in range(GameConstants.DAYS_PER_WEEK):
-		var toggle := Button.new()
-		toggle.text = WorkSchedule.DAY_NAMES[day]
-		toggle.toggle_mode = true
-		toggle.button_pressed = schedule.days.has(day)
-		toggle.custom_minimum_size = Vector2(DAY_BUTTON_WIDTH, 0)
-		toggle.pressed.connect(func() -> void:
-			var days: Array[int] = schedule.days.duplicate()
-			if days.has(day):
-				days.erase(day)
-			else:
-				days.append(day)
-			_set_shift(team_id, schedule.start_hour, days))
-		days_row.add_child(toggle)
-		controls["day_%d" % day] = toggle
+	var editor := ShiftEditor.new(DAY_BUTTON_WIDTH)
+	editor.set_schedule(schedule)
+	editor.changed.connect(func(start_hour: int, days: Array[int], overtime: int) -> void:
+		_set_shift(team_id, start_hour, days, overtime))
+	_list.add_child(editor)
+	controls.merge(editor.get_controls())
 
 	var project_row := HBoxContainer.new()
 	_list.add_child(project_row)
@@ -297,6 +273,9 @@ func _add_team(team: Dictionary) -> void:
 		_list.add_child(row)
 		var label := Label.new()
 		label.text = "%s · %s" % [employee["name"], Staff.describe_employee(employee)]
+		if Staff.has_own_schedule(employee):
+			label.text += " · horario propio"
+			label.tooltip_text = Staff.get_schedule(employee).describe()
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.clip_text = true
 		row.add_child(label)
@@ -305,7 +284,7 @@ func _add_team(team: Dictionary) -> void:
 		var member_id: int = int(member)
 		remove.pressed.connect(func() -> void:
 			Staff.remove_from_team(member_id)
-			_status_label.text = "%s sale de %s y vuelve al horario de su cargo." % [employee["name"], team["name"]])
+			_status_label.text = "%s sale de %s." % [employee["name"], team["name"]])
 		row.add_child(remove)
 		controls["remove_%d" % member_id] = remove
 
@@ -359,8 +338,8 @@ func _project_choice(team_id: int) -> OptionButton:
 	return choice
 
 
-func _set_shift(team_id: int, start_hour: int, days: Array[int]) -> void:
-	_status_label.text = Staff.set_team_shift(team_id, start_hour, days)["message"]
+func _set_shift(team_id: int, start_hour: int, days: Array[int], overtime: int) -> void:
+	_status_label.text = Staff.set_team_shift(team_id, start_hour, days, overtime)["message"]
 
 
 func _add_section(text: String) -> void:
