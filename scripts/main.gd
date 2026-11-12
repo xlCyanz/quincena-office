@@ -34,6 +34,7 @@ var _ceo_button: Button
 @onready var _settings_panel: SettingsPanel = $SettingsPanel
 @onready var _staff_panel: StaffPanel = $StaffPanel
 @onready var _projects_panel: ProjectsPanel = $ProjectsPanel
+@onready var _teams_panel: TeamsPanel = $TeamsPanel
 @onready var _employee_card: EmployeeCard = $EmployeeCard
 
 
@@ -63,13 +64,17 @@ func _ready() -> void:
 	_staff_panel.attach_button(_build_panel.get_menu_bar())
 	_staff_panel.employee_selected.connect(_employee_card.open_employee)
 	_projects_panel.attach_button(_build_panel.get_menu_bar())
-	# Personal y Proyectos ocupan el mismo lado: abrir uno cierra el otro.
+	_teams_panel.attach_button(_build_panel.get_menu_bar())
+	# Personal, Proyectos y Equipos ocupan el mismo lado: abrir uno cierra los otros.
 	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
 		if active:
-			_projects_panel.set_open(false))
+			_close_side_panels(_staff_panel))
 	_projects_panel.projects_mode_changed.connect(func(active: bool) -> void:
 		if active:
-			_staff_panel.set_open(false))
+			_close_side_panels(_projects_panel))
+	_teams_panel.teams_mode_changed.connect(func(active: bool) -> void:
+		if active:
+			_close_side_panels(_teams_panel))
 	_add_ceo_button(_build_panel.get_menu_bar())
 	_employee_card.status_provider = describe_employee_activity
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
@@ -202,11 +207,20 @@ func _on_office_changed() -> void:
 		character.replan()
 
 
+# Cierra los paneles del lado izquierdo menos uno (null los cierra todos).
+func _close_side_panels(keep: CanvasLayer) -> void:
+	if keep != _staff_panel:
+		_staff_panel.set_open(false)
+	if keep != _projects_panel:
+		_projects_panel.set_open(false)
+	if keep != _teams_panel:
+		_teams_panel.set_open(false)
+
+
 # El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
 func _on_build_mode_changed(active: bool) -> void:
 	if active:
-		_staff_panel.set_open(false)
-		_projects_panel.set_open(false)
+		_close_side_panels(null)
 	_build_controller.set_active(active)
 	_hud.set_controls_enabled(not active)
 	_office_grid.set_rooms_visible(active)
@@ -222,8 +236,7 @@ func _on_build_mode_changed(active: bool) -> void:
 
 func _on_settings_mode_changed(active: bool) -> void:
 	if active:
-		_staff_panel.set_open(false)
-		_projects_panel.set_open(false)
+		_close_side_panels(null)
 	_build_panel.get_menu_bar().visible = not active
 	_hud.set_controls_enabled(not active)
 	_set_menu_pause(active)
@@ -285,7 +298,7 @@ func _add_ceo_button(menu_bar: Container) -> void:
 	_ceo_button.focus_mode = Control.FOCUS_NONE
 	_ceo_button.pressed.connect(func() -> void: Staff.set_ceo_at_work(not Staff.ceo_at_work))
 	menu_bar.add_child(_ceo_button)
-	menu_bar.move_child(_ceo_button, _projects_panel.get_open_button().get_index() + 1)
+	menu_bar.move_child(_ceo_button, _teams_panel.get_open_button().get_index() + 1)
 	_update_ceo_button()
 
 

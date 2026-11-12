@@ -185,11 +185,13 @@ func _refresh() -> void:
 		close()
 		return
 	_title.text = employee["name"]
-	var lunch: int = int(StaffCatalog.get_workday("lunch_hour"))
+	var schedule: WorkSchedule = Staff.get_schedule(employee)
+	var lunch: int = schedule.get_lunch_hour()
+	var team: Dictionary = Staff.get_team_of(employee["id"])
 	_info.text = "\n".join([
 		"%s, %d años" % [Staff.describe_employee(employee), employee["age"]],
-		"Equipo: sin equipo",
-		"Horario: %s · almuerzo %d:00–%d:00" % [Staff.get_schedule(employee).describe(), lunch, lunch + 1],
+		"Equipo: %s" % (team["name"] if not team.is_empty() else "sin equipo (horario de su cargo)"),
+		"Horario: %s · almuerzo %d:00–%d:00" % [schedule.describe(), lunch, (lunch + 1) % GameConstants.HOURS_PER_DAY],
 		_describe_pay(employee),
 		"Ahora: %s" % (String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"),
 	])

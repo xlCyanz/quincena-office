@@ -11,11 +11,16 @@
 # "testing"}, "total_points", "days", "pay", "advance", "arrived_day", "expires_day"}.
 # advance es el anticipo (0 si no tiene) y los días se cuentan con GameClock.get_day_count.
 # Un contrato es la oferta aceptada más "accepted_day", "deadline_day" y "progress"
-# (puntos hechos de cada fase). Se pueden tener a la vez tantos contratos como equipos
-# (uno mientras no haya equipos: el CEO).
+# (puntos hechos de cada fase) y "team_id": quién lo lleva (el id de un equipo de Staff,
+# CEO_TEAM si lo lleva el CEO o NO_TEAM si nadie). Cada equipo con miembros y el CEO
+# llevan un contrato a la vez, así que el tope de contratos en curso es equipos + 1.
 extends Node
 
 const CONCEPT_ADVANCE: String = "Anticipo de contrato"
+## team_id de un contrato que lleva el CEO trabajando solo.
+const CEO_TEAM: int = 0
+## team_id de un contrato que no lleva nadie.
+const NO_TEAM: int = -1
 
 var offers: Array[Dictionary] = []
 var contracts: Array[Dictionary] = []
@@ -28,6 +33,7 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	EventBus.hour_changed.connect(_on_hour_changed)
+	EventBus.staff_changed.connect(_drop_missing_teams)
 
 
 ## Prepara los proyectos de una partida nueva: sin contratos, con la reputación inicial
@@ -47,15 +53,14 @@ func set_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
 
 
-## Cuántos contratos se pueden tener en curso: uno por equipo, y uno (el CEO) mientras
-## no haya equipos.
+## Cuántos contratos se pueden tener en curso: uno por equipo con miembros y uno del CEO.
 func get_contract_limit() -> int:
-	return maxi(1, get_team_count())
+	return get_team_count() + 1
 
 
-## Equipos de la empresa (llegan en el hito 15).
+## Equipos de la empresa que tienen al menos un miembro.
 func get_team_count() -> int:
-	return 0
+	return Staff.get_active_team_count()
 
 
 ## Tamaños de contrato que pueden llegar ahora según la reputación y los vendedores.
@@ -85,7 +90,7 @@ func accept_problem(offer_id: int) -> String:
 		return "Esa oferta ya no está."
 	var limit: int = get_contract_limit()
 	if contracts.size() >= limit:
-		return "Ya tienes %d %s en curso y el tope es %d: uno por equipo (sin equipos, el del CEO)." % [
+		return "Ya tienes %d %s en curso y el tope es %d: uno por equipo con miembros más el del CEO." % [
 			contracts.size(), "contrato" if contracts.size() == 1 else "contratos", limit]
 	var room: String = String(ContractCatalog.get_size(offer["size"]).get("requires_room", ""))
 	if not room.is_empty() and not _has_working_room(room):
@@ -107,9 +112,10 @@ func accept(offer_id: int) -> Dictionary:
 	contract["accepted_day"] = today
 	contract["deadline_day"] = today + int(offer["days"])
 	contract["progress"] = {"design": 0, "programming": 0, "testing": 0}
+	contract["team_id"] = _first_free_team()
 	contracts.append(contract)
-	var message: String = "Contrato aceptado: %s para %s, %d días." % [
-		ContractCatalog.get_type_name(offer["type"]), offer["client"], offer["days"]]
+	var message: String = "Contrato aceptado: %s para %s, %d días; %s." % [
+		ContractCatalog.get_type_name(offer["type"]), offer["client"], offer["days"], describe_owner(contract)]
 	if int(offer["advance"]) > 0:
 		Economy.earn(int(offer["advance"]), CONCEPT_ADVANCE)
 		message += " Anticipo cobrado: %s." % MoneyFormat.format(offer["advance"])
@@ -126,6 +132,42 @@ func reject(offer_id: int) -> bool:
 	offers.erase(offer)
 	EventBus.projects_changed.emit()
 	return true
+
+
+## Le da un contrato a un equipo (o al CEO, o a nadie con NO_TEAM). Un equipo lleva un
+## contrato a la vez: si ya tenía otro, ese queda sin equipo. Devuelve {"ok", "message"}.
+func assign(contract_id: int, team_id: int) -> Dictionary:
+	var contract: Dictionary = get_contract(contract_id)
+	if contract.is_empty():
+		return {"ok": false, "message": "Ese contrato ya no está."}
+	if team_id > CEO_TEAM and Staff.get_team(team_id).is_empty():
+		return {"ok": false, "message": "Ese equipo ya no está."}
+	if team_id != NO_TEAM:
+		var previous: Dictionary = get_contract_of(team_id)
+		if not previous.is_empty() and previous["id"] != contract_id:
+			previous["team_id"] = NO_TEAM
+	contract["team_id"] = team_id
+	EventBus.projects_changed.emit()
+	return {"ok": true, "message": "%s: %s." % [describe_title(contract), describe_owner(contract)]}
+
+
+## Contrato que lleva un equipo (o el CEO con CEO_TEAM), o vacío.
+func get_contract_of(team_id: int) -> Dictionary:
+	if team_id == NO_TEAM:
+		return {}
+	for contract: Dictionary in contracts:
+		if int(contract["team_id"]) == team_id:
+			return contract
+	return {}
+
+
+## "lo lleva el CEO", "lo lleva Equipo 1" o "sin equipo".
+func describe_owner(contract: Dictionary) -> String:
+	var team_id: int = int(contract.get("team_id", NO_TEAM))
+	if team_id == CEO_TEAM:
+		return "lo lleva el CEO"
+	var team: Dictionary = Staff.get_team(team_id)
+	return "sin equipo" if team.is_empty() else "lo lleva %s" % team["name"]
 
 
 func get_offer(offer_id: int) -> Dictionary:
@@ -287,6 +329,9 @@ func import_state(state: Dictionary) -> void:
 		for phase: String in ContractCatalog.PHASES:
 			progress[phase] = int(saved.get("progress", {}).get(phase, 0))
 		contract["progress"] = progress
+		# Las partidas del hito 14 tenían un solo contrato, el del CEO.
+		var team_id: int = int(saved.get("team_id", CEO_TEAM))
+		contract["team_id"] = team_id if team_id <= CEO_TEAM or not Staff.get_team(team_id).is_empty() else NO_TEAM
 		contracts.append(contract)
 	reputation = float(state.get("reputation", ContractCatalog.get_offers("start_reputation")))
 	_next_id = int(state.get("next_id", 1))
@@ -296,6 +341,27 @@ func import_state(state: Dictionary) -> void:
 	else:
 		_rng.randomize()
 	EventBus.projects_changed.emit()
+
+
+# Quién lleva un contrato nuevo: el primer equipo con miembros que no lleva ninguno; si
+# no hay, el CEO si está libre; si no, nadie.
+func _first_free_team() -> int:
+	for team: Dictionary in Staff.teams:
+		if not (team["members"] as Array).is_empty() and get_contract_of(team["id"]).is_empty():
+			return team["id"]
+	return CEO_TEAM if get_contract_of(CEO_TEAM).is_empty() else NO_TEAM
+
+
+# Los contratos de un equipo que se borró quedan sin equipo.
+func _drop_missing_teams() -> void:
+	var changed: bool = false
+	for contract: Dictionary in contracts:
+		var team_id: int = int(contract["team_id"])
+		if team_id > CEO_TEAM and Staff.get_team(team_id).is_empty():
+			contract["team_id"] = NO_TEAM
+			changed = true
+	if changed:
+		EventBus.projects_changed.emit()
 
 
 func _import_offer(saved: Dictionary) -> Dictionary:

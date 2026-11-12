@@ -65,9 +65,22 @@ static func get_shirt_color(role: String) -> Color:
 	return Color(String(_staff_data()["roles"].get(role, {}).get("shirt_color", "888888")))
 
 
-## Valor de la jornada (data/staff.json, workday): lunch_hour, start_energy, …
+## Valor de la jornada (data/staff.json, workday): lunch_offset, start_energy, …
 static func get_workday(key: String) -> Variant:
 	return _staff_data()["workday"][key]
+
+
+## Valor de los equipos y sus turnos (data/staff.json, teams).
+static func get_teams(key: String) -> Variant:
+	return _staff_data()["teams"][key]
+
+
+## Días de la semana con que empieza el turno de un equipo nuevo.
+static func get_default_team_days() -> Array[int]:
+	var days: Array[int] = []
+	for day: Variant in _staff_data()["teams"]["default_days"]:
+		days.append(int(day))
+	return days
 
 
 ## Valor de la nómina y los despidos (data/staff.json, payroll).

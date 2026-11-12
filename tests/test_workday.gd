@@ -55,7 +55,8 @@ func _check_catalog() -> void:
 	_expect(seller.describe() == "lun–vie 9:00–18:00", "horario del vendedor: %s" % seller.describe())
 	_expect(WorkSchedule.from_dict({"days": [0, 2], "start_hour": 9, "end_hour": 13}).describe() == "lun, mié 9:00–13:00",
 		"días sueltos")
-	_expect(int(StaffCatalog.get_workday("lunch_hour")) == 12, "almuerzo a las 12")
+	_expect(WorkSchedule.get_lunch_offset() == 4 and programmer.get_lunch_hour() == 12 and seller.get_lunch_hour() == 13 \
+		and Staff.get_ceo_lunch_hour() == 12, "almuerzo a la 4.ª hora de la jornada")
 	var weekdays: Array[int] = [0, 1, 2, 3, 4]
 	_expect(StaffCatalog.get_ceo_arrival_hour() == 8 and StaffCatalog.get_ceo_arrival_days() == weekdays,
 		"el CEO llega a las 8 de lunes a viernes")
@@ -182,20 +183,26 @@ func _check_arrival() -> void:
 
 
 # A las 12 salen todos; con la oficina vacía el tiempo salta a las 13 y vuelven.
+# Cada uno almuerza a la 4.ª hora de su jornada: el CEO y el programador (desde las 8) a
+# las 12 y el vendedor (desde las 9) a las 13.
 func _check_lunch() -> void:
 	GameClock.advance((11 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
 	_walk_until(func() -> bool: return GameClock.get_hour() == 12, 10.0, "llegar a las 12")
-	for character: OfficeCharacter in _game.get_characters():
-		_expect(character.activity == OfficeCharacter.Activity.WALKING_OUT, "%s sale a almorzar" % character.display_name)
+	_expect(_game.ceo.activity == OfficeCharacter.Activity.WALKING_OUT
+		and _character(_programmer).activity == OfficeCharacter.Activity.WALKING_OUT, "a las 12 salen el CEO y el programador")
+	_expect(_character(_seller).activity == OfficeCharacter.Activity.SEATED, "el vendedor sigue: almuerza a las 13")
 	_expect(_game.describe_employee_activity(_programmer["id"]) == "saliendo a almorzar", "estado al salir")
-	_walk_until(func() -> bool: return GameClock.get_hour() == 13, 60.0, "saltar al final del almuerzo")
-	_expect(GameClock.get_minute() == 0 and _left.get("ceo", 0) == 1 and _left.get(Staff.employee_key(_programmer["id"]), 0) == 1,
-		"todos salieron y el tiempo saltó a las 13:00")
-	for character: OfficeCharacter in _game.get_characters():
-		_expect(character.activity == OfficeCharacter.Activity.WALKING_TO_DESK, "%s vuelve del almuerzo" % character.display_name)
-	_walk_until(_all_seated, 60.0, "sentados tras almorzar")
+	_walk_until(func() -> bool: return GameClock.get_hour() == 13, 90.0, "llegar a las 13")
+	_expect(_left.get("ceo", 0) == 1 and _left.get(Staff.employee_key(_programmer["id"]), 0) == 1, "salieron una vez")
+	_expect(_game.ceo.activity == OfficeCharacter.Activity.WALKING_TO_DESK
+		and _character(_programmer).activity == OfficeCharacter.Activity.WALKING_TO_DESK, "a las 13 vuelven del almuerzo")
+	_expect(_character(_seller).activity == OfficeCharacter.Activity.WALKING_OUT, "a las 13 sale el vendedor")
 	# La energía bajó 6 por hora trabajada y subió 4 en el almuerzo: 9, 10, 11 y 12 → −18 + 4.
 	_expect(int(_programmer["energy"]) == 86, "energía a las 13: %d" % _programmer["energy"])
+	_walk_until(func() -> bool: return GameClock.get_hour() == 14, 90.0, "llegar a las 14")
+	_walk_until(_all_seated, 60.0, "sentados tras almorzar")
+	_expect(_left.get(Staff.employee_key(_seller["id"]), 0) == 1, "el vendedor salió a almorzar")
+	_expect(int(_programmer["energy"]) == 80, "energía a las 14: %d" % _programmer["energy"])
 
 
 func _check_card() -> void:
@@ -208,14 +215,14 @@ func _check_card() -> void:
 	_expect(card.is_open() and card.get_employee_id() == _programmer["id"], "un clic en el empleado abre su ficha")
 	var text: String = card.get_text()
 	for expected: String in [_programmer["name"], "Programador Junior", "Horario: lun–vie 8:00–17:00", "almuerzo 12:00–13:00",
-			"Ahora: trabajando", "Energía 86", "Ánimo 70", "Estrés 20", "Habilidades: Programación"]:
+			"Ahora: trabajando", "Energía 80", "Ánimo 70", "Estrés 20", "Habilidades: Programación"]:
 		_expect(text.contains(expected), "la ficha muestra «%s»: %s" % [expected, text])
-	_expect(card.get_bar_value("energy") == 86.0 and card.get_bar_value("mood") == 70.0 and card.get_bar_value("stress") == 20.0,
+	_expect(card.get_bar_value("energy") == 80.0 and card.get_bar_value("mood") == 70.0 and card.get_bar_value("stress") == 20.0,
 		"barras de la ficha")
 	_expect(not GameClock.is_paused, "la ficha no pausa el tiempo")
 	# Se actualiza sola con la hora.
 	GameClock.advance(GameConstants.SECONDS_PER_GAME_HOUR)
-	_expect(card.get_bar_value("energy") == 80.0, "la barra baja con la hora: %.0f" % card.get_bar_value("energy"))
+	_expect(card.get_bar_value("energy") == 74.0, "la barra baja con la hora: %.0f" % card.get_bar_value("energy"))
 	# Desde Personal, el botón Ficha abre la del vendedor.
 	var panel: StaffPanel = _game.get_node("StaffPanel")
 	panel.set_open(true)
@@ -230,11 +237,11 @@ func _check_card() -> void:
 	_expect(not card.is_open(), "un clic en el piso no abre la ficha")
 
 
-# El CEO se queda hasta que lo mandan a casa (a las 14), el programador se va a las 17
+# El CEO se queda hasta que lo mandan a casa (a las 15), el programador se va a las 17
 # y el vendedor a las 18. Cuando sale el último, el tiempo salta al martes a las 8.
 func _check_end_of_day() -> void:
-	# El CEO se va a las 14: los empleados siguen, así que no hay salto.
-	GameClock.advance((14 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
+	# El CEO se va a las 15: los empleados siguen, así que no hay salto.
+	GameClock.advance(maxi(0, 15 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
 	Staff.set_ceo_at_work(false)
 	_walk_until(func() -> bool: return _left.get("ceo", 0) == 2, 30.0, "el CEO sale")
 	_expect(GameClock.get_weekday() == 0 and GameClock.get_hour() < 17 and _game.ceo.activity == OfficeCharacter.Activity.AWAY,

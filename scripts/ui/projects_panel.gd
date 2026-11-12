@@ -177,8 +177,9 @@ func _add_contract(contract: Dictionary) -> void:
 		deadline = "atrasado %d %s" % [-days_left, "día" if days_left == -1 else "días"]
 	var info := Label.new()
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.text = "%s · %s\n%s\nPago %s · %s" % [Projects.describe_title(contract), deadline,
-		Projects.describe_points(contract), MoneyFormat.format(contract["pay"]),
+	var owner_text: String = Projects.describe_owner(contract)
+	info.text = "%s · %s\n%s\n%s · Pago %s · %s" % [Projects.describe_title(contract), deadline,
+		Projects.describe_points(contract), owner_text.left(1).to_upper() + owner_text.substr(1), MoneyFormat.format(contract["pay"]),
 		"anticipo cobrado %s" % MoneyFormat.format(contract["advance"]) if int(contract["advance"]) > 0 else "sin anticipo"]
 	_list.add_child(info)
 

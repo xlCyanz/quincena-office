@@ -724,7 +724,7 @@ La fase 2 cierra el ciclo básico del juego: contratar empleados, ponerlos a tra
 - **Azar reproducible:** todo lo aleatorio (candidatos, ofertas, errores) sale de un `RandomNumberGenerator` con semilla guardada en la partida. Así una prueba sin ventana da siempre el mismo resultado y cargar una partida no cambia lo que iba a pasar.
 - **Guardado:** cada sistema nuevo implementa `export_state()` e `import_state()`, y su importación tolera claves ausentes, para que las partidas de la fase 1 sigan cargando.
 - **Personajes:** cada empleado es una escena como la del CEO, con la misma rutina de llegar, caminar a su puesto, sentarse e irse. La rutina del CEO se generaliza en lugar de copiarse.
-- **Horarios:** cada cargo tiene un horario por defecto en `data/staff.json` (hasta que los turnos del hito 15 lo cambien) y todos salen a almorzar de 12 a 13. El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el jugador lo manda a casa, así que puede quedarse hasta tarde o volver cuando quiera.
+- **Horarios:** cada cargo tiene un horario por defecto en `data/staff.json`, que el turno del equipo reemplaza (hito 15). Un turno es una hora de entrada y sus días, con al menos uno de descanso; dura 8 horas más una de almuerzo, que cae en la 4.ª hora de la jornada (a las 12 si se entra a las 8). El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el jugador lo manda a casa, así que puede quedarse hasta tarde o volver cuando quiera.
 - **Puesto de trabajo:** escritorio + silla + computadora dentro de un Área de trabajo que funciona. El CEO conserva el suyo en la Oficina Ejecutiva.
 - **Arte provisional:** los empleados son figuras dibujadas en código, con un color de camisa por especialidad.
 

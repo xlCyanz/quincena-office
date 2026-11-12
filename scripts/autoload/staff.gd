@@ -37,6 +37,13 @@
 # todos lo ganado más lo debido, todo o nada; si no alcanza, queda como deuda, baja el
 # ánimo de todos y se paga solo apenas alcance el saldo. Despedir cobra lo ganado y lo
 # debido (aunque el saldo quede negativo) y baja el ánimo de los compañeros.
+#
+# Equipos (hito 15): un equipo es {"id", "name", "members", "schedule"}; members son ids
+# de empleados y cada empleado está como mucho en un equipo. El turno del equipo
+# (schedule) reemplaza el horario de su cargo para todos sus miembros; quien no está en
+# ningún equipo sigue con el de su cargo. Cada turno dura teams.shift_hours horas desde
+# la entrada y deja al menos teams.min_rest_days de descanso por semana. El proyecto de
+# cada equipo lo guarda el contrato (Projects).
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -53,8 +60,10 @@ var interview: Dictionary = {}
 var ceo_at_work: bool = true
 ## Día (GameClock.get_day_count) del último despido; -1000 si no hubo.
 var last_firing_day: int = NO_FIRING
+var teams: Array[Dictionary] = []
 
 var _next_id: int = 1
+var _next_team_id: int = 1
 var _rng := RandomNumberGenerator.new()
 
 
@@ -71,7 +80,9 @@ func new_game() -> void:
 	interview = {}
 	ceo_at_work = true
 	last_firing_day = NO_FIRING
+	teams.clear()
 	_next_id = 1
+	_next_team_id = 1
 	_rng.randomize()
 	EventBus.staff_changed.emit()
 
@@ -189,7 +200,7 @@ func interview_problem(candidate_id: int) -> String:
 	for offset: int in range(hours):
 		if hour + offset >= GameConstants.HOURS_PER_DAY or not is_expected("ceo", weekday, hour + offset):
 			return "El CEO tiene que estar en la oficina las %d horas de la entrevista, sin cruzar el almuerzo (%02d:00) ni la medianoche." % [
-				hours, int(StaffCatalog.get_workday("lunch_hour"))]
+				hours, get_ceo_lunch_hour()]
 	return ""
 
 
@@ -207,12 +218,13 @@ func set_ceo_at_work(value: bool) -> void:
 ## Indica si alguien ("ceo" o employee_key(id)) tiene que estar en la oficina en esa
 ## hora de ese día de la semana. Para el CEO se toma ceo_at_work tal como está ahora.
 func is_expected(key: String, weekday: int, hour: int) -> bool:
-	if hour == int(StaffCatalog.get_workday("lunch_hour")):
-		return false
 	if key == "ceo":
-		return ceo_at_work
+		return ceo_at_work and hour != get_ceo_lunch_hour()
 	var employee: Dictionary = get_employee_by_key(key)
-	return not employee.is_empty() and get_schedule(employee).is_working(weekday, hour)
+	if employee.is_empty():
+		return false
+	var schedule: WorkSchedule = get_schedule(employee)
+	return schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour)
 
 
 ## Lo mismo que is_expected, para la hora actual.
@@ -223,12 +235,15 @@ func is_expected_now(key: String) -> bool:
 ## Indica si alguien está fuera solo por el almuerzo (su jornada sigue después).
 func is_at_lunch(key: String) -> bool:
 	var hour: int = GameClock.get_hour()
-	if hour != int(StaffCatalog.get_workday("lunch_hour")):
-		return false
 	if key == "ceo":
-		return ceo_at_work
+		return ceo_at_work and hour == get_ceo_lunch_hour()
 	var employee: Dictionary = get_employee_by_key(key)
-	return not employee.is_empty() and get_schedule(employee).is_working(GameClock.get_weekday(), hour)
+	return not employee.is_empty() and get_schedule(employee).is_lunch(GameClock.get_weekday(), hour)
+
+
+## Hora en que almuerza el CEO: la misma distancia desde su llegada que los demás.
+func get_ceo_lunch_hour() -> int:
+	return posmod(StaffCatalog.get_ceo_arrival_hour() + WorkSchedule.get_lunch_offset(), GameConstants.HOURS_PER_DAY)
 
 
 ## Horas enteras desde ahora hasta la primera en que alguien tiene que estar en la
@@ -238,7 +253,7 @@ func hours_until_anyone_expected() -> int:
 	var at_work: bool = ceo_at_work
 	var arrival_hour: int = StaffCatalog.get_ceo_arrival_hour()
 	var arrival_days: Array[int] = StaffCatalog.get_ceo_arrival_days()
-	var lunch: int = int(StaffCatalog.get_workday("lunch_hour"))
+	var lunch: int = get_ceo_lunch_hour()
 	var start: int = _absolute_hour()
 	for offset: int in range(1, GameConstants.DAYS_PER_WEEK * hours_per_day + 2):
 		var total: int = start + offset
@@ -283,6 +298,7 @@ func fire(employee_id: int) -> Dictionary:
 	var cost: int = get_firing_cost(employee)
 	# Primero deja de ser empleado: así su deuda no se cuenta en la nómina pendiente.
 	employees.erase(employee)
+	_leave_team(employee_id)
 	Economy.charge(cost, CONCEPT_FIRING)
 	var key: String = employee_key(employee_id)
 	for item: Dictionary in OfficeState.furniture:
@@ -301,9 +317,139 @@ func fire(employee_id: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-## Horario de un empleado.
+## Horario de un empleado: el turno de su equipo o, sin equipo, el de su cargo.
 func get_schedule(employee: Dictionary) -> WorkSchedule:
-	return WorkSchedule.from_dict(employee["schedule"])
+	var team: Dictionary = get_team_of(employee["id"])
+	return WorkSchedule.from_dict(team["schedule"] if not team.is_empty() else employee["schedule"])
+
+
+## Crea un equipo vacío con el turno por defecto y lo devuelve.
+func create_team() -> Dictionary:
+	var schedule: WorkSchedule = WorkSchedule.make_shift(int(StaffCatalog.get_teams("default_start_hour")),
+		StaffCatalog.get_default_team_days())
+	var members: Array[int] = []
+	var team: Dictionary = {"id": _next_team_id, "name": "%s %d" % [StaffCatalog.get_teams("name_prefix"), _next_team_id],
+		"members": members, "schedule": schedule.to_dict()}
+	_next_team_id += 1
+	teams.append(team)
+	EventBus.staff_changed.emit()
+	return team
+
+
+## Borra un equipo; sus miembros vuelven al horario de su cargo.
+func delete_team(team_id: int) -> bool:
+	var team: Dictionary = get_team(team_id)
+	if team.is_empty():
+		return false
+	teams.erase(team)
+	_schedules_changed()
+	return true
+
+
+## Pone a un empleado en un equipo (si estaba en otro, sale de aquel).
+## Devuelve {"ok", "message"}.
+func add_to_team(team_id: int, employee_id: int) -> Dictionary:
+	var team: Dictionary = get_team(team_id)
+	var employee: Dictionary = get_employee(employee_id)
+	if team.is_empty() or employee.is_empty():
+		return {"ok": false, "message": "Ese equipo o ese empleado ya no está."}
+	if int(get_team_of(employee_id).get("id", 0)) == team_id:
+		return {"ok": false, "message": "%s ya está en %s." % [employee["name"], team["name"]]}
+	_leave_team(employee_id)
+	var members: Array[int] = team["members"]
+	members.append(employee_id)
+	_schedules_changed()
+	return {"ok": true, "message": "%s entra a %s." % [employee["name"], team["name"]]}
+
+
+## Saca a un empleado de su equipo: vuelve al horario de su cargo.
+func remove_from_team(employee_id: int) -> bool:
+	if not _leave_team(employee_id):
+		return false
+	_schedules_changed()
+	return true
+
+
+## Cambia el turno de un equipo: hora de entrada y días (con al menos un día de
+## descanso). Devuelve {"ok", "message"}.
+func set_team_shift(team_id: int, start_hour: int, days: Array[int]) -> Dictionary:
+	var team: Dictionary = get_team(team_id)
+	if team.is_empty():
+		return {"ok": false, "message": "Ese equipo ya no está."}
+	var problem: String = shift_problem(start_hour, days)
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	var schedule: WorkSchedule = WorkSchedule.make_shift(start_hour, days)
+	team["schedule"] = schedule.to_dict()
+	_schedules_changed()
+	return {"ok": true, "message": "Turno de %s: %s." % [team["name"], schedule.describe()]}
+
+
+## Por qué no vale un turno, o "" si vale.
+func shift_problem(start_hour: int, days: Array[int]) -> String:
+	if start_hour < 0 or start_hour >= GameConstants.HOURS_PER_DAY:
+		return "La hora de entrada tiene que estar entre 0 y 23."
+	var unique: Array[int] = []
+	for day: int in days:
+		if day < 0 or day >= GameConstants.DAYS_PER_WEEK:
+			return "Ese día no existe."
+		if not unique.has(day):
+			unique.append(day)
+	if unique.is_empty():
+		return "El turno necesita al menos un día de trabajo."
+	var rest_days: int = int(StaffCatalog.get_teams("min_rest_days"))
+	if unique.size() > GameConstants.DAYS_PER_WEEK - rest_days:
+		return "Cada empleado necesita al menos %d día de descanso por semana." % rest_days
+	return ""
+
+
+## Equipo con ese id, o vacío.
+func get_team(team_id: int) -> Dictionary:
+	for team: Dictionary in teams:
+		if team["id"] == team_id:
+			return team
+	return {}
+
+
+## Equipo de un empleado, o vacío si no está en ninguno.
+func get_team_of(employee_id: int) -> Dictionary:
+	for team: Dictionary in teams:
+		if (team["members"] as Array).has(employee_id):
+			return team
+	return {}
+
+
+## Equipos que tienen al menos un miembro (cada uno puede llevar un contrato).
+func get_active_team_count() -> int:
+	var count: int = 0
+	for team: Dictionary in teams:
+		if not (team["members"] as Array).is_empty():
+			count += 1
+	return count
+
+
+## Empleados que no están en ningún equipo.
+func get_employees_without_team() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for employee: Dictionary in employees:
+		if get_team_of(employee["id"]).is_empty():
+			result.append(employee)
+	return result
+
+
+# Saca a un empleado del equipo en que esté. Devuelve true si estaba en alguno.
+func _leave_team(employee_id: int) -> bool:
+	var team: Dictionary = get_team_of(employee_id)
+	if team.is_empty():
+		return false
+	(team["members"] as Array).erase(employee_id)
+	return true
+
+
+# Cambió quién trabaja a qué hora: los personajes revisan si tienen que llegar o irse.
+func _schedules_changed() -> void:
+	EventBus.staff_changed.emit()
+	EventBus.presence_changed.emit()
 
 
 ## Empleado con ese id, o vacío.
@@ -633,7 +779,7 @@ func _take_id() -> int:
 func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
 		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
-		"next_id": _next_id,
+		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
 		"rng_state": str(_rng.state)}
 
 
@@ -668,6 +814,20 @@ func import_state(state: Dictionary) -> void:
 		interview = {"candidate_id": int(saved_interview["candidate_id"]),
 			"ends_at": int(saved_interview.get("ends_at", 0))}
 	_drop_missing_interview()
+	teams.clear()
+	for saved: Dictionary in state.get("teams", []):
+		var members: Array[int] = []
+		for member: Variant in saved.get("members", []):
+			var member_id: int = int(member)
+			# Un empleado solo puede estar en un equipo y tiene que seguir contratado.
+			if not get_employee(member_id).is_empty() and get_team_of(member_id).is_empty():
+				members.append(member_id)
+		var team_id: int = int(saved["id"])
+		var schedule: Dictionary = saved.get("schedule", WorkSchedule.make_shift(
+			int(StaffCatalog.get_teams("default_start_hour")), StaffCatalog.get_default_team_days()).to_dict())
+		teams.append({"id": team_id, "name": String(saved.get("name", "%s %d" % [StaffCatalog.get_teams("name_prefix"), team_id])),
+			"members": members, "schedule": WorkSchedule.from_dict(schedule).to_dict()})
+	_next_team_id = int(state.get("next_team_id", 1))
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))
 	_next_id = int(state.get("next_id", 1))
