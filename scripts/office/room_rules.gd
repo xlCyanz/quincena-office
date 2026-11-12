@@ -19,13 +19,14 @@ const DIRECTIONS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOW
 ## Espacios del local. Cada uno es {"cells": Array[Vector2i], "doors": int,
 ## "closed": bool, "exterior": bool}; exterior dice si toca el borde del local con
 ## una pared o una puerta.
-static func find_spaces(lot: Rect2i, edges: Dictionary[Vector3i, String]) -> Array[Dictionary]:
+static func find_spaces(lot: Lot, edges: Dictionary[Vector3i, String]) -> Array[Dictionary]:
 	var spaces: Array[Dictionary] = []
 	var seen: Dictionary[Vector2i, bool] = {}
-	for y: int in range(lot.position.y, lot.end.y):
-		for x: int in range(lot.position.x, lot.end.x):
+	var bounds: Rect2i = lot.get_bounds()
+	for y: int in range(bounds.position.y, bounds.end.y):
+		for x: int in range(bounds.position.x, bounds.end.x):
 			var start := Vector2i(x, y)
-			if seen.has(start):
+			if seen.has(start) or not lot.has_point(start):
 				continue
 			seen[start] = true
 			var cells: Array[Vector2i] = []

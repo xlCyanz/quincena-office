@@ -144,7 +144,7 @@ func _check_schedule() -> void:
 
 # Un muro de obstáculos obliga a rodear; un destino encerrado no tiene camino.
 func _check_pathfinder_detour() -> void:
-	var lot := Rect2i(0, 0, 6, 8)
+	var lot := Lot.from_rect(Rect2i(0, 0, 6, 8))
 	var wall: Array[Vector2i] = []
 	for x: int in range(0, 5):
 		wall.append(Vector2i(x, 3))
@@ -157,7 +157,7 @@ func _check_pathfinder_detour() -> void:
 	var saved_lot: Rect2i = OfficeState.lot_rect
 	var saved_edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
 	OfficeState.edges.clear()
-	OfficeState.lot_rect = lot
+	OfficeState.lot = lot
 	if path.size() > 0:
 		path.pop_front()
 		_check_path(Vector2i(0, 0), path, Vector2i(0, 6), "rodeo")

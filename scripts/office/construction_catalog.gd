@@ -64,6 +64,11 @@ static func get_floor_colors(floor_type: String) -> Array[Color]:
 	return colors
 
 
+## Precio del terreno por m² y el piso con que llega: {"price_per_m2", "floor"}.
+static func get_land() -> Dictionary:
+	return _catalog().get("land", {})
+
+
 static func _catalog() -> Dictionary:
 	if _data.is_empty():
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(CATALOG_PATH))

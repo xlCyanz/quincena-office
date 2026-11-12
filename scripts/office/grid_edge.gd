@@ -33,27 +33,20 @@ static func get_endpoints(edge: Vector3i) -> Array[Vector2]:
 
 
 ## Indica si el borde toca el local (al menos una de sus casillas está dentro).
-static func touches_lot(edge: Vector3i, lot: Rect2i) -> bool:
+static func touches_lot(edge: Vector3i, lot: Lot) -> bool:
 	var cells: Array[Vector2i] = get_cells(edge)
 	return lot.has_point(cells[0]) or lot.has_point(cells[1])
 
 
 ## Indica si el borde está en el contorno del local (una casilla dentro y otra fuera).
-static func is_exterior(edge: Vector3i, lot: Rect2i) -> bool:
+static func is_exterior(edge: Vector3i, lot: Lot) -> bool:
 	var cells: Array[Vector2i] = get_cells(edge)
 	return lot.has_point(cells[0]) != lot.has_point(cells[1])
 
 
 ## Todos los bordes del contorno del local.
-static func get_lot_outline(lot: Rect2i) -> Array[Vector3i]:
-	var edges: Array[Vector3i] = []
-	for x: int in range(lot.position.x, lot.end.x):
-		edges.append(make(Vector2i(x, lot.position.y - 1), AXIS_Y))
-		edges.append(make(Vector2i(x, lot.end.y - 1), AXIS_Y))
-	for y: int in range(lot.position.y, lot.end.y):
-		edges.append(make(Vector2i(lot.position.x - 1, y), AXIS_X))
-		edges.append(make(Vector2i(lot.end.x - 1, y), AXIS_X))
-	return edges
+static func get_lot_outline(lot: Lot) -> Array[Vector3i]:
+	return lot.get_outline()
 
 
 ## Borde más cercano a un punto de la cuadrícula con decimales.

@@ -11,15 +11,18 @@ class_name OfficePathfinder
 extends RefCounted
 
 var _astar := AStarGrid2D.new()
-var _lot := Rect2i()
+var _lot := Lot.new()
+var _origin := Vector2i.ZERO
 
 
 ## Prepara la cuadrícula: el local entero es transitable salvo las casillas
 ## bloqueadas y los bordes con pared (edges es GridEdge → WALL o DOOR, como en
 ## OfficeState). No se puede salir del local: el contorno está cerrado.
-func build(lot_rect: Rect2i, blocked_cells: Array[Vector2i], edges: Dictionary[Vector3i, String] = {}) -> void:
-	_lot = lot_rect
-	_astar.region = Rect2i(Vector2i.ZERO, lot_rect.size * 2 + Vector2i.ONE)
+func build(lot: Lot, blocked_cells: Array[Vector2i], edges: Dictionary[Vector3i, String] = {}) -> void:
+	_lot = lot
+	var bounds: Rect2i = lot.get_bounds()
+	_origin = bounds.position
+	_astar.region = Rect2i(Vector2i.ZERO, bounds.size * 2 + Vector2i.ONE)
 	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	_astar.default_compute_heuristic = AStarGrid2D.HEURISTIC_MANHATTAN
 	_astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_MANHATTAN
@@ -31,8 +34,13 @@ func build(lot_rect: Rect2i, blocked_cells: Array[Vector2i], edges: Dictionary[V
 			var on_outline: bool = x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
 			if on_corner or on_outline:
 				_astar.set_point_solid(Vector2i(x, y), true)
+	# Las casillas del rectángulo que no son del local (un local en L) no se pisan.
+	for x: int in range(bounds.position.x, bounds.end.x):
+		for y: int in range(bounds.position.y, bounds.end.y):
+			if not lot.has_point(Vector2i(x, y)):
+				_astar.set_point_solid(_cell_point(Vector2i(x, y)), true)
 	for cell: Vector2i in blocked_cells:
-		if lot_rect.has_point(cell):
+		if lot.has_point(cell):
 			_astar.set_point_solid(_cell_point(cell), true)
 	for edge: Vector3i in edges:
 		if edges[edge] == ConstructionCatalog.WALL and _edge_inside(edge):
@@ -70,7 +78,7 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	for point: Vector2i in points:
 		if point.x % 2 == 1 and point.y % 2 == 1:
 			@warning_ignore("integer_division")
-			result.append(_lot.position + (point - Vector2i.ONE) / 2)
+			result.append(_origin + (point - Vector2i.ONE) / 2)
 	return result
 
 
@@ -93,7 +101,7 @@ func get_reachable(from: Vector2i) -> Dictionary[Vector2i, bool]:
 
 
 func _cell_point(cell: Vector2i) -> Vector2i:
-	return (cell - _lot.position) * 2 + Vector2i.ONE
+	return (cell - _origin) * 2 + Vector2i.ONE
 
 
 # Solo los bordes entre dos casillas del local tienen punto (el contorno está cerrado).

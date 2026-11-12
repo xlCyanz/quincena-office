@@ -133,7 +133,7 @@ func _check_new_game_state() -> void:
 		var row: int = floor_layer.get_cell_atlas_coords(cell).y
 		_expect(row == rows[expected_type], "casilla %s dibujada con la fila %d" % [cell, row])
 	# Paredes exteriores en todo el contorno, con la puerta de entrada, y la oficina cerrada con su puerta.
-	for edge: Vector3i in GridEdge.get_lot_outline(lot):
+	for edge: Vector3i in GridEdge.get_lot_outline(Lot.from_rect(lot)):
 		var expected_kind: String = ConstructionCatalog.WALL
 		if edge == GridEdge.between(OfficeState.entrance, OfficeState.get_outside_of_entrance()):
 			expected_kind = ConstructionCatalog.DOOR

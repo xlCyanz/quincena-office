@@ -141,9 +141,9 @@ func _check_builder() -> void:
 
 # Con AStarGrid2D a doble resolución: las paredes cortan el paso y las puertas no.
 func _check_pathfinder_walls_and_doors() -> void:
-	var lot := Rect2i(0, 0, 6, 8)
+	var lot := Lot.from_rect(Rect2i(0, 0, 6, 8))
 	var edges: Dictionary[Vector3i, String] = {}
-	for y: int in range(lot.size.y):
+	for y: int in range(lot.get_bounds().size.y):
 		edges[Vector3i(2, y, GridEdge.AXIS_X)] = WALL  # muro entre las columnas 2 y 3
 	edges[Vector3i(2, 6, GridEdge.AXIS_X)] = DOOR
 	var finder := OfficePathfinder.new()

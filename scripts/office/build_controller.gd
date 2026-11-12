@@ -11,6 +11,8 @@
 #   pasando otro piso encima.
 # - Tipo de habitación: clic en un espacio cerrado con puerta lo marca con ese tipo.
 # - Quitar habitación: clic en una habitación la deja sin tipo.
+# - Terreno: el terreno se elige con la fila de BuildPanel (set_land) y se compra con
+#   buy_land; aquí solo se marca en el mapa.
 # En modo construcción se escribe sobre cada habitación su nombre y si funciona.
 class_name BuildController
 extends Node2D
@@ -23,6 +25,7 @@ const TOOL_DOOR: String = "door"
 const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
+const TOOL_LAND: String = "land"
 
 ## Distancia máxima (en casillas) a un borde para que Vender lo elija en vez de la casilla.
 const SELL_EDGE_DISTANCE: float = 0.2
@@ -61,6 +64,8 @@ var _preview_edges: Array[Vector3i] = []
 var _preview_front := Vector2i.ZERO
 var _preview_ok: bool = false
 var _apply_preview := Callable()
+# Terreno elegido en la fila de BuildPanel.
+var _land: Dictionary = {"side": Builder.SIDE_EAST, "width": 4, "depth": 3, "offset": 0}
 # Zoom con el que se dibujaron los nombres de las habitaciones.
 var _label_zoom: float = 0.0
 
@@ -79,6 +84,21 @@ func set_active(active: bool) -> void:
 
 func is_active() -> bool:
 	return _active
+
+
+## Elige el terreno que se va a comprar y actualiza la vista previa.
+func set_land(side: String, width: int, depth: int, offset: int) -> void:
+	_land = {"side": side, "width": width, "depth": depth, "offset": offset}
+	if tool == TOOL_LAND:
+		_update_preview()
+
+
+## Compra el terreno elegido.
+func buy_land() -> Dictionary:
+	var result: Dictionary = builder.buy_land(_land["side"], _land["width"], _land["depth"], _land["offset"])
+	status_changed.emit(result["message"])
+	_update_preview(false)
+	return result
 
 
 func set_tool(new_tool: String) -> void:
@@ -115,7 +135,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var mouse := event as InputEventMouse
-	if mouse == null:
+	# El terreno se elige con los botones de BuildPanel, no con el ratón.
+	if mouse == null or tool == TOOL_LAND:
 		return
 	_pointer = _grid.world_to_grid(_grid.screen_to_world(mouse.position))
 	var button := event as InputEventMouseButton
@@ -168,7 +189,10 @@ func _update_preview(announce: bool = true) -> void:
 	var cell: Vector2i = Vector2i(_pointer.round())
 	var quote: Dictionary = {}
 	var info: Dictionary = FurnitureCatalog.get_item(tool)
-	if _is_furniture_tool():
+	if tool == TOOL_LAND:
+		quote = builder.quote_land(_land["side"], _land["width"], _land["depth"], _land["offset"])
+		_preview_cells = quote["cells"]
+	elif _is_furniture_tool():
 		var placement_rotation: int = _placement_rotation
 		_preview_cells = FurnitureCatalog.get_footprint(tool, cell, placement_rotation)
 		_preview_front = FurnitureCatalog.get_front(placement_rotation)
@@ -187,7 +211,7 @@ func _update_preview(announce: bool = true) -> void:
 			_preview_front = FurnitureCatalog.get_front(int(item["rotation"]) + 1)
 		_apply_preview = func() -> Dictionary: return builder.rotate(cell)
 	elif _is_room_tool() or tool == TOOL_UNMARK_ROOM:
-		if OfficeState.lot_rect.has_point(cell):
+		if OfficeState.lot.has_point(cell):
 			_preview_cells = _space_at(cell)
 			if tool == TOOL_UNMARK_ROOM:
 				quote = builder.quote_unmark_room(cell)
@@ -227,7 +251,7 @@ func _sell_targets_furniture(cell: Vector2i) -> bool:
 
 # Casillas del espacio (zona entre paredes y puertas) que contiene cell.
 func _space_at(cell: Vector2i) -> Array[Vector2i]:
-	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot_rect, OfficeState.edges)
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
 	var index: int = RoomRules.space_index_at(spaces, cell)
 	if index < 0:
 		return [cell]
@@ -263,10 +287,10 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 			var first: Vector2i = Vector2i(start.round())
 			var last: Vector2i = Vector2i(end.round())
 			var area := Rect2i(first.min(last), (first - last).abs() + Vector2i.ONE)
-			area = area.intersection(OfficeState.lot_rect)
 			for x: int in range(area.position.x, area.end.x):
 				for y: int in range(area.position.y, area.end.y):
-					changes.append({"cell": Vector2i(x, y), "kind": tool})
+					if OfficeState.lot.has_point(Vector2i(x, y)):
+						changes.append({"cell": Vector2i(x, y), "kind": tool})
 	return changes
 
 

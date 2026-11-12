@@ -6,8 +6,15 @@ extends Node
 ## Oficina con la que empieza toda partida nueva.
 const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
 
-## Casillas que ocupa el local.
-var lot_rect := Rect2i()
+## Casillas que ocupa el local (hito 25: crece al comprar terreno y puede no ser un rectángulo).
+var lot := Lot.new()
+
+## Rectángulo que encierra el local. Asignarlo deja el local con ese rectángulo.
+var lot_rect: Rect2i:
+	get:
+		return lot.get_bounds()
+	set(value):
+		lot = Lot.from_rect(value)
 
 ## Casillas del solar: el mapa fijo que rodea al local, con el local en el centro.
 var site_rect := Rect2i()
@@ -35,30 +42,29 @@ var entrance := Vector2i.ZERO
 
 ## Indica si hay una partida cargada (nueva o guardada).
 func has_game() -> bool:
-	return lot_rect.has_area()
+	return lot.has_area()
 
 
 ## Prepara la oficina de una partida nueva: el local inicial y lo que dice
 ## STARTING_OFFICE_PATH.
 func new_game() -> void:
-	lot_rect = Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE)
-	site_rect = site_around(lot_rect)
+	lot = Lot.from_rect(Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE))
+	site_rect = site_around(lot.get_bounds())
 	rooms.clear()
 	furniture.clear()
 	floors.clear()
 	edges.clear()
 	var data: Dictionary = _load_json(STARTING_OFFICE_PATH)
 	var base_floor: String = String(data.get("floor", ConstructionCatalog.BARE_FLOOR))
-	for x: int in range(lot_rect.position.x, lot_rect.end.x):
-		for y: int in range(lot_rect.position.y, lot_rect.end.y):
-			floors[Vector2i(x, y)] = base_floor
+	for cell: Vector2i in lot.get_cells():
+		floors[cell] = base_floor
 	for area_data: Dictionary in data.get("floor_areas", []):
 		var area := Rect2i(_to_cell(area_data["position"]), _to_cell(area_data["size"]))
 		for x: int in range(area.position.x, area.end.x):
 			for y: int in range(area.position.y, area.end.y):
 				floors[Vector2i(x, y)] = String(area_data["type"])
 	if bool(data.get("exterior_walls", false)):
-		for edge: Vector3i in GridEdge.get_lot_outline(lot_rect):
+		for edge: Vector3i in GridEdge.get_lot_outline(lot):
 			edges[edge] = ConstructionCatalog.WALL
 	for edge_data: Array in data.get("walls", []):
 		edges[GridEdge.from_data(edge_data)] = ConstructionCatalog.WALL
@@ -141,15 +147,19 @@ func blocks_passage(edge: Vector3i) -> bool:
 	return get_edge(edge) == ConstructionCatalog.WALL
 
 
-## Casilla de fuera del local a la que se sale por la entrada.
+## Casilla de fuera del local a la que se sale por la entrada: la vecina fuera del
+## local cuyo borde tiene la puerta (o, si no hay puerta, la primera vecina de fuera).
 func get_outside_of_entrance() -> Vector2i:
-	if entrance.y == lot_rect.end.y - 1:
-		return entrance + Vector2i(0, 1)
-	if entrance.x == lot_rect.end.x - 1:
-		return entrance + Vector2i(1, 0)
-	if entrance.y == lot_rect.position.y:
-		return entrance + Vector2i(0, -1)
-	return entrance + Vector2i(-1, 0)
+	var fallback := Vector2i(-1, -1)
+	for direction: Vector2i in [Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)]:
+		var outside: Vector2i = entrance + direction
+		if lot.has_point(outside):
+			continue
+		if get_edge(GridEdge.between(entrance, outside)) == ConstructionCatalog.DOOR:
+			return outside
+		if fallback == Vector2i(-1, -1):
+			fallback = outside
+	return fallback
 
 
 ## Devuelve la primera habitación del tipo indicado, o un diccionario vacío.
@@ -182,6 +192,7 @@ func export_state() -> Dictionary:
 		saved_edges.append(GridEdge.to_data(edge) + [edges[edge]])
 	return {
 		"lot": [lot_rect.position.x, lot_rect.position.y, lot_rect.size.x, lot_rect.size.y],
+		"lot_cells": lot.to_data(),
 		"site": [site_rect.position.x, site_rect.position.y, site_rect.size.x, site_rect.size.y],
 		"floors": saved_floors,
 		"edges": saved_edges,
@@ -193,8 +204,15 @@ func export_state() -> Dictionary:
 
 ## Restaura el estado de la oficina desde una partida guardada (hito 9).
 func import_state(state: Dictionary) -> void:
-	var lot: Array = state.get("lot", [0, 0, 0, 0])
-	lot_rect = Rect2i(int(lot[0]), int(lot[1]), int(lot[2]), int(lot[3]))
+	# Antes del hito 25 el local era solo un rectángulo ("lot").
+	if state.has("lot_cells"):
+		var cells: Array[Vector2i] = []
+		for pair: Array in state["lot_cells"]:
+			cells.append(_to_cell(pair))
+		lot = Lot.from_cells(cells)
+	else:
+		var saved_lot: Array = state.get("lot", [0, 0, 0, 0])
+		lot = Lot.from_rect(Rect2i(int(saved_lot[0]), int(saved_lot[1]), int(saved_lot[2]), int(saved_lot[3])))
 	var site: Array = state.get("site", [])
 	site_rect = Rect2i(int(site[0]), int(site[1]), int(site[2]), int(site[3])) if site.size() == 4 else site_around(lot_rect)
 	floors.clear()

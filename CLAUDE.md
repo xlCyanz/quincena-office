@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23) y `test_emergency` (24)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24) y `test_land` (25)
 
 ## Convenciones de código
 
@@ -37,6 +37,11 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   fuera del local se dibuja terreno. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
+- El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
+  terreno (`Builder.quote_land`/`buy_land`, herramienta Terreno: lado, ancho × fondo y posición; $150/m² con alfombra, en
+  `data/construction.json`): se apoya en la casilla más lejana de cada fila, así rellena huecos y cobra solo lo nuevo; no sale del
+  solar ni tapa la entrada; el borde compartido se abre y el contorno nuevo lleva pared. Una habitación puede crecer hacia el
+  terreno nuevo pero no juntarse con otro espacio. El mantenimiento se cobra por `lot.get_area()`.
 - Todo se controla con ratón; el teclado es un extra.
 
 ## Estructura
@@ -152,7 +157,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 22 | Préstamos | ✅ Completado (varios préstamos; tope por etapa en el hito 27; la cuota sin dinero deja saldo negativo hasta la mora del hito 23) |
 | 23 | Mora y embargo | ✅ Completado (5 % de recargo por cuota; meses seguidos debiendo globales; al pagar todo vuelve a 0; el sobrante se devuelve; lo del CEO no se embarga; préstamo de emergencia en el hito 24) |
 | 24 | Préstamo de emergencia | ✅ Completado (días 15 y 30; aceptar = nómina a tiempo sin golpe; monto = lo que falta redondeado a $100; primera cuota el primer día 1 con ≥15 días; no se refinancia) |
-| 25 | Compra de terreno | Pendiente (fase 3) |
+| 25 | Compra de terreno | ✅ Completado (local como conjunto de casillas; alfombra incluida en $150/m²; no tapa la entrada; rellena huecos cobrando solo lo nuevo; controles −/+ con vista previa; una habitación no se junta con otro espacio) |
 | 26 | Valor de la empresa | Pendiente (fase 3) |
 | 27 | Etapas y menú Empresa | Pendiente (fase 3) |
 | 28 | Objetivos guiados | Pendiente (fase 3) |

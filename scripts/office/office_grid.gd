@@ -13,7 +13,7 @@ const TILE_OVERLAP_PX: float = 1.0
 var hovered_cell: Vector2i = NO_CELL
 
 var _floor_source_id: int = -1
-var _lot_rect := Rect2i()
+var _lot := Lot.new()
 var _site_rect := Rect2i()
 # Fila del atlas de cada tipo de piso (los colores vienen de ConstructionCatalog).
 var _atlas_rows: Dictionary[String, int] = {}
@@ -39,21 +39,19 @@ func _process(_delta: float) -> void:
 ## Dibuja la oficina: el piso de cada casilla, las paredes y puertas de los bordes,
 ## los muebles y el tinte de las habitaciones. Recibe los datos tal como los guarda
 ## OfficeState. Alrededor del local dibuja el terreno del solar (ver set_site).
-func build(lot_rect: Rect2i, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
+func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
 		furniture: Array[Dictionary], rooms: Array[Dictionary] = []) -> void:
-	_lot_rect = lot_rect
+	_lot = lot
 	_floor.clear()
 	for x: int in range(_site_rect.position.x, _site_rect.end.x):
 		for y: int in range(_site_rect.position.y, _site_rect.end.y):
-			if not lot_rect.has_point(Vector2i(x, y)):
+			if not lot.has_point(Vector2i(x, y)):
 				_floor.set_cell(Vector2i(x, y), _floor_source_id,
 					Vector2i(posmod(x + y, 2), _atlas_rows[ConstructionCatalog.TERRAIN]))
-	for x: int in range(lot_rect.position.x, lot_rect.end.x):
-		for y: int in range(lot_rect.position.y, lot_rect.end.y):
-			var cell := Vector2i(x, y)
-			var floor_type: String = floors.get(cell, ConstructionCatalog.BARE_FLOOR)
-			var row: int = _atlas_rows.get(floor_type, _atlas_rows[ConstructionCatalog.BARE_FLOOR])
-			_floor.set_cell(cell, _floor_source_id, Vector2i((x + y) % 2, row))
+	for cell: Vector2i in lot.get_cells():
+		var floor_type: String = floors.get(cell, ConstructionCatalog.BARE_FLOOR)
+		var row: int = _atlas_rows.get(floor_type, _atlas_rows[ConstructionCatalog.BARE_FLOOR])
+		_floor.set_cell(cell, _floor_source_id, Vector2i(posmod(cell.x + cell.y, 2), row))
 	hovered_cell = NO_CELL
 	_highlight.visible = false
 	_place_edge_pieces(edges)
@@ -133,14 +131,14 @@ func get_site_world_area() -> Transform2D:
 	return Transform2D(side_x, side_y, origin)
 
 
-## Rectángulo de casillas del local actual.
+## Rectángulo que encierra el local actual.
 func get_lot_rect() -> Rect2i:
-	return _lot_rect
+	return _lot.get_bounds()
 
 
 ## Indica si una casilla pertenece al local.
 func is_in_lot(cell: Vector2i) -> bool:
-	return get_lot_rect().has_point(cell)
+	return _lot.has_point(cell)
 
 
 ## Casilla que contiene un punto del mundo (en píxeles).

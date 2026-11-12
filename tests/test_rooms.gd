@@ -73,7 +73,7 @@ func _check_catalog() -> void:
 
 func _check_starting_spaces() -> void:
 	SaveManager.new_game()
-	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot_rect, OfficeState.edges)
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
 	_expect(spaces.size() == 2, "la oficina inicial tiene 2 espacios: %d" % spaces.size())
 	var office: Dictionary = spaces[RoomRules.space_index_at(spaces, Vector2i(0, 0))]
 	var main_area: Dictionary = spaces[RoomRules.space_index_at(spaces, Vector2i(5, 7))]
@@ -205,7 +205,7 @@ func _check_walls_change_rooms() -> void:
 	var open_edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
 	open_edges.erase(Vector3i(-1, 0, x))
 	var reconciled: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms,
-		RoomRules.find_spaces(OfficeState.lot_rect, open_edges), OfficeState.entrance, OfficeState.furniture)
+		RoomRules.find_spaces(OfficeState.lot, open_edges), OfficeState.entrance, OfficeState.furniture)
 	_expect(RoomRules.room_index_at(reconciled, Vector2i(0, 0)) < 0, "una Oficina Ejecutiva abierta debería deshacerse")
 	# Agrandarla sí: al quitar una pared interior, absorbe el espacio vecino.
 	builder.mark_room("reception", OfficeState.entrance)

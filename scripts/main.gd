@@ -62,6 +62,8 @@ func _ready() -> void:
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
+	_build_panel.land_changed.connect(_build_controller.set_land)
+	_build_panel.land_buy_requested.connect(func() -> void: _build_controller.buy_land())
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
 	_add_frame_button(_build_panel.get_menu_bar())
@@ -132,9 +134,9 @@ func _restore_scene_state(state: Dictionary) -> void:
 
 func _rebuild_office() -> void:
 	_office_grid.set_site(OfficeState.site_rect)
-	_office_grid.build(OfficeState.lot_rect, OfficeState.floors, OfficeState.edges, OfficeState.furniture,
+	_office_grid.build(OfficeState.lot, OfficeState.floors, OfficeState.edges, OfficeState.furniture,
 		OfficeState.rooms)
-	pathfinder.build(OfficeState.lot_rect, OfficeState.get_furniture_cells(), OfficeState.edges)
+	pathfinder.build(OfficeState.lot, OfficeState.get_furniture_cells(), OfficeState.edges)
 
 
 func _spawn_ceo() -> void:
@@ -297,6 +299,9 @@ func _on_game_over(stats: Dictionary) -> void:
 # El banco ofrece el préstamo de emergencia: se corta el salto de tiempo, se pausa y se
 # pregunta.
 func _on_emergency_loan_offered(offer: Dictionary) -> void:
+	# Otro que escucha la señal pudo haberla respondido ya.
+	if Bank.emergency_offer.is_empty():
+		return
 	GameClock.interrupt()
 	if not _emergency_dialog.is_open():
 		_was_paused_before_emergency = GameClock.is_paused
