@@ -88,6 +88,12 @@ Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece se
   - [18.3 Hitos](#183-hitos)
   - [18.4 Orden y dependencias](#184-orden-y-dependencias)
   - [18.5 Riesgos de esta fase](#185-riesgos-de-esta-fase)
+* [19. Plan de desarrollo: fase 5](#19-plan-de-desarrollo-fase-5)
+  - [19.1 Alcance](#191-alcance)
+  - [19.2 Decisiones técnicas](#192-decisiones-técnicas)
+  - [19.3 Hitos](#193-hitos)
+  - [19.4 Orden y dependencias](#194-orden-y-dependencias)
+  - [19.5 Riesgos de esta fase](#195-riesgos-de-esta-fase)
 
 ## 1. Visión general
 
@@ -911,3 +917,66 @@ La fase 4 agrega la organización de la empresa: líderes de equipo, gerentes, e
 - **Oficinas:** gerentes y ejecutivos necesitan una Oficina única con su escritorio; vender ese mueble o perder la habitación debe dejarlos sin oficina igual que un puesto de trabajo, sin asignaciones colgadas.
 - **Barra de menús:** Equipos pasa a Horarios para no sumar un botón.
 - **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 3.
+
+## 19. Plan de desarrollo: fase 5
+
+La fase 5 agrega lo que hace a la empresa algo más que un taller de contratos: productos propios que dan ingreso diario desde la sala de servidores, eventos que piden decisiones rápidas, el ambiente de la oficina y las calidades de los muebles, los contratos grandes con su sala de reuniones y el final de la partida: llegar a Corporación y salir a bolsa. Al terminarla se puede jugar una partida completa, de Emprendimiento a la bolsa. Se construye en diez hitos, numerados después de los de la fase 4.
+
+### 19.1 Alcance
+
+| Entra en la fase 5 | Queda para fases siguientes |
+| --- | --- |
+| Sala de servidores que funciona: racks y aire acondicionado (2.1 y 11.2) | Rasgos con efecto en el trabajo (5) |
+| Productos propios: desarrollo, lanzamiento, usuarios, ingreso diario y actualizaciones (7.5 y 13.5) | Baños y sala de descanso con efecto (2.1 y 11.2) |
+| Eventos con tarjeta y cuenta atrás, y su lista inicial (10) | Inversionista (14) |
+| Ambiente y decoración con efecto (2 y 11.2) | Arte final y sonido (fase 6) |
+| Calidades de muebles: computadora media y pro, segundo monitor, silla ergonómica y escritorio amplio (11.1) | |
+| Contratos grandes, Sala de reuniones y clientes de élite (7.1 y 9.1) | |
+| Corporación y salir a bolsa (9.1 y 9.5) | |
+
+### 19.2 Decisiones técnicas
+
+- **Sistemas:** los productos viven en un sistema propio (`Products`, autoload después de `Projects`) con sus funciones puras aparte (como `Production`); comparten con los contratos el avance por puntos, las fases y los errores. Los eventos van en otro (`Events`) que sortea, muestra y resuelve tarjetas; sus efectos llaman a las funciones públicas de los demás sistemas. Todo se comunica por `EventBus` y todo pago pasa por `Economy`.
+- **Datos fuera del código:** productos (tamaños, ingreso, racks, ciclo de vida) en `data/products.json`; eventos (textos, opciones, efectos, condiciones y prevención) en `data/events.json`; muebles nuevos, calidades y ambiente en `data/furniture.json`; contratos grandes y clientes de élite en `data/contracts.json`; requisitos de etapa en `data/stages.json`.
+- **Sala de servidores:** funciona con al menos un rack y aire acondicionado. Cada rack ($3,000, $100 al mes de mantenimiento) sostiene una cantidad de productos según su tamaño (13.5). Un producto sin racks suficientes pierde usuarios.
+- **Desarrollo de un producto:** el jugador elige tipo y tamaño y se lo da a un equipo (o al CEO) como un contrato sin cliente, sin plazo y sin anticipo. Cuenta para el tope de proyectos en curso. Se puede lanzar cuando está terminado.
+- **Lanzamiento y usuarios:** un producto lanzado tiene usuarios que crecen, se estancan y caen. Da ingreso diario («Ingreso de productos») según usuarios y calidad (de la mitad al 150 % de 13.5: más diseño y menos errores, mejor). Los vendedores suben el crecimiento. Los errores que se colaron hacen perder usuarios hasta corregirlos.
+- **Actualización:** un proyecto pequeño sobre un producto lanzado que corrige sus errores y lo reaviva (vuelve a crecer).
+- **Etapas:** Mediana empresa vuelve a pedir 40 empleados y 1 producto lanzado; Corporación pide 4 ejecutivos y 3 productos activos (lanzados y con usuarios).
+- **Valor de la empresa:** suma lo que generan los productos (provisional: 60 días de su ingreso actual).
+- **Eventos:** una tarjeta con texto corto y dos o tres opciones. El tiempo sigue corriendo y el jugador tiene 2 minutos reales para elegir, a cualquier velocidad; si no elige, el juego toma una opción al azar. No ocurren en pausa ni en modo construcción. Uno cada pocos días al inicio, más seguidos mientras más grande es la empresa; la mitad buenos y la mitad malos. Cada evento tiene condiciones (por ejemplo, sin contador), y roles o muebles que lo reducen o lo anulan.
+- **Ambiente:** cada habitación tiene un ambiente que suben la decoración (plantas, cuadros, reloj, alfombras, lámparas, pecera) y que baja amontonar escritorios. El ambiente cambia la meta de ánimo de quienes trabajan ahí. Los objetos de pared se colocan en un borde con pared, como las puertas.
+- **Calidades:** la computadora media y la pro dan más velocidad y se instalan o mejoran sobre el escritorio; el segundo monitor suma un poco; la silla ergonómica hace que la energía baje más lento; el escritorio amplio sube un poco el ánimo.
+- **Contratos grandes:** desde Mediana empresa con 4 estrellas. La Sala de reuniones aparece para construir cuando llega la primera oferta grande y exige mesa de reuniones. Los clientes de élite llegan en Corporación: pagan más y exigen más reputación. Corporación también desbloquea el tamaño máximo del solar.
+- **Salir a bolsa:** con Corporación y un valor de más de $5,000,000 aparece la opción. Muestra una pantalla de cierre con estadísticas y la partida sigue en modo libre.
+- **Guardado:** los datos nuevos se exportan e importan tolerando claves ausentes; una partida de la fase 4 carga sin productos, sin eventos pendientes y con ambiente neutro.
+
+### 19.3 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 40. Sala de servidores | Rack de servidores y aire acondicionado; la sala funciona con los dos; capacidad en racks y su mantenimiento | Sin aire acondicionado la sala no funciona; cada rack cobra su mantenimiento el día 1; la capacidad cuenta los racks de la sala |
+| 41. Desarrollo de productos | Menú Productos: elegir tipo y tamaño, asignarlo a un equipo; avance por puntos y errores como un contrato | Sin sala de servidores que funcione no se puede empezar; un equipo avanza un producto igual que un contrato y cuenta para el tope |
+| 42. Lanzamiento y ciclo de vida | Lanzar, usuarios que crecen, se estancan y caen, ingreso diario por calidad, actualización, errores en producción; etapas con productos; valor con productos | Un producto pequeño de buena calidad llega cerca de $150 al día en su mejor momento; con errores pierde usuarios; una actualización lo reaviva; Mediana empresa pide uno lanzado |
+| 43. Eventos | Sistema de eventos: sorteo según frecuencia y condiciones, tarjeta con opciones y cuenta atrás de 2 minutos reales, efectos | No salen en pausa ni en construcción; sin elegir se toma una opción al azar a los 2 minutos a cualquier velocidad; la frecuencia sube con la empresa |
+| 44. Lista de eventos | Los eventos de 10.2 con sus efectos, condiciones y prevención (contador, limpieza, líder, baterías de respaldo, archivero) | Con contador la inspección de impuestos no multa; con baterías el apagón no ocurre; sin limpieza aparece la oficina sucia |
+| 45. Ambiente y decoración | Decoración de piso y de pared, ambiente por habitación, efecto en la meta de ánimo, penalidad por amontonar | Una habitación con plantas y cuadros sube la meta de ánimo; muchos escritorios juntos la bajan; los objetos de pared van en bordes con pared |
+| 46. Calidades de muebles | Computadora media y pro, segundo monitor, silla ergonómica y escritorio amplio, con mejorar desde el escritorio | Una computadora pro rinde más que la básica; con silla ergonómica la energía baja más lento; mejorar cobra la diferencia |
+| 47. Contratos grandes y Sala de reuniones | Mesa de reuniones, Sala de reuniones, ofertas grandes desde Mediana empresa, clientes de élite en Corporación | La primera oferta grande habilita la Sala de reuniones; sin sala no se acepta; los de élite solo llegan en Corporación |
+| 48. Corporación y salir a bolsa | Requisitos de Corporación, tamaño máximo del solar, opción de salir a bolsa, pantalla de cierre y modo libre | Con 4 ejecutivos y 3 productos activos se llega a Corporación; con valor > $5,000,000 se puede salir a bolsa y la partida sigue |
+| 49. Comprobación de la fase | Simulación sin ventana de una empresa que llega a Corporación con productos y sale a bolsa; ajuste de `data/products.json`, `data/events.json` y `data/stages.json` | La simulación llega a la bolsa sin quebrar con una política simple; los productos dan una parte visible de los ingresos; todas las pruebas anteriores siguen pasando |
+
+### 19.4 Orden y dependencias
+
+- **Productos:** el 40, el 41 y el 42 van en cadena y primero, porque Mediana empresa vuelve a pedir un producto lanzado y varios eventos tocan productos.
+- **Eventos:** el 43 antes del 44; el 44 usa productos (servidor caído, competidor) y muebles de prevención.
+- **Oficina:** el 45 y el 46 pueden ir en cualquier orden; el 45 agrega la colocación en pared que también usan el aire acondicionado y la pizarra.
+- **Cierre:** el 47 antes del 48 (Corporación), y el 49 al final.
+
+### 19.5 Riesgos de esta fase
+
+- **Balance:** los productos pueden volver inútiles los contratos o al revés. El hito 49 revisa que los dos importen.
+- **Objetos de pared:** el aire acondicionado del hito 40 llega antes que la colocación en pared del 45; mientras tanto ocupa una casilla.
+- **Eventos con tiempo real:** la cuenta atrás va en segundos reales; las pruebas sin ventana la adelantan con una función propia en vez de esperar.
+- **Tope de proyectos:** productos y contratos comparten el tope de proyectos en curso; hay que mostrarlo claro en Proyectos y Productos.
+- **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 4.

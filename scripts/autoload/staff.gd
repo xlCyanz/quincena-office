@@ -1712,7 +1712,7 @@ func _accountant_warning(day: int) -> void:
 		due += estimate_payroll(payroll_day)
 		what.append("la nómina")
 	if target == 1:
-		due += Bank.get_due_on_first() + Economy.get_monthly_maintenance()
+		due += Bank.get_due_on_first() + Economy.get_monthly_maintenance() + Economy.get_monthly_server_cost()
 		what.append("las cuotas y el mantenimiento")
 	if due <= 0 or Economy.balance >= due:
 		return

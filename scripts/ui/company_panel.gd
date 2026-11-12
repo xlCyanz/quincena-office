@@ -75,6 +75,7 @@ func _ready() -> void:
 	EventBus.staff_changed.connect(_refresh)
 	EventBus.projects_changed.connect(_refresh)
 	EventBus.company_value_changed.connect(func(_value: int) -> void: _refresh())
+	EventBus.office_changed.connect(_refresh)
 
 
 func attach_button(menu_bar: Container) -> void:
@@ -146,6 +147,16 @@ func _refresh() -> void:
 			var executive: Dictionary = Staff.get_executive_of(department)
 			_row("  %s (%s)" % [StaffCatalog.get_department_name(department), "el CEO" if executive.is_empty() else executive["name"]],
 				"%d %%" % roundi(Staff.get_department_factor(department) * 100.0), Color.WHITE)
+
+	var racks: int = OfficeState.get_server_capacity()
+	var server_cost: int = Economy.get_monthly_server_cost()
+	var has_server_room: bool = OfficeState.rooms.any(func(room: Dictionary) -> bool: return room["type"] == OfficeState.SERVER_ROOM)
+	if has_server_room or server_cost > 0:
+		_label("Servidores", SECTION_FONT_SIZE)
+		_row("  Capacidad", "%d %s" % [racks, "rack" if racks == 1 else "racks"], Color.WHITE)
+		_row("  Mantenimiento al mes", MoneyFormat.format(server_cost), Color.WHITE)
+		if racks == 0:
+			_label("La Sala de servidores no funciona: le falta un rack o el aire acondicionado.", 0, MUTED_COLOR)
 
 	_label("Reputación", SECTION_FONT_SIZE)
 	_row("  Actual", ProjectsPanel.describe_reputation(Projects.reputation), Hud.REPUTATION_COLOR)

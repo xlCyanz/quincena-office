@@ -614,8 +614,12 @@ func _room_status(room: Dictionary, ok_if_working: bool) -> Dictionary:
 	var type_name: String = RoomCatalog.get_display_name(room["type"])
 	var cells: Array[Vector2i] = room["cells"]
 	var problems: Array[String] = RoomRules.function_problems(room, OfficeState.furniture)
+	var racks: String = ""
+	if room["type"] == OfficeState.SERVER_ROOM:
+		var count: int = OfficeState.count_racks(room)
+		racks = " %d %s." % [count, "rack" if count == 1 else "racks"]
 	if problems.is_empty():
-		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona." % [type_name, cells.size()]}
+		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona.%s" % [type_name, cells.size(), racks]}
 	return {"ok": false, "cost": 0,
 		"message": "%s (%d m²): no funciona, %s." % [type_name, cells.size(), ", ".join(problems)]}
 

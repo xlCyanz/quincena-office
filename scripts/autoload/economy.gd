@@ -5,12 +5,14 @@
 # solo los últimos MAX_MOVEMENTS) se llevan los totales por concepto del mes actual y
 # del anterior, para que el resumen del mes no dependa de lo que se recorta.
 #
-# El día 1 de cada mes cobra el mantenimiento del local (13.1). La partida empieza el
+# El día 1 de cada mes cobra el mantenimiento del local (13.1) y el de los racks de
+# servidores (13.5, hito 40), los dos con el descuento del contador. La partida empieza el
 # día 1 del mes 1, así que el primer cobro llega el día 1 del mes 2.
 extends Node
 
 ## Concepto de los movimientos de la cuenta.
 const CONCEPT_MAINTENANCE: String = "Mantenimiento del local"
+const CONCEPT_SERVERS: String = "Mantenimiento de servidores"
 const CONCEPT_PURCHASE: String = "Compras"
 const CONCEPT_SALE: String = "Ventas"
 
@@ -94,6 +96,11 @@ func get_monthly_maintenance() -> int:
 	return roundi(base * (1.0 - Staff.get_maintenance_discount()))
 
 
+## Mantenimiento de los racks de servidores de un mes, con el descuento del contador.
+func get_monthly_server_cost() -> int:
+	return roundi(OfficeState.get_furniture_monthly_cost() * (1.0 - Staff.get_maintenance_discount()))
+
+
 func _on_day_changed(day: int, month: int) -> void:
 	_day = day
 	_month = month
@@ -102,6 +109,7 @@ func _on_day_changed(day: int, month: int) -> void:
 		# Lee el tamaño del local y el descuento del contador (solo lectura).
 		charge(get_monthly_maintenance(), CONCEPT_MAINTENANCE)
 		EventBus.payment_recorded.emit(CONCEPT_MAINTENANCE, balance >= 0)
+		charge(get_monthly_server_cost(), CONCEPT_SERVERS)
 
 
 func _add_movement(concept: String, amount: int) -> void:

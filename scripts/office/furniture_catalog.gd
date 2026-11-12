@@ -34,6 +34,16 @@ static func get_price(id: String) -> int:
 	return int(get_item(id).get("price", 0))
 
 
+## Lo que cuesta al mes tenerlo (los racks de servidores; 0 los demás).
+static func get_monthly_cost(id: String) -> int:
+	return int(get_item(id).get("monthly_cost", 0))
+
+
+## Indica si es un rack de servidores (capacidad para productos).
+static func is_server_rack(id: String) -> bool:
+	return bool(get_item(id).get("server_rack", false))
+
+
 ## Lo que devuelve la reventa (redondeado hacia abajo).
 static func get_resale(id: String) -> int:
 	if _items.is_empty():
@@ -87,4 +97,7 @@ static func _load() -> void:
 			"waiting_seat": bool(raw.get("waiting_seat", false)),
 			"trash_can": bool(raw.get("trash_can", false)),
 			"is_closet": bool(raw.get("is_closet", false)),
+			"server_rack": bool(raw.get("server_rack", false)),
+			"air_conditioner": bool(raw.get("air_conditioner", false)),
+			"monthly_cost": int(raw.get("monthly_cost", 0)),
 		}

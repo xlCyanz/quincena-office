@@ -219,6 +219,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Comprobación de la fase 3 (`test_phase3`): simula con una política simple (aceptar lo que se pueda, entregar lo terminado, el CEO
   de 8 a 17) un CEO solo 3 meses, el primer equipo con $5,000 a 12 meses durante 6 y una empresa que deja de pagar; imprime un resumen
   por mes. Sirve para ajustar `data/bank.json`, `data/stages.json` y `data/contracts.json`.
+- Sala de servidores (`OfficeState.SERVER_ROOM`, desde Pequeña empresa): funciona con `server_rack` ($3,000) y `air_conditioner` ($800, una
+  casilla de piso hasta los objetos de pared del hito 45). `OfficeState.get_server_room()` / `get_server_capacity()` (racks de la sala
+  que funciona; 1 rack = 1 unidad, los productos usan 1/3/8). Todo mueble con `monthly_cost` (cada rack $100, esté donde esté) se cobra el
+  día 1 como «Mantenimiento de servidores» (`Economy.get_monthly_server_cost`, con el descuento del contador, y en su aviso). Builder
+  `room_status` dice los racks; Empresa tiene la sección Servidores.
 - Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
   terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
@@ -231,7 +236,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/` y la suma a `test_all`.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29) y en la 18.3 (fase 4, hitos 30–39).
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39) y en la 19.3 (fase 5, hitos 40–49).
 
 ## Estado actual
 
@@ -277,3 +282,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 37 | Contador y limpieza | ✅ Completado (contador $1,300 desde Startup: −10 % mantenimiento y −1 punto a préstamos nuevos por el factor de Administración, avisos 3 días antes si el saldo no alcanza; suciedad +1 por persona-hora, zafacón la mitad, desde 50 ánimo −10; personal de limpieza $500 con armario en un Cuarto de limpieza, −25/h a la habitación más sucia) |
 | 38 | Competencia por empleados | ✅ Completado (SemiSenior, Senior y dirección; 1 %/día Senior, ×3 mal pagado, ×0.3 bien pagado, leal ×0.25, ambicioso ×2; oferta +15–30 % con 5 días; igualar retiene, «Dejar ir» o el plazo lo sacan) |
 | 39 | Comprobación de la fase | ✅ Completado (CEO solo a Mediana empresa en ~13 meses sin préstamos ni quiebra; medianos pagan $9,000–16,500 para que un equipo de 8 con líder deje margen; un ejecutivo en Desarrollo sube los ingresos ~75 % frente al CEO con 4 departamentos; partida nueva otra vez con el CEO solo) |
+| 40 | Sala de servidores | ✅ Completado (rack $3,000 y aire acondicionado $800 de piso; funciona con los dos; capacidad = racks de la sala; $100/mes por rack el día 1 aparte del local, −10 % con contador; sección Servidores en Empresa) |

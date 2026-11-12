@@ -5,6 +5,8 @@ extends Node
 
 ## Oficina con la que empieza toda partida nueva.
 const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
+## Tipo de la Sala de servidores (data/rooms.json).
+const SERVER_ROOM: String = "server_room"
 
 ## Casillas que ocupa el local (hito 25: crece al comprar terreno y puede no ser un rectángulo).
 var lot := Lot.new()
@@ -188,6 +190,40 @@ func get_room_index_at(cell: Vector2i) -> int:
 ## Indica si una habitación está tan sucia que baja el ánimo de quienes trabajan ahí.
 static func is_room_dirty(room: Dictionary) -> bool:
 	return get_room_dirt(room) >= float(StaffCatalog.get_cleaning("dirty_from"))
+
+
+## La Sala de servidores si existe y funciona (rack y aire acondicionado), o vacío.
+func get_server_room() -> Dictionary:
+	for room: Dictionary in rooms:
+		if room["type"] == SERVER_ROOM and RoomRules.function_problems(room, furniture).is_empty():
+			return room
+	return {}
+
+
+## Racks dentro de una habitación.
+func count_racks(room: Dictionary) -> int:
+	var cells: Array[Vector2i] = room["cells"]
+	var count: int = 0
+	for item: Dictionary in furniture:
+		if FurnitureCatalog.is_server_rack(item["id"]) and cells.has(item["cell"]):
+			count += 1
+	return count
+
+
+## Capacidad para productos: los racks de la Sala de servidores que funciona (cada rack
+## es una unidad; un producto usa las de su tamaño).
+func get_server_capacity() -> int:
+	var room: Dictionary = get_server_room()
+	return 0 if room.is_empty() else count_racks(room)
+
+
+## Lo que cuestan al mes los muebles con costo mensual (los racks, estén donde estén),
+## sin descuentos.
+func get_furniture_monthly_cost() -> int:
+	var total: int = 0
+	for item: Dictionary in furniture:
+		total += FurnitureCatalog.get_monthly_cost(item["id"])
+	return total
 
 
 ## Indica si una habitación tiene zafacón.
