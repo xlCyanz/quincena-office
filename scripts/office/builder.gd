@@ -521,6 +521,7 @@ func buy_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
 	var rooms: Array[Dictionary] = result["rooms"]
 	OfficeState.rooms = rooms
 	result.erase("rooms")
+	OfficeState.land_paid += int(result["cost"])
 	Economy.spend(result["cost"], CONCEPT_LAND)
 	EventBus.office_changed.emit()
 	result["message"] = "Compraste %d m² de terreno por %s." % [new_cells.size(), MoneyFormat.format(int(result["cost"]))]

@@ -35,6 +35,9 @@ var rooms: Array[Dictionary] = []
 ## en un escritorio ("" si no tiene). Comprar, girar y vender lo hace Builder.
 var furniture: Array[Dictionary] = []
 
+## Lo que se pagó por el terreno comprado (cuenta en el valor de la empresa).
+var land_paid: int = 0
+
 ## Casilla del borde del local por la que se entra y se sale.
 var entrance := Vector2i.ZERO
 
@@ -49,6 +52,7 @@ func has_game() -> bool:
 ## STARTING_OFFICE_PATH.
 func new_game() -> void:
 	lot = Lot.from_rect(Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE))
+	land_paid = 0
 	site_rect = site_around(lot.get_bounds())
 	rooms.clear()
 	furniture.clear()
@@ -193,6 +197,7 @@ func export_state() -> Dictionary:
 	return {
 		"lot": [lot_rect.position.x, lot_rect.position.y, lot_rect.size.x, lot_rect.size.y],
 		"lot_cells": lot.to_data(),
+		"land_paid": land_paid,
 		"site": [site_rect.position.x, site_rect.position.y, site_rect.size.x, site_rect.size.y],
 		"floors": saved_floors,
 		"edges": saved_edges,
@@ -213,6 +218,7 @@ func import_state(state: Dictionary) -> void:
 	else:
 		var saved_lot: Array = state.get("lot", [0, 0, 0, 0])
 		lot = Lot.from_rect(Rect2i(int(saved_lot[0]), int(saved_lot[1]), int(saved_lot[2]), int(saved_lot[3])))
+	land_paid = int(state.get("land_paid", 0))
 	var site: Array = state.get("site", [])
 	site_rect = Rect2i(int(site[0]), int(site[1]), int(site[2]), int(site[3])) if site.size() == 4 else site_around(lot_rect)
 	floors.clear()

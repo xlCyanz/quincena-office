@@ -19,7 +19,7 @@ signal bank_mode_changed(active: bool)
 
 const PANEL_WIDTH: float = 520.0
 const MARGIN: float = 16.0
-const MARGIN_TOP: float = 76.0
+const MARGIN_TOP: float = 100.0
 const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
@@ -40,6 +40,8 @@ var _movement_rows: VBoxContainer
 var _empty_label: Label
 var _credit_label: Label
 var _credit_rows: VBoxContainer
+var _company_label: Label
+var _company_rows: VBoxContainer
 var _loan_rows: VBoxContainer
 var _overdue_label: Label
 var _amount_label: Label
@@ -114,6 +116,13 @@ func _ready() -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 6)
 	scroll.add_child(content)
+
+	# Valor de la empresa (hito 26).
+	_company_label = Label.new()
+	_company_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
+	content.add_child(_company_label)
+	_company_rows = VBoxContainer.new()
+	content.add_child(_company_rows)
 
 	# Calificación de crédito.
 	_credit_label = Label.new()
@@ -193,6 +202,7 @@ func _ready() -> void:
 	EventBus.balance_changed.connect(func(_balance: int) -> void: _refresh())
 	EventBus.day_changed.connect(func(_day: int, _month: int) -> void: _refresh())
 	EventBus.bank_changed.connect(_refresh)
+	EventBus.company_value_changed.connect(func(_value: int) -> void: _refresh())
 
 
 ## Pone el botón "Banco" en la barra de menús.
@@ -304,6 +314,14 @@ func get_extra_buttons() -> Array[Button]:
 
 
 ## Texto de la calificación: título y una línea por factor.
+## Valor de la empresa y sus partes, una por renglón ("concepto | monto").
+func get_value_text() -> String:
+	var lines: Array[String] = [_company_label.text]
+	for row: Node in _company_rows.get_children():
+		lines.append(_row_text(row))
+	return "\n".join(lines)
+
+
 func get_credit_text() -> String:
 	var lines: Array[String] = [_credit_label.text]
 	for row: Node in _credit_rows.get_children():
@@ -341,6 +359,11 @@ func _refresh() -> void:
 		_balance_label.add_theme_color_override("font_color", Hud.NEGATIVE_COLOR)
 	else:
 		_balance_label.remove_theme_color_override("font_color")
+	_company_label.text = "Valor de la empresa: %s" % MoneyFormat.format(Company.get_value())
+	_clear(_company_rows)
+	for part: Dictionary in Company.get_value_parts():
+		var amount: int = part["amount"]
+		_company_rows.add_child(_row("", "  " + String(part["label"]), amount, Hud.NEGATIVE_COLOR if amount < 0 else Color.WHITE))
 	var current: int = Economy.get_current_month()
 	if _shown_month == _last_current:
 		_shown_month = current

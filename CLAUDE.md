@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24) y `test_land` (25)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25) y `test_company_value` (26)
 
 ## Convenciones de código
 
@@ -56,7 +56,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   `SaveManager.new_game()` prepara una partida nueva; la oficina inicial está en `data/starting_office.json`.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
-- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `SaveManager`.
+- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `Company`, `SaveManager`.
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
   en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
@@ -120,6 +120,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   Aceptar: llega el dinero, `Staff` paga la nómina y cuenta a tiempo; el préstamo (`emergency`) no cuenta para el límite
   (`get_limit_debt`) ni se refinancia y cobra desde `first_due_day` (primer día 1 con ≥15 días). Rechazar: nómina debida como en la
   fase 2. Se guarda la oferta pendiente y al cargar vuelve a preguntar. `SaveManager` reinicia o importa `Economy` al final.
+- Valor de la empresa (`Company`): dinero + reventa de muebles y computadoras (`Bank.get_assets_value`) + terreno a lo pagado
+  (`OfficeState.land_paid`) − deuda con el banco (capital pendiente y atrasos, `Bank.get_seizable_debt`). Avisa con
+  `EventBus.company_value_changed`; se muestra en el `Hud` tras las estrellas («Valor $X», rojo si es negativo) y en el Banco
+  arriba, tras el saldo, con su detalle. Paredes y pisos no cuentan como bienes.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -158,7 +162,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 23 | Mora y embargo | ✅ Completado (5 % de recargo por cuota; meses seguidos debiendo globales; al pagar todo vuelve a 0; el sobrante se devuelve; lo del CEO no se embarga; préstamo de emergencia en el hito 24) |
 | 24 | Préstamo de emergencia | ✅ Completado (días 15 y 30; aceptar = nómina a tiempo sin golpe; monto = lo que falta redondeado a $100; primera cuota el primer día 1 con ≥15 días; no se refinancia) |
 | 25 | Compra de terreno | ✅ Completado (local como conjunto de casillas; alfombra incluida en $150/m²; no tapa la entrada; rellena huecos cobrando solo lo nuevo; controles −/+ con vista previa; una habitación no se junta con otro espacio) |
-| 26 | Valor de la empresa | Pendiente (fase 3) |
+| 26 | Valor de la empresa | ✅ Completado (dinero + reventa + terreno a lo pagado − deuda; paredes y pisos no suman; en el Hud tras las estrellas y en el Banco con detalle) |
 | 27 | Etapas y menú Empresa | Pendiente (fase 3) |
 | 28 | Objetivos guiados | Pendiente (fase 3) |
 | 29 | Comprobación de la fase | Pendiente (fase 3) |

@@ -70,3 +70,7 @@ signal emergency_loan_offered(offer: Dictionary)
 ## El jugador aceptó o rechazó el préstamo de emergencia. La emite Bank.
 @warning_ignore("unused_signal")
 signal emergency_loan_resolved(accepted: bool)
+
+## Pudo cambiar el valor de la empresa (dinero, muebles, terreno o deuda). La emite Company.
+@warning_ignore("unused_signal")
+signal company_value_changed(value: int)

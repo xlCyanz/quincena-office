@@ -14,7 +14,7 @@ signal projects_mode_changed(active: bool)
 
 const PANEL_WIDTH: float = 560.0
 const MARGIN: float = 16.0
-const MARGIN_TOP: float = 76.0
+const MARGIN_TOP: float = 100.0
 const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18

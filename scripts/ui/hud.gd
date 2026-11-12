@@ -16,6 +16,7 @@ const MARGIN: float = 12.0
 const WEEKDAY_NAMES: Array[String] = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 const NEGATIVE_COLOR := Color(1.0, 0.45, 0.4)
 const REPUTATION_COLOR := Color(1.0, 0.82, 0.35)
+const VALUE_COLOR := Color(0.6, 0.85, 1.0)
 const MONEY_FONT_SIZE: int = 24
 const PANEL_COLOR := Color(0.12, 0.12, 0.14, 0.88)
 const PANEL_PADDING: float = 8.0
@@ -27,6 +28,7 @@ const MENU_BUTTON_SIZE := Vector2(124.0, 44.0)
 
 var _balance_label: Label
 var _reputation_label: Label
+var _value_label: Label
 var _date_label: Label
 var _time_label: Label
 var _payroll_label: Label
@@ -51,9 +53,11 @@ func _ready() -> void:
 	_money_panel = money_panel
 	root.add_child(money_panel)
 	money_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
+	var money_rows := VBoxContainer.new()
+	money_panel.add_child(money_rows)
 	var money_row := HBoxContainer.new()
 	money_row.add_theme_constant_override("separation", 16)
-	money_panel.add_child(money_row)
+	money_rows.add_child(money_row)
 	_balance_label = Label.new()
 	_balance_label.add_theme_font_size_override("font_size", MONEY_FONT_SIZE)
 	money_row.add_child(_balance_label)
@@ -64,6 +68,11 @@ func _ready() -> void:
 	_reputation_label.tooltip_text = "Reputación de la empresa"
 	_reputation_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	money_row.add_child(_reputation_label)
+	# Valor de la empresa (hito 26), en una segunda línea para no ensanchar la esquina.
+	_value_label = Label.new()
+	_value_label.tooltip_text = "Valor de la empresa: dinero + reventa de los muebles + terreno − deuda con el banco"
+	_value_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	money_rows.add_child(_value_label)
 
 	# Reloj, arriba a la derecha.
 	var clock_panel: PanelContainer = make_panel()
@@ -115,6 +124,8 @@ func _ready() -> void:
 	EventBus.balance_changed.connect(_on_balance_changed)
 	EventBus.projects_changed.connect(_update_reputation)
 	_update_reputation()
+	EventBus.company_value_changed.connect(_update_value)
+	_update_value(Company.get_value())
 	_on_balance_changed(Economy.balance)
 	_update_clock()
 
@@ -142,6 +153,16 @@ func get_speed_button(index: int) -> Button:
 ## Estrellas de reputación que se muestran arriba a la izquierda.
 func get_reputation_text() -> String:
 	return _reputation_label.text
+
+
+## Texto del valor de la empresa.
+func get_value_text() -> String:
+	return _value_label.text
+
+
+func _update_value(value: int) -> void:
+	_value_label.text = "Valor %s" % MoneyFormat.format(value)
+	_value_label.add_theme_color_override("font_color", NEGATIVE_COLOR if value < 0 else VALUE_COLOR)
 
 
 func _update_reputation() -> void:
