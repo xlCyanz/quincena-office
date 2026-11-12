@@ -119,6 +119,8 @@ func _ready() -> void:
 	_game_over_screen.menu_requested.connect(_on_quit_requested)
 	EventBus.emergency_loan_offered.connect(_on_emergency_loan_offered)
 	_emergency_dialog.closed.connect(_on_emergency_dialog_closed)
+	# Un evento corta el salto de horas de la oficina vacía para que el jugador lo vea.
+	EventBus.event_started.connect(func(_card: Dictionary) -> void: GameClock.interrupt())
 	GameClock.start()
 	# Una partida guardada con el préstamo de emergencia sin responder vuelve a preguntar.
 	if not Bank.emergency_offer.is_empty():

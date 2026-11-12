@@ -1,0 +1,42 @@
+{
+	"_comentario": "Eventos (diseño 10 y 19.2; hito 43). Cada hora de juego que pasa con el reloj andando (no en pausa ni en construcción, que pausa) y sin otra tarjeta abierta sale un evento con probabilidad 1 / (mean_days[etapa] × 24): en promedio uno cada mean_days días según la etapa (índice de data/stages.json). Se elige entre los que cumplen sus conditions, con su weight. El jugador tiene answer_seconds segundos reales con el reloj andando (a cualquier velocidad; en pausa la cuenta se detiene); si no elige, se toma una opción al azar. conditions: min_employees (contratados sin el CEO), min_stage, min_reputation, offer_room (que quepa una oferta en la bandeja). Cada opción tiene label y effects: money (amount, con el concepto «Evento»), mood, energy o stress (amount a todos los empleados, de 0 a 100), reputation (amount) y offer (pay_factor: llega una oferta con ese pago). En el texto, {employee} es el nombre de un empleado al azar. kind (good o bad) es para el balance: más o menos mitad y mitad. El hito 44 agrega la lista completa de 10.2 con su prevención.",
+	"answer_seconds": 120,
+	"mean_days": [5, 4, 3, 2, 1.5],
+	"events": [
+		{
+			"id": "birthday", "kind": "good", "weight": 1, "title": "Cumpleaños en la oficina",
+			"text": "Hoy cumple años {employee}. El equipo pregunta si habrá bizcocho.",
+			"conditions": { "min_employees": 1 },
+			"options": [
+				{ "label": "Comprar bizcocho", "effects": [{ "type": "money", "amount": -150 }, { "type": "mood", "amount": 8 }] },
+				{ "label": "Ignorarlo", "effects": [{ "type": "mood", "amount": -3 }] }
+			]
+		},
+		{
+			"id": "coffee", "kind": "bad", "weight": 1, "title": "Se acabó el café",
+			"text": "La cafetera está vacía y el pedido llega mañana. Hay caras largas en la oficina.",
+			"conditions": { "min_employees": 1 },
+			"options": [
+				{ "label": "Compra de emergencia", "effects": [{ "type": "money", "amount": -200 }] },
+				{ "label": "Esperar al pedido", "effects": [{ "type": "energy", "amount": -20 }] }
+			]
+		},
+		{
+			"id": "referral", "kind": "good", "weight": 1, "title": "Un cliente recomienda la empresa",
+			"text": "Un cliente satisfecho habló bien de ustedes y otro quiere contratarlos.",
+			"conditions": { "offer_room": true },
+			"options": [
+				{ "label": "¡Excelente!", "effects": [{ "type": "offer", "pay_factor": 1.3 }] }
+			]
+		},
+		{
+			"id": "award", "kind": "good", "weight": 0.5, "title": "Premio de la industria",
+			"text": "Una revista del sector nombra a la empresa entre las promesas del año.",
+			"conditions": { "min_reputation": 2.0 },
+			"options": [
+				{ "label": "Ir a recibirlo", "effects": [{ "type": "reputation", "amount": 0.3 }, { "type": "money", "amount": -100 }] },
+				{ "label": "Que lo manden por correo", "effects": [{ "type": "reputation", "amount": 0.1 }] }
+			]
+		}
+	]
+}

@@ -106,3 +106,12 @@ signal contract_accepted
 ## (claves de Staff.employee_key). La emite Projects.
 @warning_ignore("unused_signal")
 signal contract_delivered(worker_keys: Array)
+
+
+## Se abrió, se cerró o cambió la tarjeta de evento (hito 43). La emite Events.
+@warning_ignore("unused_signal")
+signal event_changed
+
+## Llegó un evento: la escena de juego corta el salto de horas para que el jugador lo vea.
+@warning_ignore("unused_signal")
+signal event_started(card: Dictionary)

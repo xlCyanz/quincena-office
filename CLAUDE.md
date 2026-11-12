@@ -27,7 +27,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - **Panku Console 1.7.9** (`addons/panku_console/`, MIT, autoload `Panku`): consola en el juego con la tecla de la
   izquierda del 1. Los comandos propios están en `DevCommands` (`scripts/debug/dev_commands.gd`) con el nombre `qo`:
   `qo.help()`, `qo.add_money(50000)`, `qo.skip_days(3)`, `qo.skip_hours(5)`, `qo.set_mood(20)`, `qo.set_stress(90)`,
-  `qo.set_energy(10)`. Cada comando usa las funciones públicas de los sistemas; su texto de ayuda es una constante
+  `qo.set_energy(10)`, `qo.event("birthday")`. Cada comando usa las funciones públicas de los sistemas; su texto de ayuda es una constante
   `_HELP_<función>`. No se modifica el código del addon.
 - En una exportación release `DevTools` no hace nada y `panku/disable_on_release=true` quita el autoload `Panku`.
   Al crear el primer preset de exportación, excluir también `addons/panku_console/*` y `scripts/debug/*`.
@@ -77,7 +77,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`Staff.hire_directly`, `Projects.create_offer`). `test_starting_company` y `test_dev_tools` lo ponen en true un momento.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
-- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
+- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `Events`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
   en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
@@ -239,6 +239,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`start_update`): proyecto `product["update"]` del 20 % de los puntos (`get_active_projects`, cuenta para el tope, `assign`/`abandon` por id de
   producto); al terminar corrige los errores y vuelve al pico. `retire` libera los racks. Valor de la empresa + 60 días de ingreso; Mediana empresa
   pide `products_launched` 1 y Corporación `active_products` 3 (`Company`). `test_phase4` arma la sala y un equipo hace un producto pequeño.
+- Eventos (`Events`, `data/events.json`, hito 43): cada hora con el reloj de la partida andando (`GameClock.is_processing()` y sin pausa;
+  construcción pausa) y sin tarjeta abierta, sale uno con probabilidad 1 / (`mean_days`[etapa] × 24) entre los que cumplen `conditions`
+  (min_employees, min_stage, min_reputation, offer_room), por `weight`. Tarjeta `Events.card` (`trigger`, `choose`): `answer_seconds` 120 reales
+  que solo corren con el reloj andando (`advance_countdown`, a cualquier velocidad); al acabarse elige al azar. Efectos: money (concepto «Evento»,
+  `Economy.charge`), mood/energy/stress a todos (`Staff.change_all`), reputation, offer (`Projects.create_bonus_offer`). `EventCard` a la
+  derecha bajo el reloj, plegable; `EventBus.event_started` corta el salto de horas (`main.gd`). Las pruebas con el reloj detenido no reciben
+  eventos. Hito 43: Cumpleaños, Se acabó el café, Un cliente recomienda la empresa y Premio de la industria; consola `qo.event("id")`.
 - Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
   terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
@@ -300,3 +307,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 40 | Sala de servidores | ✅ Completado (rack $3,000 y aire acondicionado $800 de piso; funciona con los dos; capacidad = racks de la sala; $100/mes por rack el día 1 aparte del local, −10 % con contador; sección Servidores en Empresa) |
 | 41 | Desarrollo de productos | ✅ Completado (App móvil, Software en la nube y Videojuego en 3 tamaños; desde Pequeña empresa con Sala de servidores que funcione, los racks se piden al lanzar en el hito 42; comparte el tope y los equipos con los contratos; pestaña Productos en Proyectos; abandonar con confirmación) |
 | 42 | Lanzamiento y ciclo de vida | ✅ Completado (lanzar con racks libres; usuarios 30 días crecen, 60 en el pico y 120 caen hasta 10 %; calidad = nivel de quien diseñó + errores, ingreso 50–150 %; errores en producción −0.5 %/día por error; actualización del 20 % de los puntos vuelve al pico; retirar libera racks; valor +60 días de ingreso; Mediana empresa pide 1 lanzado) |
+| 43 | Eventos | ✅ Completado (sorteo cada hora: uno cada 5/4/3/2/1.5 días según la etapa, uno a la vez, por condiciones y peso; tarjeta plegable a la derecha con 2 minutos reales que se detienen en pausa y construcción, al acabarse elige al azar; efectos de dinero, ánimo, energía, estrés, reputación y oferta; 4 eventos de prueba, la lista completa en el hito 44) |

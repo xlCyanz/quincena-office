@@ -509,6 +509,26 @@ func _roll_arrivals() -> int:
 
 ## Agrega a la bandeja una oferta nueva de ese tamaño (la usa la empresa con la que
 ## empieza la partida) y la devuelve.
+## Indica si cabe una oferta más en la bandeja (las visitas también cuentan).
+func has_offer_room() -> bool:
+	return offers.size() + visits.size() < int(ContractCatalog.get_offers("max_offers"))
+
+
+## Una oferta de un tamaño sorteado como siempre, con el pago por pay_factor (un cliente que
+## recomienda la empresa, hito 43). Vacía si la bandeja está llena.
+func create_bonus_offer(pay_factor: float) -> Dictionary:
+	if not has_offer_room():
+		return {}
+	var offer: Dictionary = _make_offer(GameClock.get_day_count())
+	var step: int = int(ContractCatalog.get_offers("pay_step"))
+	offer["pay"] = roundi(int(offer["pay"]) * pay_factor / step) * step
+	if int(offer["advance"]) > 0:
+		offer["advance"] = roundi(int(offer["pay"]) * float(ContractCatalog.get_offers("advance_ratio")))
+	offers.append(offer)
+	EventBus.projects_changed.emit()
+	return offer
+
+
 func create_offer(size: String) -> Dictionary:
 	var offer: Dictionary = _make_offer(GameClock.get_day_count(), size)
 	offers.append(offer)

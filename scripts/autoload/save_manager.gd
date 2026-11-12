@@ -51,6 +51,7 @@ func new_game() -> void:
 	# Después del local: la calificación inicial mira los muebles del local inicial.
 	Bank.new_game()
 	Company.new_game()
+	Events.new_game()
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.new_game()
@@ -105,6 +106,7 @@ func save_game(slot: String) -> bool:
 		"products": Products.export_state(),
 		"bank": Bank.export_state(),
 		"company": Company.export_state(),
+		"events": Events.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
@@ -138,6 +140,8 @@ func load_game(slot: String) -> bool:
 	Bank.import_state(data.get("bank", {}))
 	# Las partidas de antes del hito 27 no tienen etapa: se calcula al cargar.
 	Company.import_state(data.get("company", {}))
+	# Las partidas de antes del hito 43 no tienen eventos: se cargan sin tarjeta abierta.
+	Events.import_state(data.get("events", {}))
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.import_state(data["economy"])

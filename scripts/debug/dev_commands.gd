@@ -19,6 +19,7 @@ const _HELP_skip_days: String = "skip_days(días): adelanta el reloj esos días 
 const _HELP_set_mood: String = "set_mood(valor): fija el ánimo (0–100) de todos los empleados."
 const _HELP_set_stress: String = "set_stress(valor): fija el estrés (0–100) de todos los empleados."
 const _HELP_set_energy: String = "set_energy(valor): fija la energía (0–100) de todos los empleados."
+const _HELP_event: String = "event(id): abre la tarjeta de ese evento (birthday, coffee, referral, award…)."
 
 
 ## Lista de comandos disponibles.
@@ -26,7 +27,7 @@ func help() -> String:
 	return "\n".join([
 		"Comandos de Quincena Office (qo.):",
 		_HELP_add_money, _HELP_skip_hours, _HELP_skip_days,
-		_HELP_set_mood, _HELP_set_stress, _HELP_set_energy,
+		_HELP_set_mood, _HELP_set_stress, _HELP_set_energy, _HELP_event,
 	])
 
 
@@ -63,6 +64,13 @@ func set_stress(value: int) -> String:
 ## Fija la energía de todos los empleados.
 func set_energy(value: int) -> String:
 	return _set_bar("energy", value)
+
+
+## Abre la tarjeta de un evento (hito 43).
+func event(event_id: String) -> String:
+	if Events.trigger(event_id):
+		return "Evento %s abierto." % event_id
+	return "No se abrió: ya hay una tarjeta o «%s» no existe." % event_id
 
 
 func _set_bar(key: String, value: int) -> String:

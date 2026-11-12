@@ -878,6 +878,17 @@ func get_stress_target(employee: Dictionary) -> int:
 	return clampi(roundi(target), 0, 100)
 
 
+## Suma (o resta) a todos los empleados en "mood", "energy" o "stress" (de 0 a 100); lo
+## usan los eventos (hito 43).
+func change_all(key: String, amount: int) -> void:
+	for employee: Dictionary in employees:
+		if employee[key] is float:
+			employee[key] = clampf(float(employee[key]) + amount, 0.0, 100.0)
+		else:
+			employee[key] = clampi(int(employee[key]) + amount, 0, 100)
+	EventBus.staff_changed.emit()
+
+
 ## Indica si un empleado no tiene trabajo: su equipo no lleva contrato (los vendedores
 ## no lo necesitan).
 func is_idle(employee: Dictionary) -> bool:
