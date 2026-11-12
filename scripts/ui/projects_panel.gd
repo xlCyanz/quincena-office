@@ -41,7 +41,7 @@ var _confirming_cancel: int = 0
 
 func _ready() -> void:
 	_open_button = Button.new()
-	_open_button.custom_minimum_size = Vector2(160, 44)
+	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
 	_open_button.focus_mode = Control.FOCUS_NONE
 	_open_button.pressed.connect(func() -> void: set_open(not is_open()))
 

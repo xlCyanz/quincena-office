@@ -1,7 +1,9 @@
 # Economía: la cuenta empresarial (diseño, 8.1). Hay una sola cuenta con todo el
 # dinero: ahí entran los cobros y de ahí salen las compras y los gastos mensuales.
 # Cada cambio del saldo se avisa con EventBus.balance_changed y queda en el historial
-# de movimientos (el menú Banco lo mostrará en una fase siguiente).
+# de movimientos, que muestra el menú Banco (hito 20). Aparte del historial (que guarda
+# solo los últimos MAX_MOVEMENTS) se llevan los totales por concepto del mes actual y
+# del anterior, para que el resumen del mes no dependa de lo que se recorta.
 #
 # El día 1 de cada mes cobra el mantenimiento del local (13.1). La partida empieza el
 # día 1 del mes 1, así que el primer cobro llega el día 1 del mes 2.
@@ -23,6 +25,9 @@ var balance: int = 0
 ## "amount": int}; amount es negativo si sale dinero.
 var movements: Array[Dictionary] = []
 
+## Totales por concepto: mes → {concepto: monto}. Solo el mes actual y el anterior.
+var month_totals: Dictionary[int, Dictionary] = {}
+
 # Fecha actual según los avisos del reloj (EventBus.day_changed).
 var _day: int = 1
 var _month: int = 1
@@ -35,6 +40,7 @@ func _ready() -> void:
 ## Prepara la economía de una partida nueva.
 func new_game() -> void:
 	movements.clear()
+	month_totals.clear()
 	_day = 1
 	_month = 1
 	_set_balance(GameConstants.STARTING_CAPITAL)
@@ -63,6 +69,20 @@ func charge(amount: int, concept: String) -> void:
 	_add_movement(concept, -amount)
 
 
+## Mes actual de la cuenta (desde el inicio de la partida, empezando en 1).
+func get_current_month() -> int:
+	return _month
+
+
+## Totales por concepto de un mes (solo el actual y el anterior; otro da {}).
+func get_month_totals(month: int) -> Dictionary[String, int]:
+	var totals: Dictionary[String, int] = {}
+	var saved: Dictionary = month_totals.get(month, {})
+	for concept: String in saved:
+		totals[concept] = int(saved[concept])
+	return totals
+
+
 ## Mantenimiento mensual de un local de area m².
 static func get_maintenance(area: int) -> int:
 	return area * GameConstants.MAINTENANCE_PER_M2
@@ -71,6 +91,7 @@ static func get_maintenance(area: int) -> int:
 func _on_day_changed(day: int, month: int) -> void:
 	_day = day
 	_month = month
+	_drop_old_months()
 	if day == 1:
 		# Lee el tamaño del local del estado de la oficina (solo lectura).
 		charge(get_maintenance(OfficeState.lot_rect.get_area()), CONCEPT_MAINTENANCE)
@@ -80,9 +101,24 @@ func _add_movement(concept: String, amount: int) -> void:
 	if amount == 0:
 		return
 	movements.append({"day": _day, "month": _month, "concept": concept, "amount": amount})
+	_add_to_totals(_month, concept, amount)
 	if movements.size() > MAX_MOVEMENTS:
 		movements.pop_front()
 	_set_balance(balance + amount)
+
+
+func _add_to_totals(month: int, concept: String, amount: int) -> void:
+	if not month_totals.has(month):
+		month_totals[month] = {}
+	var totals: Dictionary = month_totals[month]
+	totals[concept] = int(totals.get(concept, 0)) + amount
+
+
+# Deja solo el mes actual y el anterior.
+func _drop_old_months() -> void:
+	for month: int in month_totals.keys():
+		if month < _month - 1:
+			month_totals.erase(month)
 
 
 func _set_balance(value: int) -> void:
@@ -92,7 +128,11 @@ func _set_balance(value: int) -> void:
 
 ## Devuelve el estado de la economía para guardarlo (hito 9).
 func export_state() -> Dictionary:
-	return {"balance": balance, "movements": movements.duplicate(true), "day": _day, "month": _month}
+	var totals: Array[Dictionary] = []
+	for month: int in month_totals:
+		totals.append({"month": month, "concepts": month_totals[month].duplicate()})
+	return {"balance": balance, "movements": movements.duplicate(true), "day": _day, "month": _month,
+		"month_totals": totals}
 
 
 ## Restaura el estado de la economía desde una partida guardada (hito 9).
@@ -103,4 +143,15 @@ func import_state(state: Dictionary) -> void:
 			"concept": String(movement["concept"]), "amount": int(movement["amount"])})
 	_day = int(state.get("day", 1))
 	_month = int(state.get("month", 1))
+	month_totals.clear()
+	if state.has("month_totals"):
+		for saved: Dictionary in state["month_totals"]:
+			var concepts: Dictionary = saved.get("concepts", {})
+			for concept: String in concepts:
+				_add_to_totals(int(saved.get("month", 0)), concept, int(concepts[concept]))
+	else:
+		# Partidas de antes del hito 20: se rearman con el historial.
+		for movement: Dictionary in movements:
+			_add_to_totals(int(movement["month"]), movement["concept"], int(movement["amount"]))
+	_drop_old_months()
 	_set_balance(int(state.get("balance", 0)))

@@ -31,7 +31,7 @@ func _ready() -> void:
 	root.add_child(_menu_bar)
 	_open_button = Button.new()
 	_open_button.text = "Construir"
-	_open_button.custom_minimum_size = Vector2(160, 44)
+	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
 	_open_button.pressed.connect(func() -> void: set_build_mode(true))
 	_menu_bar.add_child(_open_button)
 	_anchor_bottom_center(_menu_bar)

@@ -22,6 +22,8 @@ const PANEL_PADDING: float = 8.0
 const PANEL_RADIUS: int = 6
 ## Segundos reales que se ve un aviso.
 const NOTICE_SECONDS: float = 6.0
+## Tamaño de los botones de la barra de menús de abajo (caben nueve en 1280 px).
+const MENU_BUTTON_SIZE := Vector2(124.0, 44.0)
 
 var _balance_label: Label
 var _reputation_label: Label

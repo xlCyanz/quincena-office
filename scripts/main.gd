@@ -35,6 +35,7 @@ var _ceo_button: Button
 @onready var _staff_panel: StaffPanel = $StaffPanel
 @onready var _projects_panel: ProjectsPanel = $ProjectsPanel
 @onready var _teams_panel: TeamsPanel = $TeamsPanel
+@onready var _bank_panel: BankPanel = $BankPanel
 @onready var _employee_card: EmployeeCard = $EmployeeCard
 
 
@@ -65,7 +66,8 @@ func _ready() -> void:
 	_staff_panel.employee_selected.connect(_employee_card.open_employee)
 	_projects_panel.attach_button(_build_panel.get_menu_bar())
 	_teams_panel.attach_button(_build_panel.get_menu_bar())
-	# Personal, Proyectos y Equipos ocupan el mismo lado: abrir uno cierra los otros.
+	_bank_panel.attach_button(_build_panel.get_menu_bar())
+	# Personal, Proyectos, Equipos y Banco ocupan el mismo lado: abrir uno cierra los otros.
 	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_staff_panel))
@@ -75,6 +77,9 @@ func _ready() -> void:
 	_teams_panel.teams_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_teams_panel))
+	_bank_panel.bank_mode_changed.connect(func(active: bool) -> void:
+		if active:
+			_close_side_panels(_bank_panel))
 	_add_ceo_button(_build_panel.get_menu_bar())
 	_employee_card.status_provider = describe_employee_activity
 	_settings_panel.attach_button(_build_panel.get_menu_bar())
@@ -215,6 +220,8 @@ func _close_side_panels(keep: CanvasLayer) -> void:
 		_projects_panel.set_open(false)
 	if keep != _teams_panel:
 		_teams_panel.set_open(false)
+	if keep != _bank_panel:
+		_bank_panel.set_open(false)
 
 
 # El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
@@ -294,11 +301,11 @@ func _on_character_left_office() -> void:
 func _add_ceo_button(menu_bar: Container) -> void:
 	_ceo_button = Button.new()
 	_ceo_button.name = "CeoButton"
-	_ceo_button.custom_minimum_size = Vector2(200.0, 44.0)
+	_ceo_button.custom_minimum_size = Vector2(172.0, Hud.MENU_BUTTON_SIZE.y)
 	_ceo_button.focus_mode = Control.FOCUS_NONE
 	_ceo_button.pressed.connect(func() -> void: Staff.set_ceo_at_work(not Staff.ceo_at_work))
 	menu_bar.add_child(_ceo_button)
-	menu_bar.move_child(_ceo_button, _teams_panel.get_open_button().get_index() + 1)
+	menu_bar.move_child(_ceo_button, _bank_panel.get_open_button().get_index() + 1)
 	_update_ceo_button()
 
 
@@ -350,7 +357,7 @@ func _add_frame_button(menu_bar: Container) -> void:
 	var button := Button.new()
 	button.name = "FrameOfficeButton"
 	button.text = "Ver oficina"
-	button.custom_minimum_size = Vector2(160.0, 44.0)
+	button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(frame_office)
 	menu_bar.add_child(button)
