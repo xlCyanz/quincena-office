@@ -108,7 +108,7 @@ func _check_land() -> void:
 	var value: int = Company.get_value()
 	var builder := Builder.new()
 	_expect(builder.buy_land(Builder.SIDE_EAST, 4, 3, 0)["ok"], "comprar terreno")
-	_expect(OfficeState.land_paid == 1800, "terreno pagado: %d" % OfficeState.land_paid)
+	_expect(OfficeState.land_paid == 900, "terreno pagado: %d" % OfficeState.land_paid)
 	_expect(Company.get_value() == value, "comprar terreno no cambia el valor: %d → %d" % [value, Company.get_value()])
 
 
@@ -136,7 +136,7 @@ func _check_save() -> void:
 	_expect(SaveManager.save_game("slot_5"), "guardar")
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_5"), "cargar")
-	_expect(OfficeState.land_paid == 600 and Company.get_value() == value, "el terreno pagado se guarda")
+	_expect(OfficeState.land_paid == 300 and Company.get_value() == value, "el terreno pagado se guarda")
 	var state: Dictionary = OfficeState.export_state()
 	state.erase("land_paid")
 	OfficeState.import_state(state)

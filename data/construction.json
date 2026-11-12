@@ -10,5 +10,5 @@
 	"terrain": { "name": "Terreno", "colors": ["5f8a4c", "567e44"] },
 	"wall": { "name": "Pared", "price": 50, "height": 20, "color": "d8d0c4" },
 	"door": { "name": "Puerta", "price": 200, "height": 20, "color": "8a5a34" },
-	"land": { "price_per_m2": 150, "floor": "carpet" }
+	"land": { "price_per_m2": 75, "floor": "ceramic" }
 }
