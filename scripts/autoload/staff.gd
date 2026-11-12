@@ -65,6 +65,13 @@
 # líder en "leader_id" (0 si no tiene); el líder no es miembro, no suma puntos y sigue el
 # turno del equipo. Desde esa etapa un equipo sin su líder presente rinde
 # teams.no_leader_factor (get_team_factor). Un líder sin equipo sigue siendo líder.
+#
+# Gerentes (hito 32): desde Pequeña empresa un líder asciende a gerente o se contrata con
+# su vacante; trabaja en una Oficina única (StaffCatalog.get_workplace). Cada líder guarda
+# "manager_id": su gerente, o 0 si lo dirige el CEO. El jugador lo elige (set_manager):
+# un gerente dirige hasta management.max_leaders_per_manager líderes y el CEO hasta
+# max_leaders_for_ceo líderes con equipo. Con el gerente presente sus equipos rinden
+# manager_bonus más, y la meta de estrés de sus miembros baja.
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -78,6 +85,7 @@ const NO_QUIT: int = -1
 const EMPLOYEE_PREFIX: String = "employee_"
 const NO_FIRING: int = -1000
 const NO_STATION_MESSAGE: String = "No hay ningún puesto de trabajo libre: hace falta un escritorio con computadora y una silla delante, dentro de un Área de trabajo que funcione."
+const NO_OFFICE_MESSAGE: String = "No hay ninguna Oficina única libre: hace falta una que funcione, con un escritorio y una silla delante."
 
 var vacancies: Array[Dictionary] = []
 var employees: Array[Dictionary] = []
@@ -193,8 +201,9 @@ func make_offer(candidate_id: int, offer: int) -> Dictionary:
 	var candidate: Dictionary = get_candidate(candidate_id)
 	if candidate.is_empty():
 		return {"ok": false, "result": "", "message": "Ese candidato ya no está."}
-	if get_free_workstations().is_empty():
-		return {"ok": false, "result": "", "message": NO_STATION_MESSAGE}
+	var station_problem: String = get_station_problem(candidate["role"])
+	if not station_problem.is_empty():
+		return {"ok": false, "result": "", "message": station_problem}
 	var asked: int = candidate["asked_salary"]
 	if offer >= asked:
 		return _hire(candidate, offer)
@@ -430,9 +439,7 @@ func role_problem(role: String) -> String:
 func get_promotion_progress(employee: Dictionary) -> Dictionary:
 	var role: String = employee["role"]
 	var next_level: String = StaffCatalog.get_next_level(employee["level"]) if StaffCatalog.has_levels(role) else ""
-	var next_role: String = ""
-	if StaffCatalog.has_levels(role) and next_level.is_empty():
-		next_role = StaffCatalog.get_leader_role()
+	var next_role: String = StaffCatalog.get_next_role(role, employee["level"])
 	var needs: Dictionary = StaffCatalog.get_promotion(next_level) if not next_level.is_empty() else {}
 	var projects: int = int(employee.get("projects_worked", 0))
 	var days: int = GameClock.get_day_count() - int(employee["hired_day"])
@@ -441,8 +448,16 @@ func get_promotion_progress(employee: Dictionary) -> Dictionary:
 	progress["ready"] = not needs.is_empty() and projects >= int(progress["projects_needed"]) \
 		and days >= int(progress["days_needed"])
 	progress["next_role"] = next_role
+	# Para ascender de cargo: blocker "stage" si el cargo aún no existe, "station" si no
+	# hay dónde trabaje (una Oficina única libre para un gerente) o "".
+	progress["blocker"] = ""
 	if not next_role.is_empty():
-		progress["ready"] = role_problem(next_role).is_empty()
+		if not role_problem(next_role).is_empty():
+			progress["blocker"] = "stage"
+		elif StaffCatalog.get_workplace(next_role) != StaffCatalog.get_workplace(role) \
+				and not get_station_problem(next_role).is_empty():
+			progress["blocker"] = "station"
+		progress["ready"] = String(progress["blocker"]).is_empty()
 	return progress
 
 
@@ -455,6 +470,8 @@ func promote_problem(employee_id: int, new_salary: int) -> String:
 	if String(progress["next_level"]).is_empty() and String(progress["next_role"]).is_empty():
 		return "Ya está en el cargo más alto."
 	if not bool(progress["ready"]):
+		if progress["blocker"] == "station":
+			return get_station_problem(progress["next_role"])
 		if not String(progress["next_role"]).is_empty():
 			return role_problem(progress["next_role"])
 		return "Todavía no cumple lo que pide el ascenso."
@@ -495,7 +512,20 @@ func promote(employee_id: int, new_salary: int) -> Dictionary:
 func _promote_to_role(employee: Dictionary, role: String, new_salary: int) -> Dictionary:
 	var team: Dictionary = get_team_of(employee["id"])
 	_leave_team(employee["id"])
+	var key: String = employee_key(employee["id"])
+	if StaffCatalog.get_workplace(role) != StaffCatalog.get_workplace(employee["role"]):
+		# Cambia de puesto: deja su silla y toma una libre de su nuevo lugar de trabajo.
+		for item: Dictionary in OfficeState.furniture:
+			if item["assigned_to"] == key:
+				item["assigned_to"] = ""
+		OfficeState.furniture[get_free_workstations(role)[0]["chair"]]["assigned_to"] = key
+		EventBus.office_changed.emit()
+	if employee["role"] == StaffCatalog.get_leader_role():
+		# Un líder que deja de serlo ya no tiene gerente, y un gerente nuevo no dirige a nadie.
+		employee.erase("manager_id")
 	employee["role"] = role
+	if role == StaffCatalog.get_leader_role():
+		employee["manager_id"] = 0
 	var messages: Array[String] = ["%s asciende a %s y gana %s al mes." % [employee["name"],
 		StaffCatalog.get_role_name(role), MoneyFormat.format(new_salary)]]
 	if not team.is_empty() and role == StaffCatalog.get_leader_role():
@@ -577,6 +607,10 @@ func get_stress_target(employee: Dictionary) -> int:
 		target += StaffCatalog.get_morale("late_stress")
 	if int(employee.get("min_energy", 100)) < int(StaffCatalog.get_morale("tired_below")):
 		target += StaffCatalog.get_morale("tired_stress")
+	# Los equipos de un líder con gerente se estresan menos.
+	var team: Dictionary = get_team_of(employee["id"])
+	if not team.is_empty() and not get_manager_of(get_team_leader(team)).is_empty():
+		target += float(StaffCatalog.get_management("manager_stress"))
 	return clampi(roundi(target), 0, 100)
 
 
@@ -606,6 +640,9 @@ func _remove_employee(employee: Dictionary, concept: String) -> int:
 	# Primero deja de ser empleado: así su deuda no se cuenta en la nómina pendiente.
 	employees.erase(employee)
 	_leave_team(employee["id"])
+	# Los líderes de un gerente que se va vuelven a estar a cargo del CEO.
+	for leader: Dictionary in get_leaders_of(employee["id"]):
+		leader["manager_id"] = 0
 	Economy.charge(cost, concept)
 	var key: String = employee_key(employee["id"])
 	for item: Dictionary in OfficeState.furniture:
@@ -719,6 +756,9 @@ func add_to_team(team_id: int, employee_id: int) -> Dictionary:
 		if int(team["leader_id"]) != 0:
 			return {"ok": false, "message": "%s ya tiene líder: %s. Quítalo primero." % [team["name"],
 				get_employee(int(team["leader_id"]))["name"]]}
+		if int(employee.get("manager_id", 0)) == 0 and get_team_of(employee_id).is_empty() and get_ceo_leaders().size() >= get_leader_cap(0):
+			return {"ok": false, "message": "El CEO ya dirige %d líderes de equipo: asígnale un gerente a %s en el organigrama (Personal)." % [
+				get_leader_cap(0), employee["name"]]}
 		_leave_team(employee_id)
 		team["leader_id"] = employee_id
 		_schedules_changed()
@@ -731,6 +771,90 @@ func add_to_team(team_id: int, employee_id: int) -> Dictionary:
 	members.append(employee_id)
 	_schedules_changed()
 	return {"ok": true, "message": "%s entra a %s." % [employee["name"], team["name"]]}
+
+
+## Indica si un empleado es gerente.
+func is_manager(employee: Dictionary) -> bool:
+	return employee.get("role", "") == StaffCatalog.get_manager_role()
+
+
+## Gerentes contratados.
+func get_managers() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for employee: Dictionary in employees:
+		if is_manager(employee):
+			result.append(employee)
+	return result
+
+
+## Líderes de equipo contratados.
+func get_leaders() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for employee: Dictionary in employees:
+		if is_leader(employee):
+			result.append(employee)
+	return result
+
+
+## Líderes que dirige un gerente (todos los que lo tienen como gerente).
+func get_leaders_of(manager_id: int) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for leader: Dictionary in get_leaders():
+		if int(leader.get("manager_id", 0)) == manager_id:
+			result.append(leader)
+	return result
+
+
+## Líderes con equipo que dirige el CEO (los que no tienen gerente).
+func get_ceo_leaders() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for leader: Dictionary in get_leaders_of(0):
+		if not get_team_of(leader["id"]).is_empty():
+			result.append(leader)
+	return result
+
+
+## Cuántos líderes puede dirigir un gerente (o el CEO con manager_id 0).
+func get_leader_cap(manager_id: int) -> int:
+	return int(StaffCatalog.get_management("max_leaders_for_ceo" if manager_id == 0 else "max_leaders_per_manager"))
+
+
+## Gerente de un líder, o vacío si lo dirige el CEO.
+func get_manager_of(leader: Dictionary) -> Dictionary:
+	return get_employee(int(leader.get("manager_id", 0)))
+
+
+## Pone a un líder a cargo de un gerente (o del CEO con manager_id 0), si le queda
+## lugar. Devuelve {"ok", "message"}.
+func set_manager(leader_id: int, manager_id: int) -> Dictionary:
+	var leader: Dictionary = get_employee(leader_id)
+	if leader.is_empty() or not is_leader(leader):
+		return {"ok": false, "message": "Ese líder de equipo ya no está."}
+	if int(leader.get("manager_id", 0)) == manager_id:
+		return {"ok": false, "message": "%s ya está a cargo de %s." % [leader["name"], _boss_name(manager_id)]}
+	var manager: Dictionary = get_employee(manager_id)
+	if manager_id != 0 and (manager.is_empty() or not is_manager(manager)):
+		return {"ok": false, "message": "Ese gerente ya no está."}
+	var cap: int = get_leader_cap(manager_id)
+	var count: int = get_ceo_leaders().size() if manager_id == 0 else get_leaders_of(manager_id).size()
+	if count >= cap and (manager_id != 0 or not get_team_of(leader_id).is_empty()):
+		return {"ok": false, "message": "%s ya dirige %d líderes, el máximo." % [_boss_name(manager_id), cap]}
+	leader["manager_id"] = manager_id
+	var message: String = "%s queda a cargo de %s." % [leader["name"], _boss_name(manager_id)]
+	_schedules_changed()
+	EventBus.notice.emit(message)
+	return {"ok": true, "message": message}
+
+
+func _boss_name(manager_id: int) -> String:
+	return "el CEO" if manager_id == 0 else String(get_employee(manager_id).get("name", "?"))
+
+
+## Indica si el gerente que dirige al líder de un equipo está trabajando a esa hora.
+func is_manager_present(team: Dictionary, at: int) -> bool:
+	var manager: Dictionary = get_manager_of(get_team_leader(team))
+	return not manager.is_empty() and is_expected(employee_key(manager["id"]), get_weekday_at(at),
+		posmod(at, GameConstants.HOURS_PER_DAY))
 
 
 ## Indica si un empleado es líder de equipo.
@@ -759,9 +883,12 @@ func leaders_required() -> bool:
 ## Cuánto rinde un equipo a esa hora: 1, o teams.no_leader_factor si desde la etapa de
 ## los líderes no tiene a su líder presente.
 func get_team_factor(team: Dictionary, at: int) -> float:
-	if not leaders_required() or is_leader_present(team, at):
-		return 1.0
-	return float(StaffCatalog.get_teams("no_leader_factor"))
+	var factor: float = 1.0
+	if leaders_required() and not is_leader_present(team, at):
+		factor = float(StaffCatalog.get_teams("no_leader_factor"))
+	if is_manager_present(team, at):
+		factor *= 1.0 + float(StaffCatalog.get_management("manager_bonus"))
+	return factor
 
 
 ## Saca a un empleado de su equipo: vuelve al horario de su cargo.
@@ -876,9 +1003,18 @@ func get_interviewed_now() -> Dictionary:
 	return {} if interview.is_empty() else get_candidate(interview["candidate_id"])
 
 
-## Puestos de trabajo que nadie ocupa (ver Workstations.find_all).
-func get_free_workstations() -> Array[Dictionary]:
-	return Workstations.find_free(OfficeState.furniture, OfficeState.rooms)
+## Puestos de trabajo que nadie ocupa (ver Workstations.find_all), donde trabaja ese
+## cargo (un Área de trabajo si no se dice).
+func get_free_workstations(role: String = "") -> Array[Dictionary]:
+	var room_type: String = Workstations.WORK_AREA if role.is_empty() else StaffCatalog.get_workplace(role)
+	return Workstations.find_free(OfficeState.furniture, OfficeState.rooms, room_type)
+
+
+## Por qué no hay dónde contratar a alguien de ese cargo, o "" si hay lugar.
+func get_station_problem(role: String) -> String:
+	if not get_free_workstations(role).is_empty():
+		return ""
+	return NO_OFFICE_MESSAGE if StaffCatalog.get_workplace(role) == Workstations.SINGLE_OFFICE else NO_STATION_MESSAGE
 
 
 ## Clave con la que un empleado ocupa su silla (assigned_to).
@@ -1122,7 +1258,7 @@ func _drop_missing_interview() -> void:
 # Contrata a un candidato por un sueldo: ocupa el primer puesto libre, deja de ser
 # candidato y su vacante se cierra (los demás candidatos se van).
 func _hire(candidate: Dictionary, salary: int) -> Dictionary:
-	var station: Dictionary = get_free_workstations()[0]
+	var station: Dictionary = get_free_workstations(candidate["role"])[0]
 	var employee: Dictionary = candidate.duplicate(true)
 	employee.erase("arrived_day")
 	employee.erase("counter_offer")
@@ -1259,6 +1395,10 @@ func import_state(state: Dictionary) -> void:
 		employee["owed"] = int(saved.get("owed", 0))
 		_add_morale_fields(employee, saved)
 		employees.append(employee)
+	# Un líder cuyo gerente ya no está (o no es gerente) queda a cargo del CEO.
+	for leader: Dictionary in get_leaders():
+		if not is_manager(get_employee(int(leader["manager_id"]))):
+			leader["manager_id"] = 0
 	var saved_interview: Dictionary = state.get("interview", {})
 	interview = {}
 	if saved_interview.has("candidate_id"):
@@ -1306,6 +1446,8 @@ func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
 	employee["quit_day"] = int(saved.get("quit_day", NO_QUIT))
 	employee["min_energy"] = int(saved.get("min_energy", employee["energy"]))
 	employee["projects_worked"] = int(saved.get("projects_worked", 0))
+	if is_leader(employee):
+		employee["manager_id"] = int(saved.get("manager_id", 0))
 	employee["last_raise_day"] = int(saved.get("last_raise_day", employee.get("hired_day", 0)))
 	var request: Dictionary = saved.get("raise_request", {})
 	employee["raise_request"] = {} if not request.has("amount") else {"amount": int(request["amount"]),

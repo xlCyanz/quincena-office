@@ -121,7 +121,8 @@ func _check_promotion() -> void:
 	_expect(int(team["leader_id"]) == senior["id"] and not (team["members"] as Array).has(senior["id"]), "lidera su equipo y deja de ser miembro")
 	_expect(Staff.get_team_of(senior["id"]) == team, "su equipo sigue siendo ese (sigue el turno)")
 	_expect(Staff.describe_employee(senior) == "Líder de equipo · %s al mes" % MoneyFormat.format(4200), "sin nivel: %s" % Staff.describe_employee(senior))
-	_expect(String(Staff.get_promotion_progress(senior)["next_role"]).is_empty() and not bool(Staff.get_promotion_progress(senior)["ready"]), "un líder no asciende (todavía)")
+	# Un líder asciende a gerente desde Pequeña empresa (hito 32).
+	_expect(Staff.get_promotion_progress(senior)["next_role"] == "manager" and not bool(Staff.get_promotion_progress(senior)["ready"]), "un líder no asciende a gerente en Startup")
 	_expect(Staff.get_market_salary(senior) == 4200, "su sueldo de mercado es el del cargo")
 	_expect(not Staff.is_idle(senior), "un líder no queda ocioso por no producir")
 	# No suma puntos: el contrato solo lo trabaja el diseñador.

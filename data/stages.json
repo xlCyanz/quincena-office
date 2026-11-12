@@ -12,7 +12,7 @@
 		{
 			"id": "small_business", "name": "Pequeña empresa", "requirements": { "employees": 15, "complete_teams": 2 }, "max_loan": 30000,
 			"rooms": ["single_office", "server_room"],
-			"unlocks": ["Oficinas únicas", "Sala de servidores", "Gerentes y productos propios (próximamente)"]
+			"unlocks": ["Oficinas únicas", "Sala de servidores", "Gerentes", "Productos propios (próximamente)"]
 		},
 		{
 			"id": "medium_business", "name": "Mediana empresa", "requirements": { "employees": 40, "products_launched": 1 }, "max_loan": 0, "rooms": [],

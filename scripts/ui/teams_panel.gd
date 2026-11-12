@@ -148,7 +148,7 @@ func get_list_text() -> String:
 func _signature() -> String:
 	var people: Array[String] = []
 	for employee: Dictionary in Staff.employees:
-		people.append("%d:%s" % [employee["id"], employee["name"]])
+		people.append("%d:%s:%s:%d" % [employee["id"], employee["name"], employee["role"], int(employee.get("manager_id", 0))])
 	var owners: Array[String] = []
 	for contract: Dictionary in Projects.contracts:
 		owners.append("%d:%d" % [contract["id"], contract["team_id"]])
@@ -156,6 +156,7 @@ func _signature() -> String:
 	var presence: Array[bool] = [Staff.leaders_required()]
 	for team: Dictionary in Staff.teams:
 		presence.append(Staff.is_leader_present(team, Staff.get_absolute_hour()))
+		presence.append(Staff.is_manager_present(team, Staff.get_absolute_hour()))
 	return JSON.stringify([Staff.teams, people, owners, presence])
 
 
@@ -273,6 +274,10 @@ func _add_team(team: Dictionary) -> void:
 		leader_label.text = "Líder: ninguno"
 	else:
 		leader_label.text = "Líder: %s (%s)" % [leader["name"], "presente" if present else "fuera de turno"]
+		var manager: Dictionary = Staff.get_manager_of(leader)
+		if not manager.is_empty():
+			leader_label.text += " · gerente %s%s" % [manager["name"], " presente: +%d %%" % roundi(
+				float(StaffCatalog.get_management("manager_bonus")) * 100.0) if Staff.is_manager_present(team, Staff.get_absolute_hour()) else ""]
 		var leader_id: int = leader["id"]
 		var remove_leader := Button.new()
 		remove_leader.text = "Quitar"

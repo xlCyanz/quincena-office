@@ -7,46 +7,67 @@
 # oficina. Cada escritorio sirve a una sola silla: si hay dos delante, cuenta la primera
 # de la lista de muebles. La silla del puesto es la que se asigna al empleado
 # (assigned_to); el CEO conserva la suya en la Oficina Ejecutiva.
+#
+# Desde el hito 32 también hay puestos en una Oficina única que funciona (para los
+# gerentes): una silla delante de un escritorio de la misma oficina, sin computadora, y
+# uno solo por oficina. Cada puesto dice en "room_type" de qué clase es.
 class_name Workstations
 extends RefCounted
 
 const WORK_AREA: String = "work_area"
+const SINGLE_OFFICE: String = "single_office"
 
 
 ## Todos los puestos de la oficina. Cada uno es {"chair": int, "desk": int,
-## "cell": Vector2i}: índices en furniture de la silla y el escritorio y la casilla de
-## la silla.
-static func find_all(furniture: Array[Dictionary], rooms: Array[Dictionary]) -> Array[Dictionary]:
-	var work_cells: Dictionary[Vector2i, int] = {}
+## "cell": Vector2i, "room_type": String}: índices en furniture de la silla y el
+## escritorio, la casilla de la silla y la clase de habitación. Con room_type solo los
+## de esa clase.
+static func find_all(furniture: Array[Dictionary], rooms: Array[Dictionary], room_type: String = "") -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for kind: String in [WORK_AREA, SINGLE_OFFICE]:
+		if room_type.is_empty() or room_type == kind:
+			result.append_array(_find_kind(furniture, rooms, kind))
+	return result
+
+
+## Puestos que nadie ocupa, de una clase (Área de trabajo si no se dice).
+static func find_free(furniture: Array[Dictionary], rooms: Array[Dictionary], room_type: String = WORK_AREA) -> Array[Dictionary]:
+	var free: Array[Dictionary] = []
+	for station: Dictionary in find_all(furniture, rooms, room_type):
+		if String(furniture[station["chair"]]["assigned_to"]).is_empty():
+			free.append(station)
+	return free
+
+
+# Puestos de una clase de habitación. En un Área de trabajo el escritorio necesita
+# computadora; en una Oficina única no, pero hay un solo puesto por oficina.
+static func _find_kind(furniture: Array[Dictionary], rooms: Array[Dictionary], kind: String) -> Array[Dictionary]:
+	var room_cells: Dictionary[Vector2i, int] = {}
 	for room_index: int in range(rooms.size()):
 		var room: Dictionary = rooms[room_index]
-		if room["type"] != WORK_AREA or not RoomRules.function_problems(room, furniture).is_empty():
+		if room["type"] != kind or not RoomRules.function_problems(room, furniture).is_empty():
 			continue
 		for cell: Vector2i in room["cells"]:
-			work_cells[cell] = room_index
+			room_cells[cell] = room_index
+	var needs_computer: bool = kind == WORK_AREA
 	var result: Array[Dictionary] = []
 	var used_desks: Dictionary[int, bool] = {}
+	var used_rooms: Dictionary[int, bool] = {}
 	for chair_index: int in range(furniture.size()):
 		var chair: Dictionary = furniture[chair_index]
 		if not bool(FurnitureCatalog.get_item(chair["id"]).get("is_seat", false)):
 			continue
 		var cell: Vector2i = chair["cell"]
-		if not work_cells.has(cell):
+		if not room_cells.has(cell):
 			continue
-		var desk_index: int = _desk_for(furniture, cell, work_cells, used_desks)
+		if not needs_computer and used_rooms.has(room_cells[cell]):
+			continue
+		var desk_index: int = _desk_for(furniture, cell, room_cells, used_desks, needs_computer)
 		if desk_index >= 0:
 			used_desks[desk_index] = true
-			result.append({"chair": chair_index, "desk": desk_index, "cell": cell})
+			used_rooms[room_cells[cell]] = true
+			result.append({"chair": chair_index, "desk": desk_index, "cell": cell, "room_type": kind})
 	return result
-
-
-## Puestos que nadie ocupa.
-static func find_free(furniture: Array[Dictionary], rooms: Array[Dictionary]) -> Array[Dictionary]:
-	var free: Array[Dictionary] = []
-	for station: Dictionary in find_all(furniture, rooms):
-		if String(furniture[station["chair"]]["assigned_to"]).is_empty():
-			free.append(station)
-	return free
 
 
 ## Indica si la silla asignada a who forma un puesto que funciona.
@@ -88,17 +109,17 @@ static func computer_of(furniture: Array[Dictionary], who: String) -> String:
 	return ""
 
 
-# Primer escritorio libre con computadora, dentro del área de trabajo de la silla, cuyo
-# frente da a la casilla de la silla.
+# Primer escritorio libre (con computadora si needs_computer), dentro de la habitación
+# de la silla, cuyo frente da a la casilla de la silla.
 static func _desk_for(furniture: Array[Dictionary], chair_cell: Vector2i,
-		work_cells: Dictionary[Vector2i, int], used_desks: Dictionary[int, bool]) -> int:
+		work_cells: Dictionary[Vector2i, int], used_desks: Dictionary[int, bool], needs_computer: bool = true) -> int:
 	for desk_index: int in range(furniture.size()):
 		if used_desks.has(desk_index):
 			continue
 		var desk: Dictionary = furniture[desk_index]
 		if not bool(FurnitureCatalog.get_item(desk["id"]).get("accepts_computer", false)):
 			continue
-		if String(desk["computer"]).is_empty():
+		if needs_computer and String(desk["computer"]).is_empty():
 			continue
 		if work_cells.get(desk["cell"], -1) != work_cells[chair_cell]:
 			continue

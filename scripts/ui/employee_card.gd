@@ -356,6 +356,9 @@ func _refresh() -> void:
 		_describe_pay(employee),
 		"Ahora: %s" % (String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"),
 	])
+	var boss: String = _describe_boss(employee)
+	if not boss.is_empty():
+		_info.text += "\n" + boss
 	var performance: String = describe_performance(employee)
 	if not performance.is_empty():
 		_info.text += "\n" + performance
@@ -437,9 +440,12 @@ func _refresh_promotion(employee: Dictionary) -> void:
 		# Un Senior asciende de cargo (a líder de equipo) desde la etapa de ese cargo.
 		var role_name: String = StaffCatalog.get_role_name(next_role)
 		new_salary = StaffCatalog.get_salary(next_role, employee["level"])
-		if not ready:
+		if progress["blocker"] == "stage":
 			_promotion_label.text = "Ascenso a %s: desde %s." % [role_name,
 				Company.get_stage_name(StaffCatalog.get_role_min_stage(next_role))]
+			return
+		if not ready:
+			_promotion_label.text = "Ascenso a %s: %s" % [role_name, Staff.get_station_problem(next_role)]
 			return
 		_promotion_label.text = "Puede ascender a %s. Sueldo de ese cargo: %s." % [role_name, MoneyFormat.format(new_salary)]
 	elif next_level.is_empty():
@@ -484,6 +490,20 @@ func _accept_request() -> void:
 	if employee.is_empty() or (employee["raise_request"] as Dictionary).is_empty():
 		return
 	Staff.give_raise(_employee_id, int(employee["salary"]) + int(employee["raise_request"]["amount"]))
+
+
+# Quién dirige a un líder o a cuántos dirige un gerente; "" para los demás.
+func _describe_boss(employee: Dictionary) -> String:
+	if Staff.is_leader(employee):
+		var manager: Dictionary = Staff.get_manager_of(employee)
+		return "Lo dirige: %s" % ("el CEO" if manager.is_empty() else "%s (gerente)" % manager["name"])
+	if Staff.is_manager(employee):
+		var names: Array[String] = []
+		for leader: Dictionary in Staff.get_leaders_of(employee["id"]):
+			names.append(leader["name"])
+		return "Dirige %d de %d líderes%s" % [names.size(), Staff.get_leader_cap(employee["id"]),
+			": " + ", ".join(names) if not names.is_empty() else ""]
+	return ""
 
 
 # "Equipo 1", "Equipo 1 (lo lidera)" o sin equipo.

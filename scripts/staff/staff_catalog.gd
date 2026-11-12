@@ -91,6 +91,31 @@ static func describe_title(role: String, level: String) -> String:
 	return "%s %s" % [get_role_name(role), get_level_name(level)]
 
 
+## Tipo de habitación donde trabaja un cargo (work_area si no dice otra cosa).
+static func get_workplace(role: String) -> String:
+	return String(_staff_data()["roles"].get(role, {}).get("workplace", Workstations.WORK_AREA))
+
+
+## Valor de data/staff.json, management (gerentes y escalera de cargos).
+static func get_management(key: String) -> Variant:
+	return _staff_data()["management"][key]
+
+
+## Cargo al que asciende alguien: un Senior (de un cargo con niveles) al primero de la
+## escalera de dirección y cada cargo de la escalera al siguiente; "" si no hay.
+static func get_next_role(role: String, level: String) -> String:
+	var ladder: Array = get_management("ladder")
+	if has_levels(role):
+		return String(ladder[0]) if get_next_level(level).is_empty() else ""
+	var index: int = ladder.find(role)
+	return String(ladder[index + 1]) if index >= 0 and index + 1 < ladder.size() else ""
+
+
+## Cargo de gerente.
+static func get_manager_role() -> String:
+	return String(get_management("manager_role"))
+
+
 ## Cargo de líder de equipo.
 static func get_leader_role() -> String:
 	return String(get_teams("leader_role"))

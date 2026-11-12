@@ -7,6 +7,9 @@
 # No pausa el tiempo: los candidatos llegan mientras está abierto. Ocupa el lado
 # izquierdo para que la oficina siga a la vista. Se construye en código; su botón va
 # en la barra de menús (attach_button) y muestra cuántos candidatos esperan.
+#
+# Desde el hito 32, con líderes o gerentes, muestra el organigrama: el CEO y cada gerente
+# con los líderes que dirigen, y para cada líder una lista para elegir quién lo dirige.
 class_name StaffPanel
 extends CanvasLayer
 
@@ -44,6 +47,8 @@ var _offer_buttons: Dictionary[int, Button] = {}
 var _offer_step_buttons: Dictionary[int, Array] = {}
 var _counter_buttons: Dictionary[int, Button] = {}
 var _card_buttons: Dictionary[int, Button] = {}
+## Lista "A cargo de" de cada líder en el organigrama (por id del líder).
+var _boss_choices: Dictionary[int, OptionButton] = {}
 ## Sueldo que se le va a ofrecer a cada candidato (por id).
 var _offers: Dictionary[int, int] = {}
 
@@ -339,7 +344,9 @@ func _refresh() -> void:
 	_offer_step_buttons.clear()
 	_counter_buttons.clear()
 	_card_buttons.clear()
+	_boss_choices.clear()
 	_add_employees()
+	_add_org_chart()
 	_list.add_child(HSeparator.new())
 	_add_section(_list, "Vacantes abiertas")
 	if Staff.vacancies.is_empty():
@@ -381,6 +388,53 @@ func _add_employees() -> void:
 		card_button.pressed.connect(func() -> void: employee_selected.emit(employee_id))
 		row.add_child(card_button)
 		_card_buttons[employee_id] = card_button
+
+
+# Organigrama (hito 32): quién dirige a quién, solo si hay líderes o gerentes.
+func _add_org_chart() -> void:
+	var leaders: Array[Dictionary] = Staff.get_leaders()
+	var managers: Array[Dictionary] = Staff.get_managers()
+	if leaders.is_empty() and managers.is_empty():
+		return
+	_list.add_child(HSeparator.new())
+	_add_section(_list, "Organigrama")
+	_list.add_child(_muted_label("CEO · dirige %d de %d líderes con equipo" % [Staff.get_ceo_leaders().size(), Staff.get_leader_cap(0)]))
+	for manager: Dictionary in managers:
+		var present: bool = Staff.is_expected_now(Staff.employee_key(manager["id"]))
+		_list.add_child(_muted_label("Gerente %s · dirige %d de %d líderes (%s) · sus equipos rinden +%d %% mientras está presente" % [
+			manager["name"], Staff.get_leaders_of(manager["id"]).size(), Staff.get_leader_cap(manager["id"]),
+			"presente" if present else "fuera de turno",
+			roundi(float(StaffCatalog.get_management("manager_bonus")) * 100.0)]))
+	for leader: Dictionary in leaders:
+		var row := HBoxContainer.new()
+		_list.add_child(row)
+		var team: Dictionary = Staff.get_team_of(leader["id"])
+		var label := Label.new()
+		label.text = "Líder %s · %s" % [leader["name"], team["name"] if not team.is_empty() else "sin equipo"]
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		var choice := OptionButton.new()
+		choice.add_item("A cargo del CEO", 0)
+		for manager: Dictionary in managers:
+			choice.add_item("A cargo de %s" % manager["name"], manager["id"])
+			if int(leader.get("manager_id", 0)) == int(manager["id"]):
+				choice.select(choice.item_count - 1)
+		if int(leader.get("manager_id", 0)) == 0:
+			choice.select(0)
+		choice.disabled = managers.is_empty()
+		choice.tooltip_text = "Contrata o asciende un gerente para repartir los líderes." if managers.is_empty() else ""
+		var leader_id: int = leader["id"]
+		choice.item_selected.connect(func(index: int) -> void:
+			_status_label.text = Staff.set_manager(leader_id, choice.get_item_id(index))["message"]
+			_refresh.call_deferred())
+		row.add_child(choice)
+		_boss_choices[leader_id] = choice
+
+
+## Lista "A cargo de" de un líder en el organigrama, o null.
+func get_boss_choice(leader_id: int) -> OptionButton:
+	return _boss_choices.get(leader_id)
 
 
 func _add_vacancy(vacancy: Dictionary) -> void:
