@@ -19,8 +19,11 @@ static func get_detail(room: Dictionary, furniture: Array[Dictionary]) -> Dictio
 	var points: float = 0.0
 	var desks: int = 0
 	var relief: int = 0
+	var cell_set: Dictionary[Vector2i, bool] = {}
+	for cell: Vector2i in cells:
+		cell_set[cell] = true
 	for item: Dictionary in furniture:
-		if not cells.has(item["cell"]):
+		if not cell_set.has(item["cell"]):
 			continue
 		points += FurnitureCatalog.get_ambiance_points(item["id"])
 		relief = maxi(relief, FurnitureCatalog.get_stress_relief(item["id"]))

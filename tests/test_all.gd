@@ -39,12 +39,14 @@ func _ready() -> void:
 	for suite: String in SUITES:
 		if not only.is_empty() and not only.has(suite):
 			continue
+		var suite_started: int = Time.get_ticks_msec()
 		var result: Vector2i = await _run_suite(suite)
+		var seconds: float = (Time.get_ticks_msec() - suite_started) / 1000.0
 		total_failures += result.x
 		total_checks += result.y
 		if result.x > 0:
 			failed.append(suite)
-		print("[%s] %s: %d comprobaciones, %d fallos" % ["OK" if result.x == 0 else "FALLO", suite, result.y, result.x])
+		print("[%s] %s: %d comprobaciones, %d fallos · %.1f s" % ["OK" if result.x == 0 else "FALLO", suite, result.y, result.x, seconds])
 	print("Partes: %d · comprobaciones: %d · fallos: %d · %d s" % [
 		SUITES.size() if only.is_empty() else only.size(), total_checks, total_failures, (Time.get_ticks_msec() - started) / 1000])
 	if not failed.is_empty():

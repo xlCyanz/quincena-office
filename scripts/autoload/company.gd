@@ -35,6 +35,8 @@ var _loading: bool = false
 var _mark_silently: bool = false
 # Pagar una recompensa cambia el saldo y vuelve a avisar: se evita revisar dentro de una revisión.
 var _checking: bool = false
+# data/objectives.json leído (ver _objectives_data).
+var _objectives: Dictionary = {}
 
 
 func _ready() -> void:
@@ -354,12 +356,15 @@ func _stages() -> Array:
 	return _data().get("stages", [])
 
 
+# Se lee una vez: los objetivos se revisan con cada cambio de personal o proyectos.
 func _objectives_data() -> Dictionary:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(OBJECTIVES_PATH))
-	if parsed is Dictionary:
-		return parsed
-	push_error("No se pudo leer %s" % OBJECTIVES_PATH)
-	return {}
+	if _objectives.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(OBJECTIVES_PATH))
+		if not parsed is Dictionary:
+			push_error("No se pudo leer %s" % OBJECTIVES_PATH)
+			return {}
+		_objectives = parsed
+	return _objectives
 
 
 # Se lee al usarlo, como data/bank.json, para que los ajustes del hito 29 se vean sin reiniciar.
