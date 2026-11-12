@@ -517,6 +517,8 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 	var team: Dictionary = Staff.get_team(team_id)
 	if team.is_empty():
 		return workers
+	# Desde Startup, sin su líder presente el equipo rinde menos (Staff.get_team_factor).
+	var factor: float = Staff.get_team_factor(team, at)
 	for member: Variant in team["members"]:
 		var employee: Dictionary = Staff.get_employee(int(member))
 		var key: String = Staff.employee_key(int(member))
@@ -524,7 +526,7 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 		if phase.is_empty() or not Staff.is_expected(key, weekday, hour) or not Staff.has_working_station(employee):
 			continue
 		var computer: String = Workstations.computer_of(OfficeState.furniture, key)
-		workers.append({"key": key, "phase": phase, "rate": Production.get_rate(employee["level"],
+		workers.append({"key": key, "phase": phase, "rate": factor * Production.get_rate(employee["level"],
 			float(employee["energy"]), Production.get_computer_bonus(computer), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))})
 	return workers

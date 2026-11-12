@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29) y `test_promotions` (30)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30) y `test_leaders` (31)
 
 ## Convenciones de código
 
@@ -103,6 +103,11 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   los que sumó puntos (el contrato anota `worked_by`; `EventBus.contract_delivered`); los vendedores cuentan los aceptados mientras estaban
   (`EventBus.contract_accepted`). Con 3/30, 8/90 y 15/180 (contratos/días desde `hired_day`) la ficha muestra la fila Ascender con un sueldo
   mayor que el actual (sugerido el del nivel nuevo); la habilidad principal sube al mínimo del nivel y cuenta como aumento (`_apply_raise`).
+- Líderes de equipo (`team_leader`, cargo sin niveles: `fixed_salary` y `min_stage` en `data/staff.json`; `StaffCatalog.has_levels`, `describe_title`):
+  desde Startup un Senior asciende a líder (`next_role` en el progreso; si era miembro de un equipo sin líder pasa a liderarlo) o se contrata con
+  su vacante (sin nivel). El equipo guarda `leader_id`; el líder no es miembro, no suma puntos y sigue el turno (`get_team_of` lo encuentra).
+  `add_to_team` con un líder lo nombra líder (uno por equipo); hasta `max_members` 10 miembros; quitarlo lo deja líder sin equipo.
+  Desde Startup un equipo sin su líder presente (`is_leader_present`) rinde `no_leader_factor` 75 % (`Staff.get_team_factor` en `Projects.get_workers`).
 - Banco (`Bank`, `data/bank.json`): calificación A–E por puntaje = base 50 (C) + ingresos de contratos del mes pasado (hasta +20, con $25,000)
   + bienes (reventa de muebles y computadoras, hasta +10) + antigüedad (+2/mes, hasta +10) + pagos a tiempo (+2, hasta +10)
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
@@ -192,3 +197,4 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 28 | Objetivos guiados | ✅ Completado (15 objetivos hasta Pequeña empresa, $300–$5,000 y algunos con ★; 3 visibles; se pliega con los paneles izquierdos y vuelve como estaba) |
 | 29 | Comprobación de la fase | ✅ Completado (CEO solo ~$4,000/mes; primer equipo ~$9,000/mes contra $3,600 de sueldos y paga su préstamo; dejar de pagar embarga en la 3.ª cuota; plazos según los puntos; A más difícil) |
 | 30 | Ascensos | ✅ Completado (cuentan los contratos entregados en que sumó puntos; cancelados no; vendedores por contratos aceptados; sueldo nuevo mayor que el actual; el progreso solo se ve en la ficha) |
+| 31 | Líderes de equipo | ✅ Completado (ascender un Senior o contratarlo desde Startup; $4,200 sin niveles; no produce; sin líder presente 75 % desde Startup; quitarlo lo deja líder sin equipo; el liderazgo aún no cambia nada) |

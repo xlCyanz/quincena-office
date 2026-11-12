@@ -19,3 +19,11 @@ func configure(employee: Dictionary) -> void:
 	skin_color = SKIN_TONES[employee_id % SKIN_TONES.size()]
 	hair_color = HAIR_TONES[(employee_id * 7) % HAIR_TONES.size()]
 	queue_redraw()
+
+
+## Cambia la camisa al color de su cargo (al ascender de cargo cambia).
+func update_role(employee: Dictionary) -> void:
+	var color: Color = StaffCatalog.get_shirt_color(employee["role"])
+	if color != shirt_color:
+		shirt_color = color
+		queue_redraw()

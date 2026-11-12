@@ -165,6 +165,7 @@ func _sync_employees() -> void:
 		var employee_id: int = employee["id"]
 		if employees.has(employee_id):
 			employees[employee_id].set_seat(_seat_of(Staff.employee_key(employee_id)))
+			employees[employee_id].update_role(employee)
 			continue
 		var character: Employee = EMPLOYEE_SCENE.instantiate()
 		character.configure(employee)

@@ -51,7 +51,10 @@ static func get_main_skill(role: String) -> String:
 
 ## Sueldo mensual de la tabla (diseño, 13.2) para un cargo y un nivel.
 static func get_salary(role: String, level: String) -> int:
-	var salaries: Array = _staff_data()["roles"][role]["salaries"]
+	var data: Dictionary = _staff_data()["roles"][role]
+	if data.has("fixed_salary"):
+		return int(data["fixed_salary"])
+	var salaries: Array = data["salaries"]
 	return int(salaries[get_level_ids().find(level)])
 
 
@@ -68,6 +71,29 @@ static func get_next_level(level: String) -> String:
 	var levels: Array[String] = get_level_ids()
 	var index: int = levels.find(level)
 	return levels[index + 1] if index >= 0 and index + 1 < levels.size() else ""
+
+
+## Indica si un cargo tiene niveles (los de sueldo fijo no los tienen).
+static func has_levels(role: String) -> bool:
+	return not _staff_data()["roles"].get(role, {}).has("fixed_salary")
+
+
+## Etapa de la empresa (índice) desde la que existe un cargo.
+static func get_role_min_stage(role: String) -> int:
+	return int(_staff_data()["roles"].get(role, {}).get("min_stage", 0))
+
+
+## Nombre de un cargo con su nivel ("Programador Junior") o solo el cargo si no tiene
+## niveles ("Líder de equipo").
+static func describe_title(role: String, level: String) -> String:
+	if not has_levels(role):
+		return get_role_name(role)
+	return "%s %s" % [get_role_name(role), get_level_name(level)]
+
+
+## Cargo de líder de equipo.
+static func get_leader_role() -> String:
+	return String(get_teams("leader_role"))
 
 
 ## Horario por defecto de un cargo: {"days", "start_hour", "end_hour"} (ver WorkSchedule).

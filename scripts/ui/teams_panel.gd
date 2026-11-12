@@ -1,6 +1,8 @@
 # Menú Equipos (diseño, 6 y 12.3): crear equipos, elegir sus miembros, su turno (hora de
 # entrada y días; la salida la marca la jornada de 8 horas más el almuerzo) y el
 # contrato que llevan. También qué contrato lleva el CEO y quién está sin equipo.
+# Desde el hito 31 cada equipo muestra su líder (un líder de equipo añadido entra como
+# líder) y, desde Startup, si rinde menos por no tener a su líder presente.
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal y Proyectos (abrir uno
 # cierra los otros; lo hace la escena de juego). Se construye en código y solo se
@@ -123,7 +125,8 @@ func get_status_text() -> String:
 
 
 ## Control de un equipo: "delete", "earlier", "later", "add", "add_choice", "project",
-## "day_0" … "day_6" o "remove_<id del empleado>". null si no existe.
+## "day_0" … "day_6", "remove_<id del empleado>", "leader_label" o "remove_leader". null
+## si no existe.
 func get_team_control(team_id: int, control: String) -> Control:
 	return _controls.get(team_id, {}).get(control)
 
@@ -149,7 +152,11 @@ func _signature() -> String:
 	var owners: Array[String] = []
 	for contract: Dictionary in Projects.contracts:
 		owners.append("%d:%d" % [contract["id"], contract["team_id"]])
-	return JSON.stringify([Staff.teams, people, owners])
+	# Si el líder está presente cambia lo que se muestra solo al empezar o terminar su turno.
+	var presence: Array[bool] = [Staff.leaders_required()]
+	for team: Dictionary in Staff.teams:
+		presence.append(Staff.is_leader_present(team, Staff.get_absolute_hour()))
+	return JSON.stringify([Staff.teams, people, owners, presence])
 
 
 func _refresh() -> void:
@@ -197,7 +204,9 @@ func _add_team(team: Dictionary) -> void:
 	var header := HBoxContainer.new()
 	_list.add_child(header)
 	var name_label := Label.new()
-	name_label.text = "%s · %d %s" % [team["name"], members.size(), "persona" if members.size() == 1 else "personas"]
+	var leader: Dictionary = Staff.get_team_leader(team)
+	name_label.text = "%s · %d %s%s" % [team["name"], members.size(), "persona" if members.size() == 1 else "personas",
+		" + líder" if not leader.is_empty() else ""]
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	header.add_child(name_label)
@@ -251,6 +260,31 @@ func _add_team(team: Dictionary) -> void:
 	var project := _project_choice(team_id)
 	project_row.add_child(project)
 	controls["project"] = project
+
+	var leader_row := HBoxContainer.new()
+	_list.add_child(leader_row)
+	var leader_label := Label.new()
+	leader_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	leader_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	leader_row.add_child(leader_label)
+	controls["leader_label"] = leader_label
+	var present: bool = Staff.is_leader_present(team, Staff.get_absolute_hour())
+	if leader.is_empty():
+		leader_label.text = "Líder: ninguno"
+	else:
+		leader_label.text = "Líder: %s (%s)" % [leader["name"], "presente" if present else "fuera de turno"]
+		var leader_id: int = leader["id"]
+		var remove_leader := Button.new()
+		remove_leader.text = "Quitar"
+		remove_leader.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		remove_leader.pressed.connect(func() -> void:
+			Staff.remove_from_team(leader_id)
+			_status_label.text = "%s deja de liderar %s; sigue siendo líder de equipo." % [leader["name"], team["name"]])
+		leader_row.add_child(remove_leader)
+		controls["remove_leader"] = remove_leader
+	if Staff.leaders_required() and not present:
+		leader_label.text += " · rinde %d %% sin su líder presente" % roundi(float(StaffCatalog.get_teams("no_leader_factor")) * 100.0)
+		leader_label.add_theme_color_override("font_color", Color("f2c14e"))
 
 	for member: Variant in members:
 		var employee: Dictionary = Staff.get_employee(int(member))

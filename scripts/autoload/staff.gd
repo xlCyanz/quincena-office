@@ -59,6 +59,12 @@
 # los contratos aceptados mientras estaban (EventBus.contract_accepted). Con eso y los
 # días en la empresa (data/staff.json, promotion) el jugador puede ascenderlo al nivel
 # siguiente con un sueldo mayor (promote); el ascenso cuenta como aumento.
+#
+# Líderes de equipo (hito 31): desde Startup un Senior puede ascender a líder de equipo
+# (cargo sin niveles, sueldo fijo) o se contrata con su vacante. Un equipo guarda su
+# líder en "leader_id" (0 si no tiene); el líder no es miembro, no suma puntos y sigue el
+# turno del equipo. Desde esa etapa un equipo sin su líder presente rinde
+# teams.no_leader_factor (get_team_factor). Un líder sin equipo sigue siendo líder.
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -130,6 +136,11 @@ func set_seed(seed_value: int) -> void:
 func open_vacancy(role: String, level: String, salary: int, publicity: bool) -> Dictionary:
 	if not StaffCatalog.get_role_ids().has(role) or not StaffCatalog.get_level_ids().has(level):
 		return {"ok": false, "message": "Ese cargo no existe.", "id": 0}
+	var locked: String = role_problem(role)
+	if not locked.is_empty():
+		return {"ok": false, "message": locked, "id": 0}
+	if not StaffCatalog.has_levels(role):
+		level = StaffCatalog.get_level_ids()[-1]
 	if salary <= 0:
 		return {"ok": false, "message": "El sueldo tiene que ser mayor que cero.", "id": 0}
 	var publicity_until: int = 0
@@ -404,10 +415,24 @@ func _apply_raise(employee: Dictionary, new_salary: int) -> Array[String]:
 	return messages
 
 
-## Cómo va un empleado hacia el nivel siguiente: {"next_level", "projects",
-## "projects_needed", "days", "days_needed", "ready"}. next_level es "" si ya es Senior.
+## Por qué todavía no existe un cargo en esta etapa, o "" si existe.
+func role_problem(role: String) -> String:
+	var min_stage: int = StaffCatalog.get_role_min_stage(role)
+	if Company.stage < min_stage:
+		return "El cargo %s se desbloquea en %s." % [StaffCatalog.get_role_name(role), Company.get_stage_name(min_stage)]
+	return ""
+
+
+## Cómo va un empleado hacia el nivel siguiente: {"next_level", "next_role", "projects",
+## "projects_needed", "days", "days_needed", "ready"}. next_level es "" si ya es Senior
+## o su cargo no tiene niveles. Un Senior puede ascender a líder de equipo (next_role)
+## desde la etapa de ese cargo; ready dice si ya puede.
 func get_promotion_progress(employee: Dictionary) -> Dictionary:
-	var next_level: String = StaffCatalog.get_next_level(employee["level"])
+	var role: String = employee["role"]
+	var next_level: String = StaffCatalog.get_next_level(employee["level"]) if StaffCatalog.has_levels(role) else ""
+	var next_role: String = ""
+	if StaffCatalog.has_levels(role) and next_level.is_empty():
+		next_role = StaffCatalog.get_leader_role()
 	var needs: Dictionary = StaffCatalog.get_promotion(next_level) if not next_level.is_empty() else {}
 	var projects: int = int(employee.get("projects_worked", 0))
 	var days: int = GameClock.get_day_count() - int(employee["hired_day"])
@@ -415,6 +440,9 @@ func get_promotion_progress(employee: Dictionary) -> Dictionary:
 		"projects_needed": int(needs.get("projects", 0)), "days_needed": int(needs.get("days", 0))}
 	progress["ready"] = not needs.is_empty() and projects >= int(progress["projects_needed"]) \
 		and days >= int(progress["days_needed"])
+	progress["next_role"] = next_role
+	if not next_role.is_empty():
+		progress["ready"] = role_problem(next_role).is_empty()
 	return progress
 
 
@@ -424,9 +452,11 @@ func promote_problem(employee_id: int, new_salary: int) -> String:
 	if employee.is_empty():
 		return "Ese empleado ya no está."
 	var progress: Dictionary = get_promotion_progress(employee)
-	if String(progress["next_level"]).is_empty():
-		return "Ya está en el nivel más alto."
+	if String(progress["next_level"]).is_empty() and String(progress["next_role"]).is_empty():
+		return "Ya está en el cargo más alto."
 	if not bool(progress["ready"]):
+		if not String(progress["next_role"]).is_empty():
+			return role_problem(progress["next_role"])
 		return "Todavía no cumple lo que pide el ascenso."
 	if new_salary <= int(employee["salary"]):
 		return "El sueldo nuevo tiene que ser mayor que %s." % MoneyFormat.format(employee["salary"])
@@ -441,6 +471,9 @@ func promote(employee_id: int, new_salary: int) -> Dictionary:
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
 	var employee: Dictionary = get_employee(employee_id)
+	var next_role: String = get_promotion_progress(employee)["next_role"]
+	if not next_role.is_empty():
+		return _promote_to_role(employee, next_role, new_salary)
 	var level: String = StaffCatalog.get_next_level(employee["level"])
 	employee["level"] = level
 	var skill: String = StaffCatalog.get_main_skill(employee["role"])
@@ -453,6 +486,27 @@ func promote(employee_id: int, new_salary: int) -> Dictionary:
 	messages.append_array(_apply_raise(employee, new_salary))
 	var message: String = " ".join(messages)
 	EventBus.staff_changed.emit()
+	EventBus.notice.emit(message)
+	return {"ok": true, "message": message}
+
+
+# Asciende a otro cargo (un Senior a líder de equipo). Si era miembro de un equipo sin
+# líder, pasa a liderarlo; si el equipo ya tenía líder, queda sin equipo.
+func _promote_to_role(employee: Dictionary, role: String, new_salary: int) -> Dictionary:
+	var team: Dictionary = get_team_of(employee["id"])
+	_leave_team(employee["id"])
+	employee["role"] = role
+	var messages: Array[String] = ["%s asciende a %s y gana %s al mes." % [employee["name"],
+		StaffCatalog.get_role_name(role), MoneyFormat.format(new_salary)]]
+	if not team.is_empty() and role == StaffCatalog.get_leader_role():
+		if int(team["leader_id"]) == 0:
+			team["leader_id"] = employee["id"]
+			messages.append("Lidera %s." % team["name"])
+		else:
+			messages.append("%s ya tiene líder: queda sin equipo." % team["name"])
+	messages.append_array(_apply_raise(employee, new_salary))
+	var message: String = " ".join(messages)
+	_schedules_changed()
 	EventBus.notice.emit(message)
 	return {"ok": true, "message": message}
 
@@ -634,7 +688,7 @@ func create_team() -> Dictionary:
 		StaffCatalog.get_default_team_days())
 	var members: Array[int] = []
 	var team: Dictionary = {"id": _next_team_id, "name": "%s %d" % [StaffCatalog.get_teams("name_prefix"), _next_team_id],
-		"members": members, "schedule": schedule.to_dict()}
+		"members": members, "leader_id": 0, "schedule": schedule.to_dict()}
 	_next_team_id += 1
 	teams.append(team)
 	EventBus.staff_changed.emit()
@@ -651,8 +705,9 @@ func delete_team(team_id: int) -> bool:
 	return true
 
 
-## Pone a un empleado en un equipo (si estaba en otro, sale de aquel).
-## Devuelve {"ok", "message"}.
+## Pone a un empleado en un equipo (si estaba en otro, sale de aquel). Un líder de
+## equipo entra como su líder, si el equipo no tiene; los demás, como miembros, hasta
+## teams.max_members. Devuelve {"ok", "message"}.
 func add_to_team(team_id: int, employee_id: int) -> Dictionary:
 	var team: Dictionary = get_team(team_id)
 	var employee: Dictionary = get_employee(employee_id)
@@ -660,11 +715,53 @@ func add_to_team(team_id: int, employee_id: int) -> Dictionary:
 		return {"ok": false, "message": "Ese equipo o ese empleado ya no está."}
 	if int(get_team_of(employee_id).get("id", 0)) == team_id:
 		return {"ok": false, "message": "%s ya está en %s." % [employee["name"], team["name"]]}
-	_leave_team(employee_id)
+	if is_leader(employee):
+		if int(team["leader_id"]) != 0:
+			return {"ok": false, "message": "%s ya tiene líder: %s. Quítalo primero." % [team["name"],
+				get_employee(int(team["leader_id"]))["name"]]}
+		_leave_team(employee_id)
+		team["leader_id"] = employee_id
+		_schedules_changed()
+		return {"ok": true, "message": "%s lidera %s." % [employee["name"], team["name"]]}
 	var members: Array[int] = team["members"]
+	var max_members: int = int(StaffCatalog.get_teams("max_members"))
+	if members.size() >= max_members:
+		return {"ok": false, "message": "%s ya tiene %d miembros, el máximo para un líder." % [team["name"], max_members]}
+	_leave_team(employee_id)
 	members.append(employee_id)
 	_schedules_changed()
 	return {"ok": true, "message": "%s entra a %s." % [employee["name"], team["name"]]}
+
+
+## Indica si un empleado es líder de equipo.
+func is_leader(employee: Dictionary) -> bool:
+	return employee.get("role", "") == StaffCatalog.get_leader_role()
+
+
+## Líder de un equipo, o vacío si no tiene.
+func get_team_leader(team: Dictionary) -> Dictionary:
+	return get_employee(int(team.get("leader_id", 0)))
+
+
+## Indica si el líder de un equipo está trabajando a esa hora (contada como
+## get_absolute_hour).
+func is_leader_present(team: Dictionary, at: int) -> bool:
+	var leader: Dictionary = get_team_leader(team)
+	return not leader.is_empty() and is_expected(employee_key(leader["id"]), get_weekday_at(at),
+		posmod(at, GameConstants.HOURS_PER_DAY))
+
+
+## Indica si en esta etapa un equipo necesita a su líder presente para rendir al 100 %.
+func leaders_required() -> bool:
+	return Company.stage >= StaffCatalog.get_role_min_stage(StaffCatalog.get_leader_role())
+
+
+## Cuánto rinde un equipo a esa hora: 1, o teams.no_leader_factor si desde la etapa de
+## los líderes no tiene a su líder presente.
+func get_team_factor(team: Dictionary, at: int) -> float:
+	if not leaders_required() or is_leader_present(team, at):
+		return 1.0
+	return float(StaffCatalog.get_teams("no_leader_factor"))
 
 
 ## Saca a un empleado de su equipo: vuelve al horario de su cargo.
@@ -716,10 +813,10 @@ func get_team(team_id: int) -> Dictionary:
 	return {}
 
 
-## Equipo de un empleado, o vacío si no está en ninguno.
+## Equipo de un empleado (como miembro o como líder), o vacío si no está en ninguno.
 func get_team_of(employee_id: int) -> Dictionary:
 	for team: Dictionary in teams:
-		if (team["members"] as Array).has(employee_id):
+		if (team["members"] as Array).has(employee_id) or int(team.get("leader_id", 0)) == employee_id:
 			return team
 	return {}
 
@@ -747,6 +844,8 @@ func _leave_team(employee_id: int) -> bool:
 	var team: Dictionary = get_team_of(employee_id)
 	if team.is_empty():
 		return false
+	if int(team.get("leader_id", 0)) == employee_id:
+		team["leader_id"] = 0
 	(team["members"] as Array).erase(employee_id)
 	return true
 
@@ -849,8 +948,8 @@ func candidate_days_left(candidate: Dictionary) -> int:
 
 ## "Programador Junior · $1,200 al mes".
 static func describe_vacancy(vacancy: Dictionary) -> String:
-	return "%s %s · %s al mes" % [StaffCatalog.get_role_name(vacancy["role"]),
-		StaffCatalog.get_level_name(vacancy["level"]), MoneyFormat.format(vacancy["salary"])]
+	return "%s · %s al mes" % [StaffCatalog.describe_title(vacancy["role"], vacancy["level"]),
+		MoneyFormat.format(vacancy["salary"])]
 
 
 ## Habilidades de un candidato o empleado: en rangos ("Programación 40–60 · …") o, si
@@ -877,8 +976,8 @@ static func describe_known_traits(person: Dictionary) -> String:
 
 ## "Programador Junior · $1,200 al mes" para un empleado.
 static func describe_employee(employee: Dictionary) -> String:
-	return "%s %s · %s al mes" % [StaffCatalog.get_role_name(employee["role"]),
-		StaffCatalog.get_level_name(employee["level"]), MoneyFormat.format(employee["salary"])]
+	return "%s · %s al mes" % [StaffCatalog.describe_title(employee["role"], employee["level"]),
+		MoneyFormat.format(employee["salary"])]
 
 
 func _on_hour_changed(hour: int) -> void:
@@ -1177,8 +1276,14 @@ func import_state(state: Dictionary) -> void:
 		var team_id: int = int(saved["id"])
 		var schedule: Dictionary = saved.get("schedule", WorkSchedule.make_shift(
 			int(StaffCatalog.get_teams("default_start_hour")), StaffCatalog.get_default_team_days()).to_dict())
+		# Antes del hito 31 no había líderes; tiene que seguir contratado, ser líder y no
+		# estar en otro equipo.
+		var leader_id: int = int(saved.get("leader_id", 0))
+		var leader: Dictionary = get_employee(leader_id)
+		if leader.is_empty() or not is_leader(leader) or not get_team_of(leader_id).is_empty():
+			leader_id = 0
 		teams.append({"id": team_id, "name": String(saved.get("name", "%s %d" % [StaffCatalog.get_teams("name_prefix"), team_id])),
-			"members": members, "schedule": WorkSchedule.from_dict(schedule).to_dict()})
+			"members": members, "leader_id": leader_id, "schedule": WorkSchedule.from_dict(schedule).to_dict()})
 	_next_team_id = int(state.get("next_team_id", 1))
 	payroll_held = bool(state.get("payroll_held", false))
 	_last_interview_end = NO_FIRING

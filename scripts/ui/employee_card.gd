@@ -351,7 +351,7 @@ func _refresh() -> void:
 	var team: Dictionary = Staff.get_team_of(employee["id"])
 	_info.text = "\n".join([
 		"%s, %d años" % [Staff.describe_employee(employee), employee["age"]],
-		"Equipo: %s" % (team["name"] if not team.is_empty() else "sin equipo (horario de su cargo)"),
+		"Equipo: %s" % _describe_team(employee, team),
 		"Horario: %s · almuerzo %d:00–%d:00" % [schedule.describe(), lunch, (lunch + 1) % GameConstants.HOURS_PER_DAY],
 		_describe_pay(employee),
 		"Ahora: %s" % (String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"),
@@ -428,25 +428,38 @@ func _refresh_raise(employee: Dictionary) -> void:
 func _refresh_promotion(employee: Dictionary) -> void:
 	var progress: Dictionary = Staff.get_promotion_progress(employee)
 	var next_level: String = progress["next_level"]
+	var next_role: String = progress["next_role"]
 	var salary: int = employee["salary"]
 	var ready: bool = bool(progress["ready"])
 	_promote_row.visible = ready
-	if next_level.is_empty():
-		_promotion_label.text = "Ascenso: ya está en el nivel más alto."
+	var new_salary: int = 0
+	if not next_role.is_empty():
+		# Un Senior asciende de cargo (a líder de equipo) desde la etapa de ese cargo.
+		var role_name: String = StaffCatalog.get_role_name(next_role)
+		new_salary = StaffCatalog.get_salary(next_role, employee["level"])
+		if not ready:
+			_promotion_label.text = "Ascenso a %s: desde %s." % [role_name,
+				Company.get_stage_name(StaffCatalog.get_role_min_stage(next_role))]
+			return
+		_promotion_label.text = "Puede ascender a %s. Sueldo de ese cargo: %s." % [role_name, MoneyFormat.format(new_salary)]
+	elif next_level.is_empty():
+		_promotion_label.text = "Ascenso: ya está en el cargo más alto."
 		return
-	var level_name: String = StaffCatalog.get_level_name(next_level)
-	var counted: String = "ventas cerradas" if employee["role"] == Staff.SALES_ROLE else "contratos trabajados"
-	var needs: String = "%s %d/%d · días en la empresa %d/%d" % [counted,
-		mini(int(progress["projects"]), int(progress["projects_needed"])), progress["projects_needed"],
-		mini(int(progress["days"]), int(progress["days_needed"])), progress["days_needed"]]
-	if not ready:
-		_promotion_label.text = "Ascenso a %s: %s." % [level_name, needs]
-		return
-	_promotion_label.text = "Puede ascender a %s (%s). Sueldo de ese nivel: %s." % [level_name, needs,
-		MoneyFormat.format(StaffCatalog.get_salary(employee["role"], next_level))]
+	else:
+		var level_name: String = StaffCatalog.get_level_name(next_level)
+		var counted: String = "ventas cerradas" if employee["role"] == Staff.SALES_ROLE else "contratos trabajados"
+		var needs: String = "%s %d/%d · días en la empresa %d/%d" % [counted,
+			mini(int(progress["projects"]), int(progress["projects_needed"])), progress["projects_needed"],
+			mini(int(progress["days"]), int(progress["days_needed"])), progress["days_needed"]]
+		if not ready:
+			_promotion_label.text = "Ascenso a %s: %s." % [level_name, needs]
+			return
+		new_salary = StaffCatalog.get_salary(employee["role"], next_level)
+		_promotion_label.text = "Puede ascender a %s (%s). Sueldo de ese nivel: %s." % [level_name, needs,
+			MoneyFormat.format(new_salary)]
 	var step: int = int(StaffCatalog.get_hiring("salary_step"))
 	if _promote_salary <= salary:
-		_promote_salary = maxi(salary + step, StaffCatalog.get_salary(employee["role"], next_level))
+		_promote_salary = maxi(salary + step, new_salary)
 	_promote_minus.disabled = _promote_salary - step <= salary
 	_promote_salary_label.text = "Sueldo nuevo %s" % MoneyFormat.format(_promote_salary)
 
@@ -471,6 +484,15 @@ func _accept_request() -> void:
 	if employee.is_empty() or (employee["raise_request"] as Dictionary).is_empty():
 		return
 	Staff.give_raise(_employee_id, int(employee["salary"]) + int(employee["raise_request"]["amount"]))
+
+
+# "Equipo 1", "Equipo 1 (lo lidera)" o sin equipo.
+func _describe_team(employee: Dictionary, team: Dictionary) -> String:
+	if team.is_empty():
+		return "sin equipo (horario de su cargo)"
+	if int(team.get("leader_id", 0)) == int(employee["id"]):
+		return "%s (lo lidera)" % team["name"]
+	return team["name"]
 
 
 func _describe_pay(employee: Dictionary) -> String:

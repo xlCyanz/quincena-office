@@ -125,8 +125,8 @@ func _check_thresholds() -> void:
 	employee["projects_worked"] = 99
 	employee["hired_day"] = -999
 	progress = Staff.get_promotion_progress(employee)
-	_expect(String(progress["next_level"]).is_empty() and not bool(progress["ready"]), "un Senior no asciende")
-	_expect(Staff.promote_problem(employee["id"], 9999).contains("más alto"), "y lo dice")
+	_expect(String(progress["next_level"]).is_empty() and not bool(progress["ready"]), "un Senior no asciende de nivel (ni a líder en Emprendimiento)")
+	_expect(Staff.promote_problem(employee["id"], 9999).contains("Startup"), "y dice que ser líder llega en Startup")
 
 
 func _check_counting() -> void:

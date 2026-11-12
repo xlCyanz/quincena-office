@@ -91,6 +91,7 @@ func _ready() -> void:
 		_role_option.add_item(StaffCatalog.get_role_name(role))
 	_role_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_role_option.item_selected.connect(func(_index: int) -> void: _reset_salary())
+	_refresh_role_locks()
 	choice_row.add_child(_role_option)
 	_level_option = OptionButton.new()
 	for level: String in StaffCatalog.get_level_ids():
@@ -269,8 +270,35 @@ func _selected_level() -> String:
 	return StaffCatalog.get_level_ids()[_level_option.selected]
 
 
-# Al cambiar cargo o nivel, el sueldo vuelve al de la tabla.
+# Cargos que todavía no existen en esta etapa (el líder de equipo antes de Startup):
+# en gris, con la etapa en la que llegan.
+func _refresh_role_locks() -> void:
+	var roles: Array[String] = StaffCatalog.get_role_ids()
+	for index: int in range(roles.size()):
+		var problem: String = Staff.role_problem(roles[index])
+		_role_option.set_item_disabled(index, not problem.is_empty())
+		_role_option.set_item_tooltip(index, problem)
+		_role_option.set_item_text(index, StaffCatalog.get_role_name(roles[index]) +
+			("" if problem.is_empty() else " (%s)" % Company.get_stage_name(StaffCatalog.get_role_min_stage(roles[index]))))
+	if _role_option.is_item_disabled(_role_option.selected):
+		_role_option.select(0)
+		_reset_salary()
+
+
+## Elige el cargo de la vacante (para las pruebas).
+func get_role_option() -> OptionButton:
+	return _role_option
+
+
+## Lista de niveles de la vacante (deshabilitada para cargos sin niveles).
+func get_level_option() -> OptionButton:
+	return _level_option
+
+
+# Al cambiar cargo o nivel, el sueldo vuelve al de la tabla. Un cargo sin niveles
+# deshabilita la lista de niveles.
 func _reset_salary() -> void:
+	_level_option.disabled = not StaffCatalog.has_levels(_selected_role())
 	_salary = StaffCatalog.get_salary(_selected_role(), _selected_level())
 	_table_label.text = "(tabla: %s)" % MoneyFormat.format(_salary)
 	_update_salary()
@@ -300,6 +328,7 @@ func _refresh() -> void:
 	_open_button.text = "Personal (%d)" % waiting if waiting > 0 else "Personal"
 	if _list == null or not is_open():
 		return
+	_refresh_role_locks()
 	for child: Node in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()
