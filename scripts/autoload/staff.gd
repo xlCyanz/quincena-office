@@ -26,7 +26,7 @@
 # Jornada (hito 12): cada empleado tiene un horario ("schedule", el de su cargo por
 # defecto) y las barras "energy", "mood" y "stress" (0–100). Todos salen a almorzar a
 # la hora de almuerzo. La energía baja por cada hora de su horario y sube por cada hora
-# fuera; ánimo y estrés quedan fijos hasta el hito 19. El CEO no tiene horario: llega
+# fuera. El CEO no tiene horario: llega
 # solo a su hora en días hábiles y se queda hasta que el jugador lo manda a casa
 # (ceo_at_work). is_expected dice quién tiene que estar en la oficina a cada hora; los
 # personajes de la escena solo lo siguen.
@@ -37,6 +37,15 @@
 # todos lo ganado más lo debido, todo o nada; si no alcanza, queda como deuda, baja el
 # ánimo de todos y se paga solo apenas alcance el saldo. Despedir cobra lo ganado y lo
 # debido (aunque el saldo quede negativo) y baja el ánimo de los compañeros.
+#
+# Ánimo y renuncias (hito 19): cada día el ánimo y el estrés se acercan a una meta que
+# depende del sueldo comparado con su nivel, de tener contrato, de la nómina debida, del
+# atraso y del cansancio (data/staff.json, morale). Con ánimo bajo o estrés alto varios
+# días seguidos el empleado avisa ("quit_day": el día en que se va; -1 si no avisó); un
+# aumento suficiente lo retiene. A veces alguien pide aumento ("raise_request": {"amount",
+# "until_day"} o vacío). "bad_days" son los días seguidos mal, "min_energy" la energía más
+# baja del día, "last_raise_day" el día del último aumento (o de la contratación) y
+# "carry" lo ganado con un sueldo anterior que todavía no se pagó.
 #
 # Equipos (hito 15): un equipo es {"id", "name", "members", "schedule"}; members son ids
 # de empleados y cada empleado está como mucho en un equipo. El turno del equipo
@@ -49,6 +58,9 @@ extends Node
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
 const CONCEPT_PAYROLL: String = "Nómina"
 const CONCEPT_FIRING: String = "Despido"
+const CONCEPT_RESIGNATION: String = "Liquidación por renuncia"
+## quit_day de quien no avisó que renuncia.
+const NO_QUIT: int = -1
 const EMPLOYEE_PREFIX: String = "employee_"
 const NO_FIRING: int = -1000
 const NO_STATION_MESSAGE: String = "No hay ningún puesto de trabajo libre: hace falta un escritorio con computadora y una silla delante, dentro de un Área de trabajo que funcione."
@@ -293,7 +305,7 @@ func hours_until_anyone_expected() -> int:
 ## Lo que un empleado ganó desde su último pago, hasta hoy incluido (sin la deuda).
 func get_earned(employee: Dictionary) -> int:
 	var days: int = GameClock.get_day_count() - int(employee["paid_until"])
-	return maxi(0, roundi(int(employee["salary"]) * days / float(GameConstants.DAYS_PER_MONTH)))
+	return int(employee.get("carry", 0)) + maxi(0, roundi(int(employee["salary"]) * days / float(GameConstants.DAYS_PER_MONTH)))
 
 
 ## Lo que cuesta despedir a un empleado hoy: lo ganado más lo que se le debe.
@@ -315,15 +327,7 @@ func fire(employee_id: int) -> Dictionary:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty():
 		return {"ok": false, "message": "Ese empleado ya no está."}
-	var cost: int = get_firing_cost(employee)
-	# Primero deja de ser empleado: así su deuda no se cuenta en la nómina pendiente.
-	employees.erase(employee)
-	_leave_team(employee_id)
-	Economy.charge(cost, CONCEPT_FIRING)
-	var key: String = employee_key(employee_id)
-	for item: Dictionary in OfficeState.furniture:
-		if item["assigned_to"] == key:
-			item["assigned_to"] = ""
+	var cost: int = _remove_employee(employee, CONCEPT_FIRING)
 	var today: int = GameClock.get_day_count()
 	var streak: bool = today - last_firing_day <= StaffCatalog.get_payroll("fire_streak_days")
 	var mood_change: int = StaffCatalog.get_payroll("fire_streak_mood" if streak else "fire_mood")
@@ -335,6 +339,186 @@ func fire(employee_id: int) -> Dictionary:
 	EventBus.staff_changed.emit()
 	EventBus.notice.emit(message)
 	return {"ok": true, "message": message}
+
+
+## Sube el sueldo de un empleado. Lo ganado hasta hoy queda con el sueldo anterior.
+## Un aumento de al menos retain_raise_ratio retiene a quien avisó que renuncia, y uno
+## que cubre lo que pidió acepta su pedido. Devuelve {"ok", "message"}.
+func give_raise(employee_id: int, new_salary: int) -> Dictionary:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty():
+		return {"ok": false, "message": "Ese empleado ya no está."}
+	var salary: int = employee["salary"]
+	if new_salary <= salary:
+		return {"ok": false, "message": "El sueldo nuevo tiene que ser mayor que %s." % MoneyFormat.format(salary)}
+	var today: int = GameClock.get_day_count()
+	employee["carry"] = get_earned(employee)
+	employee["paid_until"] = today
+	employee["salary"] = new_salary
+	employee["last_raise_day"] = today
+	var messages: Array[String] = ["%s gana ahora %s al mes." % [employee["name"], MoneyFormat.format(new_salary)]]
+	var request: Dictionary = employee["raise_request"]
+	if not request.is_empty() and new_salary >= salary + int(request["amount"]):
+		employee["raise_request"] = {}
+		_change_mood(employee, int(StaffCatalog.get_morale("raise_accept_mood")))
+		messages.append("Le diste el aumento que pidió.")
+	if int(employee["quit_day"]) != NO_QUIT:
+		if new_salary >= salary * (1.0 + StaffCatalog.get_morale("retain_raise_ratio")) - 0.5:
+			employee["quit_day"] = NO_QUIT
+			employee["bad_days"] = 0
+			_change_mood(employee, int(StaffCatalog.get_morale("retain_mood")))
+			messages.append("Se queda en la empresa.")
+		else:
+			messages.append("No le alcanza para quedarse: pide al menos %d%% más." % roundi(
+				StaffCatalog.get_morale("retain_raise_ratio") * 100.0))
+	var message: String = " ".join(messages)
+	EventBus.staff_changed.emit()
+	EventBus.notice.emit(message)
+	return {"ok": true, "message": message}
+
+
+## Niega el aumento que pidió un empleado (le baja el ánimo).
+func deny_raise(employee_id: int) -> bool:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty() or (employee["raise_request"] as Dictionary).is_empty():
+		return false
+	employee["raise_request"] = {}
+	_change_mood(employee, int(StaffCatalog.get_morale("raise_deny_mood")))
+	EventBus.staff_changed.emit()
+	return true
+
+
+## Sueldo de su nivel en la tabla 13.2 (con el que se compara el suyo).
+func get_market_salary(employee: Dictionary) -> int:
+	return StaffCatalog.get_salary(employee["role"], employee["level"])
+
+
+## Meta del ánimo de un empleado hoy (ver data/staff.json, morale).
+func get_mood_target(employee: Dictionary) -> int:
+	var target: float = StaffCatalog.get_morale("mood_base")
+	var ratio: float = float(employee["salary"]) / maxf(1.0, float(get_market_salary(employee)))
+	if ratio >= StaffCatalog.get_morale("well_paid_ratio"):
+		target += StaffCatalog.get_morale("well_paid_mood")
+	elif ratio >= 1.0:
+		target += StaffCatalog.get_morale("fair_mood")
+	elif ratio >= StaffCatalog.get_morale("underpaid_ratio"):
+		target += StaffCatalog.get_morale("slightly_underpaid_mood")
+	else:
+		target += StaffCatalog.get_morale("underpaid_mood")
+	if is_idle(employee):
+		target += StaffCatalog.get_morale("idle_mood")
+	if int(employee["owed"]) > 0:
+		target += StaffCatalog.get_morale("owed_mood")
+	if int(employee["stress"]) >= int(StaffCatalog.get_morale("stressed_from")):
+		target += StaffCatalog.get_morale("stressed_mood")
+	return clampi(roundi(target), 0, 100)
+
+
+## Meta del estrés de un empleado hoy.
+func get_stress_target(employee: Dictionary) -> int:
+	var target: float = StaffCatalog.get_morale("stress_base")
+	var contract: Dictionary = _contract_of(employee)
+	if not contract.is_empty() and Projects.get_days_late(contract) > 0:
+		target += StaffCatalog.get_morale("late_stress")
+	if int(employee.get("min_energy", 100)) < int(StaffCatalog.get_morale("tired_below")):
+		target += StaffCatalog.get_morale("tired_stress")
+	return clampi(roundi(target), 0, 100)
+
+
+## Indica si un empleado no tiene trabajo: su equipo no lleva contrato (los vendedores
+## no lo necesitan).
+func is_idle(employee: Dictionary) -> bool:
+	return not Production.get_role_phase(employee["role"]).is_empty() and _contract_of(employee).is_empty()
+
+
+## Días que le quedan a quien avisó que renuncia, o -1.
+func quit_days_left(employee: Dictionary) -> int:
+	if int(employee["quit_day"]) == NO_QUIT:
+		return -1
+	return maxi(0, int(employee["quit_day"]) - GameClock.get_day_count())
+
+
+# Contrato que lleva el equipo de un empleado, o vacío.
+func _contract_of(employee: Dictionary) -> Dictionary:
+	var team: Dictionary = get_team_of(employee["id"])
+	return {} if team.is_empty() else Projects.get_contract_of(team["id"])
+
+
+# Saca a un empleado de la empresa: cobra lo ganado y lo debido con ese concepto y
+# libera su puesto y su equipo. Devuelve lo cobrado.
+func _remove_employee(employee: Dictionary, concept: String) -> int:
+	var cost: int = get_firing_cost(employee)
+	# Primero deja de ser empleado: así su deuda no se cuenta en la nómina pendiente.
+	employees.erase(employee)
+	_leave_team(employee["id"])
+	Economy.charge(cost, concept)
+	var key: String = employee_key(employee["id"])
+	for item: Dictionary in OfficeState.furniture:
+		if item["assigned_to"] == key:
+			item["assigned_to"] = ""
+	return cost
+
+
+# Cada día: ánimo y estrés se acercan a su meta, vencen los pedidos de aumento, se van
+# los que avisaron y avisan los que llevan varios días mal; a veces alguien pide aumento.
+func _update_morale() -> void:
+	var today: int = GameClock.get_day_count()
+	var mood_step: int = int(StaffCatalog.get_morale("mood_step"))
+	var stress_step: int = int(StaffCatalog.get_morale("stress_step"))
+	for employee: Dictionary in employees.duplicate():
+		if not employee.has("quit_day"):
+			_add_morale_fields(employee, employee.duplicate())
+		employee["stress"] = _approach(int(employee["stress"]), get_stress_target(employee), stress_step)
+		employee["mood"] = _approach(int(employee["mood"]), get_mood_target(employee), mood_step)
+		employee["min_energy"] = int(employee["energy"])
+		var request: Dictionary = employee["raise_request"]
+		if not request.is_empty() and today >= int(request["until_day"]):
+			employee["raise_request"] = {}
+			_change_mood(employee, int(StaffCatalog.get_morale("raise_deny_mood")))
+			EventBus.notice.emit("%s se quedó sin respuesta a su pedido de aumento." % employee["name"])
+		var bad: bool = int(employee["mood"]) < int(StaffCatalog.get_morale("quit_mood_below")) \
+			or int(employee["stress"]) > int(StaffCatalog.get_morale("quit_stress_above"))
+		employee["bad_days"] = int(employee["bad_days"]) + 1 if bad else 0
+		if int(employee["quit_day"]) != NO_QUIT:
+			if today >= int(employee["quit_day"]):
+				_resign(employee)
+			continue
+		if int(employee["bad_days"]) >= int(StaffCatalog.get_morale("quit_bad_days")):
+			employee["quit_day"] = today + int(StaffCatalog.get_morale("notice_days"))
+			EventBus.notice.emit("%s avisa que renuncia: se va en %d días si no le das un aumento." % [
+				employee["name"], int(StaffCatalog.get_morale("notice_days"))])
+			continue
+		_maybe_ask_raise(employee, today)
+	EventBus.staff_changed.emit()
+
+
+func _maybe_ask_raise(employee: Dictionary, today: int) -> void:
+	if not (employee["raise_request"] as Dictionary).is_empty():
+		return
+	var ratio: float = float(employee["salary"]) / maxf(1.0, float(get_market_salary(employee)))
+	if ratio >= StaffCatalog.get_morale("raise_request_below_ratio"):
+		return
+	if today - int(employee["last_raise_day"]) < int(StaffCatalog.get_morale("raise_request_min_days")):
+		return
+	if _rng.randf() >= StaffCatalog.get_morale("raise_request_chance"):
+		return
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	var amount: int = maxi(step, roundi(int(employee["salary"]) * StaffCatalog.get_morale("raise_request_ratio") / step) * step)
+	employee["raise_request"] = {"amount": amount, "until_day": today + int(StaffCatalog.get_morale("raise_request_days"))}
+	EventBus.notice.emit("%s pide un aumento de %s." % [employee["name"], MoneyFormat.format(amount)])
+
+
+# Un empleado se va por su cuenta: cobra lo ganado y lo debido.
+func _resign(employee: Dictionary) -> void:
+	var cost: int = _remove_employee(employee, CONCEPT_RESIGNATION)
+	EventBus.office_changed.emit()
+	EventBus.notice.emit("%s renunció y se fue; se le pagó %s." % [employee["name"], MoneyFormat.format(cost)])
+
+
+static func _approach(value: int, target: int, step: int) -> int:
+	if value < target:
+		return mini(value + step, target)
+	return maxi(value - step, target)
 
 
 ## Horario de un empleado: el turno de su equipo o, sin equipo, el de su cargo.
@@ -612,6 +796,7 @@ func _on_hour_changed(hour: int) -> void:
 func _on_day_changed(day: int, _month: int) -> void:
 	if GameConstants.PAYROLL_DAYS.has(day):
 		_run_payroll()
+	_update_morale()
 
 
 # Anota lo ganado por cada uno hasta hoy como deuda y trata de pagarla toda. Si no
@@ -623,6 +808,7 @@ func _run_payroll() -> void:
 	for employee: Dictionary in employees:
 		employee["owed"] = int(employee["owed"]) + get_earned(employee)
 		employee["paid_until"] = today
+		employee["carry"] = 0
 	var total: int = get_total_owed()
 	if _pay_debt_if_possible():
 		return
@@ -663,6 +849,7 @@ func _update_energy() -> void:
 	for employee: Dictionary in employees:
 		var change: int = work if is_expected(employee_key(employee["id"]), weekday, hour) else rest
 		employee["energy"] = clampi(int(employee["energy"]) + change, 0, 100)
+		employee["min_energy"] = mini(int(employee.get("min_energy", 100)), int(employee["energy"]))
 	EventBus.staff_changed.emit()
 
 
@@ -721,6 +908,7 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 	# Gana desde el día de su contratación (incluido).
 	employee["paid_until"] = GameClock.get_day_count() - 1
 	employee["owed"] = 0
+	_add_morale_fields(employee, {})
 	employees.append(employee)
 	OfficeState.furniture[station["chair"]]["assigned_to"] = employee_key(employee["id"])
 	for index: int in range(vacancies.size()):
@@ -841,6 +1029,7 @@ func import_state(state: Dictionary) -> void:
 			employee[bar] = int(saved.get(bar, StaffCatalog.get_workday("start_" + bar)))
 		employee["paid_until"] = int(saved.get("paid_until", employee["hired_day"] - 1))
 		employee["owed"] = int(saved.get("owed", 0))
+		_add_morale_fields(employee, saved)
 		employees.append(employee)
 	var saved_interview: Dictionary = state.get("interview", {})
 	interview = {}
@@ -872,6 +1061,18 @@ func import_state(state: Dictionary) -> void:
 	else:
 		_rng.randomize()
 	EventBus.staff_changed.emit()
+
+
+# Los datos del hito 19 de un empleado (desde una partida guardada o nuevos).
+func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
+	employee["carry"] = int(saved.get("carry", 0))
+	employee["bad_days"] = int(saved.get("bad_days", 0))
+	employee["quit_day"] = int(saved.get("quit_day", NO_QUIT))
+	employee["min_energy"] = int(saved.get("min_energy", employee["energy"]))
+	employee["last_raise_day"] = int(saved.get("last_raise_day", employee.get("hired_day", 0)))
+	var request: Dictionary = saved.get("raise_request", {})
+	employee["raise_request"] = {} if not request.has("amount") else {"amount": int(request["amount"]),
+		"until_day": int(request.get("until_day", 0))}
 
 
 func _import_candidate(saved: Dictionary) -> Dictionary:

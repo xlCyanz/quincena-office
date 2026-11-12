@@ -1,10 +1,13 @@
 # Ficha de empleado (diseño, 12.4): nombre, cargo, nivel, equipo, horario, qué está
 # haciendo, barras de energía, ánimo y estrés, habilidades, rasgos conocidos y sueldo.
-# Tiene el botón Despedir (hito 13), que pide confirmar con el costo; los de aumento,
-# ascenso, equipo y horario llegan en sus hitos.
+# Tiene el botón Despedir (hito 13), que pide confirmar con el costo, y desde el hito 19
+# avisa si renuncia o pide aumento: un pedido se acepta o se niega, y la fila Aumento
+# sube el sueldo cuando el jugador quiera (de a salary_step). Ascenso, equipo y horario
+# llegan en sus hitos.
 #
 # Se abre con un clic en el empleado o desde Personal, no pausa el tiempo y se
-# actualiza sola. Va a la derecha, debajo del reloj. Lo que el empleado está haciendo
+# actualiza sola. Va a la derecha, debajo del reloj; si no entra en la pantalla, el
+# contenido (menos el título) se desplaza. Lo que el empleado está haciendo
 # lo sabe la escena de juego, que lo da con status_provider.
 class_name EmployeeCard
 extends CanvasLayer
@@ -12,8 +15,11 @@ extends CanvasLayer
 const PANEL_WIDTH: float = 360.0
 const MARGIN: float = 16.0
 const MARGIN_TOP: float = 140.0
+## Espacio que se deja abajo para la barra de botones.
+const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 22
 const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const ALERT_COLOR := Color("f2c14e")
 ## Barras de la ficha: clave en el empleado y nombre para el jugador.
 const BARS: Dictionary[String, String] = {"energy": "Energía", "mood": "Ánimo", "stress": "Estrés"}
 const BAR_COLORS: Dictionary[String, Color] = {
@@ -24,6 +30,8 @@ const BAR_COLORS: Dictionary[String, Color] = {
 var status_provider: Callable = Callable()
 
 var _panel: PanelContainer
+var _scroll: ScrollContainer
+var _rows: VBoxContainer
 var _title: Label
 var _info: Label
 var _details: Label
@@ -34,6 +42,16 @@ var _fire_button: Button
 var _confirm_row: HBoxContainer
 var _confirm_label: Label
 var _confirm_button: Button
+var _alert: Label
+var _request_row: HBoxContainer
+var _accept_button: Button
+var _deny_button: Button
+var _raise_label: Label
+var _raise_minus: Button
+var _raise_plus: Button
+var _raise_button: Button
+## Aumento elegido en la fila Aumento (se reinicia al abrir la ficha).
+var _raise_amount: int = 0
 
 
 func _ready() -> void:
@@ -48,12 +66,11 @@ func _ready() -> void:
 	_panel.offset_left = -MARGIN - PANEL_WIDTH
 	_panel.offset_right = -MARGIN
 	_panel.offset_top = MARGIN_TOP
-	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 6)
-	_panel.add_child(rows)
-
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 6)
+	_panel.add_child(outer)
 	var header := HBoxContainer.new()
-	rows.add_child(header)
+	outer.add_child(header)
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -64,6 +81,14 @@ func _ready() -> void:
 	close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_button.pressed.connect(close)
 	header.add_child(close_button)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(_scroll)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 6)
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(rows)
+	_rows = rows
 
 	_info = Label.new()
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -98,6 +123,45 @@ func _ready() -> void:
 	_details.add_theme_color_override("font_color", MUTED_COLOR)
 	rows.add_child(_details)
 
+	_alert = Label.new()
+	_alert.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_alert.add_theme_color_override("font_color", ALERT_COLOR)
+	rows.add_child(_alert)
+	_request_row = HBoxContainer.new()
+	rows.add_child(_request_row)
+	_accept_button = Button.new()
+	_accept_button.text = "Dar el aumento"
+	_accept_button.pressed.connect(_accept_request)
+	_request_row.add_child(_accept_button)
+	_deny_button = Button.new()
+	_deny_button.text = "Negar"
+	_deny_button.pressed.connect(func() -> void: Staff.deny_raise(_employee_id))
+	_request_row.add_child(_deny_button)
+
+	var raise_row := HBoxContainer.new()
+	rows.add_child(raise_row)
+	_raise_minus = Button.new()
+	_raise_minus.text = "−"
+	_raise_minus.pressed.connect(func() -> void: _change_raise(-1))
+	raise_row.add_child(_raise_minus)
+	_raise_label = Label.new()
+	_raise_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_raise_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	raise_row.add_child(_raise_label)
+	_raise_plus = Button.new()
+	_raise_plus.text = "+"
+	_raise_plus.pressed.connect(func() -> void: _change_raise(1))
+	raise_row.add_child(_raise_plus)
+	_raise_button = Button.new()
+	_raise_button.text = "Dar aumento"
+	_raise_button.pressed.connect(func() -> void:
+		var employee: Dictionary = Staff.get_employee(_employee_id)
+		if not employee.is_empty():
+			Staff.give_raise(_employee_id, int(employee["salary"]) + _raise_amount))
+	raise_row.add_child(_raise_button)
+	# Los avisos y el aumento van antes de las habilidades: es lo urgente.
+	rows.move_child(_details, rows.get_child_count() - 1)
+
 	_fire_button = Button.new()
 	_fire_button.text = "Despedir"
 	_fire_button.pressed.connect(_ask_fire)
@@ -128,6 +192,7 @@ func _ready() -> void:
 ## Abre la ficha de un empleado (o la cambia a otro).
 func open_employee(employee_id: int) -> void:
 	_employee_id = employee_id
+	_raise_amount = 0
 	_cancel_fire()
 	_panel.visible = true
 	_refresh()
@@ -156,6 +221,39 @@ func get_confirm_fire_button() -> Button:
 	return _confirm_button
 
 
+## Botón que acepta el aumento que pidió el empleado.
+func get_accept_raise_button() -> Button:
+	return _accept_button
+
+
+## Botón que niega el aumento que pidió el empleado.
+func get_deny_raise_button() -> Button:
+	return _deny_button
+
+
+## Botones de la fila Aumento: «−», «+» y «Dar aumento».
+func get_raise_minus_button() -> Button:
+	return _raise_minus
+
+
+func get_raise_plus_button() -> Button:
+	return _raise_plus
+
+
+func get_raise_button() -> Button:
+	return _raise_button
+
+
+## Aumento elegido en la fila Aumento.
+func get_raise_amount() -> int:
+	return _raise_amount
+
+
+## Desplaza la ficha hasta que se vea un control (para las pruebas y los botones de abajo).
+func reveal(control: Control) -> void:
+	_scroll.ensure_control_visible(control)
+
+
 ## Valor de una barra ("energy", "mood" o "stress").
 func get_bar_value(bar: String) -> float:
 	return _bars[bar].value
@@ -167,6 +265,9 @@ func get_text() -> String:
 	for bar: String in BARS:
 		texts.append("%s %s" % [BARS[bar], _bar_values[bar].text])
 	texts.append(_details.text)
+	if _alert.visible:
+		texts.append(_alert.text)
+	texts.append(_raise_label.text)
 	if _confirm_row.visible:
 		texts.append(_confirm_label.text)
 	return "\n".join(texts)
@@ -203,9 +304,59 @@ func _refresh() -> void:
 	var known: String = Staff.describe_known_traits(employee)
 	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
 	_details.text = "\n".join(details)
+	_refresh_raise(employee)
+	_fit.call_deferred()
 	if _confirm_row.visible:
 		_confirm_label.text = "¿Despedir a %s? Cuesta %s y baja el ánimo de sus compañeros." % [
 			employee["name"], MoneyFormat.format(Staff.get_firing_cost(employee))]
+
+
+# Ajusta el alto: lo que pide el contenido, sin pasar de la pantalla.
+func _fit() -> void:
+	if not is_open():
+		return
+	var available: float = _panel.get_viewport_rect().size.y - MARGIN_TOP - MARGIN_BOTTOM \
+		- (_panel.get_combined_minimum_size().y - _scroll.get_combined_minimum_size().y)
+	_scroll.custom_minimum_size.y = minf(_rows.get_combined_minimum_size().y, maxf(available, 100.0))
+	_panel.offset_bottom = _panel.offset_top
+
+
+# Avisos de renuncia y pedido de aumento, y la fila Aumento.
+func _refresh_raise(employee: Dictionary) -> void:
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	var salary: int = employee["salary"]
+	if _raise_amount <= 0:
+		# Por defecto, lo justo para retener a quien renuncia.
+		var ratio: float = StaffCatalog.get_morale("retain_raise_ratio")
+		_raise_amount = maxi(step, ceili(salary * ratio / step) * step)
+	var alerts: Array[String] = []
+	var days: int = Staff.quit_days_left(employee)
+	if days >= 0:
+		alerts.append("Renuncia: se va en %d %s. Un aumento de %d%% o más lo retiene." % [
+			days, "día" if days == 1 else "días", roundi(StaffCatalog.get_morale("retain_raise_ratio") * 100.0)])
+	var request: Dictionary = employee["raise_request"]
+	if not request.is_empty():
+		var left: int = maxi(0, int(request["until_day"]) - GameClock.get_day_count())
+		alerts.append("Pide un aumento de %s (%d %s para responder)." % [
+			MoneyFormat.format(int(request["amount"])), left, "día" if left == 1 else "días"])
+	_alert.text = "\n".join(alerts)
+	_alert.visible = not alerts.is_empty()
+	_request_row.visible = not request.is_empty()
+	_raise_minus.disabled = _raise_amount <= step
+	_raise_label.text = "Aumento +%s → %s" % [MoneyFormat.format(_raise_amount), MoneyFormat.format(salary + _raise_amount)]
+
+
+func _change_raise(direction: int) -> void:
+	var step: int = int(StaffCatalog.get_hiring("salary_step"))
+	_raise_amount = maxi(step, _raise_amount + direction * step)
+	_refresh()
+
+
+func _accept_request() -> void:
+	var employee: Dictionary = Staff.get_employee(_employee_id)
+	if employee.is_empty() or (employee["raise_request"] as Dictionary).is_empty():
+		return
+	Staff.give_raise(_employee_id, int(employee["salary"]) + int(employee["raise_request"]["amount"]))
 
 
 func _describe_pay(employee: Dictionary) -> String:

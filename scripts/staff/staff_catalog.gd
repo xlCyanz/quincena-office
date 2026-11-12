@@ -88,6 +88,11 @@ static func get_payroll(key: String) -> int:
 	return int(_staff_data()["payroll"][key])
 
 
+## Valor del ánimo, el estrés, las renuncias y los aumentos (data/staff.json, morale).
+static func get_morale(key: String) -> float:
+	return float(_staff_data()["morale"][key])
+
+
 ## Valor de la producción (data/staff.json, production).
 static func get_production(key: String) -> Variant:
 	return _staff_data()["production"][key]

@@ -136,6 +136,10 @@ func _check_firing() -> void:
 	_expect(Staff.get_firing_cost(first) == cost, "despedir el día 10 cuesta 10/30 del sueldo: %d" % Staff.get_firing_cost(first))
 	var free_before: int = Staff.get_free_workstations().size()
 	var before: int = Economy.balance
+	# Desde el hito 19 el ánimo cambia cada día: se compara con el de justo antes.
+	var moods: Dictionary[int, int] = {}
+	for other: Dictionary in Staff.employees:
+		moods[other["id"]] = int(other["mood"])
 	var result: Dictionary = Staff.fire(first["id"])
 	_expect(result["ok"] and before - Economy.balance == cost, "el despido cobra %d: %d" % [cost, before - Economy.balance])
 	_expect(_last_movement()["concept"] == Staff.CONCEPT_FIRING, "movimiento de despido")
@@ -143,11 +147,12 @@ func _check_firing() -> void:
 	_expect(OfficeState.find_furniture_assigned_to(Staff.employee_key(first["id"])).is_empty()
 		and Staff.get_free_workstations().size() == free_before + 1, "su puesto queda libre")
 	for other: Dictionary in Staff.employees:
-		_expect(int(other["mood"]) == 65, "los compañeros bajan 5 de ánimo: %d" % other["mood"])
+		_expect(int(other["mood"]) == moods[other["id"]] - 5, "los compañeros bajan 5 de ánimo: %d" % other["mood"])
 	# Otro despido dentro de los 7 días baja más.
 	_to_day(12, 2)
+	var survivor_mood: int = int(Staff.employees[1]["mood"])
 	Staff.fire(Staff.employees[0]["id"])
-	_expect(int(Staff.employees[0]["mood"]) == 55, "seguidos bajan 10: %d" % Staff.employees[0]["mood"])
+	_expect(int(Staff.employees[0]["mood"]) == survivor_mood - 10, "seguidos bajan 10: %d" % Staff.employees[0]["mood"])
 	_expect(not Staff.fire(first["id"])["ok"], "no se despide dos veces")
 
 
@@ -165,20 +170,27 @@ func _check_prorated() -> void:
 func _check_unpaid() -> void:
 	# Sigue la partida anterior: un empleado pagado hasta el 15.
 	var employee: Dictionary = Staff.employees[0]
+	# Bien pagado para que el ánimo no baje tanto como para renunciar (hito 19).
+	employee["salary"] = roundi(Staff.get_market_salary(employee) * 1.2)
 	var half: int = int(employee["salary"]) / 2
 	Economy.charge(Economy.balance - 10, "Prueba")
 	_expect(Economy.balance == 10, "saldo casi vacío")
 	_notices.clear()
+	_to_day(29, 1)
+	var mood_before: int = int(employee["mood"])
 	_to_day(30, 1)
 	_expect(Economy.balance == 10 and int(employee["owed"]) == half and Staff.get_total_owed() == half,
 		"sin dinero no se paga y queda la deuda: %d" % employee["owed"])
-	_expect(int(employee["mood"]) == 50, "la nómina sin pagar baja 20 el ánimo: %d" % employee["mood"])
+	# −20 de golpe y después el paso diario hacia su meta (como mucho 3).
+	_expect(absi(int(employee["mood"]) - (mood_before - 20)) <= 3, "la nómina sin pagar baja 20 el ánimo: %d → %d" % [
+		mood_before, employee["mood"]])
 	_expect(not _notices.is_empty() and _notices[-1].begins_with("No alcanza el dinero para la nómina"), "aviso: %s" % [_notices])
 	# El despido incluye lo debido.
 	_expect(Staff.get_firing_cost(employee) == half, "despedir hoy cuesta lo debido: %d" % Staff.get_firing_cost(employee))
 	# Otra nómina sin dinero acumula deuda y vuelve a bajar el ánimo.
+	mood_before = int(employee["mood"])
 	_to_day(15, 2)
-	_expect(int(employee["owed"]) == half * 2 and int(employee["mood"]) == 30, "deuda acumulada: %d, ánimo %d" % [
+	_expect(int(employee["owed"]) == half * 2 and int(employee["mood"]) < mood_before, "deuda acumulada: %d, ánimo %d" % [
 		employee["owed"], employee["mood"]])
 	# Apenas entra dinero suficiente se paga sola, toda junta. (El día 1 se cobró el
 	# mantenimiento: el saldo vuelve a $10 para que las cuentas sean claras.)

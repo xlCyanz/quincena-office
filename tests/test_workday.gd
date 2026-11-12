@@ -270,7 +270,9 @@ func _check_end_of_day() -> void:
 func _check_energy_overnight() -> void:
 	_expect(int(_programmer["energy"]) == 100 and int(_seller["energy"]) == 100, "la energía se recupera de noche: %d, %d" % [
 		_programmer["energy"], _seller["energy"]])
-	_expect(int(_programmer["mood"]) == 70 and int(_programmer["stress"]) == 20, "ánimo y estrés fijos")
+	# Desde el hito 19 el ánimo se mueve 3 por día hacia su meta; el estrés queda en 20.
+	_expect(absi(int(_programmer["mood"]) - 70) == 3 and int(_programmer["stress"]) == 20, "ánimo y estrés del día: %d, %d" % [
+		_programmer["mood"], _programmer["stress"]])
 	_walk_until(_all_seated, 120.0, "todos sentados el martes")
 
 

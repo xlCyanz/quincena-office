@@ -56,6 +56,7 @@ func _add_fake(employee_id: int, role: String) -> Dictionary:
 		"level": "junior", "asked_salary": 0, "skills": skills, "skill_low": skills.duplicate(), "traits": [],
 		"interviewed": false, "known_traits": [], "hired_day": 0, "salary": 0, "schedule": StaffCatalog.get_role_schedule(role), "energy": 100, "mood": 70, "stress": 20,
 		"paid_until": 0, "owed": 0}
+	Staff._add_morale_fields(employee, {})
 	Staff.employees.append(employee)
 	return employee
 
