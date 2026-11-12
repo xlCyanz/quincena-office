@@ -16,6 +16,22 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
     comprobaciones)` en vez de cerrar el juego, y `test_all` quita entre partes las conexiones de señales que dejó. Solo algunas:
     `… res://tests/test_all.tscn -- --only=reception,administration`. Una parte nueva se agrega a `SUITES` en `tests/test_all.gd`.
 
+## Herramientas de desarrollo
+
+Solo para probar y balancear; no son parte del juego. Investigación de por qué estas: `docs/investigacion_assets.md`.
+
+- **`DevTools`** (autoload, `scripts/debug/dev_tools.gd`): en compilaciones de depuración registra monitores
+  `Quincena/…` (saldo, deuda, nómina por pagar, valor, reputación, empleados, puntos por hora, ánimo/estrés/energía
+  medios, día). Se ven en el editor en Depurador → Monitores mientras el juego corre. Un monitor nuevo se agrega en
+  `get_monitor_sources()`. Los quita en `_exit_tree`: si quedan registrados, Godot se cae al cerrar (signal 11).
+- **Panku Console 1.7.9** (`addons/panku_console/`, MIT, autoload `Panku`): consola en el juego con la tecla de la
+  izquierda del 1. Los comandos propios están en `DevCommands` (`scripts/debug/dev_commands.gd`) con el nombre `qo`:
+  `qo.help()`, `qo.add_money(50000)`, `qo.skip_days(3)`, `qo.skip_hours(5)`, `qo.set_mood(20)`, `qo.set_stress(90)`,
+  `qo.set_energy(10)`. Cada comando usa las funciones públicas de los sistemas; su texto de ayuda es una constante
+  `_HELP_<función>`. No se modifica el código del addon.
+- En una exportación release `DevTools` no hace nada y `panku/disable_on_release=true` quita el autoload `Panku`.
+  Al crear el primer preset de exportación, excluir también `addons/panku_console/*` y `scripts/debug/*`.
+
 ## Convenciones de código
 
 - GDScript con tipado estático siempre (parámetros, retornos y variables).
@@ -49,7 +65,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 ## Estructura
 
 - `scenes/` escenas · `scripts/autoload/` sistemas globales · `scripts/office/` cuadrícula y construcción
-- `scripts/characters/` personajes · `scripts/staff/` cargos y nombres · `scripts/projects/` catálogo de contratos · `scripts/ui/` interfaz · `data/` datos de diseño · `assets/` arte · `tests/` pruebas sin ventana
+- `scripts/characters/` personajes · `scripts/staff/` cargos y nombres · `scripts/projects/` catálogo de contratos · `scripts/ui/` interfaz · `data/` datos de diseño · `assets/` arte · `scripts/debug/` herramientas de desarrollo · `addons/` addons de terceros · `tests/` pruebas sin ventana
 - Escena inicial: `scenes/main_menu.tscn`; la partida es `scenes/main.tscn`.
   La interfaz superpuesta es `Hud` (dinero y reloj) más `BuildPanel` (botón Construir y herramientas).
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`, los últimos 200, y en
@@ -61,7 +77,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   (`Staff.hire_directly`, `Projects.create_offer`). `test_all` lo pone en false: las partes empiezan con el CEO solo.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
-- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `Company`, `SaveManager`.
+- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `Company`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
   en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.

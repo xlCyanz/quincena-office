@@ -26,6 +26,8 @@ Projects="*res://scripts/autoload/projects.gd"
 Bank="*res://scripts/autoload/bank.gd"
 Company="*res://scripts/autoload/company.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
+Panku="*res://addons/panku_console/console.tscn"
+DevTools="*res://scripts/debug/dev_tools.gd"
 
 [display]
 
@@ -34,9 +36,17 @@ window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/panku_console/plugin.cfg")
+
+[panku]
+
+disable_on_release=true
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-2d/snap/snap_2d_transforms_to_pixel=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+2d/snap/snap_2d_transforms_to_pixel=true

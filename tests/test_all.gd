@@ -15,7 +15,7 @@ const SUITES: Array[String] = [
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "starting_company",
+	"agenda", "reception", "administration", "starting_company", "dev_tools",
 ]
 ## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
 const AUTOLOADS: Array[String] = [
@@ -75,7 +75,7 @@ func _run_suite(suite: String) -> Vector2i:
 	node.queue_free()
 	# Las escenas que abrió la parte (menú o juego) se cierran; test_all vuelve a ser la actual.
 	for child: Node in get_tree().root.get_children():
-		if child != self and not AUTOLOADS.has(String(child.name)):
+		if child != self and not ProjectSettings.has_setting("autoload/%s" % child.name):
 			child.queue_free()
 	get_tree().current_scene = self
 	await get_tree().process_frame
