@@ -490,6 +490,15 @@ func _roll_arrivals() -> int:
 	return count
 
 
+## Agrega a la bandeja una oferta nueva de ese tamaño (la usa la empresa con la que
+## empieza la partida) y la devuelve.
+func create_offer(size: String) -> Dictionary:
+	var offer: Dictionary = _make_offer(GameClock.get_day_count(), size)
+	offers.append(offer)
+	EventBus.projects_changed.emit()
+	return offer
+
+
 func _make_offer(today: int, forced_size: String = "") -> Dictionary:
 	var size: String = forced_size if not forced_size.is_empty() else _pick_size()
 	var types: Array[String] = ContractCatalog.get_type_ids()

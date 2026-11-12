@@ -17,6 +17,10 @@ const FORMAT_VERSION: int = 1
 ## Carpeta de los archivos de guardado (las pruebas usan otra para no tocar las del jugador).
 var save_dir: String = DEFAULT_SAVE_DIR
 
+## Con true una partida nueva empieza con la empresa de data/starting_company.json
+## (40 empleados); las pruebas lo ponen en false para empezar con el CEO solo.
+var start_with_demo: bool = true
+
 ## Lo pone la escena de juego mientras está abierta: devuelve el estado de la escena
 ## (cámara y CEO). Sin escena abierta no hay autoguardado.
 var scene_state_provider := Callable()
@@ -49,6 +53,8 @@ func new_game() -> void:
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.new_game()
+	if start_with_demo:
+		StartingCompany.apply()
 	Company.finish_load()
 
 

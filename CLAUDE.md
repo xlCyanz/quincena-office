@@ -11,8 +11,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 - Ejecutable en macOS (no está en el PATH): `/Applications/Godot.app/Contents/MacOS/Godot`.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
-  - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32), `test_departments` (33), `test_overtime` (34), `test_agenda` (35), `test_reception` (36) y `test_administration` (37)
+  - Prueba única sin ventana: `Godot --headless --path . res://tests/test_all.tscn` (imprime `RESULTADO: OK`). Corre en orden
+    las partes de `tests/suites/` (una por hito, `test_<nombre>.gd`, más `test_starting_company`); cada parte emite `finished(fallos,
+    comprobaciones)` en vez de cerrar el juego, y `test_all` quita entre partes las conexiones de señales que dejó. Solo algunas:
+    `… res://tests/test_all.tscn -- --only=reception,administration`. Una parte nueva se agrega a `SUITES` en `tests/test_all.gd`.
 
 ## Convenciones de código
 
@@ -53,7 +55,10 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`, los últimos 200, y en
   `Economy.month_totals`, totales por concepto del mes actual y el anterior). Menú Banco (`BankPanel`): saldo, resumen del
   mes con «<»/«>» y movimientos, los nuevos arriba; no pausa. Los botones de la barra miden `Hud.MENU_BUTTON_SIZE`.
-  `SaveManager.new_game()` prepara una partida nueva; la oficina inicial está en `data/starting_office.json`.
+  `SaveManager.new_game()` prepara una partida nueva; la oficina inicial está en `data/starting_office.json` y, con
+  `SaveManager.start_with_demo` (true por defecto), `StartingCompany.apply()` la convierte en la empresa de `data/starting_company.json`:
+  Mediana empresa, local de 22×18, 40 empleados en 6 equipos con líder, 2 gerentes, 2 ejecutivos, apoyo y 7 contratos en curso
+  (`Staff.hire_directly`, `Projects.create_offer`). `test_all` lo pone en false: las partes empiezan con el CEO solo.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
 - Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `Company`, `SaveManager`.
@@ -199,6 +204,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
+- Cada hito agrega su parte en `tests/suites/` y la suma a `test_all`.
 - La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29) y en la 18.3 (fase 4, hitos 30–39).
 
 ## Estado actual

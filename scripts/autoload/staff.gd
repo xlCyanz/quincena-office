@@ -1881,6 +1881,19 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 		employee["name"], describe_employee(employee)]}
 
 
+## Contrata a alguien de ese cargo y nivel sin vacante ni entrevista, con el sueldo de
+## la tabla (lo usa la empresa con la que empieza la partida). Devuelve el empleado, o
+## vacío si el cargo no se puede contratar o no tiene puesto libre.
+func hire_directly(role: String, level: String) -> Dictionary:
+	if not role_problem(role).is_empty() or not get_station_problem(role).is_empty():
+		return {}
+	if not StaffCatalog.has_levels(role):
+		level = StaffCatalog.get_level_ids()[-1]
+	var candidate: Dictionary = _make_candidate({"role": role, "level": level}, GameClock.get_day_count())
+	_hire(candidate, StaffCatalog.get_salary(role, level))
+	return get_employee(candidate["id"])
+
+
 # Primero se van los que ya esperaron sus días; después llegan los nuevos.
 func _process_arrivals(today: int) -> void:
 	var waiting_days: int = int(StaffCatalog.get_hiring("candidate_days"))

@@ -156,6 +156,20 @@ func import_state(state: Dictionary) -> void:
 # Calcula el camino hasta destination y, al final, añade extra_steps (por ejemplo, el
 # paso que lo saca del local por la entrada).
 func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[Vector2i] = []) -> void:
+	# Fuera del local (recién salido por la entrada) primero vuelve a entrar.
+	if not _grid.is_in_lot(get_cell()):
+		_path = [_entrance] as Array[Vector2i]
+		if destination != _entrance:
+			var inside: Array[Vector2i] = _pathfinder.find_path(_entrance, destination)
+			if inside.is_empty():
+				push_warning("%s no encuentra camino de %s a %s" % [display_name, _entrance, destination])
+			else:
+				inside.pop_front()
+				_path.append_array(inside)
+		_path.append_array(extra_steps)
+		_set_activity(new_activity)
+		_update_position()
+		return
 	_path = _pathfinder.find_path(get_cell(), destination)
 	if _path.is_empty() and get_cell() != destination:
 		push_warning("%s no encuentra camino de %s a %s" % [display_name, get_cell(), destination])
