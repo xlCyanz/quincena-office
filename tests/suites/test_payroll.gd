@@ -62,6 +62,11 @@ func _new_game() -> void:
 		_expect(builder.place("simple_desk", Vector2i(x, 0), 2)["ok"], "escritorio en %d" % x)
 		_expect(builder.place("basic_chair", Vector2i(x, 1), 0)["ok"], "silla en %d" % x)
 		_expect(builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "computadora en %d" % x)
+	# 3 escritorios en 9 m² amontonan (caben 2: ambiente −15, hito 45): cuatro cuadros y un
+	# reloj en las paredes lo dejan casi neutro (+1), como era la prueba antes del ambiente.
+	for wall_spot: Array in [[Vector2i(3, 0), 2], [Vector2i(4, 0), 2], [Vector2i(5, 0), 2], [Vector2i(5, 1), 3]]:
+		_expect(builder.place("painting", wall_spot[0], wall_spot[1])["ok"], "cuadro en %s" % wall_spot[0])
+	_expect(builder.place("wall_clock", Vector2i(3, 1), 1)["ok"], "reloj")
 	_notices.clear()
 
 

@@ -219,8 +219,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Comprobación de la fase 3 (`test_phase3`): simula con una política simple (aceptar lo que se pueda, entregar lo terminado, el CEO
   de 8 a 17) un CEO solo 3 meses, el primer equipo con $5,000 a 12 meses durante 6 y una empresa que deja de pagar; imprime un resumen
   por mes. Sirve para ajustar `data/bank.json`, `data/stages.json` y `data/contracts.json`.
-- Sala de servidores (`OfficeState.SERVER_ROOM`, desde Pequeña empresa): funciona con `server_rack` ($3,000) y `air_conditioner` ($800, una
-  casilla de piso hasta los objetos de pared del hito 45). `OfficeState.get_server_room()` / `get_server_capacity()` (racks de la sala
+- Sala de servidores (`OfficeState.SERVER_ROOM`, desde Pequeña empresa): funciona con `server_rack` ($3,000) y `air_conditioner` ($800, objeto
+  de pared desde el hito 45). `OfficeState.get_server_room()` / `get_server_capacity()` (racks de la sala
   que funciona; 1 rack = 1 unidad, los productos usan 1/3/8). Todo mueble con `monthly_cost` (cada rack $100, esté donde esté) se cobra el
   día 1 como «Mantenimiento de servidores» (`Economy.get_monthly_server_cost`, con el descuento del contador, y en su aviso). Builder
   `room_status` dice los racks; Empresa tiene la sección Servidores.
@@ -254,6 +254,14 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   contract_change (`Projects.change_scope`), withhold («Pago retenido» y `Events.scheduled` lo devuelve como «Pago atrasado»), mood_some,
   clean_all. Prevención: contador (sin multa, cobra en 3 días), archivero (multa a la mitad), baterías (sin apagón), personal de limpieza (sin
   oficina sucia), líder con liderazgo ≥60 (sin reunión inútil), Sala de descanso (café ×0.3). Muebles: inodoro, lavamanos, cafetera, baterías y archivero.
+- Ambiente y decoración (`Ambiance`, funciones puras; `ambiance` y adornos en `data/furniture.json`, hito 45): ambiente de una habitación =
+  puntos de adornos × 10 / área − amontonar (caben uno cada 4 m²; −15 con 50 % más escritorios, en proporción antes), redondeado entre −15 y +15; suma a la meta de ánimo de quien tiene
+  su silla ahí (`Staff.get_workplace_room`, `get_ambiance`); la pecera (`stress_relief`) baja 5 la meta de estrés. Objetos de pared
+  (`wall_mounted`: cuadro, reloj y el aire acondicionado): no ocupan casilla; `cell` es la casilla que miran y la pared queda detrás del frente
+  (`FurnitureCatalog.get_wall_edge`); uno por cara (`OfficeState.find_wall_item`); una pared con algo colgado no se vende, ni pasa a puerta, ni
+  la abre el terreno. La alfombra (`walkable`) ocupa casillas pero no tapa el paso: los caminos usan `OfficeState.get_blocking_cells`. Al cargar,
+  un objeto de pared sin pared se cuelga en la cara libre más cercana de su habitación o se quita devolviendo su precio. El modo construcción
+  cuelga en la pared más cercana al ratón y muestra el ambiente; la ficha dice «Trabaja en: … · Ambiente +N».
 - Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
   terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
@@ -317,3 +325,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 42 | Lanzamiento y ciclo de vida | ✅ Completado (lanzar con racks libres; usuarios 30 días crecen, 60 en el pico y 120 caen hasta 10 %; calidad = nivel de quien diseñó + errores, ingreso 50–150 %; errores en producción −0.5 %/día por error; actualización del 20 % de los puntos vuelve al pico; retirar libera racks; valor +60 días de ingreso; Mediana empresa pide 1 lanzado) |
 | 43 | Eventos | ✅ Completado (sorteo cada hora: uno cada 5/4/3/2/1.5 días según la etapa, uno a la vez, por condiciones y peso; tarjeta plegable a la derecha con 2 minutos reales que se detienen en pausa y construcción, al acabarse elige al azar; efectos de dinero, ánimo, energía, estrés, reputación y oferta; 4 eventos de prueba, la lista completa en el hito 44) |
 | 44 | Lista de eventos | ✅ Completado (los 16 de 10.2; multa 10 % de los ingresos del mes pasado, mínimo $500, la mitad con archivero y nada con contador; pago atrasado retiene 30 % de una entrega de la última semana, 15 días o 3 con contador; baterías anulan el apagón; oficina sucia solo sin limpieza; reunión inútil con líder bajo 60; inodoro, lavamanos y cafetera nuevos para Baño y Sala de descanso; los buenos pesan más) |
+| 45 | Ambiente y decoración | ✅ Completado (planta grande, cuadro, reloj, lámpara, alfombra que se pisa y pecera que baja el estrés; puntos × 10 / área − amontonar según el porcentaje de escritorios de más que 1 cada 4 m² (−15 con 50 % más), tope ±15 a la meta de ánimo; objetos de pared en una cara de pared con casilla y lado; el aire acondicionado pasa a la pared y las partidas viejas lo cuelgan solas) |

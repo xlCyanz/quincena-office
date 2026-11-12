@@ -435,7 +435,8 @@ func _build_servers(quote: bool) -> int:
 	_ok(_builder.buy_land(Builder.SIDE_NORTH, 2, 2, 3), "terreno de la Sala de servidores")
 	_ok(_builder.apply(walls), "paredes de la Sala de servidores")
 	_ok(_builder.mark_room(OfficeState.SERVER_ROOM, Vector2i(3, -6)), "Sala de servidores")
-	_ok(_builder.place("air_conditioner", Vector2i(4, -6), 0), "aire acondicionado")
+	# Colgado en la pared del contorno norte (hito 45).
+	_ok(_builder.place("air_conditioner", Vector2i(4, -6), 2), "aire acondicionado")
 	_ok(_builder.place("server_rack", Vector2i(4, -5), 0), "rack")
 	return cost
 

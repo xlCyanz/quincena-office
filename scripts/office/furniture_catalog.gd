@@ -11,6 +11,7 @@ const FRONT_DIRECTIONS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vect
 
 static var _items: Dictionary = {}
 static var _resale_ratio: float = 0.0
+static var _ambiance: Dictionary = {}
 
 
 ## Datos de un mueble: name, price, size (Vector2i), shape, height, color (Color),
@@ -58,10 +59,10 @@ static func get_front(rotation: int) -> Vector2i:
 
 ## Casillas que ocupa un mueble colocado con su casilla de anclaje y su rotación.
 ## Con rotación 1 o 3 el mueble gira un cuarto de vuelta y se cambian ancho y fondo.
-## Las computadoras no ocupan casillas propias.
+## Las computadoras y los objetos de pared no ocupan casillas propias.
 static func get_footprint(id: String, anchor: Vector2i, rotation: int) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	if bool(get_item(id).get("on_desk", false)):
+	if bool(get_item(id).get("on_desk", false)) or is_wall_mounted(id):
 		return cells
 	var size: Vector2i = get_item(id).get("size", Vector2i.ONE)
 	if rotation % 2 == 1:
@@ -78,6 +79,7 @@ static func _load() -> void:
 		push_error("No se pudo leer %s" % CATALOG_PATH)
 		return
 	_resale_ratio = float(parsed.get("resale_ratio", 0.0))
+	_ambiance = parsed.get("ambiance", {})
 	var items: Dictionary = parsed.get("items", {})
 	for id: String in items:
 		var raw: Dictionary = items[id]
@@ -100,4 +102,41 @@ static func _load() -> void:
 			"server_rack": bool(raw.get("server_rack", false)),
 			"air_conditioner": bool(raw.get("air_conditioner", false)),
 			"monthly_cost": int(raw.get("monthly_cost", 0)),
+			"wall_mounted": bool(raw.get("wall_mounted", false)),
+			"walkable": bool(raw.get("walkable", false)),
+			"ambiance": float(raw.get("ambiance", 0.0)),
+			"stress_relief": int(raw.get("stress_relief", 0)),
 		}
+
+
+## Indica si se cuelga en una pared (hito 45): no ocupa casilla. Su casilla es la que
+## mira (la de la habitación donde cuenta) y la pared queda detrás de su frente.
+static func is_wall_mounted(id: String) -> bool:
+	return bool(get_item(id).get("wall_mounted", false))
+
+
+## Borde con pared donde cuelga un objeto de pared: el de su casilla detrás del frente.
+static func get_wall_edge(cell: Vector2i, rotation: int) -> Vector3i:
+	return GridEdge.between(cell, cell - get_front(rotation))
+
+
+## Indica si estorba el paso (la alfombra se pisa: ocupa su casilla pero no tapa el paso).
+static func blocks_passage(id: String) -> bool:
+	return not bool(get_item(id).get("walkable", false))
+
+
+## Puntos de ambiente que da un adorno (0 si no es adorno).
+static func get_ambiance_points(id: String) -> float:
+	return float(get_item(id).get("ambiance", 0.0))
+
+
+## Cuánto baja la meta de estrés de quienes trabajan en su habitación (la pecera).
+static func get_stress_relief(id: String) -> int:
+	return int(get_item(id).get("stress_relief", 0))
+
+
+## Valor de la sección ambiance de data/furniture.json (área por punto, amontonar, topes).
+static func get_ambiance_config(key: String) -> float:
+	if _items.is_empty():
+		_load()
+	return float(_ambiance.get(key, 0.0))

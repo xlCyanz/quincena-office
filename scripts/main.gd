@@ -158,7 +158,7 @@ func _rebuild_office() -> void:
 	_office_grid.set_site(OfficeState.site_rect)
 	_office_grid.build(OfficeState.lot, OfficeState.floors, OfficeState.edges, OfficeState.furniture,
 		OfficeState.rooms)
-	pathfinder.build(OfficeState.lot, OfficeState.get_furniture_cells(), OfficeState.edges)
+	pathfinder.build(OfficeState.lot, OfficeState.get_blocking_cells(), OfficeState.edges)
 
 
 func _spawn_ceo() -> void:

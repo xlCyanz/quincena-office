@@ -440,7 +440,7 @@ func get_waiting_seats() -> Array[Vector2i]:
 ## libres de la Recepción (sin muebles, sin la entrada). Vacío si no hay Recepción.
 func get_waiting_spots() -> Array[Vector2i]:
 	var spots: Array[Vector2i] = get_waiting_seats()
-	var used: Array[Vector2i] = OfficeState.get_furniture_cells()
+	var used: Array[Vector2i] = OfficeState.get_blocking_cells()
 	for cell: Vector2i in _reception_cells():
 		if not used.has(cell) and cell != OfficeState.entrance:
 			spots.append(cell)

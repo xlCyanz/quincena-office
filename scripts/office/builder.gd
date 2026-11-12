@@ -63,6 +63,8 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 	for change: Dictionary in effective:
 		if change.has("edge") and not String(change["kind"]).is_empty() and _splits_furniture(change["edge"]):
 			return {"ok": false, "cost": cost, "message": "No se puede poner en medio de un mueble."}
+		if change.has("edge") and change["kind"] != ConstructionCatalog.WALL and not OfficeState.wall_items_on(change["edge"]).is_empty():
+			return {"ok": false, "cost": cost, "message": "Hay algo colgado en esa pared: véndelo primero."}
 	if not _changes_passage(effective):
 		return {"ok": true, "cost": cost, "message": _describe(effective, cost)}
 	var new_edges: Dictionary[Vector3i, String] = _edges_with(effective)
@@ -185,7 +187,7 @@ func _keeps_ceo_access(edges: Dictionary[Vector3i, String], furniture: Array[Dic
 	if seat.is_empty():
 		return true
 	var pathfinder := OfficePathfinder.new()
-	pathfinder.build(OfficeState.lot, OfficeState.cells_of_furniture(furniture), edges)
+	pathfinder.build(OfficeState.lot, OfficeState.blocking_cells_of(furniture), edges)
 	return not pathfinder.find_path(OfficeState.entrance, seat["cell"]).is_empty()
 
 
@@ -220,7 +222,7 @@ func quote_place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate.append(item)
 	var cost: int = FurnitureCatalog.get_price(id)
-	var problem: String = _placement_problem(candidate, item)
+	var problem: String = _wall_problem(item) if bool(info["wall_mounted"]) else _placement_problem(candidate, item)
 	if problem.is_empty() and not Economy.can_afford(cost):
 		problem = "No alcanza el dinero: cuesta $%d." % cost
 	if not problem.is_empty():
@@ -230,6 +232,37 @@ func quote_place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
 
 func place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
 	return _commit(quote_place(id, anchor, rotation))
+
+
+## Vender el objeto colgado en una cara de pared (su casilla y la rotación que deja la
+## pared detrás).
+func quote_sell_wall_item(cell: Vector2i, rotation: int) -> Dictionary:
+	var index: int = OfficeState.find_wall_item(cell, rotation)
+	if index < 0:
+		return _fail(0, "Ahí no hay nada colgado.")
+	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
+	var item: Dictionary = candidate[index]
+	candidate.remove_at(index)
+	var resale: int = FurnitureCatalog.get_resale(item["id"])
+	var item_name: String = FurnitureCatalog.get_item(item["id"])["name"]
+	return {"ok": true, "cost": -resale, "message": "Venta de %s: +$%d" % [item_name, resale], "furniture": candidate}
+
+
+func sell_wall_item(cell: Vector2i, rotation: int) -> Dictionary:
+	return _commit(quote_sell_wall_item(cell, rotation))
+
+
+# Un objeto de pared va en una cara de pared libre dentro del local: la pared queda
+# detrás de su frente (no en una puerta) y cada cara lleva un solo objeto.
+func _wall_problem(item: Dictionary) -> String:
+	if not OfficeState.lot.has_point(item["cell"]):
+		return "Se cuelga en una pared por dentro del local."
+	var edge: Vector3i = FurnitureCatalog.get_wall_edge(item["cell"], item["rotation"])
+	if OfficeState.get_edge(edge) != ConstructionCatalog.WALL:
+		return "Va colgado en una pared: acércalo a una."
+	if OfficeState.find_wall_item(item["cell"], item["rotation"]) >= 0:
+		return "En esa pared ya hay algo colgado."
+	return ""
 
 
 ## Girar un cuarto de vuelta el mueble que ocupa cell. Es gratis, pero el mueble girado
@@ -257,11 +290,15 @@ func rotate(cell: Vector2i) -> Dictionary:
 
 
 ## Vender lo que hay en cell: si es un escritorio con computadora, primero la
-## computadora; si no, el mueble. La silla del CEO no se vende, ni nada del puesto de
-## un empleado.
+## computadora; si no, el mueble (sin mueble, lo colgado en una pared de la casilla).
+## La silla del CEO no se vende, ni nada del puesto de un empleado.
 func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
 	var index: int = OfficeState.find_furniture_at(cell)
 	if index < 0:
+		# Sin mueble en el piso, lo que cuelga en una pared de esa casilla.
+		for rotation: int in range(4):
+			if OfficeState.find_wall_item(cell, rotation) >= 0:
+				return quote_sell_wall_item(cell, rotation)
 		return _fail(0, "Ahí no hay ningún mueble.")
 	if OfficeState.furniture[index]["assigned_to"] == "ceo":
 		return _fail(0, "La silla del CEO no se puede vender.")
@@ -370,9 +407,9 @@ func _placement_problem(candidate: Array[Dictionary], item: Dictionary) -> Strin
 func _access_problem(candidate: Array[Dictionary], item: Dictionary) -> String:
 	var lot: Lot = OfficeState.lot
 	var before := OfficePathfinder.new()
-	before.build(lot, OfficeState.get_furniture_cells(), OfficeState.edges)
+	before.build(lot, OfficeState.get_blocking_cells(), OfficeState.edges)
 	var after := OfficePathfinder.new()
-	var blocked_after: Array[Vector2i] = OfficeState.cells_of_furniture(candidate)
+	var blocked_after: Array[Vector2i] = OfficeState.blocking_cells_of(candidate)
 	after.build(lot, blocked_after, OfficeState.edges)
 	var reachable_after: Dictionary[Vector2i, bool] = after.get_reachable(OfficeState.entrance)
 	for cell: Vector2i in before.get_reachable(OfficeState.entrance):
@@ -475,6 +512,10 @@ func quote_land(side: String, width: int, depth: int, offset: int) -> Dictionary
 		return result
 	var new_lot: Lot = OfficeState.lot.with_cells(new_cells)
 	var new_edges: Dictionary[Vector3i, String] = _edges_with_land(new_lot)
+	for edge: Vector3i in OfficeState.edges:
+		if not new_edges.has(edge) and not OfficeState.wall_items_on(edge).is_empty():
+			result["message"] = "Hay algo colgado en la pared que se abriría: véndelo primero."
+			return result
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(new_lot, new_edges)
 	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, OfficeState.entrance, OfficeState.furniture)
 	var lost: Array[String] = _lost_rooms(rooms)
@@ -618,10 +659,11 @@ func _room_status(room: Dictionary, ok_if_working: bool) -> Dictionary:
 	if room["type"] == OfficeState.SERVER_ROOM:
 		var count: int = OfficeState.count_racks(room)
 		racks = " %d %s." % [count, "rack" if count == 1 else "racks"]
+	var ambiance: String = " %s." % Ambiance.describe(room, OfficeState.furniture)
 	if problems.is_empty():
-		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona.%s" % [type_name, cells.size(), racks]}
+		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona.%s%s" % [type_name, cells.size(), racks, ambiance]}
 	return {"ok": false, "cost": 0,
-		"message": "%s (%d m²): no funciona, %s." % [type_name, cells.size(), ", ".join(problems)]}
+		"message": "%s (%d m²): no funciona, %s.%s" % [type_name, cells.size(), ", ".join(problems), ambiance]}
 
 
 func _commit_rooms(result: Dictionary) -> Dictionary:

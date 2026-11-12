@@ -415,6 +415,10 @@ func _refresh() -> void:
 	var details: Array[String] = ["Habilidades: %s" % Staff.describe_skills(employee)]
 	var known: String = Staff.describe_known_traits(employee)
 	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
+	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
+	if not room.is_empty():
+		details.append("Trabaja en: %s · %s" % [RoomCatalog.get_display_name(room["type"]),
+			Ambiance.describe(room, OfficeState.furniture)])
 	_details.text = "\n".join(details)
 	_refresh_raise(employee)
 	_refresh_promotion(employee)

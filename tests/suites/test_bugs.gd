@@ -127,6 +127,14 @@ func _add_staff(roles: Array[String]) -> Array[int]:
 		ids.append(employee_id)
 	for employee_id: int in ids:
 		_expect(Staff.has_working_station(Staff.get_employee(employee_id)), "puesto que funciona para %d" % employee_id)
+	# 3 escritorios en 9 m² amontonan (caben 2: ambiente −15, hito 45): cuatro cuadros y un
+	# reloj en las paredes (14 puntos × 10 / 9 = 15.6) lo dejan casi neutro (+1), como era la
+	# prueba antes del ambiente.
+	for wall_spot: Array in [[Vector2i(3, 0), 2], [Vector2i(4, 0), 2], [Vector2i(5, 0), 2], [Vector2i(5, 1), 3]]:
+		_expect(builder.place("painting", wall_spot[0], wall_spot[1])["ok"], "cuadro en %s" % wall_spot[0])
+	_expect(builder.place("wall_clock", Vector2i(3, 1), 1)["ok"], "reloj")
+	_expect(Ambiance.get_value(OfficeState.rooms[OfficeState.get_room_index_at(Vector2i(4, 1))], OfficeState.furniture) == 1,
+		"ambiente casi neutro")
 	return ids
 
 

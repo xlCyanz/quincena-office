@@ -58,6 +58,10 @@ func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
 	Projects.set_seed(SEED)
+	# La primera oferta salió antes de fijar la semilla (con el azar que dejó la parte
+	# anterior): se cambia por una sorteada con ella para que la simulación dé siempre lo mismo.
+	Projects.offers.clear()
+	Projects.create_offer("small")
 	_late_installments = 0
 	_emergencies = 0
 	_game_over_day = 0

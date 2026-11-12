@@ -117,6 +117,44 @@ func cells_of_furniture(items: Array[Dictionary]) -> Array[Vector2i]:
 	return cells
 
 
+## Casillas que tapan el paso: las de los muebles menos las de los que se pisan (la
+## alfombra, hito 45).
+func get_blocking_cells() -> Array[Vector2i]:
+	return blocking_cells_of(furniture)
+
+
+func blocking_cells_of(items: Array[Dictionary]) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for item: Dictionary in items:
+		if FurnitureCatalog.blocks_passage(item["id"]):
+			cells.append_array(FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]))
+	return cells
+
+
+## Índice del objeto de pared colgado en esa cara (su casilla y la rotación que deja la
+## pared detrás), o -1.
+func find_wall_item(cell: Vector2i, rotation: int) -> int:
+	return find_wall_item_in(furniture, cell, rotation)
+
+
+static func find_wall_item_in(items: Array[Dictionary], cell: Vector2i, rotation: int) -> int:
+	for index: int in range(items.size()):
+		var item: Dictionary = items[index]
+		if FurnitureCatalog.is_wall_mounted(item["id"]) and item["cell"] == cell and posmod(int(item["rotation"]), 4) == posmod(rotation, 4):
+			return index
+	return -1
+
+
+## Índices de los objetos colgados en un borde, de cualquiera de sus dos lados.
+func wall_items_on(edge: Vector3i) -> Array[int]:
+	var found: Array[int] = []
+	for index: int in range(furniture.size()):
+		var item: Dictionary = furniture[index]
+		if FurnitureCatalog.is_wall_mounted(item["id"]) and FurnitureCatalog.get_wall_edge(item["cell"], item["rotation"]) == edge:
+			found.append(index)
+	return found
+
+
 ## Índice en furniture del mueble que ocupa una casilla, o -1 si está libre.
 func find_furniture_at(cell: Vector2i) -> int:
 	for index: int in range(furniture.size()):
@@ -278,7 +316,7 @@ func get_dirtiest_room() -> int:
 ## la entrada), o la primera si no hay.
 func get_room_spot(room_index: int) -> Vector2i:
 	var cells: Array[Vector2i] = rooms[room_index]["cells"]
-	var taken: Array[Vector2i] = get_furniture_cells()
+	var taken: Array[Vector2i] = get_blocking_cells()
 	for cell: Vector2i in cells:
 		if not taken.has(cell) and cell != entrance:
 			return cell
@@ -348,6 +386,52 @@ func import_state(state: Dictionary) -> void:
 	for item: Dictionary in state.get("furniture", []):
 		furniture.append(_furniture_from_data(item))
 	entrance = _to_cell(state.get("entrance", [0, 0]))
+	_hang_wall_items()
+
+
+# Antes del hito 45 el aire acondicionado ocupaba una casilla de piso: cada objeto de
+# pared que no está en una cara de pared libre se cuelga en la más cercana de su
+# habitación (o de su casilla). Si no hay ninguna, se quita y se devuelve lo pagado.
+func _hang_wall_items() -> void:
+	var removed: Array[Dictionary] = []
+	var placed: Array[Dictionary] = []
+	for item: Dictionary in furniture.duplicate():
+		if not FurnitureCatalog.is_wall_mounted(item["id"]):
+			continue
+		var cell: Vector2i = item["cell"]
+		var slot: Array = _free_wall_slot(cell, int(item["rotation"]), placed)
+		if slot.is_empty():
+			furniture.erase(item)
+			removed.append(item)
+			continue
+		item["cell"] = slot[0]
+		item["rotation"] = slot[1]
+		placed.append(item)
+	for item: Dictionary in removed:
+		var price: int = FurnitureCatalog.get_price(item["id"])
+		# Economy se importa después: el reembolso va al terminar de cargar.
+		Economy.earn.call_deferred(price, Builder.CONCEPT_FURNITURE)
+		EventBus.notice.emit.call_deferred("%s quitado: no había pared donde colgarlo. Se devolvieron $%d." % [
+			FurnitureCatalog.get_item(item["id"])["name"], price])
+
+
+# [casilla, rotación] de la cara de pared libre más cercana para un objeto de pared, o [].
+func _free_wall_slot(cell: Vector2i, rotation: int, placed: Array[Dictionary]) -> Array:
+	var room_index: int = get_room_index_at(cell)
+	var cells: Array[Vector2i] = [cell]
+	if room_index >= 0:
+		cells = (rooms[room_index]["cells"] as Array[Vector2i]).duplicate()
+		cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return (a - cell).length_squared() < (b - cell).length_squared())
+	for candidate: Vector2i in cells:
+		var rotations: Array[int] = [0, 1, 2, 3]
+		if candidate == cell:
+			rotations.push_front(rotation)
+		for side: int in rotations:
+			if get_edge(FurnitureCatalog.get_wall_edge(candidate, side)) == ConstructionCatalog.WALL \
+					and find_wall_item_in(placed, candidate, side) < 0:
+				return [candidate, posmod(side, 4)]
+	return []
 
 
 func _furniture_from_data(item: Dictionary) -> Dictionary:

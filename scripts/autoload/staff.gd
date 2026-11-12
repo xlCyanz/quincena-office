@@ -859,6 +859,7 @@ func get_mood_target(employee: Dictionary) -> int:
 		target += float(StaffCatalog.get_overtime("night_mood"))
 	if works_in_dirty_room(employee_key(employee["id"])):
 		target += float(StaffCatalog.get_cleaning("dirty_mood"))
+	target += get_ambiance(employee_key(employee["id"]))
 	return clampi(roundi(target), 0, 100)
 
 
@@ -875,6 +876,9 @@ func get_stress_target(employee: Dictionary) -> int:
 	if not team.is_empty() and not get_manager_of(get_team_leader(team)).is_empty():
 		target += float(StaffCatalog.get_management("manager_stress"))
 	target += float(StaffCatalog.get_overtime("stress_per_hour")) * get_schedule(employee).overtime
+	var room: Dictionary = get_workplace_room(employee_key(employee["id"]))
+	if not room.is_empty():
+		target -= int(Ambiance.get_detail(room, OfficeState.furniture)["stress_relief"])
 	return clampi(roundi(target), 0, 100)
 
 
@@ -1789,6 +1793,21 @@ func get_cleaning_room(employee: Dictionary) -> int:
 
 
 ## Indica si la habitación del puesto de alguien está sucia.
+## Habitación donde está la silla de alguien, o vacío.
+func get_workplace_room(key: String) -> Dictionary:
+	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
+	if seat.is_empty():
+		return {}
+	var room_index: int = OfficeState.get_room_index_at(seat["cell"])
+	return OfficeState.rooms[room_index] if room_index >= 0 else {}
+
+
+## Ambiente de la habitación donde trabaja alguien (0 sin puesto; hito 45).
+func get_ambiance(key: String) -> int:
+	var room: Dictionary = get_workplace_room(key)
+	return 0 if room.is_empty() else Ambiance.get_value(room, OfficeState.furniture)
+
+
 func works_in_dirty_room(key: String) -> bool:
 	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
 	if seat.is_empty():

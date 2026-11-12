@@ -21,6 +21,15 @@ const POT_COLOR := Color("8a5a3c")
 const POT_SIZE: float = 0.4
 ## Margen del asiento de la silla respecto a su casilla, en casillas.
 const SEAT_INSET: float = 0.15
+## Objetos de pared (hito 45): ancho a lo largo de la pared y fondo, en casillas, y a qué
+## altura de la pared empiezan, en píxeles.
+const WALL_ITEM_WIDTH: float = 0.5
+const WALL_ITEM_DEPTH: float = 0.06
+const WALL_ITEM_BASE_PX: float = 4.0
+## Lámpara de pie: grosor del poste (en casillas) y radio de la pantalla (en píxeles).
+const LAMP_POLE: float = 0.08
+const LAMP_SHADE_RADIUS: float = 9.0
+const LAMP_POLE_COLOR := Color("5a5148")
 
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
@@ -47,6 +56,9 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 	computer_id = item.get("computer", "")
 	_info = FurnitureCatalog.get_item(item_id)
 	footprint = FurnitureCatalog.get_footprint(item_id, item["cell"], rotation_index)
+	if FurnitureCatalog.is_wall_mounted(item_id):
+		_setup_wall_item(item["cell"])
+		return
 	_low = Vector2(footprint[0])
 	_high = Vector2(footprint[0])
 	for cell: Vector2i in footprint:
@@ -58,10 +70,26 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 		_low += Vector2(SEAT_INSET, SEAT_INSET)
 		_high -= Vector2(SEAT_INSET, SEAT_INSET)
 	var sort_point: Vector2 = (_low + _high) / 2.0
+	if String(_info.get("shape", "")) == "rug":
+		# Se pisa: se dibuja antes que quien camina encima.
+		sort_point = _low
 	if part == PART_BACKREST:
 		var back: Array[Vector2] = _strip(-Vector2(FurnitureCatalog.get_front(rotation_index)), BACKREST_DEPTH)
 		sort_point = (back[0] + back[1]) / 2.0
 	position = grid.grid_to_world(sort_point) - Vector2(0.0, SORT_BIAS_PX)
+	queue_redraw()
+
+
+# Un objeto de pared es una placa delgada pegada a la cara de la pared, del lado de su
+# casilla (la pared queda detrás de su frente).
+func _setup_wall_item(cell: Vector2i) -> void:
+	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
+	var center: Vector2 = Vector2(cell) - front * 0.5 + front * (EdgePieceView.THICKNESS / 2.0 + WALL_ITEM_DEPTH / 2.0)
+	var across := Vector2(absf(front.y), absf(front.x))
+	var half: Vector2 = across * (WALL_ITEM_WIDTH / 2.0) + Vector2(absf(front.x), absf(front.y)) * (WALL_ITEM_DEPTH / 2.0)
+	_low = center - half
+	_high = center + half
+	position = _grid.grid_to_world(center + front * 0.1)
 	queue_redraw()
 
 
@@ -74,6 +102,9 @@ func _draw() -> void:
 	var height: float = _info.get("height", 16.0)
 	var color: Color = _info.get("color", Color.WHITE)
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
+	if FurnitureCatalog.is_wall_mounted(item_id):
+		_draw_box_raised(_low, _high, WALL_ITEM_BASE_PX, height, color)
+		return
 	match String(_info.get("shape", "desk")):
 		"chair":
 			if part == PART_BACKREST:
@@ -82,6 +113,13 @@ func _draw() -> void:
 				_draw_box_raised(back[0], back[1], height, BACKREST_HEIGHT_PX, color.darkened(0.15))
 			else:
 				IsoBox.draw(self, _corners(_low, _high), height, color)
+		"rug":
+			IsoBox.draw(self, _corners(_low + Vector2(0.1, 0.1), _high - Vector2(0.1, 0.1)), height, color)
+		"lamp":
+			var middle: Vector2 = (_low + _high) / 2.0
+			var pole := Vector2(LAMP_POLE, LAMP_POLE) / 2.0
+			IsoBox.draw(self, _corners(middle - pole, middle + pole), height, LAMP_POLE_COLOR)
+			draw_circle(_local(middle) - Vector2(0.0, height), LAMP_SHADE_RADIUS, color)
 		"plant":
 			var center: Vector2 = (_low + _high) / 2.0
 			var half := Vector2(POT_SIZE, POT_SIZE) / 2.0

@@ -192,6 +192,23 @@ func _update_preview(announce: bool = true) -> void:
 	if tool == TOOL_LAND:
 		quote = builder.quote_land(_land["side"], _land["width"], _land["depth"], _land["offset"])
 		_preview_cells = quote["cells"]
+	elif _is_furniture_tool() and bool(info["wall_mounted"]):
+		# Objeto de pared: va en la pared más cercana al ratón, del lado donde está el ratón.
+		var slot: Array = _wall_slot()
+		var wall_cell: Vector2i = slot[0]
+		var wall_rotation: int = slot[1]
+		_preview_cells = [wall_cell]
+		_preview_edges = [FurnitureCatalog.get_wall_edge(wall_cell, wall_rotation)]
+		quote = builder.quote_place(tool, wall_cell, wall_rotation)
+		_apply_preview = func() -> Dictionary: return builder.place(tool, wall_cell, wall_rotation)
+	elif tool == TOOL_SELL and _wall_item_under_pointer() >= 0:
+		var hung: Dictionary = OfficeState.furniture[_wall_item_under_pointer()]
+		var hung_cell: Vector2i = hung["cell"]
+		var hung_rotation: int = hung["rotation"]
+		_preview_cells = [hung_cell]
+		_preview_edges = [FurnitureCatalog.get_wall_edge(hung_cell, hung_rotation)]
+		quote = builder.quote_sell_wall_item(hung_cell, hung_rotation)
+		_apply_preview = func() -> Dictionary: return builder.sell_wall_item(hung_cell, hung_rotation)
 	elif _is_furniture_tool():
 		var placement_rotation: int = _placement_rotation
 		_preview_cells = FurnitureCatalog.get_footprint(tool, cell, placement_rotation)
@@ -239,6 +256,27 @@ func _update_preview(announce: bool = true) -> void:
 		if announce:
 			status_changed.emit(quote["message"])
 	queue_redraw()
+
+
+# [casilla, rotación] de la cara de pared más cercana al ratón: el borde más cercano y,
+# de sus dos casillas, la del lado del ratón (la pared queda detrás del frente).
+func _wall_slot() -> Array:
+	var edge: Vector3i = GridEdge.nearest(_pointer)
+	var cells: Array[Vector2i] = GridEdge.get_cells(edge)
+	var cell: Vector2i = cells[0]
+	if (Vector2(cells[1]) - _pointer).length_squared() < (Vector2(cells[0]) - _pointer).length_squared():
+		cell = cells[1]
+	var other: Vector2i = cells[1] if cell == cells[0] else cells[0]
+	return [cell, FurnitureCatalog.FRONT_DIRECTIONS.find(cell - other)]
+
+
+# Objeto colgado en la cara de pared junto al ratón (índice en furniture), o -1.
+func _wall_item_under_pointer() -> int:
+	var edge: Vector3i = GridEdge.nearest(_pointer)
+	if GridEdge.distance_to(edge, _pointer) > SELL_EDGE_DISTANCE * 2.0:
+		return -1
+	var slot: Array = _wall_slot()
+	return OfficeState.find_wall_item(slot[0], slot[1])
 
 
 # Vender elige el mueble de la casilla salvo que el ratón esté junto a una pared o puerta.
@@ -348,6 +386,10 @@ func _draw_room_labels() -> void:
 			[RoomCatalog.get_display_name(room["type"]), LABEL_COLOR],
 			["Funciona" if working else "No funciona", LABEL_OK_COLOR if working else LABEL_BAD_COLOR],
 		]
+		var ambiance: int = Ambiance.get_value(room, OfficeState.furniture)
+		if ambiance != 0:
+			lines.append([Ambiance.describe(room, OfficeState.furniture).split(" (")[0],
+				LABEL_OK_COLOR if ambiance > 0 else LABEL_BAD_COLOR])
 		# Escala inversa al zoom de la cámara, para que el texto no crezca ni se pixele.
 		draw_set_transform(center, 0.0, Vector2.ONE / _label_zoom)
 		var text_position := Vector2(-LABEL_WIDTH / 2.0, 0.0)
