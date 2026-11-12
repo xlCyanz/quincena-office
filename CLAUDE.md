@@ -77,7 +77,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`Staff.hire_directly`, `Projects.create_offer`). `test_starting_company` y `test_dev_tools` lo ponen en true un momento.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
-- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Bank`, `Company`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
+- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
   en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
@@ -224,6 +224,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   que funciona; 1 rack = 1 unidad, los productos usan 1/3/8). Todo mueble con `monthly_cost` (cada rack $100, esté donde esté) se cobra el
   día 1 como «Mantenimiento de servidores» (`Economy.get_monthly_server_cost`, con el descuento del contador, y en su aviso). Builder
   `room_status` dice los racks; Empresa tiene la sección Servidores.
+- Productos (`Products`, `ProductCatalog`, `data/products.json`; desde Pequeña empresa con una Sala de servidores que funcione): tipos App móvil,
+  Software en la nube y Videojuego (reparto de puntos por fase) y tamaños 1,500/5,000/15,000 puntos (racks 1/3/8 e ingreso al lanzarlo, hito 42).
+  Un producto es como un contrato sin cliente ni plazo (`points`, `progress`, errores con `Production.handle_bugs`/`note_workers`, `team_id`);
+  comparte el tope con los contratos (`Projects.get_project_count`, `limit_problem`) y un equipo lleva un proyecto a la vez
+  (`Projects.first_free_team`, `release_team` en los dos lados). Terminado avisa y queda en desarrollo hasta el lanzamiento; abandonar lo
+  quita sin costo. Para el ánimo cuenta como trabajo (`Staff._contract_of`). Proyectos tiene las pestañas Contratos y Productos
+  (`set_tab`); Horarios ofrece los productos en la lista de cada equipo (opciones con metadata, no ids: `add_item` con −1 pone uno automático).
 - Comprobación de la fase 4 (`test_phase4`): desde el CEO solo, una política de jugador construye por pasos (puestos, Recepción,
   terreno al este, oficinas únicas y Cuarto de limpieza al norte, más terreno), contrata por vacantes una plantilla (4 equipos de
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
@@ -283,3 +290,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 38 | Competencia por empleados | ✅ Completado (SemiSenior, Senior y dirección; 1 %/día Senior, ×3 mal pagado, ×0.3 bien pagado, leal ×0.25, ambicioso ×2; oferta +15–30 % con 5 días; igualar retiene, «Dejar ir» o el plazo lo sacan) |
 | 39 | Comprobación de la fase | ✅ Completado (CEO solo a Mediana empresa en ~13 meses sin préstamos ni quiebra; medianos pagan $9,000–16,500 para que un equipo de 8 con líder deje margen; un ejecutivo en Desarrollo sube los ingresos ~75 % frente al CEO con 4 departamentos; partida nueva otra vez con el CEO solo) |
 | 40 | Sala de servidores | ✅ Completado (rack $3,000 y aire acondicionado $800 de piso; funciona con los dos; capacidad = racks de la sala; $100/mes por rack el día 1 aparte del local, −10 % con contador; sección Servidores en Empresa) |
+| 41 | Desarrollo de productos | ✅ Completado (App móvil, Software en la nube y Videojuego en 3 tamaños; desde Pequeña empresa con Sala de servidores que funcione, los racks se piden al lanzar en el hito 42; comparte el tope y los equipos con los contratos; pestaña Productos en Proyectos; abandonar con confirmación) |

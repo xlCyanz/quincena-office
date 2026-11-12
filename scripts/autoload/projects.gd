@@ -96,9 +96,25 @@ func set_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
 
 
-## Cuántos contratos se pueden tener en curso: uno por equipo con miembros y uno del CEO.
+## Cuántos proyectos (contratos y productos en desarrollo, hito 41) se pueden tener en
+## curso: uno por equipo con miembros y uno del CEO.
 func get_contract_limit() -> int:
 	return get_team_count() + 1
+
+
+## Proyectos en curso: contratos más productos en desarrollo (comparten el tope).
+func get_project_count() -> int:
+	return contracts.size() + Products.get_development_count()
+
+
+## Por qué no se puede empezar otro proyecto ("" si se puede).
+func limit_problem() -> String:
+	var count: int = get_project_count()
+	var limit: int = get_contract_limit()
+	if count < limit:
+		return ""
+	return "Ya tienes %d %s en curso y el tope es %d: uno por equipo con miembros más el del CEO." % [
+		count, "proyecto" if count == 1 else "proyectos", limit]
 
 
 ## Equipos de la empresa que tienen al menos un miembro.
@@ -132,10 +148,9 @@ func accept_problem(offer_id: int) -> String:
 	var offer: Dictionary = get_offer(offer_id)
 	if offer.is_empty():
 		return "Esa oferta ya no está."
-	var limit: int = get_contract_limit()
-	if contracts.size() >= limit:
-		return "Ya tienes %d %s en curso y el tope es %d: uno por equipo con miembros más el del CEO." % [
-			contracts.size(), "contrato" if contracts.size() == 1 else "contratos", limit]
+	var limit_text: String = limit_problem()
+	if not limit_text.is_empty():
+		return limit_text
 	var room: String = String(ContractCatalog.get_size(offer["size"]).get("requires_room", ""))
 	if not room.is_empty() and not _has_working_room(room):
 		return "Un contrato %s exige una %s que funcione." % [ContractCatalog.get_size_name(offer["size"]).to_lower(),
@@ -160,7 +175,7 @@ func accept(offer_id: int) -> Dictionary:
 		contract[key] = 0
 	contract["fix_progress"] = 0.0
 	contract["cancel_day"] = NO_CANCEL_DAY
-	contract["team_id"] = _first_free_team()
+	contract["team_id"] = first_free_team()
 	contract["worked_by"] = []
 	contracts.append(contract)
 	accepted_count += 1
@@ -288,6 +303,8 @@ func assign(contract_id: int, team_id: int) -> Dictionary:
 		var previous: Dictionary = get_contract_of(team_id)
 		if not previous.is_empty() and previous["id"] != contract_id:
 			previous["team_id"] = NO_TEAM
+		# Un equipo lleva un proyecto a la vez: si llevaba un producto, lo suelta.
+		Products.release_team(team_id)
 	contract["team_id"] = team_id
 	EventBus.projects_changed.emit()
 	return {"ok": true, "message": "%s: %s." % [describe_title(contract), describe_owner(contract)]}
@@ -690,50 +707,13 @@ func _produce() -> void:
 			continue
 		var was_finished: bool = Production.is_finished(contract)
 		var done: Array[Dictionary] = Production.apply(contract, workers)
-		_handle_bugs(contract, done)
-		_note_workers(contract, done)
+		Production.handle_bugs(contract, done, _rng)
+		Production.note_workers(contract, done)
 		changed = true
 		if not was_finished and Production.is_finished(contract):
 			EventBus.notice.emit("Terminado: %s. Listo para entregar." % describe_title(contract))
 	if changed:
 		EventBus.projects_changed.emit()
-
-
-# Anota en el contrato a los empleados que sumaron puntos (cuenta para sus ascensos).
-func _note_workers(contract: Dictionary, done: Array[Dictionary]) -> void:
-	var worked_by: Array = contract.get_or_add("worked_by", [])
-	for item: Dictionary in done:
-		var key: String = item["worker"]["key"]
-		if key != "ceo" and float(item["amount"]) > 0.0 and not worked_by.has(key):
-			worked_by.append(key)
-
-
-# Con lo que hizo cada uno en la hora: la programación genera errores ocultos y las
-# pruebas (o la revisión de QA) encuentran algunos: cada error oculto se encuentra con
-# probabilidad cobertura × puntos de pruebas / puntos de pruebas del contrato.
-func _handle_bugs(contract: Dictionary, done: Array[Dictionary]) -> void:
-	var testing_total: float = maxf(1.0, float(contract["points"]["testing"]))
-	for item: Dictionary in done:
-		var worker: Dictionary = item["worker"]
-		var amount: float = float(item["amount"])
-		if item["kind"] == "work" and item["phase"] == "programming":
-			contract["bugs_hidden"] = int(contract["bugs_hidden"]) + _roll(amount * float(worker["bug_chance"]))
-		elif item["phase"] == "testing" and int(contract["bugs_hidden"]) > 0:
-			var coverage: float = float(ContractCatalog.get_bugs("qa_coverage" if worker["phase"] == "testing" else "other_coverage"))
-			var chance: float = minf(1.0, coverage * amount / testing_total)
-			var found: int = 0
-			for bug: int in range(int(contract["bugs_hidden"])):
-				if _rng.randf() < chance:
-					found += 1
-			contract["bugs_hidden"] = int(contract["bugs_hidden"]) - found
-			contract["bugs_found"] = int(contract["bugs_found"]) + found
-
-
-# Cuántas veces pasa algo que en promedio pasa expected veces: la parte entera siempre
-# y la fracción con esa probabilidad.
-func _roll(expected: float) -> int:
-	var whole: int = floori(expected)
-	return whole + (1 if _rng.randf() < expected - whole else 0)
 
 
 # A la hora de llegada: a cada contrato que se acaba de atrasar se le sortea cuántos días
@@ -789,13 +769,27 @@ func _finish(contract: Dictionary, result: String, paid: int, change: float, mes
 	EventBus.notice.emit(message)
 
 
-# Quién lleva un contrato nuevo: el primer equipo con miembros que no lleva ninguno; si
-# no hay, el CEO si está libre; si no, nadie.
-func _first_free_team() -> int:
+## Quién lleva un proyecto nuevo: el primer equipo con miembros que no lleva ninguno
+## (contrato ni producto); si no hay, el CEO si está libre; si no, nadie.
+func first_free_team() -> int:
 	for team: Dictionary in Staff.teams:
-		if not (team["members"] as Array).is_empty() and get_contract_of(team["id"]).is_empty():
+		if not (team["members"] as Array).is_empty() and is_team_free(team["id"]):
 			return team["id"]
-	return CEO_TEAM if get_contract_of(CEO_TEAM).is_empty() else NO_TEAM
+	return CEO_TEAM if is_team_free(CEO_TEAM) else NO_TEAM
+
+
+## Indica si un equipo (o el CEO) no lleva ningún contrato ni producto.
+func is_team_free(team_id: int) -> bool:
+	return get_contract_of(team_id).is_empty() and Products.get_product_of(team_id).is_empty()
+
+
+## Suelta el contrato que lleva un equipo (queda sin equipo); lo usa Products al darle
+## un producto a ese equipo.
+func release_team(team_id: int) -> void:
+	var contract: Dictionary = get_contract_of(team_id)
+	if not contract.is_empty():
+		contract["team_id"] = NO_TEAM
+		EventBus.projects_changed.emit()
 
 
 # Los contratos de un equipo que se borró quedan sin equipo.

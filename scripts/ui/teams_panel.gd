@@ -126,6 +126,7 @@ func _ready() -> void:
 	_panel.visible = false
 	EventBus.staff_changed.connect(_refresh)
 	EventBus.projects_changed.connect(_refresh)
+	EventBus.products_changed.connect(_refresh)
 
 
 ## Pone el botón "Horarios" en la barra de menús.
@@ -227,6 +228,8 @@ func _signature() -> String:
 	var owners: Array[String] = []
 	for contract: Dictionary in Projects.contracts:
 		owners.append("%d:%d" % [contract["id"], contract["team_id"]])
+	for product: Dictionary in Products.get_in_development():
+		owners.append("p%d:%d" % [product["id"], product["team_id"]])
 	# Si el líder está presente cambia lo que se muestra solo al empezar o terminar su turno.
 	var presence: Array[bool] = [Staff.leaders_required()]
 	for team: Dictionary in Staff.teams:
@@ -419,28 +422,41 @@ func _add_team(team: Dictionary) -> void:
 	_list.add_child(HSeparator.new())
 
 
-# Lista desplegable con los contratos en curso para un equipo (o el CEO). Elegir uno se
-# lo da; "Ninguno" lo deja sin contrato.
+# Lista desplegable con los contratos en curso y los productos en desarrollo para un
+# equipo (o el CEO). Elegir uno se lo da; "Ninguno" lo deja sin proyecto. Cada opción
+# guarda en su metadata {"kind": "contract"/"product", "id"}.
 func _project_choice(team_id: int) -> OptionButton:
 	var choice := OptionButton.new()
 	choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choice.clip_text = true
-	choice.add_item("Ninguno", Projects.NO_TEAM)
-	var current: Dictionary = Projects.get_contract_of(team_id)
+	choice.add_item("Ninguno")
+	choice.set_item_metadata(0, {})
+	var current_contract: Dictionary = Projects.get_contract_of(team_id)
+	var current_product: Dictionary = Products.get_product_of(team_id)
+	choice.select(0)
 	for contract: Dictionary in Projects.contracts:
-		choice.add_item("%s · %s" % [ContractCatalog.get_type_name(contract["type"]), contract["client"]], contract["id"])
-		if not current.is_empty() and contract["id"] == current["id"]:
+		choice.add_item("%s · %s" % [ContractCatalog.get_type_name(contract["type"]), contract["client"]])
+		choice.set_item_metadata(choice.item_count - 1, {"kind": "contract", "id": contract["id"]})
+		if not current_contract.is_empty() and contract["id"] == current_contract["id"]:
 			choice.select(choice.item_count - 1)
-	if current.is_empty():
-		choice.select(0)
+	for product: Dictionary in Products.get_in_development():
+		choice.add_item("Producto: %s" % Products.describe_title(product))
+		choice.set_item_metadata(choice.item_count - 1, {"kind": "product", "id": product["id"]})
+		if not current_product.is_empty() and product["id"] == current_product["id"]:
+			choice.select(choice.item_count - 1)
 	choice.item_selected.connect(func(index: int) -> void:
-		var contract_id: int = choice.get_item_id(index)
-		if contract_id == Projects.NO_TEAM:
+		var picked: Dictionary = choice.get_item_metadata(index)
+		if picked.is_empty():
 			var previous: Dictionary = Projects.get_contract_of(team_id)
 			if not previous.is_empty():
 				_status_label.text = Projects.assign(previous["id"], Projects.NO_TEAM)["message"]
+			var previous_product: Dictionary = Products.get_product_of(team_id)
+			if not previous_product.is_empty():
+				_status_label.text = Products.assign(previous_product["id"], Projects.NO_TEAM)["message"]
+		elif picked["kind"] == "product":
+			_status_label.text = Products.assign(picked["id"], team_id)["message"]
 		else:
-			_status_label.text = Projects.assign(contract_id, team_id)["message"])
+			_status_label.text = Projects.assign(picked["id"], team_id)["message"])
 	return choice
 
 

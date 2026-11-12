@@ -866,7 +866,7 @@ func get_mood_target(employee: Dictionary) -> int:
 func get_stress_target(employee: Dictionary) -> int:
 	var target: float = StaffCatalog.get_morale("stress_base")
 	var contract: Dictionary = _contract_of(employee)
-	if not contract.is_empty() and Projects.get_days_late(contract) > 0:
+	if contract.has("deadline_day") and Projects.get_days_late(contract) > 0:
 		target += StaffCatalog.get_morale("late_stress")
 	if int(employee.get("min_energy", 100)) < int(StaffCatalog.get_morale("tired_below")):
 		target += StaffCatalog.get_morale("tired_stress")
@@ -891,10 +891,14 @@ func quit_days_left(employee: Dictionary) -> int:
 	return maxi(0, int(employee["quit_day"]) - GameClock.get_day_count())
 
 
-# Contrato que lleva el equipo de un empleado, o vacío.
+# Contrato que lleva el equipo de un empleado, o vacío. Un producto en desarrollo (hito 41)
+# también es trabajo: devuelve el producto (no tiene plazo ni atraso).
 func _contract_of(employee: Dictionary) -> Dictionary:
 	var team: Dictionary = get_team_of(employee["id"])
-	return {} if team.is_empty() else Projects.get_contract_of(team["id"])
+	if team.is_empty():
+		return {}
+	var contract: Dictionary = Projects.get_contract_of(team["id"])
+	return contract if not contract.is_empty() else Products.get_product_of(team["id"])
 
 
 # Saca a un empleado de la empresa: cobra lo ganado y lo debido con ese concepto y

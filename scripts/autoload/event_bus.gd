@@ -31,6 +31,10 @@ signal staff_changed
 @warning_ignore("unused_signal")
 signal projects_changed
 
+## Cambiaron los productos propios (hito 41). La emite Products.
+@warning_ignore("unused_signal")
+signal products_changed
+
 ## Llegó, fue atendido o se fue un cliente que visita la Recepción (hito 36). La emite Projects.
 @warning_ignore("unused_signal")
 signal visits_changed

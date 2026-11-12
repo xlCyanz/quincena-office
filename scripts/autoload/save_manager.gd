@@ -47,6 +47,7 @@ func new_game() -> void:
 	Staff.new_game()
 	GameClock.new_game()
 	Projects.new_game()
+	Products.new_game()
 	# Después del local: la calificación inicial mira los muebles del local inicial.
 	Bank.new_game()
 	Company.new_game()
@@ -101,6 +102,7 @@ func save_game(slot: String) -> bool:
 		"office": OfficeState.export_state(),
 		"staff": Staff.export_state(),
 		"projects": Projects.export_state(),
+		"products": Products.export_state(),
 		"bank": Bank.export_state(),
 		"company": Company.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
@@ -130,6 +132,7 @@ func load_game(slot: String) -> bool:
 	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
 	Staff.import_state(data.get("staff", {}))
 	Projects.import_state(data.get("projects", {}))
+	Products.import_state(data.get("products", {}))
 	GameClock.import_state(data["clock"])
 	# Las partidas de antes del hito 21 no tienen banco: se calcula con lo que hay.
 	Bank.import_state(data.get("bank", {}))

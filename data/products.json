@@ -1,0 +1,15 @@
+{
+	"_comentario": "Productos propios (diseño, 7.5 y 13.5; hito 41). Un producto se desarrolla como un contrato pero sin cliente, sin plazo y sin anticipo: la empresa paga los sueldos hasta lanzarlo. Se puede empezar desde min_stage (índice de data/stages.json) con una Sala de servidores que funcione; cuenta para el tope de proyectos en curso (uno por equipo con miembros más el del CEO) y un equipo lleva un proyecto a la vez. sizes: trabajo en puntos, racks que usa al lanzarlo (hito 42) e ingreso diario en su mejor momento (hito 42). types: reparto del trabajo en diseño, programación y pruebas (%). names: nombres que se le dan a cada producto nuevo, en orden (al acabarse se numeran).",
+	"min_stage": 2,
+	"sizes": {
+		"small": { "name": "Pequeño", "points": 1500, "racks": 1, "daily_income": 150 },
+		"medium": { "name": "Mediano", "points": 5000, "racks": 3, "daily_income": 600 },
+		"large": { "name": "Grande", "points": 15000, "racks": 8, "daily_income": 2200 }
+	},
+	"types": {
+		"mobile_app": { "name": "App móvil", "split": [30, 50, 20] },
+		"saas": { "name": "Software en la nube", "split": [15, 60, 25] },
+		"game": { "name": "Videojuego", "split": [35, 45, 20] }
+	},
+	"names": ["Nimbo", "Pixelia", "Faro", "Colibrí", "Tucán", "Brisa", "Quetzal", "Mango", "Ceiba", "Coquí", "Caracol", "Ámbar"]
+}

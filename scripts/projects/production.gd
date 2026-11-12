@@ -164,3 +164,41 @@ static func _add(contract: Dictionary, phase: String, amount: float) -> float:
 static func _order(phase: String) -> int:
 	var index: int = ContractCatalog.PHASES.find(phase)
 	return ContractCatalog.PHASES.size() if index < 0 else index
+
+
+## Con lo que hizo cada uno en la hora (lo que devuelve apply): la programación genera
+## errores ocultos y las pruebas (o la revisión de QA) encuentran algunos: cada error
+## oculto se encuentra con probabilidad cobertura × puntos de pruebas / puntos de pruebas
+## del proyecto. Sirve para contratos y productos; el azar sale de rng.
+static func handle_bugs(project: Dictionary, done: Array[Dictionary], rng: RandomNumberGenerator) -> void:
+	var testing_total: float = maxf(1.0, float(project["points"]["testing"]))
+	for item: Dictionary in done:
+		var worker: Dictionary = item["worker"]
+		var amount: float = float(item["amount"])
+		if item["kind"] == "work" and item["phase"] == "programming":
+			project["bugs_hidden"] = int(project["bugs_hidden"]) + roll(amount * float(worker["bug_chance"]), rng)
+		elif item["phase"] == "testing" and int(project["bugs_hidden"]) > 0:
+			var coverage: float = float(ContractCatalog.get_bugs("qa_coverage" if worker["phase"] == "testing" else "other_coverage"))
+			var chance: float = minf(1.0, coverage * amount / testing_total)
+			var found: int = 0
+			for bug: int in range(int(project["bugs_hidden"])):
+				if rng.randf() < chance:
+					found += 1
+			project["bugs_hidden"] = int(project["bugs_hidden"]) - found
+			project["bugs_found"] = int(project["bugs_found"]) + found
+
+
+## Cuántas veces pasa algo que en promedio pasa expected veces: la parte entera siempre
+## y la fracción con esa probabilidad.
+static func roll(expected: float, rng: RandomNumberGenerator) -> int:
+	var whole: int = floori(expected)
+	return whole + (1 if rng.randf() < expected - whole else 0)
+
+
+## Anota en el proyecto a los empleados que sumaron puntos (cuenta para sus ascensos).
+static func note_workers(project: Dictionary, done: Array[Dictionary]) -> void:
+	var worked_by: Array = project.get_or_add("worked_by", [])
+	for item: Dictionary in done:
+		var key: String = item["worker"]["key"]
+		if key != "ceo" and float(item["amount"]) > 0.0 and not worked_by.has(key):
+			worked_by.append(key)
