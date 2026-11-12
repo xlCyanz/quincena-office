@@ -304,7 +304,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/` y la suma a `test_all`.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39) y en la 19.3 (fase 5, hitos 40–49).
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39), en la 19.3 (fase 5, hitos 40–49) y en la 20.3 (fase 6, hitos 50–59; el arte y el sonido pasan a la fase 7).
 
 ## Estado actual
 

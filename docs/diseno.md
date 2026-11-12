@@ -94,6 +94,12 @@ Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece se
   - [19.3 Hitos](#193-hitos)
   - [19.4 Orden y dependencias](#194-orden-y-dependencias)
   - [19.5 Riesgos de esta fase](#195-riesgos-de-esta-fase)
+* [20. Plan de desarrollo: fase 6](#20-plan-de-desarrollo-fase-6)
+  - [20.1 Alcance](#201-alcance)
+  - [20.2 Decisiones técnicas](#202-decisiones-técnicas)
+  - [20.3 Hitos](#203-hitos)
+  - [20.4 Orden y dependencias](#204-orden-y-dependencias)
+  - [20.5 Riesgos de esta fase](#205-riesgos-de-esta-fase)
 
 ## 1. Visión general
 
@@ -625,6 +631,10 @@ Un puesto básico completo (escritorio, silla y computadora) cuesta $710. Los ob
 | Rack de servidores | $3,000 |
 | Baterías de respaldo | $1,500 |
 | Cafetera | $200 |
+| Nevera / microondas / mesa de comedor (provisional, fase 6) | $400 / $150 / $300 |
+| Sofá / dispensador de agua (provisional, fase 6) | $500 / $120 |
+| Mesa de ping pong / máquina expendedora (provisional, fase 6) | $700 / $900 |
+| Impresora / pizarra / ventana (provisional, fase 6) | $350 / $250 / $200 |
 | Decoración | $30 a $500 |
 
 ### 13.8 Comprobación
@@ -637,7 +647,7 @@ Un puesto básico completo (escritorio, silla y computadora) cuesta $710. Los ob
 
 Ideas aprobadas que no entran en la primera versión.
 
-- **Inversionista:** un evento donde un inversionista ofrece efectivo inmediato a cambio de un porcentaje de los ingresos futuros de la empresa.
+- **Inversionista:** un evento donde un inversionista ofrece efectivo inmediato a cambio de un porcentaje de los ingresos futuros de la empresa. Entra en la fase 6 (hito 58).
 - **Versión móvil:** el juego sale primero en PC.
 - **Otros idiomas:** la primera versión sale solo en español.
 
@@ -782,7 +792,8 @@ La fase 2 cierra el ciclo básico del juego: contratar empleados, ponerlos a tra
 | 3 | Banco y crecimiento | Préstamos, calificación de crédito, préstamo de emergencia, mora y embargo; compra de terreno; etapas de la empresa, valor de la empresa, objetivos guiados y menú Empresa |
 | 4 | Organización | Líderes de equipo, gerentes, ejecutivos y departamentos con el rendimiento del CEO; ascensos por experiencia; horas extra y agenda semanal; recepcionista con visitas, contador y limpieza; competencia por empleados |
 | 5 | Productos y eventos | Productos propios con ciclo de vida y sala de servidores; eventos con tarjetas y cuenta atrás; ambiente y decoración con efecto; salir a bolsa |
-| 6 | Arte y sonido | Sprites finales generados con la herramienta de arte, animaciones de los personajes, sonido y pulido de la interfaz |
+| 6 | Vida en la oficina | Rasgos con efecto, baños y Sala de descanso, muebles que faltan, candidatos según la empresa, iconos de estado e inversionista |
+| 7 | Arte y sonido | Sprites finales generados con la herramienta de arte, animaciones de los personajes, sonido y pulido de la interfaz |
 
 ## 17. Plan de desarrollo: fase 3
 
@@ -863,7 +874,7 @@ La fase 4 agrega la organización de la empresa: líderes de equipo, gerentes, e
 | Gerentes y organigrama (4) | Ambiente y decoración con efecto (fase 5) |
 | Departamentos, rendimiento del CEO y ejecutivos (4.1) | Salir a bolsa (fase 5) |
 | Horas extra, turno de noche y horario individual (6 y 6.2) | Rasgos con efecto en el trabajo |
-| Agenda semanal y plantillas de turno (6 y 12.3) | Arte final y sonido (fase 6) |
+| Agenda semanal y plantillas de turno (6 y 12.3) | Arte final y sonido (fase 7) |
 | Recepcionista y visitas de clientes (5.1) | |
 | Contador y limpieza (5.1) | |
 | Competencia por empleados (5.3) | |
@@ -929,7 +940,7 @@ La fase 5 agrega lo que hace a la empresa algo más que un taller de contratos: 
 | Sala de servidores que funciona: racks y aire acondicionado (2.1 y 11.2) | Rasgos con efecto en el trabajo (5) |
 | Productos propios: desarrollo, lanzamiento, usuarios, ingreso diario y actualizaciones (7.5 y 13.5) | Baños y sala de descanso con efecto (2.1 y 11.2) |
 | Eventos con tarjeta y cuenta atrás, y su lista inicial (10) | Inversionista (14) |
-| Ambiente y decoración con efecto (2 y 11.2) | Arte final y sonido (fase 6) |
+| Ambiente y decoración con efecto (2 y 11.2) | Arte final y sonido (fase 7) |
 | Calidades de muebles: computadora media y pro, segundo monitor, silla ergonómica y escritorio amplio (11.1) | |
 | Contratos grandes, Sala de reuniones y clientes de élite (7.1 y 9.1) | |
 | Corporación y salir a bolsa (9.1 y 9.5) | |
@@ -980,3 +991,78 @@ La fase 5 agrega lo que hace a la empresa algo más que un taller de contratos: 
 - **Eventos con tiempo real:** la cuenta atrás va en segundos reales; las pruebas sin ventana la adelantan con una función propia en vez de esperar.
 - **Tope de proyectos:** productos y contratos comparten el tope de proyectos en curso; hay que mostrarlo claro en Proyectos y Productos.
 - **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 4.
+
+## 20. Plan de desarrollo: fase 6
+
+La fase 6 llena de vida la oficina: los rasgos de cada empleado cambian cómo trabaja, los baños y la Sala de descanso pasan a importar, llegan los muebles que faltaban del catálogo, los candidatos dependen de la fama y el ambiente de la empresa, la interfaz avisa con iconos qué le pasa a cada uno y aparece el inversionista. Es la última fase de mecánicas: el arte final y el sonido pasan a la fase 7. Se construye en diez hitos, numerados después de los de la fase 5.
+
+### 20.1 Alcance
+
+| Entra en la fase 6 | Queda para fases siguientes |
+| --- | --- |
+| Rasgos con efecto en el trabajo, el ánimo y la carrera (5) | Arte final, animaciones y sonido (fase 7) |
+| Historial y puntualidad en la ficha (5 y 12.4) | Versión móvil y otros idiomas (14) |
+| Baños con capacidad (2.1 y 11.2) | Baños por sexo y necesidades individuales |
+| Almuerzo en la oficina y pausas en la Sala de descanso (2.1 y 11.2) | |
+| Muebles que faltan: nevera, microondas, mesa de comedor, sofá, dispensador de agua, mesa de ping pong, máquina expendedora, impresora, pizarra y ventanas (11.2) | |
+| Candidatos según reputación, sueldo y ambiente (5.2) | |
+| Iconos de estado sobre los empleados y avisos con clic (12.2) | |
+| Inversionista (14) | |
+
+### 20.2 Decisiones técnicas
+
+- **Rasgos:** cada rasgo es un conjunto de modificadores en `data/staff.json` (`traits`) que leen las funciones que ya existen (producción, errores, energía, metas de ánimo y estrés, renuncia, competencia), sin código propio por rasgo cuando se pueda. Valores provisionales:
+  - **Noctámbulo:** +20 % de puntos entre las 22 y las 6, −10 % de día; el turno de noche no le baja el ánimo.
+  - **Perfeccionista:** −15 % de puntos y −40 % de errores al programar; QA perfeccionista encuentra un 25 % más.
+  - **Adicto al café:** sin una cafetera en una Sala de descanso que funcione rinde −15 %; con ella recupera +2 de energía por hora trabajada. El evento «Se acabó el café» lo usa.
+  - **Sociable:** +5 a la meta de ánimo de su equipo (una vez por equipo, aunque haya varios) y −5 % de sus propios puntos.
+  - **Impuntual:** cada día de trabajo, 20 % de llegar una hora tarde (no trabaja esa hora) y 2 % de faltar el día.
+  - **Mentor:** los Pasantes y Juniors de su equipo rinden +15 % mientras él está presente, y suben de nivel con un contrato menos.
+  - **Ambicioso:** además de la competencia, si cumple los requisitos de ascenso y pasan 15 días sin ascenderlo, −15 a su meta de ánimo hasta que se le asciende («ascenso negado», 5.3).
+  - **Leal:** además de la competencia, necesita el doble de días seguidos mal para avisar que renuncia.
+- **Descubrir rasgos:** la entrevista revela uno (como hoy); los demás se descubren solos después de 15 días en la empresa cada uno, en orden, con aviso. La ficha y Personal muestran solo los conocidos, pero todos tienen efecto desde el primer día.
+- **Historial:** cada empleado guarda errores causados (los ocultos que generó al programar), ausencias, llegadas tarde y contratos trabajados. La ficha muestra el historial y la puntualidad (% de días a tiempo).
+- **Baños:** capacidad = inodoros de los baños que funcionan; hace falta 1 por cada 10 personas presentes (redondeando hacia arriba, contando al CEO). Si faltan, la meta de ánimo de todos baja 10 y la producción baja 5 % por cada inodoro que falta (hasta −20 %) por las colas. El evento «Baño dañado» quita un inodoro de la capacidad hasta pagar la reparación. Se mantienen los dos baños obligatorios; no se separan por sexo.
+- **Almuerzo en la oficina:** una Sala de descanso con nevera, microondas y mesa de comedor sirve almuerzo dentro a tantos como asientos (4 por mesa). Quien almuerza dentro recupera el doble de energía en esa hora y trabaja media hora de ella (rinde la mitad de una hora normal). Los que no caben salen como hoy. El personaje camina a la mesa en vez de irse.
+- **Pausas:** quien trabaja con energía bajo 40 toma una pausa de una hora en la Sala de descanso si hay un lugar libre (sofá: 2 lugares). En la pausa no produce y recupera +15 de energía. La cafetera (ya obligatoria) da +3 de energía extra a quien almuerza o descansa ahí.
+- **Muebles de ánimo:** dispensador de agua +2 a la meta de ánimo de todos; mesa de ping pong +8, pero cada empleado pierde 3 % de puntos («se distrae»); máquina expendedora +3 y $2 por persona presente al día («Máquina expendedora»). Ninguno se acumula: cuenta uno de cada uno en la Sala de descanso.
+- **Impresora:** en un Área de trabajo con un contador, sus efectos (descuento de mantenimiento, tasa y cobro del pago atrasado) valen ×1.25.
+- **Pizarra:** objeto de pared en la Sala de reuniones. El evento «La reunión que pudo ser un correo» cuesta la mitad y los contratos grandes y de élite llegan con 10 % más de plazo.
+- **Ventanas:** objeto que reemplaza un tramo de pared exterior del local (no del interior). Cada ventana suma ambiente a la habitación que da a ella; no se puede colgar nada en esa cara. Al comprar terreno, las ventanas del borde que se abre se devuelven a su precio de reventa.
+- **Candidatos:** cuántos llegan y su nivel de habilidad dependen de la reputación (±1 candidato por estrella respecto de 3), del sueldo ofrecido frente al de su nivel (más alto, mejores habilidades dentro del rango) y del ambiente medio de las Áreas de trabajo. El «Premio de la industria» suma un candidato a cada vacante durante 7 días.
+- **Iconos de estado:** sobre cada personaje, como mucho uno a la vez y por prioridad: sin puesto, cansado (energía bajo 30), molesto (ánimo bajo 30 o aviso de renuncia), estresado (estrés desde 70) y sin tarea (su equipo no lleva proyecto). Se calculan al cambiar la hora, no cada cuadro.
+- **Avisos con clic:** un aviso puede llevar a quién se refiere (`EventBus.notice` con un destino opcional: empleado, contrato, producto, habitación o menú). Un clic abre su ficha o su menú.
+- **Inversionista:** un evento (`data/events.json`) desde Pequeña empresa con valor positivo: ofrece entre el 10 y el 25 % del valor de la empresa en efectivo a cambio de un porcentaje de los ingresos (contratos y productos) durante 12 a 24 meses. Se acepta o se rechaza desde la tarjeta. El pago se cobra el día 1 («Pago al inversionista»), cuenta como gasto en Empresa y Banco, y lo que falta por pagar resta del valor de la empresa (estimado con el ingreso del mes pasado). Uno a la vez.
+- **Datos fuera del código:** rasgos en `data/staff.json`; muebles nuevos en `data/furniture.json` y `data/rooms.json`; baños, almuerzo y pausas en una sección nueva de `data/staff.json`; candidatos en `hiring`; inversionista en `data/events.json` y `data/bank.json`.
+- **Guardado:** las claves nuevas se importan tolerando su falta; una partida de la fase 5 carga con los rasgos que ya tenía, historial vacío y sin inversionista.
+
+### 20.3 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 50. Rasgos de producción | Noctámbulo, perfeccionista, sociable y mentor con sus efectos; descubrir rasgos con el tiempo | Un noctámbulo rinde más de noche; un perfeccionista hace menos errores y menos puntos; un mentor acelera a los juniors de su equipo; los rasgos se descubren a los 15 días |
+| 51. Rasgos de conducta e historial | Impuntual, adicto al café, ambicioso y leal; historial y puntualidad en la ficha | Un impuntual llega tarde y falta a veces y se ve en su puntualidad; sin cafetera el adicto rinde menos; al ambicioso le baja el ánimo si no se le asciende; el leal tarda más en renunciar |
+| 52. Baños con capacidad | Capacidad por inodoros, efecto en ánimo y producción, baño dañado quita capacidad | Con 25 personas y 2 inodoros baja el ánimo y la producción; con 3 no; el evento de baño dañado quita uno hasta repararlo |
+| 53. Almuerzo en la oficina | Nevera, microondas y mesa de comedor; almuerzo dentro según asientos | Con la sala armada, quien cabe almuerza dentro, recupera más energía y rinde media hora; los demás salen |
+| 54. Sala de descanso y pausas | Sofá, dispensador de agua, mesa de ping pong y máquina expendedora; pausas con energía baja | Un cansado toma una pausa si hay sofá libre y recupera energía; el ping pong sube el ánimo y baja un poco la producción; la máquina da su ingreso diario |
+| 55. Impresora, pizarra y ventanas | Impresora para el contador, pizarra en la Sala de reuniones, ventanas en las paredes exteriores | La impresora mejora al contador; con pizarra la reunión inútil cuesta la mitad y los grandes traen más plazo; una ventana sube el ambiente y no se pone en paredes interiores |
+| 56. Candidatos según la empresa | Cantidad y calidad de candidatos por reputación, sueldo ofrecido y ambiente; el premio suma candidatos | Con 5 estrellas llegan más candidatos que con 1; ofrecer más sueldo trae mejores habilidades |
+| 57. Iconos de estado y avisos | Iconos sobre los empleados por prioridad; avisos con destino que abren ficha o menú | Un empleado cansado muestra su icono y deja de mostrarlo al recuperarse; un clic en el aviso de renuncia abre su ficha |
+| 58. Inversionista | Evento del inversionista, pago mensual, efecto en Empresa, Banco y valor | Aceptar da el efectivo y cobra el porcentaje cada día 1 hasta terminar; el valor descuenta lo que falta por pagar; rechazar no cambia nada |
+| 59. Comprobación de la fase | Simulación sin ventana con rasgos, baños, descanso e inversionista; ajuste de `data/staff.json`, `data/furniture.json` y `data/events.json` | La empresa de la fase 5 sigue llegando a la bolsa sin quebrar; armar baños y Sala de descanso compensa su costo; los rasgos se notan sin decidir solos la partida; todas las pruebas anteriores siguen pasando |
+
+### 20.4 Orden y dependencias
+
+- **Rasgos:** el 50 antes del 51; el 51 usa la cafetera, que ya existe, y los ascensos de la fase 4.
+- **Oficina:** el 52, el 53 y el 54 en ese orden; el 54 agrega los lugares de la Sala de descanso que también usa el almuerzo.
+- **Muebles sueltos:** el 55 puede ir en cualquier momento después del 52; las ventanas usan la colocación en pared del hito 45.
+- **Interfaz:** el 57 después del 51, porque los iconos usan el estado de los rasgos y las ausencias.
+- **Cierre:** el 58 antes del 59, y el 59 al final.
+
+### 20.5 Riesgos de esta fase
+
+- **Balance:** los rasgos multiplican los efectos que ya existen; varios juntos pueden dejar a alguien inútil o demasiado bueno. El hito 59 revisa los extremos.
+- **Rendimiento:** iconos, pausas y almuerzo agregan trabajo por hora; las pruebas largas no deben volver a pasar de un minuto.
+- **Personajes:** almorzar dentro y tomar pausas cambia adónde caminan; los caminos deben seguir funcionando con la Sala de descanso llena.
+- **Ventanas:** cambian la regla de que el contorno del local no se toca; hay que cuidar el terreno nuevo y el embargo.
+- **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 5.
