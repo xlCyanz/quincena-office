@@ -31,6 +31,10 @@ signal staff_changed
 @warning_ignore("unused_signal")
 signal projects_changed
 
+## Llegó, fue atendido o se fue un cliente que visita la Recepción (hito 36). La emite Projects.
+@warning_ignore("unused_signal")
+signal visits_changed
+
 ## Un aviso para el jugador (por ejemplo, la nómina pagada). Lo muestra el Hud.
 @warning_ignore("unused_signal")
 signal notice(text: String)

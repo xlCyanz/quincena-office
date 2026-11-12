@@ -11,11 +11,15 @@
 # Desde el hito 32 también hay puestos en una Oficina única que funciona (para los
 # gerentes): una silla delante de un escritorio de la misma oficina, sin computadora, y
 # uno solo por oficina. Cada puesto dice en "room_type" de qué clase es.
+#
+# Desde el hito 36 la Recepción tiene puestos para los recepcionistas: una silla
+# delante del frente de un mostrador (is_counter), uno por mostrador.
 class_name Workstations
 extends RefCounted
 
 const WORK_AREA: String = "work_area"
 const SINGLE_OFFICE: String = "single_office"
+const RECEPTION: String = "reception"
 
 
 ## Todos los puestos de la oficina. Cada uno es {"chair": int, "desk": int,
@@ -24,7 +28,7 @@ const SINGLE_OFFICE: String = "single_office"
 ## de esa clase.
 static func find_all(furniture: Array[Dictionary], rooms: Array[Dictionary], room_type: String = "") -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for kind: String in [WORK_AREA, SINGLE_OFFICE]:
+	for kind: String in [WORK_AREA, SINGLE_OFFICE, RECEPTION]:
 		if room_type.is_empty() or room_type == kind:
 			result.append_array(_find_kind(furniture, rooms, kind))
 	return result
@@ -50,6 +54,7 @@ static func _find_kind(furniture: Array[Dictionary], rooms: Array[Dictionary], k
 		for cell: Vector2i in room["cells"]:
 			room_cells[cell] = room_index
 	var needs_computer: bool = kind == WORK_AREA
+	var one_per_room: bool = kind == SINGLE_OFFICE
 	var result: Array[Dictionary] = []
 	var used_desks: Dictionary[int, bool] = {}
 	var used_rooms: Dictionary[int, bool] = {}
@@ -60,9 +65,9 @@ static func _find_kind(furniture: Array[Dictionary], rooms: Array[Dictionary], k
 		var cell: Vector2i = chair["cell"]
 		if not room_cells.has(cell):
 			continue
-		if not needs_computer and used_rooms.has(room_cells[cell]):
+		if one_per_room and used_rooms.has(room_cells[cell]):
 			continue
-		var desk_index: int = _desk_for(furniture, cell, room_cells, used_desks, needs_computer)
+		var desk_index: int = _desk_for(furniture, cell, room_cells, used_desks, needs_computer, kind == RECEPTION)
 		if desk_index >= 0:
 			used_desks[desk_index] = true
 			used_rooms[room_cells[cell]] = true
@@ -109,17 +114,19 @@ static func computer_of(furniture: Array[Dictionary], who: String) -> String:
 	return ""
 
 
-# Primer escritorio libre (con computadora si needs_computer), dentro de la habitación
-# de la silla, cuyo frente da a la casilla de la silla.
+# Primer escritorio libre (con computadora si needs_computer; un mostrador si counter),
+# dentro de la habitación de la silla, cuyo frente da a la casilla de la silla.
 static func _desk_for(furniture: Array[Dictionary], chair_cell: Vector2i,
-		work_cells: Dictionary[Vector2i, int], used_desks: Dictionary[int, bool], needs_computer: bool = true) -> int:
+		work_cells: Dictionary[Vector2i, int], used_desks: Dictionary[int, bool], needs_computer: bool = true,
+		counter: bool = false) -> int:
 	for desk_index: int in range(furniture.size()):
 		if used_desks.has(desk_index):
 			continue
 		var desk: Dictionary = furniture[desk_index]
-		if not bool(FurnitureCatalog.get_item(desk["id"]).get("accepts_computer", false)):
+		var info: Dictionary = FurnitureCatalog.get_item(desk["id"])
+		if not bool(info.get("is_counter" if counter else "accepts_computer", false)):
 			continue
-		if needs_computer and String(desk["computer"]).is_empty():
+		if needs_computer and String(desk.get("computer", "")).is_empty():
 			continue
 		if work_cells.get(desk["cell"], -1) != work_cells[chair_cell]:
 			continue

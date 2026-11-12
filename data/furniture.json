@@ -1,5 +1,5 @@
 {
-	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3).",
+	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3).",
 	"resale_ratio": 0.5,
 	"items": {
 		"simple_desk": {
@@ -36,6 +36,26 @@
 			"shape": "plant",
 			"height": 12,
 			"color": "4f8a3c"
+		},
+		"reception_counter": {
+			"name": "Mostrador de recepción",
+			"short_name": "Mostrador",
+			"price": 600,
+			"size": [2, 1],
+			"shape": "desk",
+			"height": 24,
+			"color": "8c6a9e",
+			"is_counter": true
+		},
+		"waiting_sofa": {
+			"name": "Sofá de espera",
+			"short_name": "Sofá",
+			"price": 300,
+			"size": [2, 1],
+			"shape": "desk",
+			"height": 12,
+			"color": "a0523d",
+			"waiting_seat": true
 		},
 		"basic_computer": {
 			"name": "Computadora básica",

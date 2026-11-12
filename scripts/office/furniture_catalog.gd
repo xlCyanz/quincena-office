@@ -74,6 +74,7 @@ static func _load() -> void:
 		var size: Array = raw.get("size", [1, 1])
 		_items[id] = {
 			"name": String(raw.get("name", id)),
+			"short_name": String(raw.get("short_name", raw.get("name", id))),
 			"price": int(raw.get("price", 0)),
 			"size": Vector2i(int(size[0]), int(size[1])),
 			"shape": String(raw.get("shape", "desk")),
@@ -82,4 +83,6 @@ static func _load() -> void:
 			"is_seat": bool(raw.get("is_seat", false)),
 			"accepts_computer": bool(raw.get("accepts_computer", false)),
 			"on_desk": bool(raw.get("on_desk", false)),
+			"is_counter": bool(raw.get("is_counter", false)),
+			"waiting_seat": bool(raw.get("waiting_seat", false)),
 		}

@@ -5,7 +5,8 @@
 #
 # No pausa el tiempo. Ocupa el lado izquierdo, como Personal (abrir uno cierra el otro;
 # lo hace la escena de juego). Se construye en código; su botón va en la barra de menús
-# y muestra cuántas ofertas hay.
+# y muestra cuántas ofertas hay. Desde el hito 36 lista los clientes que esperan en la
+# Recepción y hasta qué hora.
 class_name ProjectsPanel
 extends CanvasLayer
 
@@ -203,6 +204,14 @@ func _refresh() -> void:
 			ContractCatalog.get_offers("arrival_hour"))))
 	for offer: Dictionary in Projects.offers:
 		_add_offer(offer)
+	if not Projects.visits.is_empty():
+		_add_section("En la Recepción (%d)" % Projects.visits.size())
+		for visit: Dictionary in Projects.visits:
+			var offer: Dictionary = visit["offer"]
+			_list.add_child(_muted_label("Cliente de %s · %s %s · espera hasta las %d:00%s" % [offer["client"],
+				ContractCatalog.get_type_name(offer["type"]), ContractCatalog.get_size_name(offer["size"]).to_lower(),
+				posmod(int(visit["leaves_at"]), GameConstants.HOURS_PER_DAY),
+				"" if Staff.is_reception_attended(GameClock.get_weekday(), GameClock.get_hour()) else " · nadie lo atiende"]))
 	if not Projects.history.is_empty():
 		_add_section("Historial")
 		for entry: Dictionary in Projects.history:

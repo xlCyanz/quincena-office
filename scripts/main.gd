@@ -3,12 +3,15 @@
 # Cada hora (y cuando cambia quién tiene que estar) les dice a los personajes si les
 # toca estar en la oficina (Staff.is_expected); cuando todos se fueron, la oficina
 # queda vacía y el tiempo salta hasta que llegue el próximo.
+# Desde el hito 36 también dibuja a los clientes que esperan en la Recepción
+# (Projects.visits): no cuentan para saber si la oficina está vacía.
 # Sigue la regla de Godot "llamar hacia abajo, avisar hacia arriba": el nodo padre
 # configura a sus hijos directamente, y los hijos le avisan con señales.
 extends Node2D
 
 const CEO_SCENE: PackedScene = preload("res://scenes/ceo.tscn")
 const EMPLOYEE_SCENE: PackedScene = preload("res://scenes/employee.tscn")
+const VISITOR_SCENE: PackedScene = preload("res://scenes/visitor.tscn")
 ## Lo que puede moverse el ratón entre apretar y soltar para que cuente como clic.
 const CLICK_TOLERANCE_PX: float = 8.0
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
@@ -18,6 +21,10 @@ var ceo: Ceo
 var employees: Dictionary[int, Employee] = {}
 # Despedidos que todavía caminan hacia la salida; desaparecen al salir.
 var _departing: Array[Employee] = []
+## Personaje de cada cliente que espera en la Recepción, por id de visita.
+var visitors: Dictionary[int, Visitor] = {}
+# Clientes que ya se van; desaparecen al salir.
+var _leaving_visitors: Array[Visitor] = []
 var pathfinder := OfficePathfinder.new()
 
 # Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
@@ -59,6 +66,7 @@ func _ready() -> void:
 	_sync_employees()
 	_update_routines()
 	_restore_scene_state(SaveManager.take_scene_state())
+	_sync_visitors()
 	SaveManager.scene_state_provider = _export_scene_state
 	_build_controller.setup(_office_grid)
 	_build_controller.status_changed.connect(_build_panel.show_status)
@@ -103,6 +111,7 @@ func _ready() -> void:
 	_settings_panel.quit_requested.connect(_on_quit_requested)
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
+	EventBus.visits_changed.connect(_sync_visitors)
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _update_routines())
 	EventBus.presence_changed.connect(_update_routines)
 	EventBus.game_over.connect(_on_game_over)
@@ -184,6 +193,42 @@ func _sync_employees() -> void:
 	_remove_departed()
 
 
+# Crea el personaje de cada cliente que llegó (entra y va a su lugar de espera), manda
+# a casa a los que ya no esperan y reparte los lugares si cambió la Recepción.
+func _sync_visitors() -> void:
+	var spots: Array[Vector2i] = Projects.get_waiting_spots()
+	var waiting: Array[int] = []
+	for index: int in range(Projects.visits.size()):
+		var visit: Dictionary = Projects.visits[index]
+		var visit_id: int = visit["id"]
+		waiting.append(visit_id)
+		var spot: Vector2i = spots[index % spots.size()] if not spots.is_empty() else OfficeState.entrance
+		if visitors.has(visit_id):
+			visitors[visit_id].set_seat(spot)
+			continue
+		var character: Visitor = VISITOR_SCENE.instantiate()
+		character.configure(visit)
+		_office_grid.add_object(character)
+		character.left_office.connect(_remove_left_visitors)
+		character.setup(_office_grid, pathfinder, spot, OfficeState.entrance, OfficeState.get_outside_of_entrance())
+		visitors[visit_id] = character
+		character.update_routine(true)
+	for visit_id: int in visitors.keys():
+		if not waiting.has(visit_id):
+			var leaving: Visitor = visitors[visit_id]
+			visitors.erase(visit_id)
+			_leaving_visitors.append(leaving)
+			leaving.update_routine(false)
+	_remove_left_visitors()
+
+
+func _remove_left_visitors() -> void:
+	for leaving: Visitor in _leaving_visitors.duplicate():
+		if leaving.activity == OfficeCharacter.Activity.AWAY:
+			_leaving_visitors.erase(leaving)
+			leaving.queue_free()
+
+
 # Quita a los despedidos que ya salieron del local.
 func _remove_departed() -> void:
 	for leaving: Employee in _departing.duplicate():
@@ -233,6 +278,9 @@ func _on_office_changed() -> void:
 	_rebuild_office()
 	for character: OfficeCharacter in get_characters():
 		character.replan()
+	_sync_visitors()
+	for visitor: Visitor in _leaving_visitors:
+		visitor.replan()
 
 
 # Pliega los objetivos si hay algún panel del lado izquierdo abierto.

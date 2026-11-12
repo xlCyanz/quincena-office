@@ -63,6 +63,11 @@ static func get_offers(key: String) -> Variant:
 	return _contracts()["offers"][key]
 
 
+## Valor de las visitas de clientes (data/contracts.json, visits).
+static func get_visits(key: String) -> Variant:
+	return _contracts()["visits"][key]
+
+
 ## Valor de los errores (data/contracts.json, bugs).
 static func get_bugs(key: String) -> Variant:
 	return _contracts()["bugs"][key]

@@ -90,7 +90,8 @@
 # (shift_templates). Un equipo con "template_id" sigue su plantilla: cambiarla cambia el
 # turno de todos sus equipos; con NO_TEMPLATE tiene turno propio. El "schedule" del
 # equipo siempre es su turno vigente. get_agenda da quién trabaja cada hora de un día y
-# marca los huecos (AGENDA_GAP: un equipo trabajando sin su líder presente).
+# marca los huecos (AGENDA_GAP: un equipo trabajando sin su líder presente o, desde el
+# hito 36, nadie en la Recepción mientras puede haber un cliente esperando).
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -114,6 +115,9 @@ const EMPLOYEE_PREFIX: String = "employee_"
 const NO_FIRING: int = -1000
 const NO_STATION_MESSAGE: String = "No hay ningún puesto de trabajo libre: hace falta un escritorio con computadora y una silla delante, dentro de un Área de trabajo que funcione."
 const NO_OFFICE_MESSAGE: String = "No hay ninguna Oficina única libre: hace falta una que funcione, con un escritorio y una silla delante."
+const NO_RECEPTION_MESSAGE: String = "No hay ningún mostrador libre: hace falta una Recepción que funcione, con un mostrador y una silla delante."
+## Cargo que atiende a los clientes que visitan la Recepción (hito 36).
+const RECEPTIONIST_ROLE: String = "receptionist"
 
 var vacancies: Array[Dictionary] = []
 var employees: Array[Dictionary] = []
@@ -1259,6 +1263,17 @@ func get_agenda(weekday: int) -> Array[Dictionary]:
 				state = AGENDA_GAP
 			cells.append(state)
 		rows.append({"kind": "team", "id": team["id"], "label": team["name"], "cells": cells})
+	# Recepción (hito 36): las horas en que un cliente puede estar esperando.
+	if Projects.visits_enabled():
+		var cells: Array[String] = []
+		var arrival: int = int(ContractCatalog.get_offers("arrival_hour"))
+		var wait: int = Projects.get_visit_wait_hours()
+		for hour: int in range(GameConstants.HOURS_PER_DAY):
+			var state: String = AGENDA_OFF
+			if hour >= arrival and hour < arrival + wait:
+				state = AGENDA_WORK if is_reception_attended(weekday, hour) else AGENDA_GAP
+			cells.append(state)
+		rows.append({"kind": "reception", "id": 0, "label": "Recepción", "cells": cells})
 	for employee: Dictionary in employees:
 		if not has_own_schedule(employee):
 			continue
@@ -1283,7 +1298,10 @@ func get_agenda_gaps(weekday: int) -> Array[String]:
 			var start: int = hour
 			while hour < cells.size() and cells[hour] == AGENDA_GAP:
 				hour += 1
-			gaps.append("%s sin líder de %d:00 a %d:00" % [row["label"], start, hour])
+			if row["kind"] == "reception":
+				gaps.append("nadie en la Recepción de %d:00 a %d:00" % [start, hour])
+			else:
+				gaps.append("%s sin líder de %d:00 a %d:00" % [row["label"], start, hour])
 	return gaps
 
 
@@ -1412,7 +1430,22 @@ func get_free_workstations(role: String = "") -> Array[Dictionary]:
 func get_station_problem(role: String) -> String:
 	if not get_free_workstations(role).is_empty():
 		return ""
-	return NO_OFFICE_MESSAGE if StaffCatalog.get_workplace(role) == Workstations.SINGLE_OFFICE else NO_STATION_MESSAGE
+	match StaffCatalog.get_workplace(role):
+		Workstations.SINGLE_OFFICE:
+			return NO_OFFICE_MESSAGE
+		Workstations.RECEPTION:
+			return NO_RECEPTION_MESSAGE
+	return NO_STATION_MESSAGE
+
+
+## Indica si a esa hora de ese día de la semana hay un recepcionista trabajando en su
+## mostrador.
+func is_reception_attended(weekday: int, hour: int) -> bool:
+	for employee: Dictionary in employees:
+		if employee["role"] == RECEPTIONIST_ROLE and has_working_station(employee) \
+				and is_expected(employee_key(employee["id"]), weekday, hour):
+			return true
+	return false
 
 
 ## Clave con la que un empleado ocupa su silla (assigned_to).

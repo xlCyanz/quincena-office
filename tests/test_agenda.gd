@@ -288,7 +288,7 @@ func _check_ui() -> void:
 	await get_tree().process_frame
 	var gaps: Array[String] = panel.get_agenda_gaps()
 	_expect(gaps.size() == 2 and gaps[0] == "%s sin líder de 10:00 a 14:00" % team["name"], "la agenda marca los huecos sin líder: %s" % [gaps])
-	_expect(panel.get_list_text().contains("Huecos: ") and panel.get_list_text().contains("rinden 75 %"), "y los escribe: %s" % panel.get_list_text())
+	_expect(panel.get_list_text().contains("Huecos: ") and panel.get_list_text().contains("rinde 75 %"), "y los escribe: %s" % panel.get_list_text())
 	panel.get_agenda_day_button(6).pressed.emit()
 	await get_tree().process_frame
 	_expect(panel.get_agenda_gaps().is_empty() and panel.get_list_text().contains("Sin huecos este día."), "el domingo no hay huecos")

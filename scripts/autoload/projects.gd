@@ -10,6 +10,12 @@
 # Una oferta es {"id", "client", "type", "size", "points": {"design", "programming",
 # "testing"}, "total_points", "days", "pay", "advance", "arrived_day", "expires_day"}.
 # advance es el anticipo (0 si no tiene) y los días se cuentan con GameClock.get_day_count.
+#
+# Visitas (hito 36, data/contracts.json, visits): desde Startup, con una Recepción que
+# funciona, una oferta nueva puede llegar como un cliente que espera en la Recepción
+# ({"id", "offer", "arrived_at", "leaves_at"} en visits, horas contadas como
+# Staff.get_absolute_hour). Al terminar cada hora, si en ella había un recepcionista en su
+# puesto, la oferta entra en la bandeja; si llega leaves_at sin que lo atiendan, se va.
 # Un contrato es la oferta aceptada más "accepted_day", "deadline_day" y "progress"
 # (puntos hechos de cada fase) y "team_id": quién lo lleva (el id de un equipo de Staff,
 # CEO_TEAM si lo lleva el CEO o NO_TEAM si nadie). Cada equipo con miembros y el CEO
@@ -45,6 +51,8 @@ const NO_TEAM: int = -1
 const BUG_KEYS: Array[String] = ["bugs_hidden", "bugs_found", "bugs_fixed"]
 
 var offers: Array[Dictionary] = []
+## Clientes esperando en la Recepción con su oferta.
+var visits: Array[Dictionary] = []
 var contracts: Array[Dictionary] = []
 ## Reputación de la empresa, de 1 a 5 estrellas (se mueve con las entregas, hito 18).
 var reputation: float = 1.0
@@ -70,6 +78,7 @@ func _ready() -> void:
 ## y una primera oferta pequeña para no empezar sin trabajo.
 func new_game() -> void:
 	offers.clear()
+	visits.clear()
 	contracts.clear()
 	history.clear()
 	delivered_count = 0
@@ -357,6 +366,7 @@ static func describe_terms(offer: Dictionary) -> String:
 
 func _on_hour_changed(hour: int) -> void:
 	_produce()
+	_update_visits()
 	if hour == int(ContractCatalog.get_offers("arrival_hour")):
 		_check_late_contracts(GameClock.get_day_count())
 		_process_arrivals(GameClock.get_day_count())
@@ -370,11 +380,96 @@ func _process_arrivals(today: int) -> void:
 			staying.append(offer)
 	offers = staying
 	var max_offers: int = int(ContractCatalog.get_offers("max_offers"))
+	var visited: bool = false
 	for i: int in range(_roll_arrivals()):
-		if offers.size() >= max_offers:
+		if offers.size() + visits.size() >= max_offers:
 			break
-		offers.append(_make_offer(today))
+		var offer: Dictionary = _make_offer(today)
+		if visits_enabled() and _rng.randf() < float(ContractCatalog.get_visits("chance")):
+			_add_visit(offer)
+			visited = true
+		else:
+			offers.append(offer)
 	EventBus.projects_changed.emit()
+	if visited:
+		EventBus.visits_changed.emit()
+
+
+## Indica si los clientes pueden venir a la oficina: desde visits.min_stage y con una
+## Recepción que funciona.
+func visits_enabled() -> bool:
+	return Company.stage >= int(ContractCatalog.get_visits("min_stage")) and _has_working_room(Workstations.RECEPTION)
+
+
+## Horas que espera un cliente: más si la Recepción tiene un sofá de espera.
+func get_visit_wait_hours() -> int:
+	return int(ContractCatalog.get_visits("sofa_wait_hours" if not get_waiting_seats().is_empty() else "wait_hours"))
+
+
+## Casillas de los asientos de espera (sofás) dentro de una Recepción que funciona.
+func get_waiting_seats() -> Array[Vector2i]:
+	var seats: Array[Vector2i] = []
+	var room_cells: Array = _reception_cells()
+	for item: Dictionary in OfficeState.furniture:
+		if not bool(FurnitureCatalog.get_item(item["id"]).get("waiting_seat", false)):
+			continue
+		for cell: Vector2i in FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]):
+			if room_cells.has(cell):
+				seats.append(cell)
+	return seats
+
+
+## Dónde esperan los clientes, en orden: los asientos de espera y después las casillas
+## libres de la Recepción (sin muebles, sin la entrada). Vacío si no hay Recepción.
+func get_waiting_spots() -> Array[Vector2i]:
+	var spots: Array[Vector2i] = get_waiting_seats()
+	var used: Array[Vector2i] = OfficeState.get_furniture_cells()
+	for cell: Vector2i in _reception_cells():
+		if not used.has(cell) and cell != OfficeState.entrance:
+			spots.append(cell)
+	return spots
+
+
+func _reception_cells() -> Array:
+	for room: Dictionary in OfficeState.rooms:
+		if room["type"] == Workstations.RECEPTION and RoomRules.function_problems(room, OfficeState.furniture).is_empty():
+			return room["cells"]
+	return []
+
+
+func _add_visit(offer: Dictionary) -> void:
+	var now: int = Staff.get_absolute_hour()
+	var wait: int = get_visit_wait_hours()
+	visits.append({"id": offer["id"], "offer": offer, "arrived_at": now, "leaves_at": now + wait})
+	EventBus.notice.emit("Llegó un cliente de %s a la Recepción: espera hasta las %d:00." % [offer["client"],
+		posmod(now + wait, GameConstants.HOURS_PER_DAY)])
+
+
+# Al terminar cada hora: si en ella había un recepcionista en su puesto, cada cliente deja
+# su oferta en la bandeja; si no, los que ya esperaron todo su tiempo se van.
+func _update_visits() -> void:
+	if visits.is_empty():
+		return
+	var now: int = Staff.get_absolute_hour()
+	var ended: int = now - 1
+	var attended: bool = Staff.is_reception_attended(Staff.get_weekday_at(ended), posmod(ended, GameConstants.HOURS_PER_DAY))
+	var staying: Array[Dictionary] = []
+	for visit: Dictionary in visits:
+		var offer: Dictionary = visit["offer"]
+		if int(visit["arrived_at"]) > ended:
+			staying.append(visit)
+		elif attended:
+			offers.append(offer)
+			EventBus.notice.emit("Atendieron al cliente de %s: su oferta está en Proyectos." % offer["client"])
+		elif now >= int(visit["leaves_at"]):
+			EventBus.notice.emit("El cliente de %s se fue sin que nadie lo atendiera: perdiste su oferta." % offer["client"])
+		else:
+			staying.append(visit)
+	if staying.size() == visits.size():
+		return
+	visits = staying
+	EventBus.projects_changed.emit()
+	EventBus.visits_changed.emit()
 
 
 ## Ofertas que llegan por día en promedio: la base más lo de cada vendedor, que depende
@@ -456,7 +551,7 @@ func _take_id() -> int:
 func export_state() -> Dictionary:
 	return {"offers": offers.duplicate(true), "contracts": contracts.duplicate(true), "reputation": reputation,
 		"history": history.duplicate(true), "delivered_count": delivered_count, "accepted_count": accepted_count, "best_reputation": best_reputation,
-		"next_id": _next_id, "rng_state": str(_rng.state)}
+		"next_id": _next_id, "rng_state": str(_rng.state), "visits": visits.duplicate(true)}
 
 
 ## Restaura los proyectos desde una partida guardada. Sin datos (partidas anteriores al
@@ -465,6 +560,14 @@ func import_state(state: Dictionary) -> void:
 	offers.clear()
 	for saved: Dictionary in state.get("offers", []):
 		offers.append(_import_offer(saved))
+	# Antes del hito 36 no había visitas.
+	visits.clear()
+	for saved: Dictionary in state.get("visits", []):
+		if not saved.has("offer"):
+			continue
+		var offer: Dictionary = _import_offer(saved["offer"])
+		visits.append({"id": offer["id"], "offer": offer, "arrived_at": int(saved.get("arrived_at", 0)),
+			"leaves_at": int(saved.get("leaves_at", 0))})
 	contracts.clear()
 	for saved: Dictionary in state.get("contracts", []):
 		var contract: Dictionary = _import_offer(saved)
@@ -504,6 +607,7 @@ func import_state(state: Dictionary) -> void:
 	else:
 		_rng.randomize()
 	EventBus.projects_changed.emit()
+	EventBus.visits_changed.emit()
 
 
 ## Quienes trabajan en un contrato en una hora (contada como Staff.get_absolute_hour):

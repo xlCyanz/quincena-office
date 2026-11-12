@@ -37,7 +37,7 @@ const AGENDA_COLORS: Dictionary[String, Color] = {
 	Staff.AGENDA_LUNCH: Color("8a8f98"), Staff.AGENDA_GAP: Color("f2c14e"),
 }
 const AGENDA_STATE_NAMES: Dictionary[String, String] = {
-	Staff.AGENDA_OFF: "libre", Staff.AGENDA_WORK: "trabaja", Staff.AGENDA_LUNCH: "almuerzo", Staff.AGENDA_GAP: "sin líder",
+	Staff.AGENDA_OFF: "libre", Staff.AGENDA_WORK: "trabaja", Staff.AGENDA_LUNCH: "almuerzo", Staff.AGENDA_GAP: "hueco",
 }
 
 var _open_button: Button
@@ -561,8 +561,11 @@ func _add_agenda() -> void:
 			else "Sin huecos: en %s los equipos rinden igual sin líder." % Company.get_stage_name(Company.stage)))
 	else:
 		var gaps := Label.new()
-		gaps.text = "Huecos: %s (rinden %d %%)." % ["; ".join(_agenda_gaps),
-			roundi(float(StaffCatalog.get_teams("no_leader_factor")) * 100.0)]
+		gaps.text = "Huecos: %s." % "; ".join(_agenda_gaps)
+		if "".join(_agenda_gaps).contains("sin líder"):
+			gaps.text += " Sin su líder un equipo rinde %d %%." % roundi(float(StaffCatalog.get_teams("no_leader_factor")) * 100.0)
+		if "".join(_agenda_gaps).contains("Recepción"):
+			gaps.text += " Sin recepcionista los clientes se van."
 		gaps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		gaps.add_theme_color_override("font_color", AGENDA_COLORS[Staff.AGENDA_GAP])
 		_list.add_child(gaps)

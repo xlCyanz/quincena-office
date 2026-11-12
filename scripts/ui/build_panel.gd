@@ -74,7 +74,7 @@ func _ready() -> void:
 	var furniture: Array[Array] = []
 	for id: String in FurnitureCatalog.get_ids():
 		var item: Dictionary = FurnitureCatalog.get_item(id)
-		furniture.append([id, "%s $%d" % [item["name"], item["price"]]])
+		furniture.append([id, "%s $%d" % [item["short_name"], item["price"]]])
 	furniture.append([BuildController.TOOL_ROTATE, "Girar"])
 	var room_tools: Array[Array] = []
 	for type_id: String in RoomCatalog.get_type_ids():

@@ -12,7 +12,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   - Ejecutar sin ventana: `Godot --headless --path . --quit-after 5`
   - Reimportar y regenerar `.uid`: `Godot --headless --editor --quit`
   - Pruebas sin ventana: `Godot --headless --path . res://tests/<prueba>.tscn` (imprime `RESULTADO: OK`);
-    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32), `test_departments` (33), `test_overtime` (34) y `test_agenda` (35)
+    hay una por hito: `test_grid_camera` (1), `test_game_clock` (2), `test_new_game` (3), `test_ceo` (4), `test_construction` (5), `test_furniture` (6), `test_rooms` (7), `test_money_ui` (8), `test_save` (9), `test_vacancies` (10), `test_hiring` (11), `test_workday` (12), `test_payroll` (13), `test_contracts` (14), `test_teams` (15), `test_production` (16), `test_bugs` (17), `test_delivery` (18), `test_morale` (19), `test_bank` (20), `test_credit` (21), `test_loans` (22), `test_default` (23), `test_emergency` (24), `test_land` (25), `test_company_value` (26), `test_stages` (27), `test_objectives` (28), `test_phase3` (29), `test_promotions` (30), `test_leaders` (31), `test_managers` (32), `test_departments` (33), `test_overtime` (34), `test_agenda` (35) y `test_reception` (36)
 
 ## Convenciones de código
 
@@ -132,6 +132,13 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
   y todos sus equipos; `set_team_shift` suelta la plantilla; borrar una deja a sus equipos con su turno. `Staff.get_agenda(día)` da 24 estados por
   equipo y persona con horario propio (`AGENDA_GAP` = equipo con miembros trabajando sin su líder, desde Startup); `get_agenda_gaps` los textos.
   Horarios tiene tres vistas (`set_view`): Equipos, Plantillas y Agenda (un día a la vez).
+- Recepción y visitas (`visits` en `data/contracts.json`): `receptionist` ($700, desde Startup, Ventas) trabaja en una silla delante del frente
+  de un mostrador (`reception_counter`, `is_counter`) dentro de la Recepción (`Workstations.RECEPTION`, uno por mostrador). Desde Startup y con
+  Recepción que funciona (`Projects.visits_enabled`), cada oferta nueva llega con 40 % como visita (`Projects.visits`: `{id, offer, arrived_at,
+  leaves_at}`); espera 3 h (6 con `waiting_sofa`). Al terminar cada hora, si hubo recepcionista en su puesto (`Staff.is_reception_attended`)
+  la oferta entra en la bandeja; si no, al llegar `leaves_at` se va. Las visitas cuentan para el tope de la bandeja. `EventBus.visits_changed`;
+  `main.gd` dibuja a cada cliente (`Visitor`) en `Projects.get_waiting_spots()` (sofá primero); no cuentan para la oficina vacía. La agenda
+  tiene la fila Recepción con huecos «nadie en la Recepción». Los muebles tienen `short_name` para el botón del modo construcción.
 - Banco (`Bank`, `data/bank.json`): calificación A–E por puntaje = base 50 (C) + ingresos de contratos del mes pasado (hasta +20, con $25,000)
   + bienes (reventa de muebles y computadoras, hasta +10) + antigüedad (+2/mes, hasta +10) + pagos a tiempo (+2, hasta +10)
   − 15 por atraso; A ≥75, B ≥60, C ≥45, D ≥30. Se recalcula el día 1 y en el momento de un atraso. Pagos por
@@ -226,3 +233,4 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
 | 33 | Departamentos y ejecutivos | ✅ Completado (desde Mediana empresa, que pide solo 40 empleados; ascender un gerente o contratarlo; el ejecutivo rinde siempre, sin depender de estar presente; el CEO con 3+ departamentos rinde menos; Administración solo entrevista, el jugador elige quién) |
 | 34 | Horas extra y turno de noche | ✅ Completado (0–4 h extra al final del turno a 1.5×; +20 % de 22 a 6; se pagan por hora de horario en la nómina siguiente con su concepto; estrés +5 por hora extra y ánimo −10 de noche; horario propio desde la ficha, también sin equipo) |
 | 35 | Agenda semanal | ✅ Completado (Equipos pasa a Horarios con vistas Equipos, Plantillas y Agenda; Diurno, Tarde y Noche editables; cada equipo sigue una plantilla o tiene turno propio; agenda de un día con huecos sin líder desde Startup; la recepción se marca en el hito 36) |
+| 36 | Recepcionista y visitas | ✅ Completado (mostrador $600 con silla delante, uno por mostrador; recepcionista $700 desde Startup; visitas solo con Recepción armada, 40 % de las ofertas; esperan 3 h o 6 con sofá $300; atendidas al terminar una hora con recepcionista; el cliente se ve en la Recepción) |

@@ -61,14 +61,14 @@ func _ids(vacancy_id: int) -> Array[int]:
 
 
 func _check_catalog() -> void:
-	# El líder de equipo, el gerente y el ejecutivo llegan en los hitos 31–33 (sin niveles, sueldo fijo).
-	var roles: Array[String] = ["programmer", "designer", "qa", "salesperson", "team_leader", "manager", "executive"]
+	# El líder de equipo, el gerente, el ejecutivo y el recepcionista llegan en los hitos 31–33 y 36 (sin niveles, sueldo fijo).
+	var roles: Array[String] = ["programmer", "designer", "qa", "salesperson", "team_leader", "manager", "receptionist", "executive"]
 	var levels: Array[String] = ["intern", "junior", "semi_senior", "senior"]
 	_expect(StaffCatalog.get_role_ids() == roles, "cargos: %s" % [StaffCatalog.get_role_ids()])
 	_expect(StaffCatalog.get_level_ids() == levels, "niveles: %s" % [StaffCatalog.get_level_ids()])
 	var table: Dictionary = {
 		["programmer", "intern"]: 600, ["programmer", "senior"]: 3200, ["designer", "junior"]: 1000,
-		["qa", "semi_senior"]: 1500, ["salesperson", "senior"]: 2500, ["team_leader", "intern"]: 4200, ["manager", "senior"]: 6000, ["executive", "intern"]: 9000,
+		["qa", "semi_senior"]: 1500, ["salesperson", "senior"]: 2500, ["team_leader", "intern"]: 4200, ["manager", "senior"]: 6000, ["executive", "intern"]: 9000, ["receptionist", "intern"]: 700,
 	}
 	for key: Array in table:
 		_expect(StaffCatalog.get_salary(key[0], key[1]) == table[key], "sueldo de %s %s" % key)
