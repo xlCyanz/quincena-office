@@ -392,7 +392,7 @@ func _make_offer(today: int, forced_size: String = "") -> Dictionary:
 	var split: Array[int] = ContractCatalog.get_split(type_id)
 	var design: int = roundi(total * split[0] / 100.0)
 	var programming: int = roundi(total * split[1] / 100.0)
-	var days: Vector2i = ContractCatalog.get_size_range(size, "days")
+	var days: Vector2i = ContractCatalog.get_days_range(size, total)
 	# El pago crece con el trabajo dentro de su rango, con un poco de azar.
 	var pay_range: Vector2i = ContractCatalog.get_size_range(size, "pay")
 	var ratio: float = float(total - points_range.x) / maxf(1.0, points_range.y - points_range.x)

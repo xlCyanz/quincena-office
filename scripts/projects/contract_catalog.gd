@@ -26,10 +26,18 @@ static func get_size_name(size: String) -> String:
 	return String(get_size(size).get("name", size))
 
 
-## Rango [mínimo, máximo] de un valor de un tamaño: "points", "days" o "pay".
+## Rango [mínimo, máximo] de un valor de un tamaño: "points" o "pay".
 static func get_size_range(size: String, key: String) -> Vector2i:
 	var values: Array = get_size(size)[key]
 	return Vector2i(int(values[0]), int(values[1]))
+
+
+## Plazo [mínimo, máximo] en días para un contrato de points puntos (hito 29): lo que
+## tarda al ritmo esperado de su tamaño por la holgura de offers.days_slack.
+static func get_days_range(size: String, points: int) -> Vector2i:
+	var rate: float = maxf(1.0, float(get_size(size).get("points_per_day", 1)))
+	var slack: Array = get_offers("days_slack")
+	return Vector2i(ceili(points / rate * float(slack[0])), ceili(points / rate * float(slack[1])))
 
 
 static func get_type_ids() -> Array[String]:

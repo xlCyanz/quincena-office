@@ -68,7 +68,7 @@ func _check_catalog() -> void:
 	var sizes: Array[String] = ["small", "medium", "large"]
 	_expect(ContractCatalog.get_size_ids() == sizes, "tamaños: %s" % [ContractCatalog.get_size_ids()])
 	_expect(ContractCatalog.get_size_range("small", "points") == Vector2i(150, 300)
-		and ContractCatalog.get_size_range("medium", "days") == Vector2i(20, 30)
+		and ContractCatalog.get_days_range("small", 250) == Vector2i(17, 21)
 		and ContractCatalog.get_size_range("large", "pay") == Vector2i(38000, 76000), "rangos de la tabla 13.4")
 	_expect(ContractCatalog.get_type_ids().size() == 4, "cuatro tipos de proyecto")
 	for type_id: String in ContractCatalog.get_type_ids():
@@ -119,7 +119,8 @@ func _check_ranges() -> void:
 func _check_offer(offer: Dictionary) -> void:
 	var size: String = offer["size"]
 	var points: Vector2i = ContractCatalog.get_size_range(size, "points")
-	var days: Vector2i = ContractCatalog.get_size_range(size, "days")
+	var total_for_days: int = offer["total_points"]
+	var days: Vector2i = ContractCatalog.get_days_range(size, total_for_days)
 	var pay: Vector2i = ContractCatalog.get_size_range(size, "pay")
 	var total: int = offer["total_points"]
 	var label: String = "oferta %d (%s)" % [offer["id"], size]
