@@ -590,8 +590,8 @@ func has_working_room(room_type: String) -> bool:
 func get_nominal_rate(project: Dictionary) -> float:
 	var team_id: int = int(project.get("team_id", NO_TEAM))
 	if team_id == CEO_TEAM:
-		var computer: String = Workstations.computer_of(OfficeState.furniture, "ceo")
-		return Production.get_rate(String(StaffCatalog.get_production("ceo_level")), 100.0, Production.get_computer_bonus(computer))
+		return Production.get_rate(String(StaffCatalog.get_production("ceo_level")), 100.0,
+			Workstations.bonus_of(OfficeState.furniture, "ceo"))
 	var team: Dictionary = Staff.get_team(team_id)
 	if team.is_empty():
 		return 0.0
@@ -600,8 +600,8 @@ func get_nominal_rate(project: Dictionary) -> float:
 		var employee: Dictionary = Staff.get_employee(int(member))
 		if employee.is_empty() or Production.get_role_phase(employee["role"]).is_empty():
 			continue
-		var computer: String = Workstations.computer_of(OfficeState.furniture, Staff.employee_key(int(member)))
-		total += Production.get_rate(employee["level"], 100.0, Production.get_computer_bonus(computer))
+		total += Production.get_rate(employee["level"], 100.0,
+			Workstations.bonus_of(OfficeState.furniture, Staff.employee_key(int(member))))
 	return total
 
 
@@ -722,10 +722,10 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 	var team_id: int = int(contract["team_id"])
 	if team_id == CEO_TEAM:
 		if Staff.is_ceo_producing(at):
-			var computer: String = Workstations.computer_of(OfficeState.furniture, "ceo")
+			var ceo_bonus: float = Workstations.bonus_of(OfficeState.furniture, "ceo")
 			var ceo_level: String = String(StaffCatalog.get_production("ceo_level"))
 			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": Production.get_rate(ceo_level, 100.0,
-				Production.get_computer_bonus(computer)), "bug_chance": get_bug_chance(ceo_level, 100.0)})
+				ceo_bonus), "bug_chance": get_bug_chance(ceo_level, 100.0)})
 		return workers
 	var team: Dictionary = Staff.get_team(team_id)
 	if team.is_empty():
@@ -733,7 +733,7 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 	# Desde Startup, sin su líder presente el equipo rinde menos (Staff.get_team_factor).
 	var factor: float = Staff.get_team_factor(team, at)
 	var stations: Dictionary[String, bool] = Staff.get_working_station_keys()
-	var computers: Dictionary[String, String] = Workstations.computers_by_owner(OfficeState.furniture)
+	var bonuses: Dictionary[String, float] = Workstations.bonuses_by_owner(OfficeState.furniture)
 	var departments: Dictionary[String, float] = {}
 	for member: Variant in team["members"]:
 		var employee: Dictionary = Staff.get_employee(int(member))
@@ -741,13 +741,12 @@ func get_workers(contract: Dictionary, at: int) -> Array[Dictionary]:
 		var phase: String = Production.get_role_phase(employee["role"])
 		if phase.is_empty() or not Staff.is_expected(key, weekday, hour) or not stations.has(key):
 			continue
-		var computer: String = computers.get(key, "")
 		var department_id: String = StaffCatalog.get_role_department(employee["role"])
 		if not departments.has(department_id):
 			departments[department_id] = Staff.get_department_factor(department_id)
 		var department: float = departments[department_id]
 		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * Production.get_rate(employee["level"],
-			float(employee["energy"]), Production.get_computer_bonus(computer), float(employee["mood"])),
+			float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))})
 	return workers
 

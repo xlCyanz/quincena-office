@@ -33,9 +33,9 @@ var edges: Dictionary[Vector3i, String] = {}
 var rooms: Array[Dictionary] = []
 
 ## Muebles: cada uno es {"id": String, "cell": Vector2i, "rotation": int,
-## "assigned_to": String, "computer": String}. cell es la casilla de anclaje,
-## assigned_to dice quién lo usa ("" si nadie) y computer, la computadora instalada
-## en un escritorio ("" si no tiene). Comprar, girar y vender lo hace Builder.
+## "assigned_to": String, "computer": String, "monitor": String}. cell es la casilla de
+## anclaje, assigned_to dice quién lo usa ("" si nadie), computer la computadora
+## instalada en un escritorio y monitor su segundo monitor ("" si no tiene; puede faltar). Comprar, girar y vender lo hace Builder.
 var furniture: Array[Dictionary] = []
 
 ## Lo que se pagó por el terreno comprado (cuenta en el valor de la empresa).
@@ -336,7 +336,7 @@ func export_state() -> Dictionary:
 	for item: Dictionary in furniture:
 		var cell: Vector2i = item["cell"]
 		saved_furniture.append({"id": item["id"], "cell": [cell.x, cell.y], "rotation": item["rotation"],
-			"assigned_to": item["assigned_to"], "computer": item["computer"]})
+			"assigned_to": item["assigned_to"], "computer": item["computer"], "monitor": String(item.get("monitor", ""))})
 	var saved_floors: Array = []
 	for cell: Vector2i in floors:
 		saved_floors.append([cell.x, cell.y, floors[cell]])
@@ -441,6 +441,7 @@ func _furniture_from_data(item: Dictionary) -> Dictionary:
 		"rotation": int(item.get("rotation", 0)),
 		"assigned_to": String(item.get("assigned_to", "")),
 		"computer": String(item.get("computer", "")),
+		"monitor": String(item.get("monitor", "")),
 	}
 
 

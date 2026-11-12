@@ -26,6 +26,8 @@ const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
+## Mejorar la computadora de un escritorio o una silla a su calidad siguiente (hito 46).
+const TOOL_UPGRADE: String = "upgrade"
 
 ## Distancia máxima (en casillas) a un borde para que Vender lo elija en vez de la casilla.
 const SELL_EDGE_DISTANCE: float = 0.2
@@ -215,10 +217,18 @@ func _update_preview(announce: bool = true) -> void:
 		_preview_front = FurnitureCatalog.get_front(placement_rotation)
 		quote = builder.quote_place(tool, cell, placement_rotation)
 		_apply_preview = func() -> Dictionary: return builder.place(tool, cell, placement_rotation)
+	elif not info.is_empty() and FurnitureCatalog.is_monitor(tool):  # segundo monitor
+		_preview_cells = _footprint_at(cell)
+		quote = builder.quote_install_monitor(tool, cell)
+		_apply_preview = func() -> Dictionary: return builder.install_monitor(tool, cell)
 	elif not info.is_empty():  # computadora
 		_preview_cells = _footprint_at(cell)
 		quote = builder.quote_install_computer(tool, cell)
 		_apply_preview = func() -> Dictionary: return builder.install_computer(tool, cell)
+	elif tool == TOOL_UPGRADE:
+		_preview_cells = _footprint_at(cell)
+		quote = builder.quote_upgrade(cell)
+		_apply_preview = func() -> Dictionary: return builder.upgrade(cell)
 	elif tool == TOOL_ROTATE:
 		quote = builder.quote_rotate(cell)
 		var index: int = OfficeState.find_furniture_at(cell)

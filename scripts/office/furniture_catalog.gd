@@ -106,6 +106,11 @@ static func _load() -> void:
 			"walkable": bool(raw.get("walkable", false)),
 			"ambiance": float(raw.get("ambiance", 0.0)),
 			"stress_relief": int(raw.get("stress_relief", 0)),
+			"production_bonus": float(raw.get("production_bonus", 0.0)),
+			"upgrade_to": String(raw.get("upgrade_to", "")),
+			"is_monitor": bool(raw.get("is_monitor", false)),
+			"energy_per_work_hour": int(raw.get("energy_per_work_hour", 0)),
+			"mood_bonus": int(raw.get("mood_bonus", 0)),
 		}
 
 
@@ -118,6 +123,31 @@ static func is_wall_mounted(id: String) -> bool:
 ## Borde con pared donde cuelga un objeto de pared: el de su casilla detrás del frente.
 static func get_wall_edge(cell: Vector2i, rotation: int) -> Vector3i:
 	return GridEdge.between(cell, cell - get_front(rotation))
+
+
+## Calidad siguiente de un mueble o computadora (hito 46), o "" si no se mejora.
+static func get_upgrade(id: String) -> String:
+	return String(get_item(id).get("upgrade_to", ""))
+
+
+## Indica si es un segundo monitor: va sobre un escritorio con computadora.
+static func is_monitor(id: String) -> bool:
+	return bool(get_item(id).get("is_monitor", false))
+
+
+## Lo que suma a la producción de quien lo usa (computadora o segundo monitor).
+static func get_production_bonus(id: String) -> float:
+	return float(get_item(id).get("production_bonus", 0.0))
+
+
+## Energía por hora trabajada sentado ahí (una silla), o 0 si usa la de data/staff.json.
+static func get_work_energy(id: String) -> int:
+	return int(get_item(id).get("energy_per_work_hour", 0))
+
+
+## Lo que suma a la meta de ánimo de quien trabaja en ese escritorio.
+static func get_mood_bonus(id: String) -> int:
+	return int(get_item(id).get("mood_bonus", 0))
 
 
 ## Indica si estorba el paso (la alfombra se pisa: ocupa su casilla pero no tapa el paso).

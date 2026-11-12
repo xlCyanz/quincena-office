@@ -1,5 +1,5 @@
 {
-	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). Limpieza (hito 37): trash_can = zafacón (la habitación se ensucia más lento; $30 provisional); is_closet = armario de limpieza, puesto del personal de limpieza dentro de un Cuarto de limpieza ($200 provisional). Servidores (hito 40): server_rack = rack de servidores, una unidad de capacidad para productos si está en una Sala de servidores que funciona; monthly_cost = lo que cuesta al mes cada uno («Mantenimiento de servidores», el día 1). air_conditioner = aire acondicionado, obligatorio en la Sala de servidores ($800 provisional; objeto de pared desde el hito 45). Eventos (hito 44): toilet y sink (inodoro y lavamanos, obligatorios en el Baño, $400 y $200 provisionales), coffee_maker (cafetera, obligatoria en la Sala de descanso, $200), backup_battery (baterías de respaldo, $1,500: con una en la oficina no hay apagones) y filing_cabinet (archivero, $250 provisional: la multa de la inspección de impuestos es la mitad). Ambiente (hito 45): ambiance = puntos de ambiente de un adorno; wall_mounted = se cuelga en una pared (no ocupa casilla: su casilla es la que mira y la pared queda detrás de su frente, uno por cara de pared); walkable = se pisa (la alfombra: ocupa su casilla pero no tapa el paso); stress_relief = baja la meta de estrés de quienes trabajan en su habitación (la pecera). Sección ambiance: ambiente de una habitación = puntos × area_unit / área − amontonar, redondeado y entre min y max; amontonar: caben floor(área / desk_area) escritorios y por cada parte de más resta en proporción hasta crowding_max al pasarse en crowding_full_over (50 % más escritorios de los que caben = −15); suma a la meta de ánimo de quienes trabajan ahí. production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3).",
+	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). Limpieza (hito 37): trash_can = zafacón (la habitación se ensucia más lento; $30 provisional); is_closet = armario de limpieza, puesto del personal de limpieza dentro de un Cuarto de limpieza ($200 provisional). Servidores (hito 40): server_rack = rack de servidores, una unidad de capacidad para productos si está en una Sala de servidores que funciona; monthly_cost = lo que cuesta al mes cada uno («Mantenimiento de servidores», el día 1). air_conditioner = aire acondicionado, obligatorio en la Sala de servidores ($800 provisional; objeto de pared desde el hito 45). Eventos (hito 44): toilet y sink (inodoro y lavamanos, obligatorios en el Baño, $400 y $200 provisionales), coffee_maker (cafetera, obligatoria en la Sala de descanso, $200), backup_battery (baterías de respaldo, $1,500: con una en la oficina no hay apagones) y filing_cabinet (archivero, $250 provisional: la multa de la inspección de impuestos es la mitad). Ambiente (hito 45): ambiance = puntos de ambiente de un adorno; wall_mounted = se cuelga en una pared (no ocupa casilla: su casilla es la que mira y la pared queda detrás de su frente, uno por cara de pared); walkable = se pisa (la alfombra: ocupa su casilla pero no tapa el paso); stress_relief = baja la meta de estrés de quienes trabajan en su habitación (la pecera). Sección ambiance: ambiente de una habitación = puntos × area_unit / área − amontonar, redondeado y entre min y max; amontonar: caben floor(área / desk_area) escritorios y por cada parte de más resta en proporción hasta crowding_max al pasarse en crowding_full_over (50 % más escritorios de los que caben = −15); suma a la meta de ánimo de quienes trabajan ahí. production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3). Calidades (hito 46): upgrade_to = la calidad siguiente (computadora básica → media → pro, silla básica → ergonómica); la herramienta Mejorar la cambia en su lugar, también en un puesto ocupado, y cobra la diferencia de precio. is_monitor = segundo monitor ($300 provisional): va sobre un escritorio con computadora (uno por escritorio) y suma su production_bonus al de la computadora. energy_per_work_hour de una silla reemplaza el de data/staff.json para quien se sienta ahí (la ergonómica −4 en vez de −6). mood_bonus de un escritorio suma a la meta de ánimo de quien trabaja en él (el amplio +5).",
 	"resale_ratio": 0.5,
 	"ambiance": { "area_unit": 10, "desk_area": 4, "crowding_max": 15, "crowding_full_over": 0.5, "min": -15, "max": 15 },
 	"items": {
@@ -21,6 +21,7 @@
 			"color": "6b4a32",
 			"accepts_computer": true
 		},
+		"wide_desk": { "name": "Escritorio amplio", "short_name": "Esc. amplio", "price": 350, "size": [2, 1], "shape": "desk", "height": 22, "color": "a77d52", "accepts_computer": true, "mood_bonus": 5 },
 		"basic_chair": {
 			"name": "Silla básica",
 			"price": 60,
@@ -28,8 +29,10 @@
 			"shape": "chair",
 			"height": 14,
 			"color": "3d5a80",
-			"is_seat": true
+			"is_seat": true,
+			"upgrade_to": "ergonomic_chair"
 		},
+		"ergonomic_chair": { "name": "Silla ergonómica", "short_name": "Silla ergo.", "price": 250, "size": [1, 1], "shape": "chair", "height": 18, "color": "2a3b4f", "is_seat": true, "energy_per_work_hour": -4 },
 		"small_plant": {
 			"name": "Planta pequeña",
 			"price": 40,
@@ -107,8 +110,12 @@
 			"height": 12,
 			"color": "2b2f36",
 			"on_desk": true,
-			"production_bonus": 0.0
+			"production_bonus": 0.0,
+			"upgrade_to": "mid_computer"
 		},
+		"mid_computer": { "name": "Computadora media", "short_name": "PC media", "price": 1200, "shape": "computer", "height": 14, "color": "3a4a5c", "on_desk": true, "production_bonus": 0.15, "upgrade_to": "pro_computer" },
+		"pro_computer": { "name": "Computadora pro", "short_name": "PC pro", "price": 2500, "shape": "computer", "height": 16, "color": "1d2a44", "on_desk": true, "production_bonus": 0.3 },
+		"second_monitor": { "name": "Segundo monitor", "short_name": "Monitor", "price": 300, "shape": "computer", "height": 10, "color": "30343c", "on_desk": true, "is_monitor": true, "production_bonus": 0.05 },
 		"toilet": { "name": "Inodoro", "short_name": "Inodoro", "price": 400, "size": [1, 1], "shape": "desk", "color": "eef0f2", "height": 14 },
 		"sink": { "name": "Lavamanos", "short_name": "Lavamanos", "price": 200, "size": [1, 1], "shape": "desk", "color": "dfe6ea", "height": 18 },
 		"coffee_maker": { "name": "Cafetera", "short_name": "Cafetera", "price": 200, "size": [1, 1], "shape": "desk", "color": "3b3230", "height": 16 },

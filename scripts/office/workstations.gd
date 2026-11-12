@@ -29,9 +29,9 @@ const CLEANING_ROOM: String = "cleaning_room"
 # Últimos puestos encontrados por clase de habitación y el hash de los datos que los dieron.
 static var _cache: Dictionary = {}
 static var _cache_key: int = 0
-# Últimas computadoras por silla ocupada (computers_by_owner) y el hash de los muebles.
-static var _computers: Dictionary[String, String] = {}
-static var _computers_key: int = 0
+# Últimos bonos por silla ocupada (bonuses_by_owner) y el hash de los muebles.
+static var _bonuses: Dictionary[String, float] = {}
+static var _bonuses_key: int = 0
 
 
 ## Todos los puestos de la oficina. Cada uno es {"chair": int, "desk": int,
@@ -127,43 +127,74 @@ static func owner_of(furniture: Array[Dictionary], rooms: Array[Dictionary], ind
 ## Computadora que usa quien se sienta en la silla de furniture[chair_index]: la del
 ## escritorio cuyo frente da a esa silla, o "" si no hay.
 static func computer_for_chair(furniture: Array[Dictionary], chair_index: int) -> String:
+	var desk: int = computer_desk_for_chair(furniture, chair_index)
+	return "" if desk < 0 else String(furniture[desk]["computer"])
+
+
+## Índice del escritorio con computadora cuyo frente da a la silla de
+## furniture[chair_index] (el primero de la lista), o -1 si no hay.
+static func computer_desk_for_chair(furniture: Array[Dictionary], chair_index: int) -> int:
 	var chair_cell: Vector2i = furniture[chair_index]["cell"]
-	for desk: Dictionary in furniture:
+	for desk_index: int in range(furniture.size()):
+		var desk: Dictionary = furniture[desk_index]
 		if String(desk.get("computer", "")).is_empty():
 			continue
 		var front: Vector2i = FurnitureCatalog.get_front(desk["rotation"])
 		for cell: Vector2i in FurnitureCatalog.get_footprint(desk["id"], desk["cell"], desk["rotation"]):
 			if cell + front == chair_cell:
-				return String(desk["computer"])
-	return ""
+				return desk_index
+	return -1
 
 
-## Computadora de cada silla ocupada: {assigned_to: computadora} (sin computadora, "").
-## Lo mismo que computer_of para todos de una vez, sin recorrer los muebles por cada uno.
-## Se guarda el último resultado mientras los muebles no cambien.
-static func computers_by_owner(furniture: Array[Dictionary]) -> Dictionary[String, String]:
+## Lo que suma a la producción un escritorio: su computadora y, con computadora, su
+## segundo monitor (hito 46).
+static func get_desk_bonus(desk: Dictionary) -> float:
+	var computer: String = String(desk.get("computer", ""))
+	if computer.is_empty():
+		return 0.0
+	var bonus: float = FurnitureCatalog.get_production_bonus(computer)
+	var monitor: String = String(desk.get("monitor", ""))
+	if not monitor.is_empty():
+		bonus += FurnitureCatalog.get_production_bonus(monitor)
+	return bonus
+
+
+## Lo que suma a la producción de cada silla ocupada su escritorio con computadora:
+## {assigned_to: bono} (sin computadora, 0). Lo mismo que bonus_of para todos de una vez,
+## sin recorrer los muebles por cada uno. Se guarda mientras los muebles no cambien.
+static func bonuses_by_owner(furniture: Array[Dictionary]) -> Dictionary[String, float]:
 	var key: int = furniture.hash()
-	if key != _computers_key or _computers.is_empty():
-		_computers = _find_computers(furniture)
-		_computers_key = key
-	return _computers
+	if key != _bonuses_key or _bonuses.is_empty():
+		_bonuses = _find_bonuses(furniture)
+		_bonuses_key = key
+	return _bonuses
 
 
-static func _find_computers(furniture: Array[Dictionary]) -> Dictionary[String, String]:
-	var by_cell: Dictionary[Vector2i, String] = {}
+static func _find_bonuses(furniture: Array[Dictionary]) -> Dictionary[String, float]:
+	var by_cell: Dictionary[Vector2i, float] = {}
 	for desk: Dictionary in furniture:
 		if String(desk.get("computer", "")).is_empty():
 			continue
 		var front: Vector2i = FurnitureCatalog.get_front(desk["rotation"])
 		for cell: Vector2i in FurnitureCatalog.get_footprint(desk["id"], desk["cell"], desk["rotation"]):
 			if not by_cell.has(cell + front):
-				by_cell[cell + front] = String(desk["computer"])
-	var result: Dictionary[String, String] = {}
+				by_cell[cell + front] = get_desk_bonus(desk)
+	var result: Dictionary[String, float] = {}
 	for item: Dictionary in furniture:
 		var owner: String = String(item["assigned_to"])
 		if not owner.is_empty() and not result.has(owner):
-			result[owner] = by_cell.get(item["cell"], "")
+			result[owner] = by_cell.get(item["cell"], 0.0)
 	return result
+
+
+## Lo que suma a la producción de who (el assigned_to de su silla) el escritorio que
+## usa: computadora y segundo monitor.
+static func bonus_of(furniture: Array[Dictionary], who: String) -> float:
+	for index: int in range(furniture.size()):
+		if furniture[index]["assigned_to"] == who:
+			var desk: int = computer_desk_for_chair(furniture, index)
+			return 0.0 if desk < 0 else get_desk_bonus(furniture[desk])
+	return 0.0
 
 
 ## Computadora que usa who (el assigned_to de su silla), o "" si no tiene.
@@ -172,6 +203,14 @@ static func computer_of(furniture: Array[Dictionary], who: String) -> String:
 		if furniture[index]["assigned_to"] == who:
 			return computer_for_chair(furniture, index)
 	return ""
+
+
+## Escritorio del puesto que funciona de who, o vacío (para el escritorio amplio).
+static func station_desk_of(furniture: Array[Dictionary], rooms: Array[Dictionary], who: String) -> Dictionary:
+	for station: Dictionary in find_all(furniture, rooms):
+		if furniture[station["chair"]]["assigned_to"] == who:
+			return furniture[station["desk"]]
+	return {}
 
 
 # Primer escritorio libre (con computadora si needs_computer; un mostrador si counter),

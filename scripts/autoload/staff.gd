@@ -875,6 +875,7 @@ func get_mood_target(employee: Dictionary) -> int:
 	if works_in_dirty_room(employee_key(employee["id"])):
 		target += float(StaffCatalog.get_cleaning("dirty_mood"))
 	target += get_ambiance(employee_key(employee["id"]))
+	target += get_desk_mood(employee_key(employee["id"]))
 	return clampi(roundi(target), 0, 100)
 
 
@@ -1871,6 +1872,24 @@ func _ambiance_detail(room: Dictionary) -> Dictionary:
 	return _ambiance_cache[key]
 
 
+## Lo que suma a la meta de ánimo el escritorio del puesto de alguien (el amplio, hito 46).
+func get_desk_mood(key: String) -> int:
+	var desk: Dictionary = Workstations.station_desk_of(OfficeState.furniture, OfficeState.rooms, key)
+	return 0 if desk.is_empty() else FurnitureCatalog.get_mood_bonus(desk["id"])
+
+
+## Energía que pierde alguien por hora trabajada: la de su silla si tiene una propia (la
+## ergonómica, hito 46) o la de data/staff.json.
+func get_work_energy(key: String) -> int:
+	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
+	return _work_energy_of(seat)
+
+
+func _work_energy_of(seat: Dictionary) -> int:
+	var own: int = 0 if seat.is_empty() else FurnitureCatalog.get_work_energy(seat["id"])
+	return own if own != 0 else int(StaffCatalog.get_workday("energy_per_work_hour"))
+
+
 func works_in_dirty_room(key: String) -> bool:
 	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
 	if seat.is_empty():
@@ -1969,7 +1988,11 @@ func _update_energy() -> void:
 	@warning_ignore("integer_division")
 	var weekday: int = (ended / GameConstants.HOURS_PER_DAY) % GameConstants.DAYS_PER_WEEK
 	var hour: int = posmod(ended, GameConstants.HOURS_PER_DAY)
-	var work: int = int(StaffCatalog.get_workday("energy_per_work_hour"))
+	var seats: Dictionary[String, Dictionary] = {}
+	for item: Dictionary in OfficeState.furniture:
+		var owner: String = String(item["assigned_to"])
+		if not owner.is_empty() and not seats.has(owner):
+			seats[owner] = item
 	var rest: int = int(StaffCatalog.get_workday("energy_per_rest_hour"))
 	var pay_factor: float = float(StaffCatalog.get_overtime("pay_factor"))
 	var night_bonus: float = float(StaffCatalog.get_overtime("night_bonus"))
@@ -1983,7 +2006,7 @@ func _update_energy() -> void:
 				employee["overtime_pay"] = float(employee.get("overtime_pay", 0.0)) + hour_pay * pay_factor
 			if WorkSchedule.is_night_hour(hour):
 				employee["night_pay"] = float(employee.get("night_pay", 0.0)) + hour_pay * night_bonus
-		var change: int = work if working else rest
+		var change: int = _work_energy_of(seats.get(employee_key(employee["id"]), {})) if working else rest
 		employee["energy"] = clampi(int(employee["energy"]) + change, 0, 100)
 		employee["min_energy"] = mini(int(employee.get("min_energy", 100)), int(employee["energy"]))
 	EventBus.staff_changed.emit()

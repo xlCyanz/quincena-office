@@ -267,6 +267,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
   si alguien se va, le da a cada equipo el contrato más grande y al CEO solo pequeños; guarda 1.5 meses de gastos. Llega a Mediana
   empresa (~mes 13) e imprime un resumen por mes; compara 3 meses con el CEO dirigiendo 4 departamentos contra un ejecutivo.
+- Calidades de muebles (hito 46, `data/furniture.json`): computadora básica/media/pro (`production_bonus` 0/0.15/0.3), segundo monitor
+  (`is_monitor`, $300, +0.05, en `furniture["monitor"]` sobre un escritorio con computadora, uno por escritorio; se vende antes que la
+  computadora), silla ergonómica ($250, `energy_per_work_hour` −4 en vez de −6: `Staff.get_work_energy`) y escritorio amplio ($350, 2×1,
+  `mood_bonus` +5 a la meta de ánimo de su puesto: `Staff.get_desk_mood`, `Workstations.station_desk_of`). `upgrade_to` es la calidad
+  siguiente; `Builder.quote_upgrade`/`upgrade` (herramienta Mejorar) la cambia en su lugar cobrando la diferencia, también en un puesto
+  ocupado o la silla del CEO. El bono de un puesto es computadora + monitor (`Workstations.get_desk_bonus`, `bonus_of`, `bonuses_by_owner`
+  con caché). `data/rooms.json` acepta la silla ergonómica y el escritorio amplio donde pedía silla y escritorio.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -326,3 +333,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 43 | Eventos | ✅ Completado (sorteo cada hora: uno cada 5/4/3/2/1.5 días según la etapa, uno a la vez, por condiciones y peso; tarjeta plegable a la derecha con 2 minutos reales que se detienen en pausa y construcción, al acabarse elige al azar; efectos de dinero, ánimo, energía, estrés, reputación y oferta; 4 eventos de prueba, la lista completa en el hito 44) |
 | 44 | Lista de eventos | ✅ Completado (los 16 de 10.2; multa 10 % de los ingresos del mes pasado, mínimo $500, la mitad con archivero y nada con contador; pago atrasado retiene 30 % de una entrega de la última semana, 15 días o 3 con contador; baterías anulan el apagón; oficina sucia solo sin limpieza; reunión inútil con líder bajo 60; inodoro, lavamanos y cafetera nuevos para Baño y Sala de descanso; los buenos pesan más) |
 | 45 | Ambiente y decoración | ✅ Completado (planta grande, cuadro, reloj, lámpara, alfombra que se pisa y pecera que baja el estrés; puntos × 10 / área − amontonar según el porcentaje de escritorios de más que 1 cada 4 m² (−15 con 50 % más), tope ±15 a la meta de ánimo; objetos de pared en una cara de pared con casilla y lado; el aire acondicionado pasa a la pared y las partidas viejas lo cuelgan solas) |
+| 46 | Calidades de muebles | ✅ Completado (computadora media $1,200 +15 % y pro $2,500 +30 %; segundo monitor $300 +5 % sobre un escritorio con computadora; silla ergonómica $250 −4/h de energía en vez de −6; escritorio amplio $350 +5 a la meta de ánimo; herramienta Mejorar sube computadora o silla en su lugar cobrando la diferencia, también en puestos ocupados) |

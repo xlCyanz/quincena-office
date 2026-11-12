@@ -127,6 +127,8 @@ func get_assets_value() -> int:
 		total += FurnitureCatalog.get_resale(item["id"])
 		if not String(item.get("computer", "")).is_empty():
 			total += FurnitureCatalog.get_resale(item["computer"])
+		if not String(item.get("monitor", "")).is_empty():
+			total += FurnitureCatalog.get_resale(item["monitor"])
 	return total
 
 

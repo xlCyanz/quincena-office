@@ -9,7 +9,7 @@
 # (por ejemplo, una fila de paredes) se cobran todos o ninguno.
 #
 # Los muebles tienen sus propias funciones (place, rotate, sell_furniture_at,
-# install_computer), cada una con su quote_ para la vista previa. Un mueble no puede
+# install_computer, install_monitor, upgrade), cada una con su quote_ para la vista previa. Un mueble no puede
 # ponerse sobre otro, ni sobre la entrada o un personaje, ni dejar sin acceso una parte
 # de la oficina que lo tenía, ni una silla nueva sin acceso.
 #
@@ -218,7 +218,7 @@ func quote_place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
 	if info.is_empty() or bool(info["on_desk"]):
 		return _fail(0, "Ese objeto no se coloca en el piso.")
 	var item: Dictionary = {"id": id, "cell": anchor, "rotation": posmod(rotation, 4),
-		"assigned_to": "", "computer": ""}
+		"assigned_to": "", "computer": "", "monitor": ""}
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate.append(item)
 	var cost: int = FurnitureCatalog.get_price(id)
@@ -289,8 +289,8 @@ func rotate(cell: Vector2i) -> Dictionary:
 	return _commit(quote_rotate(cell))
 
 
-## Vender lo que hay en cell: si es un escritorio con computadora, primero la
-## computadora; si no, el mueble (sin mueble, lo colgado en una pared de la casilla).
+## Vender lo que hay en cell: si es un escritorio con segundo monitor, primero el
+## monitor; si tiene computadora, después la computadora; si no, el mueble (sin mueble, lo colgado en una pared de la casilla).
 ## La silla del CEO no se vende, ni nada del puesto de un empleado.
 func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
 	var index: int = OfficeState.find_furniture_at(cell)
@@ -307,6 +307,13 @@ func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
 		return _fail(0, station_problem)
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	var item: Dictionary = candidate[index].duplicate()
+	if not String(item.get("monitor", "")).is_empty():
+		var monitor_refund: int = FurnitureCatalog.get_resale(item["monitor"])
+		var monitor_name: String = FurnitureCatalog.get_item(item["monitor"])["name"]
+		item["monitor"] = ""
+		candidate[index] = item
+		return {"ok": true, "cost": -monitor_refund, "message": "Venta de %s: +$%d" % [monitor_name, monitor_refund],
+			"furniture": candidate}
 	if not String(item["computer"]).is_empty():
 		var refund: int = FurnitureCatalog.get_resale(item["computer"])
 		var computer_name: String = FurnitureCatalog.get_item(item["computer"])["name"]
@@ -345,6 +352,66 @@ func quote_install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 
 func install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 	return _commit(quote_install_computer(computer_id, cell))
+
+
+## Instalar un segundo monitor en el escritorio que ocupa cell: necesita computadora y
+## va uno por escritorio (hito 46).
+func quote_install_monitor(monitor_id: String, cell: Vector2i) -> Dictionary:
+	var index: int = OfficeState.find_furniture_at(cell)
+	if index < 0 or not bool(FurnitureCatalog.get_item(OfficeState.furniture[index]["id"])["accepts_computer"]):
+		return _fail(0, "El monitor va sobre un escritorio.")
+	var item: Dictionary = OfficeState.furniture[index].duplicate()
+	if String(item["computer"]).is_empty():
+		return _fail(0, "Ese escritorio no tiene computadora: instala una primero.")
+	if not String(item.get("monitor", "")).is_empty():
+		return _fail(0, "Ese escritorio ya tiene segundo monitor.")
+	var cost: int = FurnitureCatalog.get_price(monitor_id)
+	if not Economy.can_afford(cost):
+		return _fail(cost, "No alcanza el dinero: cuesta $%d." % cost)
+	item["monitor"] = monitor_id
+	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
+	candidate[index] = item
+	var monitor_name: String = FurnitureCatalog.get_item(monitor_id)["name"]
+	return {"ok": true, "cost": cost, "message": "%s: −$%d" % [monitor_name, cost], "furniture": candidate}
+
+
+func install_monitor(monitor_id: String, cell: Vector2i) -> Dictionary:
+	return _commit(quote_install_monitor(monitor_id, cell))
+
+
+## Mejorar lo que hay en cell a su calidad siguiente (hito 46), cobrando la diferencia de
+## precio: la computadora de un escritorio (básica → media → pro) o una silla básica
+## (→ ergonómica). Se puede aunque sea parte de un puesto ocupado: no cambia el lugar.
+func quote_upgrade(cell: Vector2i) -> Dictionary:
+	var index: int = OfficeState.find_furniture_at(cell)
+	if index < 0:
+		return _fail(0, "Ahí no hay nada que mejorar.")
+	var item: Dictionary = OfficeState.furniture[index].duplicate()
+	var old_id: String = item["id"]
+	var field: String = "id"
+	if bool(FurnitureCatalog.get_item(old_id)["accepts_computer"]):
+		if String(item["computer"]).is_empty():
+			return _fail(0, "Ese escritorio no tiene computadora: instala una primero.")
+		old_id = item["computer"]
+		field = "computer"
+	var new_id: String = FurnitureCatalog.get_upgrade(old_id)
+	var old_name: String = FurnitureCatalog.get_item(old_id)["name"]
+	if new_id.is_empty():
+		if field == "computer":
+			return _fail(0, "%s es la mejor que hay." % old_name)
+		return _fail(0, "%s no se puede mejorar." % old_name)
+	var cost: int = maxi(0, FurnitureCatalog.get_price(new_id) - FurnitureCatalog.get_price(old_id))
+	if not Economy.can_afford(cost):
+		return _fail(cost, "No alcanza el dinero: la mejora cuesta $%d." % cost)
+	item[field] = new_id
+	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
+	candidate[index] = item
+	var new_name: String = FurnitureCatalog.get_item(new_id)["name"]
+	return {"ok": true, "cost": cost, "message": "%s → %s: −$%d" % [old_name, new_name, cost], "furniture": candidate}
+
+
+func upgrade(cell: Vector2i) -> Dictionary:
+	return _commit(quote_upgrade(cell))
 
 
 # Los muebles del puesto de un empleado (silla, escritorio y computadora) no se venden

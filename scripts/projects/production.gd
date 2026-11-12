@@ -49,7 +49,7 @@ static func get_mood_factor(mood: float) -> float:
 static func get_computer_bonus(computer_id: String) -> float:
 	if computer_id.is_empty():
 		return 0.0
-	return float(FurnitureCatalog.get_item(computer_id).get("production_bonus", 0.0))
+	return FurnitureCatalog.get_production_bonus(computer_id)
 
 
 ## Fase en que trabaja un cargo: la de su habilidad principal, o "" si no es una fase

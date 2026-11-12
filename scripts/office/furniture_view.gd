@@ -16,6 +16,9 @@ const BACKREST_HEIGHT_PX: float = 18.0
 ## Medidas de la computadora sobre el escritorio (en casillas) y del frente marcado.
 const MONITOR_WIDTH: float = 0.5
 const MONITOR_DEPTH: float = 0.12
+## Segundo monitor: ancho y cuánto se aparta del centro del escritorio.
+const SECOND_MONITOR_WIDTH: float = 0.3
+const SECOND_MONITOR_OFFSET: float = 0.3
 const FRONT_MARK_COLOR := Color(1.0, 1.0, 1.0, 0.35)
 const POT_COLOR := Color("8a5a3c")
 const POT_SIZE: float = 0.4
@@ -38,6 +41,8 @@ var item_id: String = ""
 var footprint: Array[Vector2i] = []
 var rotation_index: int = 0
 var computer_id: String = ""
+## Segundo monitor del escritorio ("" si no tiene; hito 46).
+var monitor_id: String = ""
 var part: String = PART_MAIN
 
 var _grid: OfficeGrid
@@ -54,6 +59,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 	item_id = item["id"]
 	rotation_index = item["rotation"]
 	computer_id = item.get("computer", "")
+	monitor_id = item.get("monitor", "")
 	_info = FurnitureCatalog.get_item(item_id)
 	footprint = FurnitureCatalog.get_footprint(item_id, item["cell"], rotation_index)
 	if FurnitureCatalog.is_wall_mounted(item_id):
@@ -145,7 +151,16 @@ func _draw_computer(front: Vector2, desk_height: float) -> void:
 	var computer: Dictionary = FurnitureCatalog.get_item(computer_id)
 	var center: Vector2 = (_low + _high) / 2.0 - front * 0.2
 	var across := Vector2(absf(front.y), absf(front.x))  # eje a lo ancho del escritorio
-	var size: Vector2 = across * MONITOR_WIDTH + Vector2(absf(front.x), absf(front.y)) * MONITOR_DEPTH
+	var depth: Vector2 = Vector2(absf(front.x), absf(front.y)) * MONITOR_DEPTH
+	if not monitor_id.is_empty():
+		# Con segundo monitor, la computadora se corre a un lado y el monitor va al otro.
+		var monitor: Dictionary = FurnitureCatalog.get_item(monitor_id)
+		var monitor_center: Vector2 = center + across * SECOND_MONITOR_OFFSET
+		var monitor_size: Vector2 = across * SECOND_MONITOR_WIDTH + depth
+		center -= across * SECOND_MONITOR_OFFSET * 0.5
+		_draw_box_raised(monitor_center - monitor_size / 2.0, monitor_center + monitor_size / 2.0, desk_height,
+			float(monitor.get("height", 10.0)), monitor.get("color", Color.BLACK))
+	var size: Vector2 = across * MONITOR_WIDTH + depth
 	_draw_box_raised(center - size / 2.0, center + size / 2.0, desk_height,
 		float(computer.get("height", 12.0)), computer.get("color", Color.BLACK))
 
