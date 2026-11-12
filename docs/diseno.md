@@ -239,13 +239,13 @@ Los horarios se asignan por equipo o por empleado, sobre un reloj de 24 horas.
 
 ### 6.1 Reloj y calendario
 
-Un día de juego dura 2 minutos reales a velocidad normal: cada hora del reloj son 5 segundos.
+Un día de juego dura 4 minutos reales a velocidad normal: cada hora del reloj son 10 segundos.
 
 | Elemento | Valor |
 | --- | --- |
 | Reloj | 24 horas, visible siempre junto con el día y la fecha |
 | Velocidades | Pausa, 1x, 2x y 4x |
-| Un día de juego | 2 minutos a 1x; 30 segundos a 4x |
+| Un día de juego | 4 minutos a 1x; 1 minuto a 4x |
 | Mes | 30 días (1 hora real a 1x) |
 | Nómina | Cada 15 días: los días 15 y 30 de cada mes |
 | Gastos mensuales y cuotas del banco | Día 1 de cada mes |
@@ -669,7 +669,7 @@ La fase 1 entrega una oficina funcional sin empleados: proyecto de Godot 4 confi
 | --- | --- | --- |
 | 0. Proyecto | Proyecto de Godot, ajustes de pantalla y texturas, carpetas, autoloads vacíos, git y un `CLAUDE.md` con las reglas del proyecto | El proyecto abre y corre una escena vacía sin errores |
 | 1. Cuadrícula y cámara | Piso isométrico del local de 6×8, cámara que se arrastra, zoom en 3 niveles fijos y resaltado de la casilla bajo el cursor | El cursor resalta la casilla correcta en todo el local y en cada nivel de zoom |
-| 2. Reloj | Reloj de 24 horas, fecha, mes de 30 días, pausa y velocidades 1x, 2x y 4x, con señales de cambio de hora y de día | Un día dura 2 minutos a 1x y 30 segundos a 4x; en pausa nada avanza |
+| 2. Reloj | Reloj de 24 horas, fecha, mes de 30 días, pausa y velocidades 1x, 2x y 4x, con señales de cambio de hora y de día | Un día dura 4 minutos a 1x y 1 minuto a 4x; en pausa nada avanza |
 | 3. Inicio de partida | Nueva partida con el local inicial, la Oficina Ejecutiva ya construida, el CEO y $20,000 | Al pulsar "Nueva partida" aparece la oficina lista para jugar |
 | 4. CEO | Personaje que camina por la cuadrícula, esquiva obstáculos, se sienta en su escritorio en horario de trabajo y se va al terminar | El CEO llega a su escritorio por un camino válido y queda bien ordenado respecto a los muebles |
 | 5. Construcción: pisos y paredes | Modo construcción que pausa el tiempo, con pisos, paredes pieza por pieza, puertas y venta | Las paredes bloquean el paso, las puertas lo permiten y cada acción cobra o devuelve dinero |

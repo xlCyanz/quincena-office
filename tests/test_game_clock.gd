@@ -151,7 +151,8 @@ func _check_big_step() -> void:
 	_expect(_days == [Vector2i(2, 1)], "días del paso largo: %s" % [_days])
 	_expect(GameClock.get_hour() == (GameConstants.START_HOUR + 20) % GameConstants.HOURS_PER_DAY,
 		"hora tras el paso largo: %d" % GameClock.get_hour())
-	_expect(GameClock.get_minute() == 6, "minuto tras el paso largo: %d" % GameClock.get_minute())
+	var minute: int = floori(0.5 / GameConstants.SECONDS_PER_GAME_HOUR * 60.0)
+	_expect(GameClock.get_minute() == minute, "minuto tras el paso largo: %d (esperado %d)" % [GameClock.get_minute(), minute])
 
 
 # Recorre 61 días: cambio de mes en el día 31 y de semana cada 7 días.
