@@ -73,6 +73,13 @@ func fast_forward_hours(hours: int) -> void:
 	_interrupted = false
 
 
+## Adelanta el reloj dentro de la hora actual hasta ese minuto (sin pasar de hora); no
+## retrocede. Lo usa el salto de la oficina vacía para llegar a la primera entrada.
+func skip_to_minute(minute: int) -> void:
+	var seconds: float = clampi(minute, 0, 59) * GameConstants.SECONDS_PER_GAME_HOUR / 60.0
+	_seconds_into_hour = maxf(_seconds_into_hour, seconds)
+
+
 ## Corta el salto de fast_forward_hours en curso después de la hora actual.
 func interrupt() -> void:
 	_interrupted = true

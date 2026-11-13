@@ -321,6 +321,11 @@ static func get_breaks(key: String) -> float:
 	return float(_staff_data()["breaks"][key])
 
 
+## Valor de las llegadas escalonadas (data/staff.json, arrivals).
+static func get_arrivals(key: String) -> float:
+	return float(_staff_data()["arrivals"][key])
+
+
 ## Valor de los baños (data/staff.json, bathrooms; hito 52).
 static func get_bathrooms(key: String) -> float:
 	return float(_staff_data()["bathrooms"][key])

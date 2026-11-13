@@ -176,6 +176,9 @@ var bathrooms_enabled: bool = true
 ## Solo para pruebas: false deja los candidatos como antes del hito 56 (sin primera tanda,
 ## sin calidad por sueldo y ambiente ni candidato extra del premio). No se guarda.
 var company_hiring_enabled: bool = true
+## Solo para pruebas: false hace que todos entren a la hora en punto, como antes de las
+## llegadas escalonadas (las pruebas de la jornada miden quién entra a cada hora). No se guarda.
+var arrival_spread_enabled: bool = true
 ## Hasta qué día (sin incluirlo) el «Premio de la industria» suma un candidato por vacante.
 var award_until: int = 0
 ## Pausas (hito 54): hora absoluta → claves de quienes descansan esa hora (la actual y la
@@ -1236,11 +1239,7 @@ func _check_arrivals() -> void:
 			continue
 		var late: float = _trait_value(employee, "late_chance")
 		var absent: float = _trait_value(employee, "absent_chance")
-		var roll: float = 1.0
-		if late > 0.0 or absent > 0.0:
-			var rng := RandomNumberGenerator.new()
-			rng.seed = hash([_rng.seed, int(employee["id"]), now])
-			roll = rng.randf()
+		var roll: float = _lateness_roll(employee, now)
 		if roll < absent:
 			employee["missing_from"] = now
 			employee["missing_until"] = now + schedule.get_duration()
@@ -1252,6 +1251,66 @@ func _check_arrivals() -> void:
 			employee["late_count"] = int(employee.get("late_count", 0)) + 1
 		else:
 			employee["on_time_count"] = int(employee.get("on_time_count", 0)) + 1
+
+
+# Sorteo de tardanza o ausencia al empezar el turno en la hora absoluta at (fijo por
+# persona y hora; 1.0 si no es impuntual). Se puede pedir antes para saber si llegará.
+func _lateness_roll(employee: Dictionary, at: int) -> float:
+	if _trait_value(employee, "late_chance") <= 0.0 and _trait_value(employee, "absent_chance") <= 0.0:
+		return 1.0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([_rng.seed, int(employee["id"]), at])
+	return rng.randf()
+
+
+## Minutos respecto de la hora en punto en que alguien entra si su llegada es en la hora
+## absoluta at (data/staff.json, arrivals): negativo = antes. Fijo por persona y hora.
+## Solo cambia cuándo se le ve entrar; la producción sigue contando por hora.
+func get_arrival_offset(employee: Dictionary, at: int) -> int:
+	if not arrival_spread_enabled:
+		return 0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([_rng.seed, int(employee["id"]), at, "arrival"])
+	var unpunctual: bool = _trait_value(employee, "late_chance") > 0.0
+	var late_chance: float = StaffCatalog.get_arrivals("unpunctual_late_chance" if unpunctual else "late_chance")
+	var earliest: int = int(StaffCatalog.get_arrivals("unpunctual_earliest" if unpunctual else "earliest"))
+	if rng.randf() < late_chance:
+		return rng.randi_range(1, int(StaffCatalog.get_arrivals("latest")))
+	return rng.randi_range(earliest, 0)
+
+
+## Minutos de la hora actual que tarda en entrar alguien cuya jornada empieza (o que
+## vuelve tras llegar una hora tarde) ahora; 0 si llega en punto o no es su llegada.
+func get_late_minutes(key: String) -> int:
+	var employee: Dictionary = get_employee_by_key(key)
+	if employee.is_empty() or not is_expected_now(key):
+		return 0
+	var weekday: int = GameClock.get_weekday()
+	var hour: int = GameClock.get_hour()
+	var previous_weekday: int = weekday if hour > 0 else posmod(weekday - 1, GameConstants.DAYS_PER_WEEK)
+	var previous_hour: int = posmod(hour - 1, GameConstants.HOURS_PER_DAY)
+	if is_expected(key, previous_weekday, previous_hour) or get_schedule(employee).is_lunch(previous_weekday, previous_hour):
+		return 0
+	return maxi(get_arrival_offset(employee, _absolute_hour()), 0)
+
+
+## Minutos antes de la hora siguiente en que entra alguien cuyo turno empieza en ella y
+## que llegará a tiempo (sin tardanza ni ausencia sorteada); 0 si no.
+func get_early_minutes(key: String) -> int:
+	var employee: Dictionary = get_employee_by_key(key)
+	if employee.is_empty() or is_expected_now(key):
+		return 0
+	var next: int = _absolute_hour() + 1
+	var hours_per_day: int = GameConstants.HOURS_PER_DAY
+	@warning_ignore("integer_division")
+	var weekday: int = (next / hours_per_day) % GameConstants.DAYS_PER_WEEK
+	var hour: int = next % hours_per_day
+	var schedule: WorkSchedule = get_schedule(employee)
+	if schedule.start_hour != hour or not schedule.days.has(weekday):
+		return 0
+	if _lateness_roll(employee, next) < _trait_value(employee, "late_chance") + _trait_value(employee, "absent_chance"):
+		return 0
+	return maxi(-get_arrival_offset(employee, next), 0)
 
 
 ## Anota los errores ocultos que generó cada empleado en la hora (lo que devuelve

@@ -102,6 +102,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `CHARACTER_PASS_WAIT` pasa igual (dos de frente en un pasillo de una casilla). Aparece en la entrada si está libre; si no,
   espera en la calle sin verse. Fuera del local no hay límite. `main.gd` no manda a dos al mismo lugar: limpieza, almuerzo,
   pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Prueba `test_walking`.
+  Llegadas escalonadas (`arrivals` en `data/staff.json`): al empezar la jornada cada empleado entra entre −30 y +10 minutos de su hora
+  (`Staff.get_arrival_offset(empleado, hora absoluta)`, fijo por persona y hora; 10 % tarde, impuntual 50 % y desde −10). `get_early_minutes`
+  (turno que empieza la hora siguiente, sin tardanza sorteada: `_lateness_roll` predice `_check_arrivals`) y `get_late_minutes` (llegada de ahora).
+  `main._arrive_staggered` guarda `_arrivals` (clave → minuto absoluto, `get_arrival_minute`) y `_process` lo revisa cada minuto; quien llega
+  antes (`_early`, `is_waiting_shift`) espera de pie (`OfficeCharacter.standing`) en la Sala de descanso o da vueltas (`_waiting_spot`, cambia cada
+  `wander_minutes`). Solo visual: producción y presencia siguen por hora. La oficina vacía salta a la hora anterior y con `GameClock.skip_to_minute`
+  al primero que entra. `Staff.arrival_spread_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga antes de `arrivals`.
 - Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
   Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
   lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.

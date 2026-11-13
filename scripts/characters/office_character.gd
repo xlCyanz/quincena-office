@@ -50,6 +50,12 @@ var hair_color := Color("3b2a20")
 var activity: Activity = Activity.AWAY
 ## Icono de estado que se dibuja sobre la cabeza ("" ninguno; claves de STATUS_ICONS).
 var status_icon: String = ""
+## Si al llegar a su lugar se queda de pie (los que llegan antes de su hora y esperan)
+## en vez de sentarse.
+var standing: bool = false:
+	set(value):
+		standing = value
+		queue_redraw()
 ## Posición en la cuadrícula; con decimales mientras camina entre dos casillas.
 var grid_position := Vector2.ZERO
 
@@ -359,7 +365,7 @@ func refresh_position() -> void:
 # Muñeco provisional. El origen es el punto de apoyo en el centro de su casilla.
 # Sentado, la cadera queda sobre el asiento y las piernas cuelgan por delante.
 func _draw() -> void:
-	var seated: bool = activity == Activity.SEATED
+	var seated: bool = activity == Activity.SEATED and not standing
 	# Sentado, la cadera tiene que quedar sobre el asiento aunque el cuerpo se achique.
 	var lift: float = -SEAT_HEIGHT_PX * (1.0 - BODY_SCALE) if seated else 0.0
 	var body := Transform2D(0.0, Vector2.ONE * BODY_SCALE, 0.0, Vector2(0.0, lift))

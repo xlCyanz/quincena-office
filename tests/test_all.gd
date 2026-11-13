@@ -9,13 +9,13 @@ extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 69), cómo caminan los personajes y la empresa inicial.
+## Partes en el orden de los hitos (1 a 69), cómo caminan y llegan los personajes y la empresa inicial.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "starting_company", "dev_tools",
 ]
 ## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
 ## oficinas sin baño y corren con Staff.bathrooms_enabled en false.
@@ -29,6 +29,9 @@ const FIRST_INVESTOR_SUITE: String = "investor"
 ## Primera parte con la cámara suave (hito 68): las anteriores miden la cámara al instante y
 ## corren con OfficeCamera.smoothing_enabled en false.
 const FIRST_CAMERA_VIEW_SUITE: String = "camera_view"
+## Primera parte con llegadas escalonadas: las anteriores miden quién entra a cada hora en
+## punto y corren con Staff.arrival_spread_enabled en false.
+const FIRST_ARRIVALS_SUITE: String = "arrivals"
 ## Ninguna parte puede tardar más que esto (hito 67: las largas son las simulaciones de fase).
 const MAX_SUITE_SECONDS: float = 60.0
 ## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
@@ -86,6 +89,7 @@ func _run_suite(suite: String) -> Vector2i:
 	Staff.company_hiring_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CANDIDATES_SUITE)
 	Bank.investor_enabled = SUITES.find(suite) >= SUITES.find(FIRST_INVESTOR_SUITE)
 	OfficeCamera.smoothing_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CAMERA_VIEW_SUITE)
+	Staff.arrival_spread_enabled = SUITES.find(suite) >= SUITES.find(FIRST_ARRIVALS_SUITE)
 	var script: GDScript = load("%stest_%s.gd" % [SUITES_DIR, suite])
 	var node := Node.new()
 	node.name = suite

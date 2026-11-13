@@ -26,6 +26,13 @@ var visitors: Dictionary[int, Visitor] = {}
 # Clientes que ya se van; desaparecen al salir.
 var _leaving_visitors: Array[Visitor] = []
 var pathfinder := OfficePathfinder.new()
+# Llegadas escalonadas: clave → minuto absoluto (hora absoluta × 60 + minuto) en que entra
+# quien todavía no llegó. Se recalcula en cada _update_routines.
+var _arrivals: Dictionary[String, int] = {}
+# Quienes llegaron antes de su hora: esperan en la Sala de descanso o dan vueltas.
+var _early: Dictionary[String, bool] = {}
+# Último minuto (o tramo de vueltas) en que se revisaron las llegadas.
+var _last_arrival_check: int = -1
 
 # Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
 var _was_paused_before_menu: bool = false
@@ -362,6 +369,95 @@ func get_characters() -> Array[OfficeCharacter]:
 	return characters
 
 
+## Minuto absoluto del reloj (hora absoluta × 60 + minuto), el de _arrivals.
+func get_arrival_minute() -> int:
+	return Staff.get_absolute_hour() * 60 + GameClock.get_minute()
+
+
+## Minuto absoluto en que entra cada empleado que todavía no llegó (copia).
+func get_pending_arrivals() -> Dictionary[String, int]:
+	return _arrivals.duplicate()
+
+
+## Indica si alguien llegó antes de su hora y está esperando.
+func is_waiting_shift(key: String) -> bool:
+	return _early.has(key)
+
+
+# Llegadas escalonadas (data/staff.json, arrivals): al empezar la jornada cada empleado
+# entra unos minutos antes o después de la hora en punto. Quien llega antes espera de pie
+# en la Sala de descanso (o da vueltas por la oficina si no hay) hasta su hora. Devuelve
+# true si ya se ocupó del personaje (no hay que hacer lo de siempre).
+func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_start: int,
+		used: Dictionary[Vector2i, bool]) -> bool:
+	var key: String = character.person_key
+	if eating or Staff.is_expected_now(key):
+		_early.erase(key)
+		character.standing = false
+		if eating or character.activity != OfficeCharacter.Activity.AWAY:
+			return false
+		var late_at: int = hour_start + Staff.get_late_minutes(key)
+		if late_at <= now:
+			return false
+		_arrivals[key] = late_at
+		character.set_seat(_home_spot(key))
+		return true
+	var early: int = Staff.get_early_minutes(key)
+	if early <= 0:
+		_early.erase(key)
+		character.standing = false
+		return false
+	var early_at: int = hour_start + 60 - early
+	if early_at > now and character.activity == OfficeCharacter.Activity.AWAY:
+		_arrivals[key] = early_at
+		return true
+	_early[key] = true
+	character.standing = true
+	character.set_seat(_waiting_spot(key, now, used))
+	character.update_routine(true)
+	return true
+
+
+# Dónde espera quien llegó antes: una casilla libre de la Sala de descanso que funciona o,
+# sin ella, una casilla cualquiera de la oficina que cambia cada wander_minutes (da vueltas).
+func _waiting_spot(key: String, now: int, used: Dictionary[Vector2i, bool]) -> Vector2i:
+	var cells: Array[Vector2i] = []
+	var bucket: int = 0
+	var room: Dictionary = OfficeState.get_working_room(OfficeState.BREAK_ROOM)
+	if not room.is_empty():
+		cells.assign(room["cells"])
+	else:
+		cells.assign(pathfinder.get_reachable(OfficeState.entrance).keys())
+		@warning_ignore("integer_division")
+		bucket = now / int(StaffCatalog.get_arrivals("wander_minutes"))
+	var free: Array[Vector2i] = []
+	for cell: Vector2i in cells:
+		if cell != OfficeState.entrance and pathfinder.is_walkable(cell):
+			free.append(cell)
+	if free.is_empty():
+		return _home_spot(key)
+	return _free_spot_near(free[posmod(hash([key, bucket]), free.size())], used)
+
+
+# Revisa una vez por minuto de juego si le toca entrar a alguien y, cada wander_minutes,
+# mueve a los que dan vueltas esperando su hora.
+func _process(_delta: float) -> void:
+	if _arrivals.is_empty() and _early.is_empty():
+		return
+	var now: int = get_arrival_minute()
+	if now == _last_arrival_check:
+		return
+	_last_arrival_check = now
+	var due: bool = false
+	for key: String in _arrivals:
+		if _arrivals[key] <= now:
+			due = true
+	var wander: bool = not _early.is_empty() and now % int(StaffCatalog.get_arrivals("wander_minutes")) == 0 \
+		and OfficeState.get_working_room(OfficeState.BREAK_ROOM).is_empty()
+	if due or wander:
+		_update_routines()
+
+
 # Cada personaje entra o sale según si le toca estar en la oficina ahora. Quien almuerza
 # dentro (hito 53) camina a una mesa de la Sala de descanso y después vuelve a su silla.
 func _update_routines() -> void:
@@ -379,12 +475,18 @@ func _update_routines() -> void:
 	# Lugares para comer o descansar ya repartidos: si hay más gente que lugares, cada uno
 	# en una casilla distinta (una persona por casilla).
 	var used: Dictionary[Vector2i, bool] = {}
+	var now: int = get_arrival_minute()
+	var hour_start: int = Staff.get_absolute_hour() * 60
+	_arrivals.clear()
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
 		if leaving:
+			_early.erase(character.person_key)
 			character.update_routine(false)
 			continue
 		var eating: bool = lunch.has(character.person_key) and not spots.is_empty()
+		if character is Employee and _arrive_staggered(character, eating, now, hour_start, used):
+			continue
 		if eating:
 			character.set_seat(_free_spot_near(spots[next_spot % spots.size()], used))
 			next_spot += 1
@@ -431,8 +533,10 @@ func describe_employee_activity(employee_id: int) -> String:
 	var lunch: bool = Staff.is_at_lunch(character.person_key)
 	match character.activity:
 		OfficeCharacter.Activity.WALKING_TO_DESK:
-			return "llegando a su puesto"
+			return "llegó temprano y espera su hora" if _early.has(character.person_key) else "llegando a su puesto"
 		OfficeCharacter.Activity.SEATED:
+			if _early.has(character.person_key):
+				return "llegó temprano y espera su hora"
 			if lunch:
 				return "almorzando en la Sala de descanso"
 			return "descansando en la Sala de descanso" if Staff.is_on_break(character.person_key) else "trabajando"
@@ -766,8 +870,21 @@ func _on_character_left_office() -> void:
 		return
 	var hours: int = Staff.hours_until_anyone_expected()
 	print("La oficina está vacía.")
-	if hours > 0:
-		GameClock.fast_forward_hours(hours)
+	if hours <= 0:
+		return
+	# Salta hasta la hora anterior a la próxima llegada y, dentro de ella, hasta el primero
+	# que entra antes de la hora en punto; si nadie llega antes, hasta la hora en punto.
+	var target: int = Staff.get_absolute_hour() + hours - 1
+	if hours > 1:
+		GameClock.fast_forward_hours(hours - 1)
+		if Staff.get_absolute_hour() != target:
+			return  # Un evento cortó el salto.
+	_update_routines()
+	if _arrivals.is_empty():
+		GameClock.fast_forward_hours(1)
+		return
+	var first: int = _arrivals.values().min()
+	GameClock.skip_to_minute(first - target * 60)
 
 
 # Botón del CEO en la barra de menús: lo manda a casa o a la oficina.
