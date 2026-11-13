@@ -256,10 +256,22 @@ func _wait_until(done: Callable, max_hours: int = MAX_WAIT_HOURS) -> int:
 	return hours
 
 
+## Elige una herramienta de Construir con clics: primero su sección y su categoría si están
+## cerradas (con follow, comprueba que el tutorial resalta cada botón que se pulsa).
+func _open_tool(tool: String, what: String, follow: bool) -> void:
+	var build: BuildPanel = _game.get_node("BuildPanel")
+	for i: int in range(3):
+		var control: Button = build.get_button_toward(tool)
+		if follow:
+			await _follows(control, "%s (%s)" % [what, control.text])
+		await _click(control)
+		if build.get_selected_tool() == tool:
+			return
+
+
 ## Coloca el mueble de una herramienta girándolo con el clic derecho hasta mirar a `rotation`.
 func _place(tool: String, cell: Vector2i, rotation: int) -> void:
-	var build: BuildPanel = _game.get_node("BuildPanel")
-	await _click(build.get_tool_button(tool))
+	await _open_tool(tool, tool, false)
 	await _bring_into_view(cell)
 	var at: Vector2 = _cell_on_screen(cell)
 	while _rotation != rotation:
@@ -310,8 +322,7 @@ func _play(seed: int) -> void:
 	_expect(build.is_build_mode() and _step_id() == "work_area", "abrir Construir cumple el paso 2")
 
 	# 3. Área de trabajo: herramienta y clic en el espacio libre.
-	await _follows(build.get_tool_button("work_area"), "Área de trabajo")
-	await _click(build.get_tool_button("work_area"))
+	await _open_tool("work_area", "Área de trabajo", true)
 	await _bring_into_view(AREA_CELL)
 	await _click_at(_cell_on_screen(AREA_CELL))
 	_expect(OfficeState.rooms.any(func(room: Dictionary) -> bool: return room["type"] == "work_area"),
@@ -319,7 +330,7 @@ func _play(seed: int) -> void:
 	_expect(_step_id() == "workstation", "el Área de trabajo cumple el paso 3")
 
 	# 4. Puesto: escritorio, computadora encima y silla delante (girar con clic derecho).
-	await _follows(build.get_tool_button("simple_desk"), "Escritorio sencillo")
+	await _open_tool("simple_desk", "Escritorio sencillo", true)
 	var money_before: int = Economy.balance
 	await _place("simple_desk", DESK_CELL, DESK_ROTATION)
 	await _place("basic_computer", DESK_CELL, _rotation)

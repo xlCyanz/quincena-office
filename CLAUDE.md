@@ -73,6 +73,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - `scripts/characters/` personajes · `scripts/staff/` cargos y nombres · `scripts/projects/` catálogo de contratos · `scripts/ui/` interfaz · `data/` datos de diseño · `assets/` arte · `scripts/debug/` herramientas de desarrollo · `addons/` addons de terceros · `tests/` pruebas sin ventana
 - Escena inicial: `scenes/main_menu.tscn`; la partida es `scenes/main.tscn`.
   La interfaz superpuesta es `Hud` (dinero y reloj) más `BuildPanel` (botón Construir y herramientas).
+  Construir va en secciones (`BuildPanel.SECTION_*`: Estructura, Muebles, Habitaciones y Terreno, con «?» y Salir en la misma fila): solo se ve
+  la abierta (`set_section`, `get_section_of`); Muebles se parte por `category` de `data/furniture.json` (`categories`; `set_category`,
+  `FurnitureCatalog.get_category`) con Girar y Mejorar en la fila de categorías; Terreno muestra solo su fila (la herramienta va en un botón
+  oculto). `select_tool` abre la sección y la categoría; `get_button_toward(tool)` es el botón a pulsar para llegar (lo resalta el tutorial
+  con `tool:`). Prueba `test_build_sections`.
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`, los últimos 200, y en
   `Economy.month_totals`, totales por concepto del mes actual y el anterior). Menú Banco (`BankPanel`): saldo, resumen del
   mes con «<»/«>» y movimientos, los nuevos arriba; no pausa. Los botones de la barra miden `Hud.MENU_BUTTON_SIZE`.
@@ -387,7 +392,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   pared del contorno (`Builder._is_window_swap`; la pared del contorno no se cobra ni devuelve, `_paid_kind`); venderla o pasarle Pared la deja
   pared; cierra como pared (`blocks_passage`, caminos, espacios) y nada se cuelga en ella. Suma sus puntos al ambiente de la habitación a la que da
   (`OfficeState.count_room_windows`, `Ambiance.get_detail(…, windows)`). Al comprar terreno las del borde que se abre se devuelven a la mitad
-  (`window_refund`, «Construcción»). No cuentan como bienes. Herramienta Ventana en la fila de estructura (`BuildController.TOOL_WINDOW`).
+  (`window_refund`, «Construcción»). No cuentan como bienes. Herramienta Ventana en la sección Estructura (`BuildController.TOOL_WINDOW`).
 - Candidatos según la empresa (hito 56, `hiring` en `data/staff.json`): el primer día de una vacante (`vacancy["first_done"]`, falta = true)
   llega la primera tanda `Staff.get_first_batch()` = 3 + (estrellas enteras − 3), al menos 1, más 1 con publicidad; después, cada día como antes
   (`_roll_daily`). Calidad (`get_candidate_quality`, ±0.8) = 2.5 × (sueldo ofrecido / tabla − 1) + 0.02 × ambiente medio de las Áreas de trabajo
@@ -450,7 +455,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Tutorial del negocio y ayuda (hito 64): 10 pasos; tras contratar siguen aceptar un contrato (`projects_accept` = Aceptar de la primera oferta),
   la nómina con la velocidad (`speed_changed`: botón o tecla 1–3; resalta 2x), abrir el Banco (`bank_opened`) y entregar (`projects_deliver` =
   Entregar del primer contrato); termina con la primera entrega. Ayuda: `HelpButton.create(tema)` es el «?» (44 px, tooltip «Ayuda») en la
-  cabecera de Personal, Proyectos, Horarios, Banco y Empresa y en la fila de estructura de Construir (`get_help_button()`); emite
+  cabecera de Personal, Proyectos, Horarios, Banco y Empresa y en la fila de secciones de Construir (`get_help_button()`); emite
   `EventBus.help_requested` y `HelpDialog` (capa 12, en `main.gd`, `get_help_dialog`) muestra el título y el texto de `data/help.json`
   (`topics`) sin pausar; «Entendido» o Esc (lo primero que cierra `handle_escape`) la cierran.
 - Interfaz escalable (hito 65): opción `ui_scale` (`ui_scales` 100/125/150 en `data/settings.json`) que pone `content_scale_factor` de la

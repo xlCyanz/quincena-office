@@ -157,7 +157,11 @@ func _check_hud() -> void:
 	_expect(GameClock.is_paused and GameClock.speed_index == 0, "un botón de velocidad cambió el tiempo en modo construcción")
 
 	# El dinero en pantalla cambia con cada compra.
-	await _click(panel.get_tool_button("small_plant"))
+	# Muebles → Decoración → Planta pequeña.
+	for i: int in range(3):
+		await _click(panel.get_button_toward("small_plant"))
+		if panel.get_selected_tool() == "small_plant":
+			break
 	var grid: OfficeGrid = game.get_node("OfficeGrid")
 	var at := InputEventMouseMotion.new()
 	var cell_position: Vector2 = grid.get_canvas_transform() * grid.cell_to_world(Vector2i(5, 5))

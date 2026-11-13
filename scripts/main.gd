@@ -835,7 +835,8 @@ func tutorial_target_rect(key: String) -> Rect2:
 			control = _bank_panel.get_open_button()
 		_:
 			if key.begins_with("tool:"):
-				control = _build_panel.get_tool_button(key.trim_prefix("tool:"))
+				# Si su sección o su categoría está cerrada, se resalta la que hay que abrir.
+				control = _build_panel.get_button_toward(key.trim_prefix("tool:"))
 	if control == null or not control.is_visible_in_tree():
 		return Rect2()
 	return control.get_global_rect()

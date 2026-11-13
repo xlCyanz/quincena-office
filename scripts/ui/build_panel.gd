@@ -1,8 +1,10 @@
 # Panel del modo construcción, parte de la interfaz superpuesta (el dinero y el reloj
 # están en Hud). Abajo al centro: la barra de menús con "Construir" (otros paneles,
 # como Ajustes, añaden ahí su botón) o, en modo construcción, las herramientas, el
-# estado de la última acción y "Salir". Con la herramienta Terreno (hito 25) aparece una
-# fila para elegir el lado, el ancho, el fondo y la posición del terreno, y Comprar.
+# estado de la última acción y "Salir". Las herramientas van en secciones (Estructura,
+# Muebles, Habitaciones y Terreno): arriba se elige la sección y solo se ven las suyas, así
+# el panel tapa poco del mapa. Terreno (hito 25) muestra la fila para elegir el lado, el
+# ancho, el fondo y la posición del terreno, y Comprar.
 class_name BuildPanel
 extends CanvasLayer
 
@@ -17,6 +19,14 @@ signal land_buy_requested
 
 const SIDE_NAMES: Dictionary[String, String] = {
 	Builder.SIDE_NORTH: "Norte", Builder.SIDE_SOUTH: "Sur", Builder.SIDE_EAST: "Este", Builder.SIDE_WEST: "Oeste",
+}
+## Secciones del panel en orden: id → nombre del botón.
+const SECTION_STRUCTURE: String = "structure"
+const SECTION_FURNITURE: String = "furniture"
+const SECTION_ROOMS: String = "rooms"
+const SECTION_LAND: String = "land"
+const SECTION_NAMES: Dictionary[String, String] = {
+	SECTION_STRUCTURE: "Estructura", SECTION_FURNITURE: "Muebles", SECTION_ROOMS: "Habitaciones", SECTION_LAND: "Terreno",
 }
 const DEFAULT_LAND_WIDTH: int = 4
 const DEFAULT_LAND_DEPTH: int = 3
@@ -33,12 +43,23 @@ var _menu_bar: HFlowContainer
 # Herramientas en filas que se acomodan al ancho (hito 65), dentro de un desplazamiento.
 var _tools_scroll: ScrollContainer
 var _tool_groups: Array[HFlowContainer] = []
+# Sección → su grupo de herramientas (Terreno no tiene: solo su fila).
+var _section_groups: Dictionary[String, HFlowContainer] = {}
+var _section_buttons: Dictionary[String, Button] = {}
+# Herramienta → sección.
+var _tool_sections: Dictionary[String, String] = {}
+var _section: String = SECTION_STRUCTURE
+# Categorías de muebles: id → botón y su fila; mueble → categoría; la abierta.
+var _category_buttons: Dictionary[String, Button] = {}
+var _category_groups: Dictionary[String, HFlowContainer] = {}
+var _tool_categories: Dictionary[String, String] = {}
+var _category: String = ""
 var _open_button: Button
 var _panel: PanelContainer
 var _status_label: Label
 var _tool_buttons: Dictionary[String, Button] = {}
 var _exit_button: Button
-var _land_row: HBoxContainer
+var _land_row: HFlowContainer
 var _side_buttons: Dictionary[String, Button] = {}
 var _land_labels: Dictionary[String, Label] = {}
 var _land_buttons: Dictionary[String, Button] = {}
@@ -95,39 +116,92 @@ func _ready() -> void:
 	for floor_type: String in ConstructionCatalog.get_floor_types():
 		structure.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])
 	structure.append([BuildController.TOOL_SELL, "Vender"])
-	structure.append([BuildController.TOOL_LAND, "Terreno"])
-	var furniture: Array[Array] = []
+	# Muebles: una fila con sus categorías, Girar y Mejorar; debajo, los de la categoría abierta.
+	var furniture: Array[Array] = [[BuildController.TOOL_ROTATE, "Girar"], [BuildController.TOOL_UPGRADE, "Mejorar"]]
+	var by_category: Dictionary[String, Array] = {}
+	for category: String in FurnitureCatalog.get_categories():
+		by_category[category] = [] as Array[Array]
 	for id: String in FurnitureCatalog.get_ids():
 		var item: Dictionary = FurnitureCatalog.get_item(id)
-		furniture.append([id, "%s $%d" % [item["short_name"], item["price"]]])
-	furniture.append([BuildController.TOOL_ROTATE, "Girar"])
-	furniture.append([BuildController.TOOL_UPGRADE, "Mejorar"])
+		var category: String = FurnitureCatalog.get_category(id)
+		if not by_category.has(category):
+			by_category[category] = [] as Array[Array]
+		by_category[category].append([id, "%s $%d" % [item["short_name"], item["price"]]])
 	var room_tools: Array[Array] = []
 	for type_id: String in RoomCatalog.get_type_ids():
 		room_tools.append([type_id, RoomCatalog.get_display_name(type_id)])
 	room_tools.append([BuildController.TOOL_UNMARK_ROOM, "Quitar habitación"])
+	# Fila de secciones, con la ayuda y Salir.
+	var sections := HFlowContainer.new()
+	sections.alignment = FlowContainer.ALIGNMENT_CENTER
+	sections.add_theme_constant_override("h_separation", 4)
+	sections.add_theme_constant_override("v_separation", 4)
+	rows.add_child(sections)
+	var section_group := ButtonGroup.new()
+	for section: String in SECTION_NAMES:
+		var section_button := Button.new()
+		section_button.text = SECTION_NAMES[section]
+		section_button.toggle_mode = true
+		section_button.focus_mode = Control.FOCUS_NONE
+		section_button.button_group = section_group
+		section_button.pressed.connect(set_section.bind(section))
+		sections.add_child(section_button)
+		_section_buttons[section] = section_button
+	_help_button = HelpButton.create("build")
+	sections.add_child(_help_button)
+	_exit_button = Button.new()
+	_exit_button.text = "Salir"
+	_exit_button.pressed.connect(func() -> void: set_build_mode(false))
+	sections.add_child(_exit_button)
+	rows.add_child(HSeparator.new())
 	_tools_scroll = ScrollContainer.new()
 	_tools_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	rows.add_child(_tools_scroll)
 	var tool_rows := VBoxContainer.new()
 	tool_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tools_scroll.add_child(tool_rows)
-	var structure_row: HFlowContainer = _add_tool_row(tool_rows, structure, group)
-	_add_tool_row(tool_rows, furniture, group)
-	_add_tool_row(tool_rows, room_tools, group)
-	_build_land_row(rows)
-	_exit_button = Button.new()
-	_exit_button.text = "Salir"
-	_exit_button.pressed.connect(func() -> void: set_build_mode(false))
-	_help_button = HelpButton.create("build")
-	structure_row.add_child(_help_button)
-	structure_row.add_child(_exit_button)
+	_section_groups[SECTION_STRUCTURE] = _add_tool_row(tool_rows, structure, group, SECTION_STRUCTURE)
+	var furniture_row: HFlowContainer = _add_tool_row(tool_rows, furniture, group, SECTION_FURNITURE)
+	_section_groups[SECTION_FURNITURE] = furniture_row
+	var category_group := ButtonGroup.new()
+	var index: int = 0
+	for category: String in by_category:
+		var category_button := Button.new()
+		category_button.text = String(FurnitureCatalog.get_categories().get(category, category))
+		category_button.toggle_mode = true
+		category_button.focus_mode = Control.FOCUS_NONE
+		category_button.button_group = category_group
+		category_button.pressed.connect(set_category.bind(category))
+		furniture_row.add_child(category_button)
+		furniture_row.move_child(category_button, index)
+		index += 1
+		_category_buttons[category] = category_button
+		var entries: Array[Array] = []
+		entries.assign(by_category[category])
+		_category_groups[category] = _add_tool_row(tool_rows, entries, group, SECTION_FURNITURE)
+		for entry: Array in entries:
+			_tool_categories[String(entry[0])] = category
+		if _category.is_empty():
+			_category = category
+	furniture_row.add_child(VSeparator.new())
+	furniture_row.move_child(furniture_row.get_child(-1), index)
+	_section_groups[SECTION_ROOMS] = _add_tool_row(tool_rows, room_tools, group, SECTION_ROOMS)
+	# Terreno: un botón oculto mantiene la herramienta en el grupo; se ve su fila.
+	var land_tool := Button.new()
+	land_tool.toggle_mode = true
+	land_tool.button_group = group
+	land_tool.visible = false
+	tool_rows.add_child(land_tool)
+	_tool_buttons[BuildController.TOOL_LAND] = land_tool
+	_tool_sections[BuildController.TOOL_LAND] = SECTION_LAND
+	_build_land_row(tool_rows)
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rows.add_child(_status_label)
 	_anchor_bottom_center(_panel)
 
 	_tool_buttons[BuildController.TOOL_WALL].button_pressed = true
+	_show_section(SECTION_STRUCTURE)
 	_panel.visible = false
 	EventBus.stage_changed.connect(func(_stage: int) -> void: _refresh_room_locks())
 	EventBus.rooms_unlocked.connect(_refresh_room_locks)
@@ -148,10 +222,112 @@ func is_build_mode() -> bool:
 	return _panel.visible
 
 
-## Elige una herramienta como si se hubiera pulsado su botón.
+## Elige una herramienta como si se hubiera pulsado su botón (abre su sección).
 func select_tool(tool: String) -> void:
+	if _tool_categories.has(tool):
+		_category = _tool_categories[tool]
+	_show_section(get_section_of(tool))
 	_tool_buttons[tool].button_pressed = true
 	_on_tool_pressed(tool)
+
+
+## Abre una sección: se ven solo sus herramientas. Si la herramienta elegida es de otra
+## sección, elige la primera de esta (en Terreno, la herramienta Terreno).
+func set_section(section: String) -> void:
+	_show_section(section)
+	var current: String = get_selected_tool()
+	if get_section_of(current) != section:
+		var first: String = BuildController.TOOL_LAND if section == SECTION_LAND else ""
+		var tools_row: HFlowContainer = _category_groups[_category] if section == SECTION_FURNITURE \
+			else _section_groups.get(section)
+		if first.is_empty() and tools_row != null:
+			for child: Node in tools_row.get_children():
+				var button := child as Button
+				if button != null and not button.disabled:
+					first = _tool_buttons.find_key(button)
+					break
+		if not first.is_empty():
+			select_tool(first)
+
+
+## Abre una categoría de la sección Muebles; si la herramienta elegida es un mueble de
+## otra, elige el primero de esta.
+func set_category(category: String) -> void:
+	_category = category
+	_show_section(SECTION_FURNITURE)
+	var current: String = get_selected_tool()
+	var keep: bool = current == BuildController.TOOL_ROTATE or current == BuildController.TOOL_UPGRADE \
+		or _tool_categories.get(current, "") == category
+	if keep:
+		return
+	for child: Node in _category_groups[category].get_children():
+		var button := child as Button
+		if button != null and not button.disabled:
+			select_tool(_tool_buttons.find_key(button))
+			return
+
+
+## Botón que hay que pulsar para llegar a una herramienta: el suyo si se ve; si no, el de su
+## sección o, con la sección abierta, el de su categoría de muebles.
+func get_button_toward(tool: String) -> Button:
+	var button: Button = get_tool_button(tool)
+	if button == null or button.is_visible_in_tree() or not _panel.visible:
+		return button
+	if _section != get_section_of(tool):
+		return get_section_button(get_section_of(tool))
+	return get_category_button(get_category_of(tool)) if _tool_categories.has(tool) else button
+
+
+## Categoría de muebles abierta.
+func get_category() -> String:
+	return _category
+
+
+## Botón de una categoría de muebles.
+func get_category_button(category: String) -> Button:
+	return _category_buttons.get(category)
+
+
+## Categoría de un mueble ("" si la herramienta no es un mueble).
+func get_category_of(tool: String) -> String:
+	return _tool_categories.get(tool, "")
+
+
+## Sección abierta (SECTION_*).
+func get_section() -> String:
+	return _section
+
+
+## Sección de una herramienta.
+func get_section_of(tool: String) -> String:
+	return _tool_sections.get(tool, SECTION_STRUCTURE)
+
+
+## Botón de una sección.
+func get_section_button(section: String) -> Button:
+	return _section_buttons.get(section)
+
+
+## Herramienta elegida ("" si ninguna).
+func get_selected_tool() -> String:
+	for tool: String in _tool_buttons:
+		if _tool_buttons[tool].button_pressed:
+			return tool
+	return ""
+
+
+func _show_section(section: String) -> void:
+	_section = section
+	_section_buttons[section].set_pressed_no_signal(true)
+	for id: String in _section_groups:
+		_section_groups[id].visible = id == section
+	for id: String in _category_groups:
+		_category_groups[id].visible = section == SECTION_FURNITURE and id == _category
+	if _category_buttons.has(_category):
+		_category_buttons[_category].set_pressed_no_signal(true)
+	_land_row.visible = section == SECTION_LAND
+	if _panel != null and _panel.visible:
+		_fit_panel()
 
 
 ## Elige el terreno como si se hubieran usado los botones de la fila.
@@ -205,7 +381,7 @@ func get_tool_button(tool: String) -> Button:
 
 # Un grupo de herramientas (estructura, muebles o habitaciones): sus botones se parten en
 # filas según el ancho del panel (hito 65).
-func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup) -> HFlowContainer:
+func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup, section: String) -> HFlowContainer:
 	var row := HFlowContainer.new()
 	row.alignment = FlowContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("h_separation", 4)
@@ -221,6 +397,7 @@ func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup)
 		button.pressed.connect(func() -> void: _on_tool_pressed(tool))
 		row.add_child(button)
 		_tool_buttons[tool] = button
+		_tool_sections[tool] = section
 	return row
 
 
@@ -233,18 +410,21 @@ func _refresh_room_locks() -> void:
 		button.tooltip_text = Company.room_lock_reason(type_id)
 		if not unlocked and button.button_pressed:
 			select_tool(BuildController.TOOL_WALL)
+	if _section_groups.has(_section):
+		_show_section(_section)
 
 
 func _on_tool_pressed(tool: String) -> void:
-	_land_row.visible = tool == BuildController.TOOL_LAND
 	tool_selected.emit(tool)
-	if _land_row.visible:
+	if tool == BuildController.TOOL_LAND:
 		_refresh_land()
 
 
 func _build_land_row(parent: Container) -> void:
-	_land_row = HBoxContainer.new()
-	_land_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_land_row = HFlowContainer.new()
+	_land_row.alignment = FlowContainer.ALIGNMENT_CENTER
+	_land_row.add_theme_constant_override("h_separation", 4)
+	_land_row.add_theme_constant_override("v_separation", 4)
 	parent.add_child(_land_row)
 	var sides := ButtonGroup.new()
 	for side: String in Builder.SIDES:
@@ -345,9 +525,10 @@ func _fit_panel() -> void:
 	_panel.custom_minimum_size.x = width
 	_tools_scroll.custom_minimum_size.y = 0.0
 	var tools_height: float = 0.0
-	for row: HFlowContainer in _tool_groups:
-		# Alto de cada grupo con el ancho que tendrá.
-		tools_height += _flow_height(row, width - 16.0) + 4.0
+	for row: HFlowContainer in _tool_groups + [_land_row] as Array[HFlowContainer]:
+		# Alto de cada grupo que se ve con el ancho que tendrá.
+		if row.visible:
+			tools_height += _flow_height(row, width - 16.0) + 4.0
 	var other: float = _panel.get_combined_minimum_size().y - _tools_scroll.get_combined_minimum_size().y
 	var available: float = view.y - UiLayout.top_space - MARGIN_BOTTOM - other
 	_tools_scroll.custom_minimum_size.y = clampf(tools_height, 60.0, maxf(available, 60.0))

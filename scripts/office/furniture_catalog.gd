@@ -12,6 +12,7 @@ const FRONT_DIRECTIONS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vect
 static var _items: Dictionary = {}
 static var _resale_ratio: float = 0.0
 static var _ambiance: Dictionary = {}
+static var _categories: Dictionary = {}
 
 
 ## Datos de un mueble: name, price, size (Vector2i), shape, height, color (Color),
@@ -20,6 +21,18 @@ static func get_item(id: String) -> Dictionary:
 	if _items.is_empty():
 		_load()
 	return _items.get(id, {})
+
+
+## Categorías de la sección Muebles de Construir: id → nombre, en orden.
+static func get_categories() -> Dictionary:
+	if _items.is_empty():
+		_load()
+	return _categories
+
+
+## Categoría de un mueble ("" si no tiene).
+static func get_category(id: String) -> String:
+	return String(get_item(id).get("category", ""))
 
 
 ## Ids de los muebles que se compran desde el modo construcción, en el orden del archivo.
@@ -101,6 +114,7 @@ static func _load() -> void:
 		return
 	_resale_ratio = float(parsed.get("resale_ratio", 0.0))
 	_ambiance = parsed.get("ambiance", {})
+	_categories = parsed.get("categories", {})
 	var items: Dictionary = parsed.get("items", {})
 	for id: String in items:
 		var raw: Dictionary = items[id]
@@ -108,6 +122,7 @@ static func _load() -> void:
 		_items[id] = {
 			"name": String(raw.get("name", id)),
 			"short_name": String(raw.get("short_name", raw.get("name", id))),
+			"category": String(raw.get("category", "")),
 			"price": int(raw.get("price", 0)),
 			"size": Vector2i(int(size[0]), int(size[1])),
 			"shape": String(raw.get("shape", "desk")),

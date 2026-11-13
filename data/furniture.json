@@ -1,9 +1,10 @@
 {
-	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). Limpieza (hito 37): trash_can = zafacón (la habitación se ensucia más lento; $30 provisional); is_closet = armario de limpieza, puesto del personal de limpieza dentro de un Cuarto de limpieza ($200 provisional). Servidores (hito 40): server_rack = rack de servidores, una unidad de capacidad para productos si está en una Sala de servidores que funciona; monthly_cost = lo que cuesta al mes cada uno («Mantenimiento de servidores», el día 1). air_conditioner = aire acondicionado, obligatorio en la Sala de servidores ($800 provisional; objeto de pared desde el hito 45). Eventos (hito 44): toilet y sink (inodoro y lavamanos, obligatorios en el Baño, $400 y $200 provisionales), coffee_maker (cafetera, obligatoria en la Sala de descanso, $200), backup_battery (baterías de respaldo, $1,500: con una en la oficina no hay apagones) y filing_cabinet (archivero, $250 provisional: la multa de la inspección de impuestos es la mitad). Hito 55: accountant_boost = la impresora: en un Área de trabajo donde trabaja un contador, sus efectos (descuento de mantenimiento, de tasa y cobro del pago atrasado) valen ×accountant_boost; meeting_board = la pizarra (de pared): en una Sala de reuniones que funciona la reunión inútil pierde la mitad de horas y los contratos que exigen esa sala traen meetings.board_days_factor de plazo (data/contracts.json). Sala de descanso (hito 54): rest_places = lugares para una pausa (el sofá, 2); break_mood suma a la meta de ánimo de todos, distraction resta esa parte de los puntos de cada empleado (ping pong) y vending_income cobra eso por persona presente al día («Máquina expendedora»); cuentan solo en la Sala de descanso que funciona y uno de cada uno. Almuerzo (hito 53): lunch_part = fridge (nevera, $400), microwave (microondas, $150) o table (mesa de comedor 2×1, $300, dining_seats asientos); una Sala de descanso que funciona con nevera, microondas y mesas sirve almuerzo dentro (data/staff.json, lunch). Baños (hito 52): is_toilet = inodoro, una unidad de capacidad si está en un Baño que funciona (data/staff.json, bathrooms). Ambiente (hito 45): ambiance = puntos de ambiente de un adorno; wall_mounted = se cuelga en una pared (no ocupa casilla: su casilla es la que mira y la pared queda detrás de su frente, uno por cara de pared); walkable = se pisa (la alfombra: ocupa su casilla pero no tapa el paso); stress_relief = baja la meta de estrés de quienes trabajan en su habitación (la pecera). Sección ambiance: ambiente de una habitación = puntos × area_unit / área − amontonar, redondeado y entre min y max; amontonar: caben floor(área / desk_area) escritorios y por cada parte de más resta en proporción hasta crowding_max al pasarse en crowding_full_over (50 % más escritorios de los que caben = −15); suma a la meta de ánimo de quienes trabajan ahí. production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3). Calidades (hito 46): upgrade_to = la calidad siguiente (computadora básica → media → pro, silla básica → ergonómica); la herramienta Mejorar la cambia en su lugar, también en un puesto ocupado, y cobra la diferencia de precio. is_monitor = segundo monitor ($300 provisional): va sobre un escritorio con computadora (uno por escritorio) y suma su production_bonus al de la computadora. energy_per_work_hour de una silla reemplaza el de data/staff.json para quien se sienta ahí (la ergonómica −4 en vez de −6). mood_bonus de un escritorio suma a la meta de ánimo de quien trabaja en él (el amplio +5). Reuniones (hito 47): meeting_table = mesa de reuniones (2×2, $1,200), obligatoria en la Sala de reuniones; presentation_screen = pantalla de presentaciones (de pared, $800 provisional): en una Sala de reuniones que funciona llegan más ofertas grandes y de élite (data/contracts.json, meetings).",
+	"_comentario": "Catálogo de muebles (hito 6: los del puesto de trabajo y una planta; el resto llega con su fase). Precios de docs/diseno.md 13.7; la planta pequeña no tiene precio fijado (decoración $30 a $500) y se deja en $40 provisional. size = [ancho en x, fondo en y] en casillas con rotation 0. shape elige el dibujo provisional: desk, chair, plant o computer. Las computadoras no ocupan casilla: se instalan sobre un escritorio (on_desk). resale_ratio es lo que devuelve la reventa. short_name = nombre corto para el botón del modo construcción. category = grupo del mueble en la sección Muebles de Construir (categories: id → nombre, en orden). Recepción (hito 36): is_counter = mostrador, puesto del recepcionista con una silla delante de su frente; waiting_seat = asiento donde esperan los clientes (el sofá de espera, $300 provisional). Limpieza (hito 37): trash_can = zafacón (la habitación se ensucia más lento; $30 provisional); is_closet = armario de limpieza, puesto del personal de limpieza dentro de un Cuarto de limpieza ($200 provisional). Servidores (hito 40): server_rack = rack de servidores, una unidad de capacidad para productos si está en una Sala de servidores que funciona; monthly_cost = lo que cuesta al mes cada uno («Mantenimiento de servidores», el día 1). air_conditioner = aire acondicionado, obligatorio en la Sala de servidores ($800 provisional; objeto de pared desde el hito 45). Eventos (hito 44): toilet y sink (inodoro y lavamanos, obligatorios en el Baño, $400 y $200 provisionales), coffee_maker (cafetera, obligatoria en la Sala de descanso, $200), backup_battery (baterías de respaldo, $1,500: con una en la oficina no hay apagones) y filing_cabinet (archivero, $250 provisional: la multa de la inspección de impuestos es la mitad). Hito 55: accountant_boost = la impresora: en un Área de trabajo donde trabaja un contador, sus efectos (descuento de mantenimiento, de tasa y cobro del pago atrasado) valen ×accountant_boost; meeting_board = la pizarra (de pared): en una Sala de reuniones que funciona la reunión inútil pierde la mitad de horas y los contratos que exigen esa sala traen meetings.board_days_factor de plazo (data/contracts.json). Sala de descanso (hito 54): rest_places = lugares para una pausa (el sofá, 2); break_mood suma a la meta de ánimo de todos, distraction resta esa parte de los puntos de cada empleado (ping pong) y vending_income cobra eso por persona presente al día («Máquina expendedora»); cuentan solo en la Sala de descanso que funciona y uno de cada uno. Almuerzo (hito 53): lunch_part = fridge (nevera, $400), microwave (microondas, $150) o table (mesa de comedor 2×1, $300, dining_seats asientos); una Sala de descanso que funciona con nevera, microondas y mesas sirve almuerzo dentro (data/staff.json, lunch). Baños (hito 52): is_toilet = inodoro, una unidad de capacidad si está en un Baño que funciona (data/staff.json, bathrooms). Ambiente (hito 45): ambiance = puntos de ambiente de un adorno; wall_mounted = se cuelga en una pared (no ocupa casilla: su casilla es la que mira y la pared queda detrás de su frente, uno por cara de pared); walkable = se pisa (la alfombra: ocupa su casilla pero no tapa el paso); stress_relief = baja la meta de estrés de quienes trabajan en su habitación (la pecera). Sección ambiance: ambiente de una habitación = puntos × area_unit / área − amontonar, redondeado y entre min y max; amontonar: caben floor(área / desk_area) escritorios y por cada parte de más resta en proporción hasta crowding_max al pasarse en crowding_full_over (50 % más escritorios de los que caben = −15); suma a la meta de ánimo de quienes trabajan ahí. production_bonus es lo que una computadora suma a la producción de quien la usa (diseño 13.3: básica 0, media 0.15, pro 0.3). Calidades (hito 46): upgrade_to = la calidad siguiente (computadora básica → media → pro, silla básica → ergonómica); la herramienta Mejorar la cambia en su lugar, también en un puesto ocupado, y cobra la diferencia de precio. is_monitor = segundo monitor ($300 provisional): va sobre un escritorio con computadora (uno por escritorio) y suma su production_bonus al de la computadora. energy_per_work_hour de una silla reemplaza el de data/staff.json para quien se sienta ahí (la ergonómica −4 en vez de −6). mood_bonus de un escritorio suma a la meta de ánimo de quien trabaja en él (el amplio +5). Reuniones (hito 47): meeting_table = mesa de reuniones (2×2, $1,200), obligatoria en la Sala de reuniones; presentation_screen = pantalla de presentaciones (de pared, $800 provisional): en una Sala de reuniones que funciona llegan más ofertas grandes y de élite (data/contracts.json, meetings).",
 	"resale_ratio": 0.5,
+	"categories": { "work": "Trabajo", "services": "Servicios", "break": "Descanso", "decor": "Decoración" },
 	"ambiance": { "area_unit": 10, "desk_area": 4, "crowding_max": 15, "crowding_full_over": 0.5, "min": -15, "max": 15 },
 	"items": {
-		"simple_desk": {
+		"simple_desk": { "category": "work",
 			"name": "Escritorio sencillo",
 			"price": 150,
 			"size": [1, 1],
@@ -12,7 +13,7 @@
 			"color": "9a7048",
 			"accepts_computer": true
 		},
-		"executive_desk": {
+		"executive_desk": { "category": "work",
 			"name": "Escritorio ejecutivo",
 			"price": 900,
 			"size": [2, 1],
@@ -21,8 +22,8 @@
 			"color": "6b4a32",
 			"accepts_computer": true
 		},
-		"wide_desk": { "name": "Escritorio amplio", "short_name": "Esc. amplio", "price": 350, "size": [2, 1], "shape": "desk", "height": 22, "color": "a77d52", "accepts_computer": true, "mood_bonus": 5 },
-		"basic_chair": {
+		"wide_desk": { "category": "work", "name": "Escritorio amplio", "short_name": "Esc. amplio", "price": 350, "size": [2, 1], "shape": "desk", "height": 22, "color": "a77d52", "accepts_computer": true, "mood_bonus": 5 },
+		"basic_chair": { "category": "work",
 			"name": "Silla básica",
 			"price": 60,
 			"size": [1, 1],
@@ -32,8 +33,8 @@
 			"is_seat": true,
 			"upgrade_to": "ergonomic_chair"
 		},
-		"ergonomic_chair": { "name": "Silla ergonómica", "short_name": "Silla ergo.", "price": 250, "size": [1, 1], "shape": "chair", "height": 18, "color": "2a3b4f", "is_seat": true, "energy_per_work_hour": -4 },
-		"small_plant": {
+		"ergonomic_chair": { "category": "work", "name": "Silla ergonómica", "short_name": "Silla ergo.", "price": 250, "size": [1, 1], "shape": "chair", "height": 18, "color": "2a3b4f", "is_seat": true, "energy_per_work_hour": -4 },
+		"small_plant": { "category": "decor",
 			"name": "Planta pequeña",
 			"price": 40,
 			"size": [1, 1],
@@ -42,7 +43,7 @@
 			"color": "4f8a3c",
 			"ambiance": 2
 		},
-		"reception_counter": {
+		"reception_counter": { "category": "services",
 			"name": "Mostrador de recepción",
 			"short_name": "Mostrador",
 			"price": 600,
@@ -52,7 +53,7 @@
 			"color": "8c6a9e",
 			"is_counter": true
 		},
-		"waiting_sofa": {
+		"waiting_sofa": { "category": "services",
 			"name": "Sofá de espera",
 			"short_name": "Sofá",
 			"price": 300,
@@ -62,7 +63,7 @@
 			"color": "a0523d",
 			"waiting_seat": true
 		},
-		"trash_can": {
+		"trash_can": { "category": "services",
 			"name": "Zafacón",
 			"price": 30,
 			"size": [1, 1],
@@ -71,7 +72,7 @@
 			"color": "6f7a80",
 			"trash_can": true
 		},
-		"cleaning_closet": {
+		"cleaning_closet": { "category": "services",
 			"name": "Armario de limpieza",
 			"short_name": "Armario",
 			"price": 200,
@@ -81,7 +82,7 @@
 			"color": "8fa3b8",
 			"is_closet": true
 		},
-		"server_rack": {
+		"server_rack": { "category": "services",
 			"name": "Rack de servidores",
 			"short_name": "Rack",
 			"price": 3000,
@@ -92,7 +93,7 @@
 			"server_rack": true,
 			"monthly_cost": 100
 		},
-		"air_conditioner": {
+		"air_conditioner": { "category": "services",
 			"name": "Aire acondicionado",
 			"short_name": "Aire",
 			"price": 800,
@@ -103,7 +104,7 @@
 			"air_conditioner": true,
 			"wall_mounted": true
 		},
-		"basic_computer": {
+		"basic_computer": { "category": "work",
 			"name": "Computadora básica",
 			"price": 500,
 			"shape": "computer",
@@ -113,30 +114,30 @@
 			"production_bonus": 0.0,
 			"upgrade_to": "mid_computer"
 		},
-		"mid_computer": { "name": "Computadora media", "short_name": "PC media", "price": 1200, "shape": "computer", "height": 14, "color": "3a4a5c", "on_desk": true, "production_bonus": 0.15, "upgrade_to": "pro_computer" },
-		"pro_computer": { "name": "Computadora pro", "short_name": "PC pro", "price": 2500, "shape": "computer", "height": 16, "color": "1d2a44", "on_desk": true, "production_bonus": 0.3 },
-		"second_monitor": { "name": "Segundo monitor", "short_name": "Monitor", "price": 300, "shape": "computer", "height": 10, "color": "30343c", "on_desk": true, "is_monitor": true, "production_bonus": 0.05 },
-		"meeting_table": { "name": "Mesa de reuniones", "short_name": "Mesa reun.", "price": 1200, "size": [2, 2], "shape": "desk", "height": 20, "color": "7a5838" },
-		"presentation_screen": { "name": "Pantalla de presentaciones", "short_name": "Pantalla", "price": 800, "size": [1, 1], "shape": "desk", "height": 14, "color": "1f2530", "wall_mounted": true, "presentation_screen": true },
-		"toilet": { "name": "Inodoro", "short_name": "Inodoro", "price": 400, "is_toilet": true, "size": [1, 1], "shape": "desk", "color": "eef0f2", "height": 14 },
-		"sink": { "name": "Lavamanos", "short_name": "Lavamanos", "price": 200, "size": [1, 1], "shape": "desk", "color": "dfe6ea", "height": 18 },
-		"coffee_maker": { "name": "Cafetera", "short_name": "Cafetera", "price": 200, "size": [1, 1], "shape": "desk", "color": "3b3230", "height": 16 },
-		"fridge": { "name": "Nevera", "short_name": "Nevera", "price": 400, "lunch_part": "fridge", "size": [1, 1], "shape": "desk", "color": "e9edf0", "height": 40 },
-		"microwave": { "name": "Microondas", "short_name": "Microondas", "price": 150, "lunch_part": "microwave", "size": [1, 1], "shape": "desk", "color": "5b6066", "height": 14 },
-		"printer": { "name": "Impresora", "short_name": "Impresora", "price": 350, "accountant_boost": 1.25, "size": [1, 1], "shape": "desk", "color": "e4e4e4", "height": 16 },
-		"whiteboard": { "name": "Pizarra", "short_name": "Pizarra", "price": 250, "meeting_board": true, "size": [1, 1], "shape": "wall", "color": "f7f7f2", "height": 16, "wall_mounted": true },
-		"sofa": { "name": "Sofá", "short_name": "Sofá", "price": 500, "rest_places": 2, "size": [2, 1], "shape": "desk", "color": "7a5a9e", "height": 16 },
-		"water_dispenser": { "name": "Dispensador de agua", "short_name": "Agua", "price": 120, "break_mood": 2, "size": [1, 1], "shape": "desk", "color": "8fc3e0", "height": 34 },
-		"ping_pong": { "name": "Mesa de ping pong", "short_name": "Ping pong", "price": 700, "break_mood": 8, "distraction": 0.03, "size": [2, 2], "shape": "desk", "color": "2f7a4a", "height": 12 },
-		"vending_machine": { "name": "Máquina expendedora", "short_name": "Expendedora", "price": 900, "break_mood": 3, "vending_income": 2, "size": [1, 1], "shape": "desk", "color": "c0392b", "height": 40 },
-		"dining_table": { "name": "Mesa de comedor", "short_name": "Comedor", "price": 300, "lunch_part": "table", "dining_seats": 4, "size": [2, 1], "shape": "desk", "color": "b0855a", "height": 14 },
-		"backup_battery": { "name": "Baterías de respaldo", "short_name": "Baterías", "price": 1500, "size": [1, 1], "shape": "desk", "color": "4a5560", "height": 22 },
-		"filing_cabinet": { "name": "Archivero", "short_name": "Archivero", "price": 250, "size": [1, 1], "shape": "desk", "color": "8a8f96", "height": 26 },
-		"large_plant": { "name": "Planta grande", "short_name": "Planta G", "price": 120, "size": [1, 1], "shape": "plant", "color": "3f7a34", "height": 22, "ambiance": 4 },
-		"painting": { "name": "Cuadro", "price": 80, "size": [1, 1], "shape": "wall", "color": "c98a3c", "height": 12, "wall_mounted": true, "ambiance": 3 },
-		"wall_clock": { "name": "Reloj de pared", "short_name": "Reloj", "price": 50, "size": [1, 1], "shape": "wall", "color": "f0ece0", "height": 8, "wall_mounted": true, "ambiance": 2 },
-		"floor_lamp": { "name": "Lámpara de pie", "short_name": "Lámpara", "price": 90, "size": [1, 1], "shape": "lamp", "color": "f2d06b", "height": 34, "ambiance": 3 },
-		"rug": { "name": "Alfombra decorativa", "short_name": "Tapete", "price": 150, "size": [2, 2], "shape": "rug", "color": "9c4f5e", "height": 1, "walkable": true, "ambiance": 4 },
-		"aquarium": { "name": "Pecera", "price": 500, "size": [2, 1], "shape": "desk", "color": "4f9fc9", "height": 20, "ambiance": 8, "stress_relief": 5 }
+		"mid_computer": { "category": "work", "name": "Computadora media", "short_name": "PC media", "price": 1200, "shape": "computer", "height": 14, "color": "3a4a5c", "on_desk": true, "production_bonus": 0.15, "upgrade_to": "pro_computer" },
+		"pro_computer": { "category": "work", "name": "Computadora pro", "short_name": "PC pro", "price": 2500, "shape": "computer", "height": 16, "color": "1d2a44", "on_desk": true, "production_bonus": 0.3 },
+		"second_monitor": { "category": "work", "name": "Segundo monitor", "short_name": "Monitor", "price": 300, "shape": "computer", "height": 10, "color": "30343c", "on_desk": true, "is_monitor": true, "production_bonus": 0.05 },
+		"meeting_table": { "category": "services", "name": "Mesa de reuniones", "short_name": "Mesa reun.", "price": 1200, "size": [2, 2], "shape": "desk", "height": 20, "color": "7a5838" },
+		"presentation_screen": { "category": "services", "name": "Pantalla de presentaciones", "short_name": "Pantalla", "price": 800, "size": [1, 1], "shape": "desk", "height": 14, "color": "1f2530", "wall_mounted": true, "presentation_screen": true },
+		"toilet": { "category": "services", "name": "Inodoro", "short_name": "Inodoro", "price": 400, "is_toilet": true, "size": [1, 1], "shape": "desk", "color": "eef0f2", "height": 14 },
+		"sink": { "category": "services", "name": "Lavamanos", "short_name": "Lavamanos", "price": 200, "size": [1, 1], "shape": "desk", "color": "dfe6ea", "height": 18 },
+		"coffee_maker": { "category": "break", "name": "Cafetera", "short_name": "Cafetera", "price": 200, "size": [1, 1], "shape": "desk", "color": "3b3230", "height": 16 },
+		"fridge": { "category": "break", "name": "Nevera", "short_name": "Nevera", "price": 400, "lunch_part": "fridge", "size": [1, 1], "shape": "desk", "color": "e9edf0", "height": 40 },
+		"microwave": { "category": "break", "name": "Microondas", "short_name": "Microondas", "price": 150, "lunch_part": "microwave", "size": [1, 1], "shape": "desk", "color": "5b6066", "height": 14 },
+		"printer": { "category": "work", "name": "Impresora", "short_name": "Impresora", "price": 350, "accountant_boost": 1.25, "size": [1, 1], "shape": "desk", "color": "e4e4e4", "height": 16 },
+		"whiteboard": { "category": "services", "name": "Pizarra", "short_name": "Pizarra", "price": 250, "meeting_board": true, "size": [1, 1], "shape": "wall", "color": "f7f7f2", "height": 16, "wall_mounted": true },
+		"sofa": { "category": "break", "name": "Sofá", "short_name": "Sofá", "price": 500, "rest_places": 2, "size": [2, 1], "shape": "desk", "color": "7a5a9e", "height": 16 },
+		"water_dispenser": { "category": "break", "name": "Dispensador de agua", "short_name": "Agua", "price": 120, "break_mood": 2, "size": [1, 1], "shape": "desk", "color": "8fc3e0", "height": 34 },
+		"ping_pong": { "category": "break", "name": "Mesa de ping pong", "short_name": "Ping pong", "price": 700, "break_mood": 8, "distraction": 0.03, "size": [2, 2], "shape": "desk", "color": "2f7a4a", "height": 12 },
+		"vending_machine": { "category": "break", "name": "Máquina expendedora", "short_name": "Expendedora", "price": 900, "break_mood": 3, "vending_income": 2, "size": [1, 1], "shape": "desk", "color": "c0392b", "height": 40 },
+		"dining_table": { "category": "break", "name": "Mesa de comedor", "short_name": "Comedor", "price": 300, "lunch_part": "table", "dining_seats": 4, "size": [2, 1], "shape": "desk", "color": "b0855a", "height": 14 },
+		"backup_battery": { "category": "work", "name": "Baterías de respaldo", "short_name": "Baterías", "price": 1500, "size": [1, 1], "shape": "desk", "color": "4a5560", "height": 22 },
+		"filing_cabinet": { "category": "work", "name": "Archivero", "short_name": "Archivero", "price": 250, "size": [1, 1], "shape": "desk", "color": "8a8f96", "height": 26 },
+		"large_plant": { "category": "decor", "name": "Planta grande", "short_name": "Planta G", "price": 120, "size": [1, 1], "shape": "plant", "color": "3f7a34", "height": 22, "ambiance": 4 },
+		"painting": { "category": "decor", "name": "Cuadro", "price": 80, "size": [1, 1], "shape": "wall", "color": "c98a3c", "height": 12, "wall_mounted": true, "ambiance": 3 },
+		"wall_clock": { "category": "decor", "name": "Reloj de pared", "short_name": "Reloj", "price": 50, "size": [1, 1], "shape": "wall", "color": "f0ece0", "height": 8, "wall_mounted": true, "ambiance": 2 },
+		"floor_lamp": { "category": "decor", "name": "Lámpara de pie", "short_name": "Lámpara", "price": 90, "size": [1, 1], "shape": "lamp", "color": "f2d06b", "height": 34, "ambiance": 3 },
+		"rug": { "category": "decor", "name": "Alfombra decorativa", "short_name": "Tapete", "price": 150, "size": [2, 2], "shape": "rug", "color": "9c4f5e", "height": 1, "walkable": true, "ambiance": 4 },
+		"aquarium": { "category": "decor", "name": "Pecera", "price": 500, "size": [2, 1], "shape": "desk", "color": "4f9fc9", "height": 20, "ambiance": 8, "stress_relief": 5 }
 	}
 }

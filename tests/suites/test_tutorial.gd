@@ -152,8 +152,14 @@ func _check_walkthrough() -> void:
 	await _click(build.get_open_button())
 	_expect(build.is_build_mode() and _step_id() == "work_area", "abrir Construir (bajo el marco) pasa al Área de trabajo")
 	await get_tree().process_frame
-	_expect(panel.get_target_key() == "tool:work_area" and panel.get_frame_rect().encloses(build.get_tool_button("work_area").get_global_rect()),
-		"en Construir resalta la herramienta Área de trabajo: %s" % panel.get_target_key())
+	# Con Habitaciones cerrada resalta esa sección; al abrirla, la herramienta.
+	_expect(panel.get_target_key() == "tool:work_area" and panel.get_frame_rect().encloses(
+		build.get_section_button(BuildPanel.SECTION_ROOMS).get_global_rect()),
+		"en Construir resalta la sección Habitaciones: %s" % panel.get_target_key())
+	await _click(build.get_section_button(BuildPanel.SECTION_ROOMS))
+	await get_tree().process_frame
+	_expect(panel.get_frame_rect().encloses(build.get_tool_button("work_area").get_global_rect()),
+		"abierta la sección, resalta la herramienta Área de trabajo")
 	# 3. Área de trabajo.
 	var builder: Builder = game.get_node("BuildController").builder
 	_expect(builder.mark_room("work_area", AREA_CELL)["ok"], "marcar el Área de trabajo")

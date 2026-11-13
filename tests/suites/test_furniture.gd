@@ -210,8 +210,12 @@ func _check_in_game_with_mouse() -> void:
 	var panel: BuildPanel = game.get_node("BuildPanel")
 	var at_cell: Callable = func(cell: Vector2i) -> Vector2:
 		return grid.get_canvas_transform() * grid.cell_to_world(cell)
+	# Abre con clics la sección (y la categoría de muebles) de la herramienta y la elige.
 	var press: Callable = func(tool: String) -> void:
-		await _click(panel.get_tool_button(tool).get_global_rect().get_center())
+		for i: int in range(3):
+			await _click(panel.get_button_toward(tool).get_global_rect().get_center())
+			if panel.get_selected_tool() == tool:
+				break
 
 	await _click(panel.get_open_button().get_global_rect().get_center())
 	_expect(panel.is_build_mode() and GameClock.is_paused, "no se abrió el modo construcción en pausa")
