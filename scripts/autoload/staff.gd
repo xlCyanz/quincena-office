@@ -173,6 +173,11 @@ var bathroom_short_day: int = NO_SHORT_DAY
 ## Solo para pruebas: false hace como si siempre alcanzaran los inodoros (las pruebas de
 ## los hitos anteriores al 52 miden oficinas sin baño). No se guarda.
 var bathrooms_enabled: bool = true
+## Solo para pruebas: false deja los candidatos como antes del hito 56 (sin primera tanda,
+## sin calidad por sueldo y ambiente ni candidato extra del premio). No se guarda.
+var company_hiring_enabled: bool = true
+## Hasta qué día (sin incluirlo) el «Premio de la industria» suma un candidato por vacante.
+var award_until: int = 0
 ## Pausas (hito 54): hora absoluta → claves de quienes descansan esa hora (la actual y la
 ## anterior, que la producción y la energía cobran al terminar).
 var breaks: Dictionary[int, Array] = {}
@@ -219,6 +224,7 @@ func new_game() -> void:
 	coffee_out_day = NO_COFFEE_OUT
 	broken_toilets = 0
 	bathroom_short_day = NO_SHORT_DAY
+	award_until = 0
 	breaks.clear()
 	present_today.clear()
 	_next_id = 1
@@ -253,7 +259,7 @@ func open_vacancy(role: String, level: String, salary: int, publicity: bool) -> 
 		publicity_until = next_arrival_day() + int(StaffCatalog.get_hiring("publicity_days"))
 	var vacancy: Dictionary = {
 		"id": _take_id(), "role": role, "level": level, "salary": salary,
-		"publicity_until": publicity_until, "candidates": [] as Array[Dictionary],
+		"publicity_until": publicity_until, "candidates": [] as Array[Dictionary], "first_done": false,
 	}
 	vacancies.append(vacancy)
 	EventBus.staff_changed.emit()
@@ -2805,8 +2811,20 @@ func _process_arrivals(today: int) -> void:
 	EventBus.staff_changed.emit()
 
 
-# Cuántos candidatos llegan hoy a una vacante.
+# Cuántos candidatos llegan hoy a una vacante. El primer día (hito 56) llega la primera
+# tanda según las estrellas, más uno con publicidad; con el premio, uno más cada día.
 func _roll_arrivals(vacancy: Dictionary, today: int) -> int:
+	var first: bool = not bool(vacancy.get("first_done", true))
+	vacancy["first_done"] = true
+	if company_hiring_enabled:
+		var extra: int = 1 if today < award_until else 0
+		if first:
+			return get_first_batch() + (1 if today < int(vacancy["publicity_until"]) else 0) + extra
+		return _roll_daily(vacancy, today) + extra
+	return _roll_daily(vacancy, today)
+
+
+func _roll_daily(vacancy: Dictionary, today: int) -> int:
 	var key: String = "arrivals_with_publicity" if today < int(vacancy["publicity_until"]) else "arrivals"
 	var arrivals: Vector2i = StaffCatalog.get_hiring_range(key)
 	var count: int = _rng.randi_range(arrivals.x, arrivals.y)
@@ -2816,6 +2834,68 @@ func _roll_arrivals(vacancy: Dictionary, today: int) -> int:
 			and _rng.randf() < float(StaffCatalog.get_hiring("high_offer_extra_chance")):
 		count += 1
 	return count
+
+
+## Cuántos llegan el primer día de una vacante: first_batch + first_batch_per_star por
+## estrella entera sobre neutral_stars (1★ = 1, 3★ = 3, 5★ = 5), al menos first_batch_min.
+func get_first_batch() -> int:
+	var stars: int = floori(Projects.reputation)
+	return maxi(int(StaffCatalog.get_hiring("first_batch_min")), int(StaffCatalog.get_hiring("first_batch"))
+		+ int(StaffCatalog.get_hiring("first_batch_per_star")) * (stars - int(StaffCatalog.get_hiring("neutral_stars"))))
+
+
+## Calidad de los candidatos de una vacante, entre −max_quality y +max_quality: el sueldo
+## ofrecido frente al de la tabla (quality_per_salary por cada 100 % de más o de menos) y el
+## ambiente medio de las Áreas de trabajo (quality_per_ambiance por punto).
+func get_candidate_quality(role: String, level: String, salary: int) -> float:
+	var table: int = maxi(1, StaffCatalog.get_salary(role, level))
+	var quality: float = (float(salary) / table - 1.0) * float(StaffCatalog.get_hiring("quality_per_salary")) \
+		+ get_work_area_ambiance() * float(StaffCatalog.get_hiring("quality_per_ambiance"))
+	var limit: float = float(StaffCatalog.get_hiring("max_quality"))
+	return clampf(quality, -limit, limit)
+
+
+## Dónde cae una habilidad dentro de su rango (0 a 1) con un azar roll de 0 a 1: con calidad
+## positiva el rango se corre hacia arriba (0.5 = solo la mitad de arriba), con negativa hacia abajo.
+static func quality_position(roll: float, quality: float) -> float:
+	return clampf(roll * (1.0 - absf(quality)) + maxf(quality, 0.0), 0.0, 1.0)
+
+
+## Ambiente medio de las Áreas de trabajo (0 sin ninguna).
+func get_work_area_ambiance() -> float:
+	var total: int = 0
+	var count: int = 0
+	for room: Dictionary in OfficeState.rooms:
+		if room["type"] == Workstations.WORK_AREA:
+			total += int(_ambiance_detail(room)["value"])
+			count += 1
+	return float(total) / count if count > 0 else 0.0
+
+
+## Lo que se espera de una vacante con ese sueldo, para el formulario de Personal:
+## «Llegan 3 el primer día (3 ★) · habilidades +20 % (sueldo +10 %, ambiente +4)».
+func describe_hiring_outlook(role: String, level: String, salary: int) -> String:
+	var quality: int = roundi(get_candidate_quality(role, level, salary) * 100.0)
+	var text: String = "Llegan %d el primer día (%d ★) · habilidades %s" % [get_first_batch(), floori(Projects.reputation),
+		"normales" if quality == 0 else ("%+d %%" % quality).replace("-", "−")]
+	var parts: Array[String] = []
+	var table: int = maxi(1, StaffCatalog.get_salary(role, level))
+	var salary_diff: int = roundi((float(salary) / table - 1.0) * 100.0)
+	if salary_diff != 0:
+		parts.append(("sueldo %+d %%" % salary_diff).replace("-", "−"))
+	var ambiance: int = roundi(get_work_area_ambiance())
+	if ambiance != 0:
+		parts.append(("ambiente %+d" % ambiance).replace("-", "−"))
+	if not parts.is_empty():
+		text += " (%s)" % ", ".join(parts)
+	if GameClock.get_day_count() < award_until:
+		text += " · premio: +1 por día"
+	return text
+
+
+## Suma un candidato a cada vacante cada día durante days días (el «Premio de la industria»).
+func boost_candidates(days: int) -> void:
+	award_until = maxi(award_until, next_arrival_day() + days)
 
 
 func _make_candidate(vacancy: Dictionary, today: int) -> Dictionary:
@@ -2833,9 +2913,13 @@ func _make_candidate(vacancy: Dictionary, today: int) -> Dictionary:
 	var width: int = StaffCatalog.get_skill_range_width()
 	var skills: Dictionary = {}
 	var skill_low: Dictionary = {}
+	var quality: float = 0.0
+	if company_hiring_enabled and vacancy.has("salary"):
+		quality = get_candidate_quality(role, level, int(vacancy["salary"]))
 	for skill: String in StaffCatalog.get_skill_ids():
 		var skill_range: Vector2i = main_range if skill == main_skill else other_range
-		var value: int = _rng.randi_range(skill_range.x, skill_range.y)
+		var value: int = _rng.randi_range(skill_range.x, skill_range.y) if not company_hiring_enabled \
+			else skill_range.x + roundi((skill_range.y - skill_range.x) * quality_position(_rng.randf(), quality))
 		skills[skill] = value
 		# El rango que se ve contiene el valor real en un lugar al azar.
 		skill_low[skill] = clampi(value - _rng.randi_range(0, width), maxi(1, value - width), mini(value, 100 - width))
@@ -2869,7 +2953,7 @@ func export_state() -> Dictionary:
 		"shift_templates": shift_templates.duplicate(true), "next_template_id": _next_template_id,
 		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held,
 		"coffee_out_day": coffee_out_day, "broken_toilets": broken_toilets, "bathroom_short_day": bathroom_short_day,
-		"breaks": _export_breaks(), "present_today": present_today.keys()}
+		"breaks": _export_breaks(), "present_today": present_today.keys(), "award_until": award_until}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -2883,7 +2967,7 @@ func import_state(state: Dictionary) -> void:
 		vacancies.append({
 			"id": int(saved["id"]), "role": String(saved["role"]), "level": String(saved["level"]),
 			"salary": int(saved["salary"]), "publicity_until": int(saved.get("publicity_until", 0)),
-			"candidates": candidates,
+			"candidates": candidates, "first_done": bool(saved.get("first_done", true)),
 		})
 	employees.clear()
 	for saved: Dictionary in state.get("employees", []):
@@ -2959,6 +3043,7 @@ func import_state(state: Dictionary) -> void:
 	_next_team_id = int(state.get("next_team_id", 1))
 	payroll_held = bool(state.get("payroll_held", false))
 	coffee_out_day = int(state.get("coffee_out_day", NO_COFFEE_OUT))
+	award_until = int(state.get("award_until", 0))
 	broken_toilets = int(state.get("broken_toilets", 0))
 	bathroom_short_day = int(state.get("bathroom_short_day", NO_SHORT_DAY))
 	breaks.clear()

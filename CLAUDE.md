@@ -347,6 +347,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   pared; cierra como pared (`blocks_passage`, caminos, espacios) y nada se cuelga en ella. Suma sus puntos al ambiente de la habitación a la que da
   (`OfficeState.count_room_windows`, `Ambiance.get_detail(…, windows)`). Al comprar terreno las del borde que se abre se devuelven a la mitad
   (`window_refund`, «Construcción»). No cuentan como bienes. Herramienta Ventana en la fila de estructura (`BuildController.TOOL_WINDOW`).
+- Candidatos según la empresa (hito 56, `hiring` en `data/staff.json`): el primer día de una vacante (`vacancy["first_done"]`, falta = true)
+  llega la primera tanda `Staff.get_first_batch()` = 3 + (estrellas enteras − 3), al menos 1, más 1 con publicidad; después, cada día como antes
+  (`_roll_daily`). Calidad (`get_candidate_quality`, ±0.8) = 2.5 × (sueldo ofrecido / tabla − 1) + 0.02 × ambiente medio de las Áreas de trabajo
+  (`get_work_area_ambiance`); `quality_position` corre cada habilidad dentro de su rango (0.5 = la mitad de arriba); lo que piden no cambia. El
+  «Premio de la industria» (efecto `candidates`, 7 días) suma 1 por día a cada vacante (`Staff.award_until`, guardado). Personal muestra el
+  pronóstico bajo el sueldo (`describe_hiring_outlook`). `Staff.company_hiring_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga
+  en las partes anteriores a `candidates` (cuentan candidatos y habilidades exactos; las simulaciones de fase siguen iguales).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -416,3 +423,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 53 | Almuerzo en la oficina | ✅ Completado (Sala de descanso con nevera $400, microondas $150 y mesas de comedor $300 de 4 asientos; almuerzan dentro el CEO y los más antiguos hasta llenar los asientos; dentro recuperan el doble de energía y rinden media hora; los demás salen; caminan a la mesa y vuelven a su silla) |
 | 54 | Sala de descanso y pausas | ✅ Completado (sofá $500 con 2 lugares: quien produce con energía bajo 40 descansa una hora sin producir y recupera +15, +3 con café, también en el almuerzo; dispensador de agua $120 +2, ping pong $700 +8 y −3 % de puntos, máquina expendedora $900 +3 y $2 por persona al día; uno de cada uno y solo en la Sala de descanso que funciona) |
 | 55 | Impresora, pizarra y ventanas | ✅ Completado (impresora $350 en el Área de trabajo del contador: sus efectos ×1.25 y cobra el pago atrasado en 2 días; pizarra de pared $250 en la Sala de reuniones: reunión inútil 1 h en vez de 2 y grandes y de élite con 10 % más de plazo; ventana $200 solo en paredes exteriores, +4 puntos de ambiente a la habitación, nada colgado; el terreno devuelve la mitad de las ventanas del borde que abre) |
+| 56 | Candidatos según la empresa | ✅ Completado (primera tanda de 3 ± 1 por estrella sobre 3, al menos 1, +1 con publicidad, después como antes; sueldo ofrecido y ambiente medio de las Áreas de trabajo corren las habilidades dentro del rango del nivel, hasta ±80 %; el premio suma 1 candidato por día a cada vacante durante 7 días; pronóstico en el formulario de Personal; las pruebas anteriores corren sin la regla nueva) |

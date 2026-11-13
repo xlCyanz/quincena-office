@@ -36,6 +36,7 @@ var _table_label: Label
 var _salary_down: Button
 var _salary_up: Button
 var _publicity_check: CheckBox
+var _outlook_label: Label
 var _publish_button: Button
 var _status_label: Label
 var _list: VBoxContainer
@@ -132,6 +133,10 @@ func _ready() -> void:
 	_table_label.add_theme_color_override("font_color", MUTED_COLOR)
 	salary_row.add_child(_table_label)
 
+	_outlook_label = Label.new()
+	_outlook_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_outlook_label.add_theme_color_override("font_color", MUTED_COLOR)
+	rows.add_child(_outlook_label)
 	_publicity_check = CheckBox.new()
 	_publicity_check.text = "Con publicidad: %s, más candidatos durante %d días" % [
 		MoneyFormat.format(int(StaffCatalog.get_hiring("publicity_cost"))), int(StaffCatalog.get_hiring("publicity_days"))]
@@ -195,6 +200,10 @@ func get_salary_offer() -> int:
 
 func get_open_button() -> Button:
 	return _open_button
+
+
+func get_outlook_label() -> Label:
+	return _outlook_label
 
 
 func get_salary_buttons() -> Array[Button]:
@@ -331,6 +340,7 @@ func _change_salary(direction: int) -> void:
 func _update_salary() -> void:
 	_salary_label.text = "%s al mes" % MoneyFormat.format(_salary)
 	_salary_down.disabled = _salary <= int(StaffCatalog.get_hiring("salary_step"))
+	_outlook_label.text = Staff.describe_hiring_outlook(_selected_role(), _selected_level(), _salary)
 
 
 func _on_publish_pressed() -> void:
@@ -347,6 +357,7 @@ func _refresh() -> void:
 	if _list == null or not is_open():
 		return
 	_refresh_role_locks()
+	_update_salary()
 	for child: Node in _list.get_children():
 		_list.remove_child(child)
 		child.queue_free()

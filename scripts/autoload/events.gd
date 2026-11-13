@@ -195,6 +195,8 @@ static func describe_effect(effect: Dictionary) -> String:
 			return "limpia toda la oficina"
 		"coffee_out":
 			return "los adictos al café rinden menos hoy"
+		"candidates":
+			return "llega un candidato más a cada vacante durante %d días" % int(effect["days"])
 		"break_toilet":
 			return "un inodoro deja de funcionar hasta repararlo (%s en Empresa)" % MoneyFormat.format(int(StaffCatalog.get_bathrooms("repair_cost")))
 	return ""
@@ -496,6 +498,9 @@ func _apply(effect: Dictionary, target: Dictionary, title: String) -> String:
 			return describe_effect(effect)
 		"coffee_out":
 			Staff.run_out_of_coffee()
+			return describe_effect(effect)
+		"candidates":
+			Staff.boost_candidates(int(effect["days"]))
 			return describe_effect(effect)
 		"break_toilet":
 			return describe_effect(effect) if Staff.break_toilet() else ""
