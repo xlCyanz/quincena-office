@@ -77,6 +77,8 @@ var _done_day: Dictionary[int, int] = {}
 var _phase5: bool = false
 ## Ingresos de cada mes de la fase 5: {"contracts", "products"}.
 var _income: Dictionary[int, Dictionary] = {}
+## Meses desde Mediana empresa en que tiene que llegar a la bolsa (test_phase6 pone el suyo).
+var _target_months: Array[int] = TARGET_MONTHS
 
 
 func _ready() -> void:
@@ -135,7 +137,7 @@ func _check_ipo_run() -> void:
 	_expect(Company.stage == 4, "llega a Corporación (etapa %d, %d ejecutivos, %d productos activos)" % [
 		Company.stage, Staff.get_executives().size(), Products.get_active_count()])
 	_expect(Company.is_public(), "sale a bolsa (valor %s)" % MoneyFormat.format(Company.get_value()))
-	_expect(months_to_ipo >= TARGET_MONTHS[0] and months_to_ipo <= TARGET_MONTHS[1],
+	_expect(months_to_ipo >= _target_months[0] and months_to_ipo <= _target_months[1],
 		"llega a la bolsa en unos dos años desde Mediana empresa: %d meses" % months_to_ipo)
 	_expect(share >= PRODUCT_SHARE[0] and share <= PRODUCT_SHARE[1], "los productos dan una parte visible de los ingresos: %d %%" % roundi(share * 100))
 	_expect(_events_seen > 0, "salen eventos")

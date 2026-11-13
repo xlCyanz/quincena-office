@@ -25,6 +25,12 @@ var lot_rect: Rect2i:
 ## Casillas del solar: el mapa fijo que rodea al local, con el local en el centro.
 var site_rect := Rect2i()
 
+# Habitaciones que funcionan, mesas, muebles de la Sala de descanso e inodoros: los piden
+# varias veces por hora los baños, el almuerzo, las pausas y la producción. Solo se usa
+# mientras el reloj procesa una hora (GameClock.in_hour_tick); se borra al cambiar la
+# oficina o la hora, y al empezar o cargar una partida.
+var _query_cache: Dictionary[String, Variant] = {}
+
 ## Tipo de piso de cada casilla del local (ver ConstructionCatalog).
 var floors: Dictionary[Vector2i, String] = {}
 
@@ -60,9 +66,15 @@ func has_game() -> bool:
 	return lot.has_area()
 
 
+func _ready() -> void:
+	EventBus.office_changed.connect(func() -> void: _query_cache.clear())
+	EventBus.hour_changed.connect(func(_hour: int) -> void: _query_cache.clear())
+
+
 ## Prepara la oficina de una partida nueva: el local inicial y lo que dice
 ## STARTING_OFFICE_PATH.
 func new_game() -> void:
+	_query_cache.clear()
 	lot = Lot.from_rect(Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE))
 	land_paid = 0
 	site_rect = site_around(lot.get_bounds())
@@ -299,6 +311,15 @@ func get_server_capacity() -> int:
 
 ## Primera habitación de ese tipo que funciona ({} si no hay).
 func get_working_room(room_type: String) -> Dictionary:
+	var key: String = "room:" + room_type
+	if not GameClock.in_hour_tick:
+		return _find_working_room(room_type)
+	if not _query_cache.has(key):
+		_query_cache[key] = _find_working_room(room_type)
+	return _query_cache[key]
+
+
+func _find_working_room(room_type: String) -> Dictionary:
 	for room: Dictionary in rooms:
 		if room["type"] == room_type and RoomRules.function_problems(room, furniture).is_empty():
 			return room
@@ -308,6 +329,14 @@ func get_working_room(room_type: String) -> Dictionary:
 ## Mesas de comedor de la Sala de descanso que funciona si también tiene nevera y
 ## microondas (hito 53: almuerzo dentro); vacío si no se puede almorzar dentro.
 func get_lunch_tables() -> Array[Dictionary]:
+	if not GameClock.in_hour_tick:
+		return _find_lunch_tables()
+	if not _query_cache.has("get_lunch_tables"):
+		_query_cache["get_lunch_tables"] = _find_lunch_tables()
+	return _query_cache["get_lunch_tables"]
+
+
+func _find_lunch_tables() -> Array[Dictionary]:
 	var tables: Array[Dictionary] = []
 	var room: Dictionary = get_working_room(BREAK_ROOM)
 	if room.is_empty():
@@ -341,6 +370,14 @@ func get_lunch_spots() -> Array[Vector2i]:
 
 ## Muebles dentro de la Sala de descanso que funciona (hito 54).
 func get_break_room_items() -> Array[Dictionary]:
+	if not GameClock.in_hour_tick:
+		return _find_break_room_items()
+	if not _query_cache.has("get_break_room_items"):
+		_query_cache["get_break_room_items"] = _find_break_room_items()
+	return _query_cache["get_break_room_items"]
+
+
+func _find_break_room_items() -> Array[Dictionary]:
 	var items: Array[Dictionary] = []
 	var room: Dictionary = get_working_room(BREAK_ROOM)
 	if room.is_empty():
@@ -402,6 +439,14 @@ func _spots_near(items: Array[Dictionary]) -> Array[Vector2i]:
 
 ## Inodoros dentro de los Baños que funcionan (hito 52).
 func count_working_toilets() -> int:
+	if not GameClock.in_hour_tick:
+		return _count_working_toilets()
+	if not _query_cache.has("count_working_toilets"):
+		_query_cache["count_working_toilets"] = _count_working_toilets()
+	return _query_cache["count_working_toilets"]
+
+
+func _count_working_toilets() -> int:
 	var count: int = 0
 	for room: Dictionary in rooms:
 		if room["type"] != BATHROOM or not RoomRules.function_problems(room, furniture).is_empty():
@@ -516,6 +561,7 @@ func export_state() -> Dictionary:
 
 ## Restaura el estado de la oficina desde una partida guardada (hito 9).
 func import_state(state: Dictionary) -> void:
+	_query_cache.clear()
 	# Antes del hito 25 el local era solo un rectángulo ("lot").
 	if state.has("lot_cells"):
 		var cells: Array[Vector2i] = []

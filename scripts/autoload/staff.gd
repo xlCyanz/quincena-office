@@ -199,6 +199,13 @@ var _seat_lookup_cache: Dictionary = {}
 var _schedule_cache: Dictionary[int, WorkSchedule] = {}
 # id → posición en employees (get_employee); se comprueba al usarla y se rehace si no coincide.
 var _employee_index: Dictionary[int, int] = {}
+# Quiénes están presentes y quiénes almuerzan dentro por hora absoluta: se piden dos o tres
+# veces por hora (baños, máquina expendedora, energía y producción). Solo se usan mientras el
+# reloj procesa una hora (GameClock.in_hour_tick); se borran al cambiar la hora, el personal
+# (también la llegada del CEO) o la oficina; la presencia, también después de sortear las
+# tardanzas.
+var _present_cache: Dictionary[int, Dictionary] = {}
+var _lunch_cache: Dictionary[int, Dictionary] = {}
 
 
 func _ready() -> void:
@@ -208,6 +215,13 @@ func _ready() -> void:
 	EventBus.emergency_loan_resolved.connect(_on_emergency_loan_resolved)
 	EventBus.contract_delivered.connect(_on_contract_delivered)
 	EventBus.contract_accepted.connect(_on_contract_accepted)
+	EventBus.staff_changed.connect(_clear_hour_caches)
+	EventBus.office_changed.connect(_clear_hour_caches)
+
+
+func _clear_hour_caches() -> void:
+	_present_cache.clear()
+	_lunch_cache.clear()
 
 
 ## Prepara el personal de una partida nueva: sin vacantes y con una semilla al azar.
@@ -1068,12 +1082,7 @@ func _decide_breaks() -> void:
 func _note_presence() -> void:
 	if OfficeState.get_break_room_effect("vending_income") <= 0.0:
 		return
-	if is_expected_now("ceo"):
-		present_today["ceo"] = true
-	var team_map: Dictionary[int, Dictionary] = _get_team_map()
-	for employee: Dictionary in employees:
-		if _is_working_at(employee, GameClock.get_weekday(), GameClock.get_hour(), team_map):
-			present_today[employee_key(employee["id"])] = true
+	present_today.merge(get_present_keys(_absolute_hour()))
 
 
 # La máquina expendedora cobra lo de las personas que estuvieron ayer.
@@ -1095,6 +1104,14 @@ func _export_breaks() -> Array[Dictionary]:
 ## almuerzo mientras haya asientos en una Sala de descanso armada para almorzar (nevera,
 ## microondas y mesas), primero el CEO y después por antigüedad. Claves como is_expected.
 func get_lunch_inside(at: int) -> Dictionary[String, bool]:
+	if not GameClock.in_hour_tick:
+		return _find_lunch_inside(at)
+	if not _lunch_cache.has(at):
+		_lunch_cache[at] = _find_lunch_inside(at)
+	return _lunch_cache[at]
+
+
+func _find_lunch_inside(at: int) -> Dictionary[String, bool]:
 	var inside: Dictionary[String, bool] = {}
 	var seats: int = OfficeState.get_lunch_seats()
 	if seats <= 0:
@@ -1126,14 +1143,25 @@ func get_toilet_capacity() -> int:
 ## Personas en la oficina a esa hora absoluta: quienes trabajan (sin almuerzo, tardanza
 ## ni ausencia) y el CEO.
 func count_present(at: int) -> int:
+	return get_present_keys(at).size()
+
+
+## Claves de quienes están en la oficina a esa hora absoluta (como count_present).
+func get_present_keys(at: int) -> Dictionary[String, bool]:
+	if GameClock.in_hour_tick and _present_cache.has(at):
+		return _present_cache[at]
 	var weekday: int = get_weekday_at(at)
 	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
 	var team_map: Dictionary[int, Dictionary] = _get_team_map()
-	var count: int = 1 if is_expected("ceo", weekday, hour) else 0
+	var keys: Dictionary[String, bool] = {}
+	if is_expected("ceo", weekday, hour):
+		keys["ceo"] = true
 	for employee: Dictionary in employees:
 		if _is_working_at(employee, weekday, hour, team_map):
-			count += 1
-	return count
+			keys[employee_key(employee["id"])] = true
+	if GameClock.in_hour_tick:
+		_present_cache[at] = keys
+	return keys
 
 
 ## Inodoros que hacen falta para esa cantidad de personas: 1 cada 10, hacia arriba.
@@ -2332,9 +2360,11 @@ static func describe_employee(employee: Dictionary) -> String:
 
 
 func _on_hour_changed(hour: int) -> void:
+	_clear_hour_caches()
 	_update_energy()
 	_update_dirt()
 	_check_arrivals()
+	_present_cache.clear()
 	_check_bathrooms()
 	_decide_breaks()
 	_note_presence()

@@ -11,6 +11,10 @@ var speed_index: int = 0
 var is_paused: bool = false
 # Un salto de horas en curso debe cortarse (ver interrupt).
 var _interrupted: bool = false
+## true mientras los sistemas reaccionan al cambio de hora: OfficeState y Staff solo usan
+## sus cachés por hora entonces (fuera, por ejemplo en las pruebas que cambian cosas a mano,
+## calculan de nuevo).
+var in_hour_tick: bool = false
 
 # Días completos desde el inicio de la partida (0 = día 1 del mes 1).
 var _day_count: int = 0
@@ -80,7 +84,9 @@ func _next_hour() -> void:
 		_hour = 0
 		_day_count += 1
 		EventBus.day_changed.emit(get_day(), get_month())
+	in_hour_tick = true
 	EventBus.hour_changed.emit(_hour)
+	in_hour_tick = false
 
 
 ## Multiplicador del tiempo: 0 en pausa; si no, la velocidad actual. Los sistemas que

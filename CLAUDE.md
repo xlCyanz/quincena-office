@@ -371,6 +371,16 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   con `Economy.charge` («Pago al inversionista»), aunque deje el saldo negativo; al cumplir los meses termina con aviso. `get_investor_remaining`
   (parte × ingreso del mes pasado × meses que faltan) resta del valor como una parte más de `Company.get_value_parts`. Empresa y Banco tienen su
   sección. `Bank.investor_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga antes de `investor` (las simulaciones sortean igual).
+- Comprobación de la fase 6 (`test_phase6`, extiende `test_phase5`, hito 59): la misma partida con todo encendido (rasgos sin quitar,
+  baños, almuerzo, pausas, candidatos según la empresa e inversionista; responde los eventos al azar). La política suma desde el primer
+  día una franja al sur de la Recepción (x 1–2, filas 8–17) con dos Baños y un inodoro cada 10 personas, y desde Startup otra al otro lado
+  de la entrada (x 4–5, filas 8–22) con la Sala de descanso completa. Desde Mediana empresa compara 30 días: tal cual, sin esos muebles
+  (≈ +40 % de puntos con ellos: se pagan en días) y sin rasgos (+5–6 %). Llega a la bolsa en ~16 meses desde Mediana empresa (la fase 5
+  en 20; `_target_months` [12, 30]). Sin cambios de datos. Para que dure menos de un minuto, `OfficeState` guarda por hora las consultas
+  de habitaciones que funcionan, mesas, muebles de la Sala de descanso e inodoros (`_query_cache`, se borra con `office_changed`, la hora,
+  `new_game` e `import_state`) y `Staff` quién está presente y quién almuerza dentro (`get_present_keys`, `_present_cache`, `_lunch_cache`;
+  se borran con la hora, `staff_changed`, `office_changed` y tras sortear las tardanzas). Las cachés solo se usan mientras el reloj procesa
+  una hora (`GameClock.in_hour_tick`); fuera, por ejemplo en pruebas que cambian cosas a mano, se calcula de nuevo.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -443,3 +453,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 56 | Candidatos según la empresa | ✅ Completado (primera tanda de 3 ± 1 por estrella sobre 3, al menos 1, +1 con publicidad, después como antes; sueldo ofrecido y ambiente medio de las Áreas de trabajo corren las habilidades dentro del rango del nivel, hasta ±80 %; el premio suma 1 candidato por día a cada vacante durante 7 días; pronóstico en el formulario de Personal; las pruebas anteriores corren sin la regla nueva) |
 | 57 | Iconos de estado y avisos | ✅ Completado (un icono por empleado: sin puesto, cansado bajo 30, molesto bajo 30 o con aviso de renuncia, estresado desde 70 y sin tarea, en ese orden; se recalcula al cambiar la hora o el personal, no por cuadro; avisos con destino en celeste con «›»: un clic abre la ficha, Proyectos en Contratos o Productos, Banco, Empresa, Personal o centra la cámara en la habitación) |
 | 58 | Inversionista | ✅ Completado (evento desde Pequeña empresa con valor positivo e ingresos del mes pasado desde $5,000; ofrece 10–25 % del valor por una parte de los ingresos de contratos y productos durante 12–24 meses, calculada para devolverle 1.6 veces, entre 5 y 40 %; aceptar da el efectivo como «Inversión», aparte de los ingresos; cada día 1 «Pago al inversionista» aunque deje saldo negativo; el valor descuenta lo que falta estimado con el mes pasado; uno a la vez; rechazar no cambia nada) |
+| 59 | Comprobación de la fase | ✅ Completado (la empresa de la fase 5 con rasgos, baños, almuerzo, pausas, candidatos e inversionista llega a la bolsa sin quebrar en ~16 meses desde Mediana empresa; baños y Sala de descanso (~$17,000) suman ~40 % de puntos y se pagan en días; los rasgos suman ~6 %; sin cambios de datos; consultas de muebles y presencia guardadas por hora para que la prueba dure menos de un minuto) |
