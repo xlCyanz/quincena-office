@@ -29,6 +29,7 @@ func _ready() -> void:
 	SaveManager.save_dir = "user://test_saves"
 	_check_data()
 	_check_printer()
+	_check_seat_access()
 	_check_whiteboard()
 	_check_window_rules()
 	_check_window_ambiance()
@@ -56,8 +57,8 @@ func _new_game() -> void:
 	Projects.offers.clear()
 
 
-# Área de trabajo de tres puestos al norte de la zona abierta (como en test_breaks).
-func _work_area() -> void:
+# Área de trabajo al norte de la zona abierta (como en test_breaks) con puestos en desk_xs.
+func _work_area(desk_xs: Array[int] = [4, 5]) -> void:
 	var y: int = GridEdge.AXIS_Y
 	var walls: Array[Dictionary] = [
 		{"edge": Vector3i(3, 2, y), "kind": ConstructionCatalog.WALL},
@@ -66,7 +67,7 @@ func _work_area() -> void:
 	]
 	_expect(_builder.apply(walls)["ok"], "paredes del área de trabajo")
 	_expect(_builder.mark_room(Workstations.WORK_AREA, Vector2i(4, 1))["ok"], "marcar el área de trabajo")
-	for x: int in [3, 4, 5]:
+	for x: int in desk_xs:
 		_expect(_builder.place("simple_desk", Vector2i(x, 0), 2)["ok"], "escritorio en %d" % x)
 		_expect(_builder.place("basic_chair", Vector2i(x, 1), 0)["ok"], "silla en %d" % x)
 		_expect(_builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "computadora en %d" % x)
@@ -105,7 +106,7 @@ func _check_printer() -> void:
 	_expect(_builder.place("printer", Vector2i(4, 5), 0)["ok"], "impresora en la zona abierta")
 	_expect(is_equal_approx(Staff.get_printer_factor(), 1.0), "fuera del Área de trabajo no ayuda")
 	_expect(_builder.sell_furniture_at(Vector2i(4, 5))["ok"], "vender esa impresora")
-	var placed: Dictionary = _builder.place("printer", Vector2i(5, 2), 0)
+	var placed: Dictionary = _builder.place("printer", Vector2i(3, 0), 2)
 	_expect(placed["ok"], "impresora en el Área de trabajo: %s" % placed["message"])
 	_expect(is_equal_approx(Staff.get_printer_factor(), 1.25), "con impresora: ×1.25")
 	_expect(is_equal_approx(Staff.get_maintenance_discount(), base_maintenance * 1.25),
@@ -124,6 +125,17 @@ func _check_printer() -> void:
 	_expect(is_equal_approx(Staff.get_printer_factor(), 1.0) and is_zero_approx(Staff.get_maintenance_discount()),
 		"sin contador, nada")
 	_expect(int(Events._resolve(effect, {"amount": 900})["days"]) == 3, "sin contador vuelven a ser 3 días")
+
+
+# Un mueble no puede dejar sin acceso una silla que ya estaba (la impresora delante de una).
+func _check_seat_access() -> void:
+	_new_game()
+	_work_area([3, 4, 5])
+	var result: Dictionary = _builder.quote_place("printer", Vector2i(5, 2), 0)
+	_expect(not result["ok"] and String(result["message"]).contains("silla"), "no tapa el acceso a una silla: %s" % result["message"])
+	_expect(not _builder.quote_place("printer", Vector2i(3, 2), 0)["ok"], "tampoco la del otro lado")
+	# Lejos de las sillas, sí.
+	_expect(_builder.place("printer", Vector2i(4, 5), 0)["ok"], "en la zona abierta sí")
 
 
 func _late_payment_accountant_effect() -> Dictionary:

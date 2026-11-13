@@ -504,18 +504,28 @@ func _access_problem(candidate: Array[Dictionary], item: Dictionary) -> String:
 	for cell: Vector2i in before.get_reachable(OfficeState.entrance):
 		if not reachable_after.has(cell) and not blocked_after.has(cell):
 			return "Así una parte de la oficina quedaría sin acceso."
-	if bool(FurnitureCatalog.get_item(item["id"])["is_seat"]):
-		var seat: Vector2i = item["cell"]
-		var reachable_seat: bool = false
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
-			var next: Vector2i = seat + direction
-			if reachable_after.has(next) and after.can_cross(seat, next):
-				reachable_seat = true
-		if not reachable_seat:
-			return "No se podría llegar a esa silla."
+	if bool(FurnitureCatalog.get_item(item["id"])["is_seat"]) and not _seat_reachable(after, reachable_after, item["cell"]):
+		return "No se podría llegar a esa silla."
+	# Una silla que ya está y se podía alcanzar tiene que seguir alcanzable.
+	var reachable_before: Dictionary[Vector2i, bool] = before.get_reachable(OfficeState.entrance)
+	for other: Dictionary in OfficeState.furniture:
+		if other == item or not bool(FurnitureCatalog.get_item(other["id"]).get("is_seat", false)):
+			continue
+		if _seat_reachable(before, reachable_before, other["cell"]) and not _seat_reachable(after, reachable_after, other["cell"]):
+			return "Así no se podría llegar a una silla."
 	if not _keeps_ceo_access(OfficeState.edges, candidate):
 		return "Así el CEO no podría llegar a su escritorio desde la entrada."
 	return ""
+
+
+
+# Indica si se llega a una silla: alguna casilla vecina alcanzable sin pared entre ellas.
+func _seat_reachable(pathfinder: OfficePathfinder, reachable: Dictionary[Vector2i, bool], seat: Vector2i) -> bool:
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+		var next: Vector2i = seat + direction
+		if reachable.has(next) and pathfinder.can_cross(seat, next):
+			return true
+	return false
 
 
 # --- Terreno ----------------------------------------------------------------------
