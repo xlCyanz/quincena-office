@@ -9,13 +9,13 @@ extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 52) y la empresa inicial.
+## Partes en el orden de los hitos (1 a 53) y la empresa inicial.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "starting_company", "dev_tools",
 ]
 ## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
 ## oficinas sin baño y corren con Staff.bathrooms_enabled en false.

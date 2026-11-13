@@ -168,6 +168,11 @@
 		"raise_range": [0.15, 0.3],
 		"days": 5
 	},
+	"lunch": {
+		"_comentario": "Hito 53: una Sala de descanso que funciona con nevera, microondas y mesas de comedor sirve almuerzo dentro a tantos como asientos (dining_seats de cada mesa en data/furniture.json), en orden: el CEO y después los empleados por antigüedad. Quien almuerza dentro recupera energy_factor veces la energía de una hora fuera y trabaja esa hora a work_factor (media hora). Los demás salen como siempre.",
+		"energy_factor": 2.0,
+		"work_factor": 0.5
+	},
 	"bathrooms": {
 		"_comentario": "Hito 52: capacidad = inodoros de los Baños que funcionan menos los dañados; hace falta 1 cada people_per_toilet personas presentes (hacia arriba, con el CEO). Si faltan, la meta de ánimo de todos suma short_mood (el día que faltó y el siguiente) y la producción baja points_per_missing por inodoro que falta, hasta max_points_loss; los que no caben salen del edificio a buscar un baño y vuelven (trips_per_missing por inodoro que falta cada hora). repair_cost = reparar un inodoro dañado (evento «Baño dañado»).",
 		"people_per_toilet": 10,

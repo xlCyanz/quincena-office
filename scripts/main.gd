@@ -265,6 +265,14 @@ func _spot_of(employee: Dictionary) -> Vector2i:
 	return _seat_of(Staff.employee_key(employee["id"]))
 
 
+# Adónde va alguien cuando trabaja: el CEO a su silla y cada empleado a su lugar.
+func _home_spot(key: String) -> Vector2i:
+	if key == "ceo":
+		return _seat_of(key)
+	var employee: Dictionary = Staff.get_employee_by_key(key)
+	return _seat_of(key) if employee.is_empty() else _spot_of(employee)
+
+
 func _seat_of(key: String) -> Vector2i:
 	return OfficeState.find_furniture_assigned_to(key).get("cell", OfficeState.entrance)
 
@@ -278,11 +286,26 @@ func get_characters() -> Array[OfficeCharacter]:
 	return characters
 
 
-# Cada personaje entra o sale según si le toca estar en la oficina ahora.
+# Cada personaje entra o sale según si le toca estar en la oficina ahora. Quien almuerza
+# dentro (hito 53) camina a una mesa de la Sala de descanso y después vuelve a su silla.
 func _update_routines() -> void:
+	var lunch: Dictionary[String, bool] = Staff.get_lunch_inside(Staff.get_absolute_hour())
+	var spots: Array[Vector2i] = []
+	if not lunch.is_empty():
+		spots = OfficeState.get_lunch_spots()
+	var next_spot: int = 0
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
-		character.update_routine(not leaving and Staff.is_expected_now(character.person_key))
+		if leaving:
+			character.update_routine(false)
+			continue
+		var eating: bool = lunch.has(character.person_key) and not spots.is_empty()
+		if eating:
+			character.set_seat(spots[next_spot % spots.size()])
+			next_spot += 1
+		else:
+			character.set_seat(_home_spot(character.person_key))
+		character.update_routine(eating or Staff.is_expected_now(character.person_key))
 	_update_ceo_button()
 
 
@@ -312,7 +335,7 @@ func describe_employee_activity(employee_id: int) -> String:
 		OfficeCharacter.Activity.WALKING_TO_DESK:
 			return "llegando a su puesto"
 		OfficeCharacter.Activity.SEATED:
-			return "trabajando"
+			return "almorzando en la Sala de descanso" if lunch else "trabajando"
 		OfficeCharacter.Activity.WALKING_OUT:
 			return "saliendo a almorzar" if lunch else "yéndose a casa"
 		OfficeCharacter.Activity.STEPPING_OUT:

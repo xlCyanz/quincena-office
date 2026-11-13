@@ -306,6 +306,11 @@ static func get_trait_effects(trait_id: String) -> Dictionary:
 
 
 ## Cada cuántos días en la empresa se descubre un rasgo más.
+## Valor del almuerzo dentro (data/staff.json, lunch; hito 53).
+static func get_lunch(key: String) -> float:
+	return float(_staff_data()["lunch"][key])
+
+
 ## Valor de los baños (data/staff.json, bathrooms; hito 52).
 static func get_bathrooms(key: String) -> float:
 	return float(_staff_data()["bathrooms"][key])

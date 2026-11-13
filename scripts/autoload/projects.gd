@@ -784,11 +784,17 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 	if not shared.has("bathroom"):
 		shared["bathroom"] = Staff.get_bathroom_factor(Staff.get_bathroom_shortage(at))
 	var bathroom: float = shared["bathroom"]
+	# Almuerzo dentro (hito 53): quien almuerza en la Sala de descanso trabaja media hora.
+	if not shared.has("lunch"):
+		shared["lunch"] = Staff.get_lunch_inside(at)
+	var lunch: Dictionary[String, bool] = shared["lunch"]
+	var lunch_factor: float = StaffCatalog.get_lunch("work_factor")
 	if team_id == CEO_TEAM:
-		if Staff.is_ceo_producing(at):
+		var ceo_lunch: bool = lunch.has("ceo")
+		if Staff.is_ceo_producing(at) or ceo_lunch:
 			var ceo_bonus: float = Workstations.bonus_of(OfficeState.furniture, "ceo")
 			var ceo_level: String = String(StaffCatalog.get_production("ceo_level"))
-			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": bathroom * Production.get_rate(ceo_level, 100.0,
+			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": (lunch_factor if ceo_lunch else 1.0) * bathroom * Production.get_rate(ceo_level, 100.0,
 				ceo_bonus), "bug_chance": get_bug_chance(ceo_level, 100.0)})
 		return workers
 	var team: Dictionary = Staff.get_team(team_id)
@@ -809,7 +815,8 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		var employee: Dictionary = Staff.get_employee(int(member))
 		var key: String = Staff.employee_key(int(member))
 		var phase: String = Production.get_role_phase(employee["role"])
-		if phase.is_empty() or not Staff.is_expected(key, weekday, hour) or not stations.has(key):
+		var eating: bool = lunch.has(key)
+		if phase.is_empty() or not (eating or Staff.is_expected(key, weekday, hour)) or not stations.has(key):
 			continue
 		var department_id: String = StaffCatalog.get_role_department(employee["role"])
 		if not departments.has(department_id):
@@ -817,7 +824,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		var department: float = departments[department_id]
 		# Rasgos (hito 50): puntos según la hora, mentor del equipo, errores al programar y al probar.
 		var traits: float = Staff.get_trait_points_factor(employee, hour, bool(shared["coffee"])) * mentored.get(int(member), 1.0)
-		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits * bathroom
+		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits * bathroom * (lunch_factor if eating else 1.0)
 			* Production.get_rate(employee["level"], float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))
 			* Staff.get_trait_bug_factor(employee), "find_factor": Staff.get_trait_find_factor(employee)})

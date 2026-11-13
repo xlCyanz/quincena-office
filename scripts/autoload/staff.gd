@@ -1009,6 +1009,33 @@ func has_coffee() -> bool:
 	return coffee_out_day != GameClock.get_day_count() and Projects.has_working_room(BREAK_ROOM)
 
 
+## Quiénes almuerzan dentro a esa hora absoluta (hito 53): los que están en su hora de
+## almuerzo mientras haya asientos en una Sala de descanso armada para almorzar (nevera,
+## microondas y mesas), primero el CEO y después por antigüedad. Claves como is_expected.
+func get_lunch_inside(at: int) -> Dictionary[String, bool]:
+	var inside: Dictionary[String, bool] = {}
+	var seats: int = OfficeState.get_lunch_seats()
+	if seats <= 0:
+		return inside
+	var weekday: int = get_weekday_at(at)
+	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
+	if ceo_at_work and hour == get_ceo_lunch_hour():
+		inside["ceo"] = true
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
+	for employee: Dictionary in employees:
+		if inside.size() >= seats:
+			break
+		var schedule: WorkSchedule = _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
+		if schedule.is_working(weekday, hour) and schedule.is_lunch(weekday, hour) and not is_missing(employee, weekday, hour):
+			inside[employee_key(employee["id"])] = true
+	return inside
+
+
+## Indica si alguien almuerza ahora dentro de la oficina.
+func is_lunching_inside(key: String) -> bool:
+	return get_lunch_inside(_absolute_hour()).has(key)
+
+
 ## Inodoros que cuentan: los de los Baños que funcionan menos los dañados (hito 52).
 func get_toilet_capacity() -> int:
 	return maxi(0, OfficeState.count_working_toilets() - broken_toilets)
@@ -2536,6 +2563,8 @@ func _update_energy() -> void:
 	var night_bonus: float = float(StaffCatalog.get_overtime("night_bonus"))
 	var team_map: Dictionary[int, Dictionary] = _get_team_map()
 	var coffee: bool = has_coffee()
+	var lunch_inside: Dictionary[String, bool] = get_lunch_inside(ended)
+	var lunch_rest: int = roundi(rest * StaffCatalog.get_lunch("energy_factor"))
 	for employee: Dictionary in employees:
 		# Lo mismo que is_expected, con el horario a mano para las horas extra (que se
 		# pagan aunque llegue tarde o falte).
@@ -2549,7 +2578,10 @@ func _update_energy() -> void:
 				employee["night_pay"] = float(employee.get("night_pay", 0.0)) + hour_pay * night_bonus
 		var present: bool = working and not is_missing(employee, weekday, hour)
 		var change: int = rest
-		if present:
+		if lunch_inside.has(employee_key(employee["id"])):
+			# Almorzó dentro (hito 53): descansa el doble.
+			change = lunch_rest
+		elif present:
 			change = _work_energy_of(seats.get(employee_key(employee["id"]), {}))
 			if coffee:
 				change += int(_trait_value(employee, "coffee_energy"))

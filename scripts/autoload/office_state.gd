@@ -9,6 +9,8 @@ const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
 const SERVER_ROOM: String = "server_room"
 ## Baño: sus inodoros dan la capacidad (hito 52).
 const BATHROOM: String = "bathroom"
+## Sala de descanso: almuerzo dentro (hito 53).
+const BREAK_ROOM: String = "break_room"
 
 ## Casillas que ocupa el local (hito 25: crece al comprar terreno y puede no ser un rectángulo).
 var lot := Lot.new()
@@ -278,6 +280,60 @@ func count_racks(room: Dictionary) -> int:
 func get_server_capacity() -> int:
 	var room: Dictionary = get_server_room()
 	return 0 if room.is_empty() else count_racks(room)
+
+
+## Primera habitación de ese tipo que funciona ({} si no hay).
+func get_working_room(room_type: String) -> Dictionary:
+	for room: Dictionary in rooms:
+		if room["type"] == room_type and RoomRules.function_problems(room, furniture).is_empty():
+			return room
+	return {}
+
+
+## Mesas de comedor de la Sala de descanso que funciona si también tiene nevera y
+## microondas (hito 53: almuerzo dentro); vacío si no se puede almorzar dentro.
+func get_lunch_tables() -> Array[Dictionary]:
+	var tables: Array[Dictionary] = []
+	var room: Dictionary = get_working_room(BREAK_ROOM)
+	if room.is_empty():
+		return tables
+	var cells: Array[Vector2i] = room["cells"]
+	var parts: Dictionary[String, bool] = {}
+	for item: Dictionary in furniture:
+		var part: String = FurnitureCatalog.get_lunch_part(item["id"])
+		if not part.is_empty() and cells.has(item["cell"]):
+			parts[part] = true
+			if part == "table":
+				tables.append(item)
+	if not parts.has("fridge") or not parts.has("microwave"):
+		tables.clear()
+	return tables
+
+
+## Asientos para almorzar dentro (4 por mesa).
+func get_lunch_seats() -> int:
+	var seats: int = 0
+	for table: Dictionary in get_lunch_tables():
+		seats += FurnitureCatalog.get_dining_seats(table["id"])
+	return seats
+
+
+## Casillas libres de la Sala de descanso junto a las mesas de comedor, adonde caminan los
+## que almuerzan dentro (en orden; puede haber menos que asientos).
+func get_lunch_spots() -> Array[Vector2i]:
+	var spots: Array[Vector2i] = []
+	var room: Dictionary = get_working_room(BREAK_ROOM)
+	if room.is_empty():
+		return spots
+	var cells: Array[Vector2i] = room["cells"]
+	var taken: Array[Vector2i] = get_blocking_cells()
+	for table: Dictionary in get_lunch_tables():
+		for cell: Vector2i in FurnitureCatalog.get_footprint(table["id"], table["cell"], int(table["rotation"])):
+			for step: Vector2i in [Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0), Vector2i(-1, 0)]:
+				var spot: Vector2i = cell + step
+				if cells.has(spot) and not taken.has(spot) and not spots.has(spot) and spot != entrance:
+					spots.append(spot)
+	return spots
 
 
 ## Inodoros dentro de los Baños que funcionan (hito 52).

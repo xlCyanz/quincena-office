@@ -41,6 +41,16 @@ static func get_monthly_cost(id: String) -> int:
 
 
 ## Indica si es un rack de servidores (capacidad para productos).
+## Para qué sirve en el almuerzo dentro (hito 53): "fridge", "microwave", "table" o "".
+static func get_lunch_part(id: String) -> String:
+	return String(get_item(id).get("lunch_part", ""))
+
+
+## Asientos de una mesa de comedor (0 si no es mesa).
+static func get_dining_seats(id: String) -> int:
+	return int(get_item(id).get("dining_seats", 0))
+
+
 ## Indica si es un inodoro (hito 52: capacidad de los baños).
 static func is_toilet(id: String) -> bool:
 	return bool(get_item(id).get("is_toilet", false))
@@ -118,6 +128,8 @@ static func _load() -> void:
 			"mood_bonus": int(raw.get("mood_bonus", 0)),
 			"presentation_screen": bool(raw.get("presentation_screen", false)),
 			"is_toilet": bool(raw.get("is_toilet", false)),
+			"lunch_part": String(raw.get("lunch_part", "")),
+			"dining_seats": int(raw.get("dining_seats", 0)),
 		}
 
 

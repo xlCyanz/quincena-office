@@ -322,6 +322,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `STEPPING_OUT`; no vacía la oficina). «Baño dañado»: «Poner un cartel» aplica `break_toilet` (un inodoro deja de contar) y Empresa muestra la
   sección Baños con «Reparar el baño ($400)» (`Staff.repair_toilet`, «Reparación del baño»). `Staff.bathrooms_enabled` (no se guarda) es solo para
   pruebas: `test_all` lo apaga en las partes anteriores a `bathrooms` (oficinas sin baño con números exactos).
+- Almuerzo dentro (hito 53, `lunch` en `data/staff.json`; nevera $400, microondas $150 y mesa de comedor 2×1 $300 con `lunch_part` y `dining_seats` 4
+  en `data/furniture.json`): `OfficeState.get_lunch_tables`/`get_lunch_seats` cuentan las mesas de la Sala de descanso que funciona (`get_working_room`)
+  solo si también tiene nevera y microondas. `Staff.get_lunch_inside(at)` da quiénes almuerzan dentro: el CEO en su hora y después los empleados por
+  antigüedad en su 4.ª hora (sin tardanza ni ausencia) hasta llenar los asientos. Ellos recuperan `energy_factor` ×2 la energía de descanso y
+  `Projects.get_workers` los suma a `work_factor` 0.5 (`shared["lunch"]`); los demás salen como siempre. `main._update_routines` los manda a una casilla
+  libre junto a una mesa (`get_lunch_spots`, `set_seat`) y después a su lugar (`_home_spot`); la ficha dice «almorzando en la Sala de descanso».
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -388,3 +394,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 50 | Rasgos de producción | ✅ Completado (noctámbulo +20 % de noche y −10 % de día sin perder ánimo de noche; perfeccionista −15 % de puntos, −40 % de errores y QA encuentra 25 % más; sociable −5 % y +5 a la meta de ánimo de su equipo; mentor +15 % a Pasantes y Juniors de su equipo en su turno y un contrato menos para ascender; un rasgo más se descubre cada 15 días; la ficha explica los conocidos) |
 | 51 | Rasgos de conducta e historial | ✅ Completado (impuntual 20 % tarde una hora y 2 % falta la jornada, sorteado al empezar el turno; adicto al café −15 % sin Sala de descanso o con el café agotado por el evento, +2 de energía por hora con café; ambicioso −15 de ánimo tras 15 días sin ascenso pudiendo; leal renuncia con el doble de días malos; historial en la ficha: contratos, errores causados, tardanzas, ausencias y puntualidad) |
 | 52 | Baños con capacidad | ✅ Completado (1 inodoro cada 10 presentes con el CEO; siempre aplica, también sin baño: salen del edificio a buscar uno y vuelven; por inodoro que falta −5 % de producción hasta −20 % y −10 a la meta de ánimo ese día y el siguiente; «Baño dañado» con cartel quita un inodoro hasta repararlo desde Empresa por $400; las pruebas anteriores corren sin baños) |
+| 53 | Almuerzo en la oficina | ✅ Completado (Sala de descanso con nevera $400, microondas $150 y mesas de comedor $300 de 4 asientos; almuerzan dentro el CEO y los más antiguos hasta llenar los asientos; dentro recuperan el doble de energía y rinden media hora; los demás salen; caminan a la mesa y vuelven a su silla) |
