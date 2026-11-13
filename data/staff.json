@@ -194,12 +194,12 @@
 		"coffee_energy": 3
 	},
 	"bathrooms": {
-		"_comentario": "Hito 52: capacidad = inodoros de los Baños que funcionan menos los dañados; hace falta 1 cada people_per_toilet personas presentes (hacia arriba, con el CEO). Si faltan, la meta de ánimo de todos suma short_mood (el día que faltó y el siguiente) y la producción baja points_per_missing por inodoro que falta, hasta max_points_loss; los que no caben salen del edificio a buscar un baño y vuelven (trips_per_missing por inodoro que falta cada hora). repair_cost = reparar un inodoro dañado (evento «Baño dañado»).",
+		"_comentario": "Hito 52: capacidad = inodoros de los Baños que funcionan menos los dañados; hace falta 1 cada people_per_toilet personas presentes (hacia arriba, con el CEO). Si faltan, la meta de ánimo de todos suma short_mood (el día que faltó y el siguiente) y la producción baja points_per_missing por inodoro que falta, hasta max_points_loss; los que no caben (people_per_toilet por inodoro que falta) salen del edificio a buscar un baño y vuelven, cada uno una vez cada trip_every_hours horas de trabajo, repartidos entre las horas. repair_cost = reparar un inodoro dañado (evento «Baño dañado»).",
 		"people_per_toilet": 10,
 		"short_mood": -10,
 		"points_per_missing": 0.05,
 		"max_points_loss": 0.2,
-		"trips_per_missing": 2,
+		"trip_every_hours": 4,
 		"repair_cost": 400
 	},
 	"traits": {

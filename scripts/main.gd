@@ -363,16 +363,26 @@ func _update_routines() -> void:
 ## Faltan inodoros (hito 52): cada hora algunos de los que están sentados salen del
 ## edificio a buscar un baño y vuelven (solo se ve; la producción ya lo cuenta).
 ## Devuelve cuántos salieron.
-func _send_bathroom_trips() -> int:
-	var shortage: int = Staff.get_bathroom_shortage(Staff.get_absolute_hour())
+func _send_bathroom_trips(hour: int = -1) -> int:
+	if hour < 0:
+		hour = Staff.get_absolute_hour()
+	var shortage: int = Staff.get_bathroom_shortage(hour)
 	if shortage <= 0:
 		return 0
 	var seated: Array[OfficeCharacter] = get_characters().filter(func(character: OfficeCharacter) -> bool:
 		return character.activity == OfficeCharacter.Activity.SEATED and not (character is Employee and _departing.has(character)))
-	seated.shuffle()
-	var count: int = mini(seated.size(), shortage * int(StaffCatalog.get_bathrooms("trips_per_missing")))
-	for index: int in range(count):
-		seated[index].step_out()
+	# Cada uno sale una vez cada trip_every_hours horas, en su turno (repartidos por su clave);
+	# por hora salen como mucho los que no caben divididos por esas horas.
+	var every: int = maxi(1, int(StaffCatalog.get_bathrooms("trip_every_hours")))
+	var unfit: int = mini(Staff.count_present(hour), shortage * int(StaffCatalog.get_bathrooms("people_per_toilet")))
+	var limit: int = ceili(float(unfit) / every)
+	var count: int = 0
+	for character: OfficeCharacter in seated:
+		if count >= limit:
+			break
+		if posmod(character.person_key.hash() + hour, every) == 0:
+			character.step_out()
+			count += 1
 	return count
 
 

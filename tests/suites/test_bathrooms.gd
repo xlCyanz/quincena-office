@@ -278,10 +278,35 @@ func _check_ui() -> void:
 	for character: OfficeCharacter in characters:
 		character.import_state({"activity": OfficeCharacter.Activity.SEATED,
 			"cell": [character.get_seat_cell().x, character.get_seat_cell().y]})
-	var sent: int = game._send_bathroom_trips()
-	var out: Array[OfficeCharacter] = characters.filter(func(character: OfficeCharacter) -> bool:
-		return character.activity == OfficeCharacter.Activity.STEPPING_OUT)
-	_expect(sent == 2 and out.size() == 2, "falta 1 inodoro: salen 2 (%d)" % out.size())
+	# Cada uno sale una vez cada 4 horas, repartidos: en 4 horas salen todos una vez y por
+	# hora como mucho 2 (6 personas que no caben / 4, hacia arriba).
+	var hour: int = Staff.get_absolute_hour()
+	var trips: Dictionary[String, int] = {}
+	var per_hour: Array[int] = []
+	var out: Array[OfficeCharacter] = []
+	for step: int in range(8):
+		for character: OfficeCharacter in characters:
+			character.import_state({"activity": OfficeCharacter.Activity.SEATED,
+				"cell": [character.get_seat_cell().x, character.get_seat_cell().y]})
+		per_hour.append(game._send_bathroom_trips(hour + step))
+		out = characters.filter(func(character: OfficeCharacter) -> bool:
+			return character.activity == OfficeCharacter.Activity.STEPPING_OUT)
+		for character: OfficeCharacter in out:
+			trips[character.person_key] = trips.get(character.person_key, 0) + 1
+	var most: int = 0
+	for count: int in per_hour:
+		most = maxi(most, count)
+	var total: int = 0
+	for key: String in trips:
+		total += trips[key]
+	_expect(most <= 2 and total >= 6 and total <= 12 and trips.size() >= 4, "falta 1 inodoro: en 8 horas %d salidas %s" % [total, per_hour])
+	for key: String in trips:
+		_expect(trips[key] <= 2, "%s salió %d veces en 8 horas (una cada 4)" % [key, trips[key]])
+	if out.is_empty():
+		for character: OfficeCharacter in characters:
+			character.step_out()
+			out.append(character)
+			break
 	_expect(game.describe_employee_activity(worker["id"]) == "buscando un baño fuera del edificio"
 		or game.describe_employee_activity(worker["id"]) == "trabajando", "la ficha lo dice")
 	var walker: OfficeCharacter = out[0]
