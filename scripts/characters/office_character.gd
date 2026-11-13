@@ -69,6 +69,8 @@ var _path: Array[Vector2i] = []
 # Una persona por casilla del local: casilla → personaje que la ocupa (la suya y, mientras
 # camina, la siguiente). Compartido entre todos los personajes.
 static var _occupants: Dictionary = {}
+# Fila en la puerta: quienes esperan en la calle para entrar, por orden de llegada.
+static var _door_queue: Array = []
 # Casillas del local que ocupa este personaje.
 var _held: Array[Vector2i] = []
 # Segundos (a 1x) que lleva esperando a que se libere la siguiente casilla.
@@ -119,7 +121,8 @@ func update_routine(expected: bool) -> void:
 		if activity == Activity.AWAY:
 			# Aparece en la entrada; si hay alguien, espera en la calle a que se libere.
 			_release_cells()
-			grid_position = Vector2(_entrance) if _claim(_entrance, false) else Vector2(_outside)
+			grid_position = Vector2(_entrance) if _door_queue_front() == null and _claim(_entrance, false) \
+				else Vector2(_outside)
 			visible = true
 		_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 	elif not expected and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK
@@ -165,6 +168,7 @@ func _replan_avoiding(avoid: Array[Vector2i]) -> void:
 func _process(delta: float) -> void:
 	if activity == Activity.AWAY:
 		_release_cells()
+		_door_queue.erase(self)
 		return
 	# Parado en una casilla que todavía no tiene (al cargar, al aparecer): la toma.
 	if _held.is_empty() and grid_position == Vector2(get_cell()):
@@ -177,10 +181,17 @@ func _process(delta: float) -> void:
 		var next: Vector2i = _path[0]
 		# Dentro del local, tras esperar mucho, pasa igual; afuera espera siempre (nadie
 		# de afuera le cierra el paso a quien está en la entrada).
-		var force: bool = _blocked_time >= GameConstants.CHARACTER_PASS_WAIT and _grid.is_in_lot(get_cell())
-		if not _claim(next, force):
+		var inside: bool = _grid.is_in_lot(get_cell())
+		var force: bool = _blocked_time >= GameConstants.CHARACTER_PASS_WAIT and inside
+		# Desde la calle se entra por turno: primero el que espera hace más.
+		var my_turn: bool = inside or _held.has(next) or not _grid.is_in_lot(next) or _door_queue_front() in [null, self]
+		if not my_turn or not _claim(next, force):
+			if not inside and not _door_queue.has(self):
+				_door_queue.append(self)
 			_on_blocked(scaled_delta)
 			break
+		if not inside:
+			_door_queue.erase(self)
 		visible = true
 		var target := Vector2(next)
 		var distance: float = grid_position.distance_to(target)
@@ -201,6 +212,18 @@ func _process(delta: float) -> void:
 
 func _exit_tree() -> void:
 	_release_cells()
+	_door_queue.erase(self)
+
+
+# El primero de la fila de la puerta que sigue esperando (quita a los que ya no).
+func _door_queue_front() -> OfficeCharacter:
+	while not _door_queue.is_empty():
+		var first: Variant = _door_queue[0]
+		if is_instance_valid(first) and (first as OfficeCharacter).activity != Activity.AWAY \
+				and not (first as OfficeCharacter)._grid.is_in_lot((first as OfficeCharacter).get_cell()):
+			return first
+		_door_queue.pop_front()
+	return null
 
 
 ## Indica si otro personaje ocupa una casilla (la suya o la siguiente mientras camina).

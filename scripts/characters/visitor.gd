@@ -6,6 +6,7 @@ extends OfficeCharacter
 
 const SUIT_COLOR := Color("5b6170")
 const TIE_COLOR := Color("2d6a9f")
+const CANDIDATE_SHIRT_COLOR := Color("8fb8a0")
 
 ## Id de la visita (el de su oferta) en Projects.visits.
 var visit_id: int = 0
@@ -18,4 +19,15 @@ func configure(visit: Dictionary) -> void:
 	display_name = "Cliente de %s" % visit["offer"]["client"]
 	shirt_color = SUIT_COLOR
 	tie_color = TIE_COLOR
+	queue_redraw()
+
+
+## Un candidato que viene a su entrevista (va frente al escritorio de quien lo entrevista).
+func configure_candidate(candidate: Dictionary) -> void:
+	visit_id = -int(candidate["id"])
+	person_key = "candidate_%d" % int(candidate["id"])
+	display_name = "Candidato %s" % candidate["name"]
+	shirt_color = CANDIDATE_SHIRT_COLOR
+	tie_color = Color(0.0, 0.0, 0.0, 0.0)
+	standing = true
 	queue_redraw()

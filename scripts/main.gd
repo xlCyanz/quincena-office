@@ -25,6 +25,9 @@ var _departing: Array[Employee] = []
 var visitors: Dictionary[int, Visitor] = {}
 # Clientes que ya se van; desaparecen al salir.
 var _leaving_visitors: Array[Visitor] = []
+## El candidato que está en su entrevista (camina hasta el escritorio de quien lo
+## entrevista, el CEO o el ejecutivo, y se va al terminar); null si no hay entrevista.
+var interviewee: Visitor = null
 var pathfinder := OfficePathfinder.new()
 # Llegadas escalonadas: clave → minuto absoluto (hora absoluta × 60 + minuto) en que entra
 # quien todavía no llegó. Se recalcula en cada _update_routines.
@@ -92,6 +95,7 @@ func _ready() -> void:
 	update_status_icons()
 	_restore_scene_state(SaveManager.take_scene_state())
 	_sync_visitors()
+	_sync_interview()
 	SaveManager.scene_state_provider = _export_scene_state
 	_build_controller.setup(_office_grid)
 	_build_controller.status_changed.connect(_build_panel.show_status)
@@ -158,6 +162,7 @@ func _ready() -> void:
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.staff_changed.connect(update_status_icons)
+	EventBus.staff_changed.connect(_sync_interview)
 	EventBus.office_changed.connect(update_status_icons)
 	EventBus.projects_changed.connect(update_status_icons)
 	EventBus.visits_changed.connect(_sync_visitors)
@@ -287,6 +292,60 @@ func _sync_visitors() -> void:
 			_leaving_visitors.append(leaving)
 			leaving.update_routine(false)
 	_remove_left_visitors()
+
+
+# El candidato de la entrevista entra y va frente al escritorio de quien lo entrevista;
+# al terminar (o cortarse) la entrevista se va.
+func _sync_interview() -> void:
+	var candidate: Dictionary = Staff.get_interviewed_now()
+	var candidate_key: String = "" if candidate.is_empty() else "candidate_%d" % int(candidate["id"])
+	if interviewee != null and interviewee.person_key != candidate_key:
+		_leaving_visitors.append(interviewee)
+		interviewee.update_routine(false)
+		interviewee = null
+		_remove_left_visitors()
+	if candidate.is_empty() or interviewee != null:
+		return
+	interviewee = VISITOR_SCENE.instantiate()
+	interviewee.configure_candidate(candidate)
+	_office_grid.add_object(interviewee)
+	interviewee.left_office.connect(_remove_left_visitors)
+	interviewee.setup(_office_grid, pathfinder, _interview_spot(String(Staff.interview.get("by", "ceo"))),
+		OfficeState.entrance, OfficeState.get_outside_of_entrance())
+	interviewee.update_routine(true)
+
+
+## Casilla donde se para el candidato: del otro lado del escritorio de quien entrevista
+## ("ceo" o la clave del ejecutivo), dentro de su habitación; si no hay, junto a su silla.
+func _interview_spot(by: String) -> Vector2i:
+	var chair: Vector2i = _seat_of(by)
+	var desk_cells: Array[Vector2i] = []
+	for item: Dictionary in OfficeState.furniture:
+		if bool(FurnitureCatalog.get_item(String(item["id"])).get("accepts_computer", false)):
+			var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(item["id"], item["cell"], int(item["rotation"]))
+			for cell: Vector2i in cells:
+				if (cell - chair).abs().x + (cell - chair).abs().y == 1:
+					desk_cells = cells
+	var room: Dictionary = Staff.get_workplace_room(by)
+	var room_cells: Array = room.get("cells", [])
+	var best := chair
+	var best_score: int = -1000000
+	var around: Array[Vector2i] = desk_cells if not desk_cells.is_empty() else [chair] as Array[Vector2i]
+	for base: Vector2i in around:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var cell: Vector2i = base + direction
+			if cell == chair or desk_cells.has(cell) or not pathfinder.is_walkable(cell) or cell == OfficeState.entrance:
+				continue
+			if not room_cells.is_empty() and not room_cells.has(cell):
+				continue
+			# Frente a la silla, del otro lado del escritorio: lo más lejos posible de ella.
+			var score: int = (cell - chair).abs().x + (cell - chair).abs().y
+			if score > best_score:
+				best_score = score
+				best = cell
+	if best == chair:
+		return _cells_near(chair, 2)[-1] if pathfinder.is_walkable(chair) else OfficeState.entrance
+	return best
 
 
 func _remove_left_visitors() -> void:
@@ -574,6 +633,8 @@ func describe_employee_activity(employee_id: int) -> String:
 				return "llegó temprano y espera su hora"
 			if _departures.has(character.person_key):
 				return "terminando antes de irse"
+			if String(Staff.interview.get("by", "")) == character.person_key:
+				return "entrevistando a %s" % Staff.get_interviewed_now().get("name", "un candidato")
 			if lunch:
 				return "almorzando en la Sala de descanso"
 			return "descansando en la Sala de descanso" if Staff.is_on_break(character.person_key) else "trabajando"
@@ -621,6 +682,8 @@ func _on_office_changed() -> void:
 	for character: OfficeCharacter in get_characters():
 		character.replan()
 	_sync_visitors()
+	if interviewee != null:
+		interviewee.set_seat(_interview_spot(String(Staff.interview.get("by", "ceo"))))
 	for visitor: Visitor in _leaving_visitors:
 		visitor.replan()
 

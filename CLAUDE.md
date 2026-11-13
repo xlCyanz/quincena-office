@@ -101,7 +101,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   espera; cada `CHARACTER_REPATH_WAIT` busca un camino que esquive a los demás (`OfficePathfinder.find_path(…, avoid)`) y tras
   `CHARACTER_PASS_WAIT` pasa igual (dos de frente en un pasillo de una casilla). Aparece en la entrada si está libre; si no,
   espera en la calle sin verse. Fuera del local no hay límite. `main.gd` no manda a dos al mismo lugar: limpieza, almuerzo,
-  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Prueba `test_walking`.
+  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Desde la calle se entra por turno (`_door_queue`, primero el que espera hace más). Prueba `test_walking`.
   Llegadas escalonadas (`arrivals` en `data/staff.json`): al empezar la jornada cada empleado entra entre −30 y +10 minutos de su hora
   (`Staff.get_arrival_offset(empleado, hora absoluta)`, fijo por persona y hora; 10 % tarde, impuntual 50 % y desde −10). `get_early_minutes`
   (turno que empieza la hora siguiente, sin tardanza sorteada: `_lateness_roll` predice `_check_arrivals`) y `get_late_minutes` (llegada de ahora).
@@ -129,7 +129,10 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   está cerrada o llena ayuda al 50 % en la primera con lugar. Una fase abre con la anterior al 50 % y nunca pasa su %. El CEO es
   generalista (SemiSenior) y no rinde en entrevistas ni dormido (de 22 a su llegada). La entrevista dura `interview_minutes` (30) minutos de juego
   desde que empieza (`interview`: `starts_at`/`ends_at` en minutos absolutos, `Staff.get_absolute_minute`; termina en `Staff._process` o en la hora
-  con `check_interview`); el CEO rinde esa hora × `get_ceo_interview_factor` (0.5); las partidas viejas (ends_at en horas) terminan a esa hora. `progress` guarda puntos con decimales.
+  con `check_interview`); el CEO rinde esa hora × `get_ceo_interview_factor` (0.5); las partidas viejas (ends_at en horas) terminan a esa hora.
+  Se ve: `main.interviewee` (un `Visitor` con `configure_candidate`, de pie) entra y espera del otro lado del escritorio de quien entrevista
+  (`_interview_spot`, en su habitación) y se va al terminar o cortarse (`_sync_interview` con `staff_changed`); la ficha del ejecutivo dice
+  «entrevistando a X». Prueba `test_interview_view`. `progress` guarda puntos con decimales.
 - Errores (`data/contracts.json`, bugs): programar genera `bugs_hidden` (1 cada 20/30/45/70 puntos por nivel, el doble cansado o con estrés ≥70, sin acumularse);
   cada punto de pruebas encuentra cada oculto con probabilidad cobertura × puntos / pruebas del contrato (QA 3, otros 0.2) y
   pasan a `bugs_found`; programadores o CEO los corrigen a 3 puntos (`bugs_fixed`) antes de programar. Con pruebas al 100 % QA
