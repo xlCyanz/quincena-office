@@ -300,6 +300,11 @@ static func get_trait_effect(trait_id: String, key: String, default: Variant = n
 	return (_staff_data()["traits"]["effects"].get(trait_id, {}) as Dictionary).get(key, default)
 
 
+## Todos los efectos de un rasgo (vacío si no tiene).
+static func get_trait_effects(trait_id: String) -> Dictionary:
+	return _staff_data()["traits"]["effects"].get(trait_id, {})
+
+
 ## Cada cuántos días en la empresa se descubre un rasgo más.
 static func get_trait_discover_days() -> int:
 	return int(_staff_data()["traits"]["discover_days"])

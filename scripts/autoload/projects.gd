@@ -796,6 +796,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		shared["stations"] = Staff.get_working_station_keys()
 		shared["bonuses"] = Workstations.bonuses_by_owner(OfficeState.furniture)
 		shared["departments"] = {}
+		shared["coffee"] = Staff.has_coffee()
 	var stations: Dictionary = shared["stations"]
 	var bonuses: Dictionary = shared["bonuses"]
 	var departments: Dictionary = shared["departments"]
@@ -811,7 +812,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 			departments[department_id] = Staff.get_department_factor(department_id)
 		var department: float = departments[department_id]
 		# Rasgos (hito 50): puntos según la hora, mentor del equipo, errores al programar y al probar.
-		var traits: float = Staff.get_trait_points_factor(employee, hour) * mentored.get(int(member), 1.0)
+		var traits: float = Staff.get_trait_points_factor(employee, hour, bool(shared["coffee"])) * mentored.get(int(member), 1.0)
 		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits
 			* Production.get_rate(employee["level"], float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))
@@ -859,6 +860,7 @@ func _produce() -> void:
 		var done: Array[Dictionary] = Production.apply(contract, workers)
 		Production.handle_bugs(contract, done, _rng)
 		Production.note_workers(contract, done)
+		Staff.note_bugs_caused(done)
 		changed = true
 		if not was_finished and Production.is_finished(contract):
 			EventBus.notice.emit("Terminado: %s. Listo para entregar." % describe_title(contract))

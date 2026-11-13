@@ -193,6 +193,8 @@ static func describe_effect(effect: Dictionary) -> String:
 			return "te devuelven %s en %d días" % [MoneyFormat.format(int(effect["amount"])), int(effect["days"])]
 		"clean_all":
 			return "limpia toda la oficina"
+		"coffee_out":
+			return "los adictos al café rinden menos hoy"
 	return ""
 
 
@@ -483,6 +485,9 @@ func _apply(effect: Dictionary, target: Dictionary, title: String) -> String:
 			return describe_effect(effect)
 		"clean_all":
 			OfficeState.clean_all()
+			return describe_effect(effect)
+		"coffee_out":
+			Staff.run_out_of_coffee()
 			return describe_effect(effect)
 	push_error("Efecto de evento desconocido en %s: %s" % [title, effect])
 	return ""

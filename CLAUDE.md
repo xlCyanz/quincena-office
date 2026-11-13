@@ -304,6 +304,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   sin contarse a sí mismo) y `get_mentor_projects` (un contrato menos para ascender). Sociable: +5 a la meta de ánimo de todo su equipo, una vez
   (`get_team_trait_mood`); el noctámbulo no pierde ánimo por la noche (`night_mood_free`). Todos hacen efecto aunque no se conozcan; la ficha solo
   explica los conocidos (`Staff.describe_trait`) y «Rinde N %» no los cuenta. `_discover_traits` cada 15 días en la empresa revela el siguiente con aviso.
+- Rasgos de conducta e historial (hito 51, `traits` en `data/staff.json`): impuntual (`late_chance` 20 %, `absent_chance` 2 %) se sortea al empezar
+  cada turno (`Staff._check_arrivals`, azar fijo por `hash([semilla, id, hora])`, no gasta el de `Staff`): tarde falta 1 h, ausente toda la jornada
+  (aviso «X faltó hoy al trabajo.»); se guarda en horas absolutas (`missing_from`/`missing_until`, `is_missing`) y `_is_working_at` lo descuenta.
+  Adicto al café: −15 % de puntos sin café (`Staff.has_coffee()` = Sala de descanso que funciona y no `coffee_out_day`; el evento del café,
+  «Esperar al pedido», aplica `coffee_out` ese día) y +2 de energía por hora trabajada con café. Ambicioso: `promotion_ready_day` anota desde
+  cuándo puede ascender (`_update_promotion_waits`, antes del ánimo); a los 15 días sin ascenso −15 a la meta de ánimo (`is_waiting_promotion`);
+  `promote` lo reinicia. Leal: renuncia tras el doble de días malos (`quit_days_factor`). Historial (`describe_history`, en la ficha): contratos,
+  `bugs_caused` (`Production.handle_bugs` anota `item["bugs"]` y `Staff.note_bugs_caused`), `late_count`, `absent_count`, `on_time_count` y
+  puntualidad (`get_punctuality`, −1 sin datos). `test_phase4` quita impuntual y adicto y olvida la espera del ambicioso (la política no asciende).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -368,3 +377,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 48 | Corporación y salir a bolsa | ✅ Completado (Corporación con 4 ejecutivos y 3 productos activos; bolsa siendo Corporación con valor > $5,000,000, solo cierre sin dinero; botón en Empresa con confirmación y aviso al cumplirse; pantalla de cierre con estadísticas, «Seguir jugando» en modo libre o «Volver al menú»; terreno sin tope hasta llenar el solar) |
 | 49 | Comprobación de la fase | ✅ Completado (sigue la empresa de la fase 4 desde Mediana empresa; bolsa ~20 meses después sin quebrar; productos 40–70 % de los ingresos del último año (~60 %); medianos y grandes pagan ×3 y valen 540 días de ingreso; eventos y etapas sin cambios; la prueba tarda ~40 s) |
 | 50 | Rasgos de producción | ✅ Completado (noctámbulo +20 % de noche y −10 % de día sin perder ánimo de noche; perfeccionista −15 % de puntos, −40 % de errores y QA encuentra 25 % más; sociable −5 % y +5 a la meta de ánimo de su equipo; mentor +15 % a Pasantes y Juniors de su equipo en su turno y un contrato menos para ascender; un rasgo más se descubre cada 15 días; la ficha explica los conocidos) |
+| 51 | Rasgos de conducta e historial | ✅ Completado (impuntual 20 % tarde una hora y 2 % falta la jornada, sorteado al empezar el turno; adicto al café −15 % sin Sala de descanso o con el café agotado por el evento, +2 de energía por hora con café; ambicioso −15 de ánimo tras 15 días sin ascenso pudiendo; leal renuncia con el doble de días malos; historial en la ficha: contratos, errores causados, tardanzas, ausencias y puntualidad) |

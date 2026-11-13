@@ -112,6 +112,11 @@ const CONCEPT_PAYROLL: String = "Nómina"
 const NO_TEMPLATE: int = 0
 # Clave de _get_team_map que ningún empleado usa (los ids empiezan en 1).
 const NO_TEAM_KEY: int = -1
+const NO_COFFEE_OUT: int = -1
+## Habitación cuya cafetera necesitan los adictos al café (hito 51).
+const BREAK_ROOM: String = "break_room"
+## Sin llegadas tarde ni ausencias (ver missing_from).
+const NOT_MISSING: int = -1
 ## Estados de una hora en la agenda.
 const AGENDA_OFF: String = "off"
 const AGENDA_WORK: String = "work"
@@ -154,6 +159,9 @@ var hired_count: int = 0
 ## La nómina de hoy no alcanzó y espera la respuesta al préstamo de emergencia (hito 24):
 ## todavía no baja el ánimo ni cuenta como atraso.
 var payroll_held: bool = false
+## Día en que se acabó el café por un evento (hito 51): ese día los adictos rinden como
+## sin cafetera. NO_COFFEE_OUT si no.
+var coffee_out_day: int = NO_COFFEE_OUT
 
 var _next_id: int = 1
 var _next_team_id: int = 1
@@ -192,6 +200,7 @@ func new_game() -> void:
 	_reset_templates()
 	hired_count = 0
 	payroll_held = false
+	coffee_out_day = NO_COFFEE_OUT
 	_next_id = 1
 	_next_team_id = 1
 	_last_interview_end = NO_FIRING
@@ -369,7 +378,27 @@ func is_expected(key: String, weekday: int, hour: int) -> bool:
 func _is_working_at(employee: Dictionary, weekday: int, hour: int, team_map: Dictionary[int, Dictionary] = {}) -> bool:
 	var schedule: WorkSchedule = _cached_schedule(employee) if team_map.is_empty() \
 		else _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
-	return schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour)
+	return schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour) and not is_missing(employee, weekday, hour)
+
+
+## Indica si alguien falta a esa hora de la semana por llegar tarde o faltar el día
+## (hito 51). La hora se toma como la más cercana a ahora con ese día y esa hora.
+func is_missing(employee: Dictionary, weekday: int, hour: int) -> bool:
+	var from: int = int(employee.get("missing_from", NOT_MISSING))
+	if from == NOT_MISSING:
+		return false
+	var at: int = _nearest_absolute(weekday, hour)
+	return at >= from and at < int(employee.get("missing_until", NOT_MISSING))
+
+
+# La hora absoluta más cercana a ahora que cae en ese día de la semana y esa hora.
+func _nearest_absolute(weekday: int, hour: int) -> int:
+	var week: int = GameConstants.DAYS_PER_WEEK * GameConstants.HOURS_PER_DAY
+	var now: int = _absolute_hour()
+	var target: int = weekday * GameConstants.HOURS_PER_DAY + hour
+	@warning_ignore("integer_division")
+	var difference: int = posmod(target - posmod(now, week) + week / 2, week) - week / 2
+	return now + difference
 
 
 ## Lo mismo que is_expected, para la hora actual.
@@ -601,6 +630,8 @@ func promote(employee_id: int, new_salary: int) -> Dictionary:
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
 	var employee: Dictionary = get_employee(employee_id)
+	# Ascendido: la espera del ambicioso vuelve a contar desde que pueda otra vez.
+	employee["promotion_ready_day"] = NOT_MISSING
 	var next_role: String = get_promotion_progress(employee)["next_role"]
 	if not next_role.is_empty():
 		return _promote_to_role(employee, next_role, new_salary)
@@ -888,6 +919,8 @@ func get_mood_target(employee: Dictionary) -> int:
 	if get_schedule(employee).get_night_hours() > 0 and not _trait_flag(employee, "night_mood_free"):
 		target += float(StaffCatalog.get_overtime("night_mood"))
 	target += get_team_trait_mood(employee)
+	if is_waiting_promotion(employee):
+		target += _trait_value(employee, "promotion_wait_mood")
 	if works_in_dirty_room(employee_key(employee["id"])):
 		target += float(StaffCatalog.get_cleaning("dirty_mood"))
 	target += get_ambiance(employee_key(employee["id"]))
@@ -904,6 +937,10 @@ static func has_trait(person: Dictionary, trait_id: String) -> bool:
 # hora): "points", "night_points", "day_points" (factores), "bug_factor", "find_factor",
 # "team_mood", "mentor_points", "mentor_projects" (el mayor) y "night_mood_free".
 static var _trait_summaries: Dictionary[int, Dictionary] = {}
+## Efectos que se multiplican como (1 + valor) y los que se multiplican tal cual; los demás
+## números cuentan el más fuerte y los true/false, cualquiera.
+const PLUS_ONE_EFFECTS: Array[String] = ["points", "night_points", "day_points", "no_coffee_points"]
+const TIMES_EFFECTS: Array[String] = ["bug_factor", "find_factor", "quit_days_factor"]
 
 
 static func _trait_summary(person: Dictionary) -> Dictionary:
@@ -911,36 +948,141 @@ static func _trait_summary(person: Dictionary) -> Dictionary:
 	var key: int = traits.hash()
 	if _trait_summaries.has(key):
 		return _trait_summaries[key]
-	var summary: Dictionary = {"points": 1.0, "night_points": 1.0, "day_points": 1.0, "bug_factor": 1.0, "find_factor": 1.0,
-		"team_mood": 0.0, "mentor_points": 0.0, "mentor_projects": 0.0, "night_mood_free": false}
+	var summary: Dictionary = {}
+	for factor_key: String in PLUS_ONE_EFFECTS + TIMES_EFFECTS:
+		summary[factor_key] = 1.0
 	for trait_id: Variant in traits:
-		for factor_key: String in ["points", "night_points", "day_points"]:
-			summary[factor_key] = float(summary[factor_key]) * (1.0 + float(StaffCatalog.get_trait_effect(String(trait_id), factor_key, 0.0)))
-		for factor_key: String in ["bug_factor", "find_factor"]:
-			summary[factor_key] = float(summary[factor_key]) * float(StaffCatalog.get_trait_effect(String(trait_id), factor_key, 1.0))
-		for best_key: String in ["team_mood", "mentor_points", "mentor_projects"]:
-			summary[best_key] = maxf(float(summary[best_key]), float(StaffCatalog.get_trait_effect(String(trait_id), best_key, 0.0)))
-		if bool(StaffCatalog.get_trait_effect(String(trait_id), "night_mood_free", false)):
-			summary["night_mood_free"] = true
+		var effects: Dictionary = StaffCatalog.get_trait_effects(String(trait_id))
+		for effect_key: String in effects:
+			var value: Variant = effects[effect_key]
+			if PLUS_ONE_EFFECTS.has(effect_key):
+				summary[effect_key] = float(summary[effect_key]) * (1.0 + float(value))
+			elif TIMES_EFFECTS.has(effect_key):
+				summary[effect_key] = float(summary[effect_key]) * float(value)
+			elif value is bool:
+				summary[effect_key] = bool(summary.get(effect_key, false)) or bool(value)
+			elif value is float or value is int:
+				# De varios rasgos con el mismo efecto cuenta el más fuerte.
+				if absf(float(value)) > absf(float(summary.get(effect_key, 0.0))):
+					summary[effect_key] = float(value)
 	_trait_summaries[key] = summary
 	return summary
 
 
 # Indica si algún rasgo de alguien tiene ese efecto en true.
 static func _trait_flag(person: Dictionary, key: String) -> bool:
-	return bool(_trait_summary(person)[key])
+	return bool(_trait_summary(person).get(key, false))
 
 
 # Producto de los factores de un efecto numérico de los rasgos de alguien.
 static func _trait_product(person: Dictionary, key: String) -> float:
-	return float(_trait_summary(person)[key])
+	return float(_trait_summary(person).get(key, 1.0))
 
 
 ## Cuánto rinden los puntos de alguien a esa hora por sus rasgos (hito 50): el
-## perfeccionista y el sociable menos, el noctámbulo más de noche y menos de día.
-static func get_trait_points_factor(person: Dictionary, hour: int) -> float:
+## perfeccionista y el sociable menos, el noctámbulo más de noche y menos de día y, sin
+## café (coffee false, ver has_coffee), el adicto al café menos (hito 51).
+static func get_trait_points_factor(person: Dictionary, hour: int, coffee: bool = true) -> float:
 	var factor: float = _trait_product(person, "points")
+	if not coffee:
+		factor *= _trait_product(person, "no_coffee_points")
 	return factor * _trait_product(person, "night_points" if WorkSchedule.is_night_hour(hour) else "day_points")
+
+
+## Indica si hay café hoy: una Sala de descanso que funciona (con su cafetera) y sin el
+## evento de que se acabó.
+func has_coffee() -> bool:
+	return coffee_out_day != GameClock.get_day_count() and Projects.has_working_room(BREAK_ROOM)
+
+
+## Se acabó el café por hoy (evento «Se acabó el café»).
+func run_out_of_coffee() -> void:
+	coffee_out_day = GameClock.get_day_count()
+
+
+# Al empezar cada hora: quien entra a trabajar llega a tiempo, tarde (pierde esa hora) o
+# falta (pierde la jornada) según sus rasgos. El sorteo depende solo de la semilla, el
+# empleado y la hora: no gasta el azar de las vacantes.
+func _check_arrivals() -> void:
+	var weekday: int = GameClock.get_weekday()
+	var hour: int = GameClock.get_hour()
+	var now: int = _absolute_hour()
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
+	for employee: Dictionary in employees:
+		var schedule: WorkSchedule = _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
+		if schedule.start_hour != hour or not schedule.days.has(weekday):
+			continue
+		var late: float = _trait_value(employee, "late_chance")
+		var absent: float = _trait_value(employee, "absent_chance")
+		var roll: float = 1.0
+		if late > 0.0 or absent > 0.0:
+			var rng := RandomNumberGenerator.new()
+			rng.seed = hash([_rng.seed, int(employee["id"]), now])
+			roll = rng.randf()
+		if roll < absent:
+			employee["missing_from"] = now
+			employee["missing_until"] = now + schedule.get_duration()
+			employee["absent_count"] = int(employee.get("absent_count", 0)) + 1
+			EventBus.notice.emit("%s faltó hoy al trabajo." % employee["name"])
+		elif roll < absent + late:
+			employee["missing_from"] = now
+			employee["missing_until"] = now + 1
+			employee["late_count"] = int(employee.get("late_count", 0)) + 1
+		else:
+			employee["on_time_count"] = int(employee.get("on_time_count", 0)) + 1
+
+
+## Anota los errores ocultos que generó cada empleado en la hora (lo que devuelve
+## Production.apply después de Production.handle_bugs).
+func note_bugs_caused(done: Array[Dictionary]) -> void:
+	for item: Dictionary in done:
+		var bugs: int = int(item.get("bugs", 0))
+		if bugs <= 0:
+			continue
+		var employee: Dictionary = get_employee_by_key(String(item["worker"]["key"]))
+		if not employee.is_empty():
+			employee["bugs_caused"] = int(employee.get("bugs_caused", 0)) + bugs
+
+
+## Porcentaje de jornadas en que llegó a tiempo, o -1 si todavía no empezó ninguna.
+static func get_punctuality(employee: Dictionary) -> int:
+	var on_time: int = int(employee.get("on_time_count", 0))
+	var total: int = on_time + int(employee.get("late_count", 0)) + int(employee.get("absent_count", 0))
+	return -1 if total == 0 else roundi(100.0 * on_time / total)
+
+
+## «Historial: 3 contratos · 5 errores causados · 2 llegadas tarde · 1 ausencia · puntualidad 90 %».
+static func describe_history(employee: Dictionary) -> String:
+	var late: int = int(employee.get("late_count", 0))
+	var absent: int = int(employee.get("absent_count", 0))
+	var parts: Array[String] = [
+		"%d %s" % [int(employee.get("projects_worked", 0)), "contrato" if int(employee.get("projects_worked", 0)) == 1 else "contratos"],
+		"%d %s" % [int(employee.get("bugs_caused", 0)), "error causado" if int(employee.get("bugs_caused", 0)) == 1 else "errores causados"],
+		"%d %s" % [late, "llegada tarde" if late == 1 else "llegadas tarde"],
+		"%d %s" % [absent, "ausencia" if absent == 1 else "ausencias"]]
+	var punctuality: int = get_punctuality(employee)
+	parts.append("puntualidad %s" % ("—" if punctuality < 0 else "%d %%" % punctuality))
+	return "Historial: " + " · ".join(parts)
+
+
+# Cada día: desde cuándo puede ascender cada ambicioso (se borra al ascenderlo o si deja de
+# poder).
+func _update_promotion_waits() -> void:
+	for employee: Dictionary in employees:
+		if _trait_value(employee, "promotion_wait_days") <= 0.0:
+			continue
+		var ready: bool = bool(get_promotion_progress(employee)["ready"])
+		if not ready:
+			employee["promotion_ready_day"] = NOT_MISSING
+		elif int(employee.get("promotion_ready_day", NOT_MISSING)) == NOT_MISSING:
+			employee["promotion_ready_day"] = GameClock.get_day_count()
+
+
+## Indica si un ambicioso lleva tanto tiempo sin que lo asciendan que se molesta.
+func is_waiting_promotion(employee: Dictionary) -> bool:
+	var since: int = int(employee.get("promotion_ready_day", NOT_MISSING))
+	var wait: float = _trait_value(employee, "promotion_wait_days")
+	return wait > 0.0 and since != NOT_MISSING and GameClock.get_day_count() - since >= int(wait)
 
 
 ## Por cuánto se multiplican los errores que genera alguien al programar (perfeccionista).
@@ -980,7 +1122,7 @@ func get_team_trait_mood(employee: Dictionary) -> float:
 
 # El mayor valor de un efecto numérico entre los rasgos de alguien (0 si ninguno lo tiene).
 static func _trait_value(person: Dictionary, key: String) -> float:
-	return float(_trait_summary(person)[key])
+	return float(_trait_summary(person).get(key, 0.0))
 
 
 # Mentores del equipo de un empleado, sin contarlo a él.
@@ -1168,7 +1310,7 @@ func _update_morale() -> void:
 			if today >= int(employee["quit_day"]):
 				_resign(employee)
 			continue
-		if int(employee["bad_days"]) >= int(StaffCatalog.get_morale("quit_bad_days")):
+		if int(employee["bad_days"]) >= roundi(StaffCatalog.get_morale("quit_bad_days") * _trait_product(employee, "quit_days_factor")):
 			employee["quit_day"] = today + int(StaffCatalog.get_morale("notice_days"))
 			EventBus.notice.emit("%s avisa que renuncia: se va en %d días si no le das un aumento." % [
 				employee["name"], int(StaffCatalog.get_morale("notice_days"))])
@@ -1930,6 +2072,25 @@ static func describe_trait(trait_id: String) -> String:
 			levels.append(StaffCatalog.get_level_name(String(level)))
 		parts.append("%s de su equipo rinden %s si está presente y ascienden con %d contrato menos" % [
 			" y ".join(levels), percent.call(float(mentor)), int(StaffCatalog.get_trait_effect(trait_id, "mentor_projects", 0))])
+	var late: Variant = StaffCatalog.get_trait_effect(trait_id, "late_chance")
+	if late != null:
+		parts.append("%d %% de llegar una hora tarde" % roundi(float(late) * 100.0))
+	var absent: Variant = StaffCatalog.get_trait_effect(trait_id, "absent_chance")
+	if absent != null:
+		parts.append("%d %% de faltar el día" % roundi(float(absent) * 100.0))
+	var no_coffee: Variant = StaffCatalog.get_trait_effect(trait_id, "no_coffee_points")
+	if no_coffee != null:
+		parts.append("sin cafetera en la Sala de descanso %s de puntos" % percent.call(float(no_coffee)))
+	var coffee_energy: Variant = StaffCatalog.get_trait_effect(trait_id, "coffee_energy")
+	if coffee_energy != null:
+		parts.append("con ella +%d de energía por hora" % int(coffee_energy))
+	var wait: Variant = StaffCatalog.get_trait_effect(trait_id, "promotion_wait_days")
+	if wait != null:
+		parts.append("si puede ascender y pasan %d días sin ascenderlo, %d de ánimo" % [int(wait),
+			int(StaffCatalog.get_trait_effect(trait_id, "promotion_wait_mood", 0))])
+	var quit_factor: Variant = StaffCatalog.get_trait_effect(trait_id, "quit_days_factor")
+	if quit_factor != null:
+		parts.append("aguanta %s más días mal antes de renunciar" % ("el doble de" if is_equal_approx(float(quit_factor), 2.0) else "%.1f veces" % float(quit_factor)))
 	var offers: float = float((StaffCatalog.get_competition("traits") as Dictionary).get(trait_id, 1.0))
 	if offers < 1.0:
 		parts.append("otras empresas lo tientan menos")
@@ -1954,6 +2115,7 @@ static func describe_employee(employee: Dictionary) -> String:
 func _on_hour_changed(hour: int) -> void:
 	_update_energy()
 	_update_dirt()
+	_check_arrivals()
 	if not ceo_at_work and hour == StaffCatalog.get_ceo_arrival_hour() \
 			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
 		set_ceo_at_work(true)
@@ -1968,6 +2130,7 @@ func _on_hour_changed(hour: int) -> void:
 func _on_day_changed(day: int, _month: int) -> void:
 	if GameConstants.PAYROLL_DAYS.has(day):
 		_run_payroll()
+	_update_promotion_waits()
 	_update_morale()
 	_discover_traits()
 	_accountant_warning(day)
@@ -2286,8 +2449,10 @@ func _update_energy() -> void:
 	var pay_factor: float = float(StaffCatalog.get_overtime("pay_factor"))
 	var night_bonus: float = float(StaffCatalog.get_overtime("night_bonus"))
 	var team_map: Dictionary[int, Dictionary] = _get_team_map()
+	var coffee: bool = has_coffee()
 	for employee: Dictionary in employees:
-		# Lo mismo que is_expected, con el horario a mano para las horas extra.
+		# Lo mismo que is_expected, con el horario a mano para las horas extra (que se
+		# pagan aunque llegue tarde o falte).
 		var schedule: WorkSchedule = _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
 		var working: bool = schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour)
 		if working:
@@ -2296,7 +2461,12 @@ func _update_energy() -> void:
 				employee["overtime_pay"] = float(employee.get("overtime_pay", 0.0)) + hour_pay * pay_factor
 			if WorkSchedule.is_night_hour(hour):
 				employee["night_pay"] = float(employee.get("night_pay", 0.0)) + hour_pay * night_bonus
-		var change: int = _work_energy_of(seats.get(employee_key(employee["id"]), {})) if working else rest
+		var present: bool = working and not is_missing(employee, weekday, hour)
+		var change: int = rest
+		if present:
+			change = _work_energy_of(seats.get(employee_key(employee["id"]), {}))
+			if coffee:
+				change += int(_trait_value(employee, "coffee_energy"))
 		employee["energy"] = clampi(int(employee["energy"]) + change, 0, 100)
 		employee["min_energy"] = mini(int(employee.get("min_energy", 100)), int(employee["energy"]))
 	EventBus.staff_changed.emit()
@@ -2467,7 +2637,8 @@ func export_state() -> Dictionary:
 		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
 		"shift_templates": shift_templates.duplicate(true), "next_template_id": _next_template_id,
-		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held}
+		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held,
+		"coffee_out_day": coffee_out_day}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -2556,6 +2727,7 @@ func import_state(state: Dictionary) -> void:
 			"template_id": NO_TEMPLATE if template.is_empty() else int(template["id"])})
 	_next_team_id = int(state.get("next_team_id", 1))
 	payroll_held = bool(state.get("payroll_held", false))
+	coffee_out_day = int(state.get("coffee_out_day", NO_COFFEE_OUT))
 	_last_interview_end = NO_FIRING
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))
@@ -2582,6 +2754,14 @@ func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
 	employee["quit_day"] = int(saved.get("quit_day", NO_QUIT))
 	employee["min_energy"] = int(saved.get("min_energy", employee["energy"]))
 	employee["projects_worked"] = int(saved.get("projects_worked", 0))
+	# Historial (hito 51): errores que generó al programar, llegadas tarde, ausencias y
+	# jornadas a tiempo; missing_from/missing_until son las horas (absolutas) en que falta;
+	# promotion_ready_day, desde cuándo puede ascender (para el ambicioso).
+	for counter: String in ["bugs_caused", "late_count", "absent_count", "on_time_count"]:
+		employee[counter] = int(saved.get(counter, 0))
+	employee["missing_from"] = int(saved.get("missing_from", NOT_MISSING))
+	employee["missing_until"] = int(saved.get("missing_until", NOT_MISSING))
+	employee["promotion_ready_day"] = int(saved.get("promotion_ready_day", NOT_MISSING))
 	if is_leader(employee):
 		employee["manager_id"] = int(saved.get("manager_id", 0))
 	if is_executive(employee):

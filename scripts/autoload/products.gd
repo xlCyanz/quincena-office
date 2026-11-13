@@ -491,6 +491,7 @@ func _produce() -> void:
 		var done: Array[Dictionary] = Production.apply(project, workers)
 		Production.handle_bugs(project, done, _rng)
 		Production.note_workers(project, done)
+		Staff.note_bugs_caused(done)
 		_note_design(project, done)
 		changed = true
 		if not was_finished and Production.is_finished(project):

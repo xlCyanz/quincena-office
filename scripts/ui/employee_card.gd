@@ -420,6 +420,12 @@ func _refresh() -> void:
 		var effect: String = Staff.describe_trait(trait_id)
 		if not effect.is_empty():
 			details.append("· %s: %s" % [StaffCatalog.get_trait_name(trait_id), effect])
+	# Historial y puntualidad (hito 51).
+	details.append(Staff.describe_history(employee))
+	if Staff.is_waiting_promotion(employee):
+		details.append("Quiere un ascenso: ya puede ascender y no se lo dan.")
+	if Staff.is_missing(employee, GameClock.get_weekday(), GameClock.get_hour()):
+		details.append("Hoy faltó." if int(employee["missing_until"]) - int(employee["missing_from"]) > 1 else "Llegó tarde: viene a la próxima hora.")
 	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
 	if not room.is_empty():
 		details.append("Trabaja en: %s · %s" % [RoomCatalog.get_display_name(room["type"]),

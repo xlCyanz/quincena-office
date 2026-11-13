@@ -169,14 +169,17 @@ static func _order(phase: String) -> int:
 ## Con lo que hizo cada uno en la hora (lo que devuelve apply): la programación genera
 ## errores ocultos y las pruebas (o la revisión de QA) encuentran algunos: cada error
 ## oculto se encuentra con probabilidad cobertura × puntos de pruebas / puntos de pruebas
-## del proyecto. Sirve para contratos y productos; el azar sale de rng.
+## del proyecto. Sirve para contratos y productos; el azar sale de rng. Cada item de
+## programación queda con "bugs", los errores ocultos que generó.
 static func handle_bugs(project: Dictionary, done: Array[Dictionary], rng: RandomNumberGenerator) -> void:
 	var testing_total: float = maxf(1.0, float(project["points"]["testing"]))
 	for item: Dictionary in done:
 		var worker: Dictionary = item["worker"]
 		var amount: float = float(item["amount"])
 		if item["kind"] == "work" and item["phase"] == "programming":
-			project["bugs_hidden"] = int(project["bugs_hidden"]) + roll(amount * float(worker["bug_chance"]), rng)
+			# Quién los generó queda en el item (historial del empleado, hito 51).
+			item["bugs"] = roll(amount * float(worker["bug_chance"]), rng)
+			project["bugs_hidden"] = int(project["bugs_hidden"]) + int(item["bugs"])
 		elif item["phase"] == "testing" and int(project["bugs_hidden"]) > 0:
 			var coverage: float = float(ContractCatalog.get_bugs("qa_coverage" if worker["phase"] == "testing" else "other_coverage"))
 			var chance: float = minf(1.0, coverage * float(worker.get("find_factor", 1.0)) * amount / testing_total)

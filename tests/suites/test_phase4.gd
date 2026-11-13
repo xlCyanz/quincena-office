@@ -32,8 +32,8 @@ const TEAM_COUNT: int = 4
 ## Un equipo recibe contratos desde que tiene estos miembros.
 const TEAM_READY: int = 4
 
-## Rasgos del hito 50 que esta simulación no usa todavía.
-const PRODUCTION_TRAITS: Array[String] = ["night_owl", "perfectionist", "sociable", "mentor"]
+## Rasgos de los hitos 50 y 51 que esta simulación no usa todavía.
+const PRODUCTION_TRAITS: Array[String] = ["night_owl", "perfectionist", "sociable", "mentor", "unpunctual", "coffee_addict"]
 
 var _failures: int = 0
 var _checks: int = 0
@@ -127,6 +127,7 @@ func _check_growth() -> void:
 func _play_day() -> void:
 	if Bank.game_over:
 		return
+	_forget_promotion_waits()
 	_manage_contracts()
 	_grow()
 	GameClock.fast_forward_hours(9)
@@ -501,6 +502,7 @@ func _income_over_months(months: int) -> int:
 	var counted: int = 0
 	var month: int = Economy.get_current_month()
 	while counted <= months:
+		_forget_promotion_waits()
 		_manage_contracts()
 		GameClock.fast_forward_hours(9)
 		if Staff.ceo_at_work:
@@ -534,7 +536,15 @@ func _record_month(month: int) -> void:
 		Projects.delivered_count, Projects.reputation, Bank.rating])
 
 
-# Quita los rasgos de producción (hito 50) y deja los demás.
+# La política no asciende: el ambicioso (hito 51) no se molesta por esperar; el
+# hito 59 la revisa con todos los rasgos.
+func _forget_promotion_waits() -> void:
+	for employee: Dictionary in Staff.employees:
+		if int(employee.get("promotion_ready_day", Staff.NOT_MISSING)) != Staff.NOT_MISSING:
+			employee["promotion_ready_day"] = GameClock.get_day_count()
+
+
+# Quita los rasgos de producción e impuntual y adicto al café (hitos 50 y 51) y deja los demás.
 func _drop_production_traits(employee: Dictionary) -> void:
 	var traits: Array = employee.get("traits", [])
 	traits.assign(traits.filter(func(trait_id: Variant) -> bool:
