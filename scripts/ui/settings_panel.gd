@@ -126,7 +126,7 @@ func _ready() -> void:
 	_confirm_box.add_child(_confirm_button)
 	_cancel_button = Button.new()
 	_cancel_button.text = "Cancelar"
-	_cancel_button.pressed.connect(_cancel_confirm)
+	_cancel_button.pressed.connect(cancel_confirm)
 	_confirm_box.add_child(_cancel_button)
 
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -163,7 +163,7 @@ func set_open(open: bool) -> void:
 	if open:
 		refresh_slots()
 		refresh_options()
-		_cancel_confirm()
+		cancel_confirm()
 		_status_label.text = "El tiempo está en pausa."
 	_panel.visible = open
 	_open_button.disabled = open
@@ -225,12 +225,13 @@ func _ask(text: String, confirm_text: String, action: Callable) -> void:
 
 func _confirm() -> void:
 	var action: Callable = _pending
-	_cancel_confirm()
+	cancel_confirm()
 	if action.is_valid():
 		action.call()
 
 
-func _cancel_confirm() -> void:
+## Vuelve de la pregunta (cargar o salir) a las pestañas.
+func cancel_confirm() -> void:
 	_pending = Callable()
 	_confirm_box.visible = false
 	_main_rows.visible = true

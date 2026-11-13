@@ -33,6 +33,12 @@ var _was_paused_before_menu: bool = false
 var _build_paused: bool = false
 var _was_paused_before_emergency: bool = false
 var _was_paused_before_ipo: bool = false
+# Si el reloj estaba en pausa antes de abrir el menú de pausa (hito 62).
+var _was_paused_before_pause: bool = false
+# Ajustes se abrió desde el menú de pausa: al cerrarlo se vuelve a la pausa.
+var _settings_from_pause: bool = false
+# Menú de pausa (hito 62); se arma en código.
+var _pause_menu: PauseMenu
 # Pantalla de cierre al salir a bolsa (hito 48); se arma en código.
 var _ipo_screen: IpoScreen
 # Dónde se apretó el botón izquierdo (para distinguir un clic de un arrastre).
@@ -117,6 +123,12 @@ func _ready() -> void:
 	_settings_panel.save_requested.connect(_on_save_requested)
 	_settings_panel.quit_requested.connect(_on_quit_requested)
 	_settings_panel.load_requested.connect(_on_load_requested)
+	_pause_menu = PauseMenu.new()
+	_pause_menu.name = "PauseMenu"
+	add_child(_pause_menu)
+	_pause_menu.resume_requested.connect(func() -> void: set_pause_menu_open(false))
+	_pause_menu.settings_requested.connect(_open_settings_from_pause)
+	_pause_menu.quit_requested.connect(_on_quit_requested)
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.staff_changed.connect(update_status_icons)
@@ -452,6 +464,77 @@ func _on_settings_mode_changed(active: bool) -> void:
 	_build_panel.get_menu_bar().visible = not active
 	_hud.set_controls_enabled(not active)
 	_set_menu_pause(active)
+	# Abierto desde la pausa: al cerrarlo se vuelve a ella.
+	if not active and _settings_from_pause:
+		_settings_from_pause = false
+		set_pause_menu_open(true)
+
+
+## Abre o cierra el menú de pausa (hito 62): al abrirlo se cierran los paneles, se oculta la
+## barra y se detiene el tiempo; al cerrarlo (Seguir) el tiempo vuelve a como estaba.
+func set_pause_menu_open(open: bool) -> void:
+	if open == _pause_menu.is_open():
+		return
+	if open:
+		_close_side_panels(null)
+		_employee_card.close()
+		_was_paused_before_pause = GameClock.is_paused
+		GameClock.set_paused(true)
+	else:
+		GameClock.set_paused(_was_paused_before_pause)
+	_pause_menu.set_open(open)
+	_build_panel.get_menu_bar().visible = not open
+	_hud.set_controls_enabled(not open)
+
+
+func is_pause_menu_open() -> bool:
+	return _pause_menu.is_open()
+
+
+func get_pause_menu() -> PauseMenu:
+	return _pause_menu
+
+
+# Guardar, Cargar o Ajustes desde la pausa: la pausa deja el tiempo como estaba antes y
+# Ajustes lo pausa por su cuenta (así guarda la partida con la pausa de antes del menú).
+func _open_settings_from_pause(tab: String) -> void:
+	set_pause_menu_open(false)
+	_settings_from_pause = true
+	_settings_panel.set_open(true)
+	_settings_panel.set_tab(tab)
+
+
+## Esc (hito 62): cierra primero lo que esté abierto, de lo más reciente a lo más general
+## (una pregunta, Ajustes, la pausa, el modo construcción, la ficha, un panel izquierdo);
+## si no hay nada, abre la pausa. Las pantallas que piden una respuesta no se cierran.
+## Devuelve qué hizo, para las pruebas.
+func handle_escape() -> String:
+	if _game_over_screen.is_open() or _emergency_dialog.is_open() or _ipo_screen.is_open():
+		return "none"
+	if _settings_panel.is_open():
+		if _settings_panel.is_confirming():
+			_settings_panel.cancel_confirm()
+			return "settings_confirm"
+		_settings_panel.set_open(false)
+		return "settings"
+	if _pause_menu.is_open():
+		if _pause_menu.is_confirming():
+			_pause_menu.cancel_confirm()
+			return "pause_confirm"
+		set_pause_menu_open(false)
+		return "resume"
+	if _build_panel.is_build_mode():
+		_build_panel.set_build_mode(false)
+		return "build"
+	if _employee_card.is_open():
+		_employee_card.close()
+		return "card"
+	if _staff_panel.is_open() or _projects_panel.is_open() or _teams_panel.is_open() or _bank_panel.is_open() \
+			or _company_panel.is_open():
+		_close_side_panels(null)
+		return "panel"
+	set_pause_menu_open(true)
+	return "pause"
 
 
 # Mientras un menú que pausa está abierto, el tiempo se detiene; al cerrarlo vuelve a
@@ -466,7 +549,7 @@ func _set_menu_pause(active: bool) -> void:
 
 func _is_menu_open() -> bool:
 	return (_build_panel.is_build_mode() or _settings_panel.is_open() or _game_over_screen.is_open()
-		or _emergency_dialog.is_open() or _ipo_screen.is_open())
+		or _emergency_dialog.is_open() or _ipo_screen.is_open() or _pause_menu.is_open())
 
 
 func _on_save_requested(slot: String) -> void:
@@ -548,6 +631,8 @@ func on_focus_lost() -> void:
 	if _is_menu_open():
 		# Con un menú que pausa abierto, al cerrarlo no debe volver a correr solo.
 		_was_paused_before_menu = true
+	if _pause_menu.is_open():
+		_was_paused_before_pause = true
 	GameClock.set_paused(true)
 
 
@@ -647,12 +732,17 @@ func _on_speed_pressed(index: int) -> void:
 
 
 # Atajos de teclado (un extra: los botones del reloj hacen lo mismo).
+# Esc: cierra lo abierto o abre el menú de pausa (handle_escape, hito 62).
 # Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
 # nada, porque el tiempo tiene que quedarse en pausa. F: ver la oficina completa
 # (funciona siempre).
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
+		return
+	if key.keycode == KEY_ESCAPE:
+		handle_escape()
+		get_viewport().set_input_as_handled()
 		return
 	if key.keycode == KEY_F:
 		frame_office()

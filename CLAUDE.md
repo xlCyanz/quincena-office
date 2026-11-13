@@ -391,6 +391,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Menú principal (`main_menu.gd`, hito 61): Continuar (la partida más reciente, `SaveManager.get_latest_slot` por `saved_at`; con empate el
   autoguardado; no aparece sin partidas), Nueva partida (con autoguardado pregunta antes: vista `confirm`), Cargar, Ajustes (`OptionsList`) y
   Salir. Vistas `buttons`/`load`/`options`/`confirm` (`get_view`). Las pruebas cambian `change_scene` y `quit_action` para no salir del menú.
+- Menú de pausa (hito 62, `PauseMenu`, capa 15, se arma en `main.gd`): Esc (`main.handle_escape`, devuelve qué hizo) cierra primero lo
+  abierto: la pregunta de Ajustes (`SettingsPanel.cancel_confirm`), Ajustes, la pregunta y la pausa, el modo construcción, la ficha y los
+  paneles izquierdos; sin nada abre la pausa. Fin de partida, bolsa y préstamo de emergencia no se cierran con Esc. `set_pause_menu_open`
+  cierra paneles y ficha, oculta la barra, apaga el reloj del `Hud` y guarda `_was_paused_before_pause`; Seguir (o Esc) lo devuelve.
+  Guardar, Cargar y Ajustes cierran la pausa (el reloj vuelve a como estaba) y abren Ajustes en su pestaña; al cerrarlo
+  (`_settings_from_pause`) se vuelve a la pausa, así se guarda con el reloj de antes. Salir al menú pregunta en la misma pausa.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -466,3 +472,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 59 | Comprobación de la fase | ✅ Completado (la empresa de la fase 5 con rasgos, baños, almuerzo, pausas, candidatos e inversionista llega a la bolsa sin quebrar en ~16 meses desde Mediana empresa; baños y Sala de descanso (~$17,000) suman ~40 % de puntos y se pagan en días; los rasgos suman ~6 %; sin cambios de datos; consultas de muebles y presencia guardadas por hora para que la prueba dure menos de un minuto) |
 | 60 | Opciones y Ajustes | ✅ Completado (autoload `Settings` con `user://settings.cfg`: pantalla completa, autoguardado, velocidad inicial, pausa al construir y al perder el foco; un valor roto vuelve al de `data/settings.json`; Ajustes con pestañas Guardar, Cargar y Opciones; cargar y salir piden confirmación; la escala de la interfaz queda para el hito 65) |
 | 61 | Menú principal | ✅ Completado (Continuar carga la partida guardada más reciente y no aparece sin partidas; Nueva partida pregunta si hay autoguardado, que se reemplaza, y deja las ranuras manuales; Ajustes con las mismas opciones que en la partida; Salir cierra el juego) |
+| 62 | Menú de pausa | ✅ Completado (Esc cierra la pregunta, Ajustes, la pausa, construcción, la ficha o los paneles izquierdos, en ese orden; sin nada abierto abre la pausa con Seguir, Guardar, Cargar, Ajustes y Salir al menú y detiene el reloj; Seguir lo deja como estaba; Guardar, Cargar y Ajustes abren Ajustes en su pestaña y vuelven a la pausa; salir pregunta; las pantallas de fin, bolsa y préstamo de emergencia no se cierran con Esc) |
