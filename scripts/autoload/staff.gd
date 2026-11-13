@@ -113,6 +113,9 @@ const NO_TEMPLATE: int = 0
 # Clave de _get_team_map que ningún empleado usa (los ids empiezan en 1).
 const NO_TEAM_KEY: int = -1
 const NO_COFFEE_OUT: int = -1
+const CONCEPT_REPAIR: String = "Reparación del baño"
+## bathroom_short_day si nunca faltaron inodoros (lejos de cualquier día de juego).
+const NO_SHORT_DAY: int = -1000
 ## Habitación cuya cafetera necesitan los adictos al café (hito 51).
 const BREAK_ROOM: String = "break_room"
 ## Sin llegadas tarde ni ausencias (ver missing_from).
@@ -162,6 +165,13 @@ var payroll_held: bool = false
 ## Día en que se acabó el café por un evento (hito 51): ese día los adictos rinden como
 ## sin cafetera. NO_COFFEE_OUT si no.
 var coffee_out_day: int = NO_COFFEE_OUT
+## Inodoros dañados por el evento «Baño dañado» (hito 52): no cuentan hasta repararlos.
+var broken_toilets: int = 0
+## Último día en que faltaron inodoros alguna hora (hito 52); NO_SHORT_DAY si nunca.
+var bathroom_short_day: int = NO_SHORT_DAY
+## Solo para pruebas: false hace como si siempre alcanzaran los inodoros (las pruebas de
+## los hitos anteriores al 52 miden oficinas sin baño). No se guarda.
+var bathrooms_enabled: bool = true
 
 var _next_id: int = 1
 var _next_team_id: int = 1
@@ -201,6 +211,8 @@ func new_game() -> void:
 	hired_count = 0
 	payroll_held = false
 	coffee_out_day = NO_COFFEE_OUT
+	broken_toilets = 0
+	bathroom_short_day = NO_SHORT_DAY
 	_next_id = 1
 	_next_team_id = 1
 	_last_interview_end = NO_FIRING
@@ -923,6 +935,8 @@ func get_mood_target(employee: Dictionary) -> int:
 		target += _trait_value(employee, "promotion_wait_mood")
 	if works_in_dirty_room(employee_key(employee["id"])):
 		target += float(StaffCatalog.get_cleaning("dirty_mood"))
+	if is_bathroom_short_recently():
+		target += StaffCatalog.get_bathrooms("short_mood")
 	target += get_ambiance(employee_key(employee["id"]))
 	target += get_desk_mood(employee_key(employee["id"]))
 	return clampi(roundi(target), 0, 100)
@@ -993,6 +1007,77 @@ static func get_trait_points_factor(person: Dictionary, hour: int, coffee: bool 
 ## evento de que se acabó.
 func has_coffee() -> bool:
 	return coffee_out_day != GameClock.get_day_count() and Projects.has_working_room(BREAK_ROOM)
+
+
+## Inodoros que cuentan: los de los Baños que funcionan menos los dañados (hito 52).
+func get_toilet_capacity() -> int:
+	return maxi(0, OfficeState.count_working_toilets() - broken_toilets)
+
+
+## Personas en la oficina a esa hora absoluta: quienes trabajan (sin almuerzo, tardanza
+## ni ausencia) y el CEO.
+func count_present(at: int) -> int:
+	var weekday: int = get_weekday_at(at)
+	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
+	var count: int = 1 if is_expected("ceo", weekday, hour) else 0
+	for employee: Dictionary in employees:
+		if _is_working_at(employee, weekday, hour, team_map):
+			count += 1
+	return count
+
+
+## Inodoros que hacen falta para esa cantidad de personas: 1 cada 10, hacia arriba.
+static func get_toilets_needed(present: int) -> int:
+	return ceili(float(present) / StaffCatalog.get_bathrooms("people_per_toilet"))
+
+
+## Cuántos inodoros faltan a esa hora absoluta (0 si alcanzan).
+func get_bathroom_shortage(at: int) -> int:
+	if not bathrooms_enabled:
+		return 0
+	return maxi(0, get_toilets_needed(count_present(at)) - get_toilet_capacity())
+
+
+## Por cuánto se multiplica la producción con esa falta de inodoros: −5 % por cada uno
+## que falta por las colas, hasta −20 %.
+static func get_bathroom_factor(shortage: int) -> float:
+	return 1.0 - minf(StaffCatalog.get_bathrooms("max_points_loss"), shortage * StaffCatalog.get_bathrooms("points_per_missing"))
+
+
+## Indica si faltaron inodoros hoy o ayer (baja la meta de ánimo de todos).
+func is_bathroom_short_recently() -> bool:
+	return GameClock.get_day_count() - bathroom_short_day <= 1
+
+
+# Anota el día si a esta hora faltan inodoros.
+func _check_bathrooms() -> void:
+	if get_bathroom_shortage(_absolute_hour()) > 0:
+		bathroom_short_day = GameClock.get_day_count()
+
+
+## Evento «Baño dañado»: un inodoro deja de contar hasta repararlo. Devuelve false si no
+## había ninguno que dañar.
+func break_toilet() -> bool:
+	if broken_toilets >= OfficeState.count_working_toilets():
+		return false
+	broken_toilets += 1
+	EventBus.staff_changed.emit()
+	return true
+
+
+## Repara un inodoro dañado cobrando repair_cost. Devuelve {"ok", "message"}.
+func repair_toilet() -> Dictionary:
+	var cost: int = int(StaffCatalog.get_bathrooms("repair_cost"))
+	if broken_toilets <= 0:
+		return {"ok": false, "message": "No hay ningún inodoro dañado."}
+	if not Economy.spend(cost, CONCEPT_REPAIR):
+		return {"ok": false, "message": "No alcanza el dinero para reparar el baño (%s)." % MoneyFormat.format(cost)}
+	broken_toilets -= 1
+	var message: String = "Se reparó el baño por %s." % MoneyFormat.format(cost)
+	EventBus.staff_changed.emit()
+	EventBus.notice.emit(message)
+	return {"ok": true, "message": message}
 
 
 ## Se acabó el café por hoy (evento «Se acabó el café»).
@@ -2116,6 +2201,7 @@ func _on_hour_changed(hour: int) -> void:
 	_update_energy()
 	_update_dirt()
 	_check_arrivals()
+	_check_bathrooms()
 	if not ceo_at_work and hour == StaffCatalog.get_ceo_arrival_hour() \
 			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
 		set_ceo_at_work(true)
@@ -2638,7 +2724,7 @@ func export_state() -> Dictionary:
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
 		"shift_templates": shift_templates.duplicate(true), "next_template_id": _next_template_id,
 		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held,
-		"coffee_out_day": coffee_out_day}
+		"coffee_out_day": coffee_out_day, "broken_toilets": broken_toilets, "bathroom_short_day": bathroom_short_day}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -2728,6 +2814,8 @@ func import_state(state: Dictionary) -> void:
 	_next_team_id = int(state.get("next_team_id", 1))
 	payroll_held = bool(state.get("payroll_held", false))
 	coffee_out_day = int(state.get("coffee_out_day", NO_COFFEE_OUT))
+	broken_toilets = int(state.get("broken_toilets", 0))
+	bathroom_short_day = int(state.get("bathroom_short_day", NO_SHORT_DAY))
 	_last_interview_end = NO_FIRING
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))

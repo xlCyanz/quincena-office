@@ -28,6 +28,7 @@ var _open_button: Button
 var _panel: PanelContainer
 var _content: VBoxContainer
 var _ipo_button: Button
+var _repair_button: Button
 var _confirm_ipo_button: Button
 # Se pulsó «Salir a bolsa» y se espera la confirmación.
 var _confirming_ipo: bool = false
@@ -81,6 +82,7 @@ func _ready() -> void:
 	EventBus.projects_changed.connect(_refresh)
 	EventBus.company_value_changed.connect(func(_value: int) -> void: _refresh())
 	EventBus.office_changed.connect(_refresh)
+	EventBus.hour_changed.connect(func(_hour: int) -> void: _refresh())
 
 
 func attach_button(menu_bar: Container) -> void:
@@ -163,6 +165,7 @@ func _refresh() -> void:
 		if racks == 0:
 			_label("La Sala de servidores no funciona: le falta un rack o el aire acondicionado.", 0, MUTED_COLOR)
 
+	_add_bathroom_section()
 	_add_ipo_section()
 
 	_label("Reputación", SECTION_FONT_SIZE)
@@ -195,6 +198,36 @@ func _refresh() -> void:
 	if borrowed > 0:
 		_row("  Préstamos recibidos", "+" + MoneyFormat.format(borrowed), MUTED_COLOR)
 	_label("El detalle por concepto está en el Banco.", 0, MUTED_COLOR)
+
+
+## Botón «Reparar el baño» (null si no hay inodoros dañados o el panel está cerrado).
+func get_repair_button() -> Button:
+	return _repair_button
+
+
+# Baños (hito 52): inodoros que cuentan, cuántos hacen falta ahora y la reparación.
+func _add_bathroom_section() -> void:
+	_repair_button = null
+	var capacity: int = Staff.get_toilet_capacity()
+	var present: int = Staff.count_present(Staff.get_absolute_hour())
+	var needed: int = Staff.get_toilets_needed(present)
+	_label("Baños", SECTION_FONT_SIZE)
+	_row("  Inodoros que funcionan", str(capacity), Color.WHITE)
+	_row("  Hacen falta ahora (%d %s)" % [present, "persona" if present == 1 else "personas"], str(needed),
+		Hud.NEGATIVE_COLOR if needed > capacity else Color.WHITE)
+	if needed > capacity:
+		var loss: int = roundi((1.0 - Staff.get_bathroom_factor(needed - capacity)) * 100.0)
+		_label("Faltan inodoros: salen del edificio a buscar un baño, rinden %d %% menos y baja el ánimo." % loss, 0, Hud.NEGATIVE_COLOR)
+	if Staff.broken_toilets > 0:
+		_row("  Dañados", str(Staff.broken_toilets), Hud.NEGATIVE_COLOR)
+		_repair_button = Button.new()
+		_repair_button.text = "Reparar el baño (%s)" % MoneyFormat.format(int(StaffCatalog.get_bathrooms("repair_cost")))
+		_repair_button.focus_mode = Control.FOCUS_NONE
+		_repair_button.pressed.connect(func() -> void:
+			var result: Dictionary = Staff.repair_toilet()
+			if not result["ok"]:
+				EventBus.notice.emit(result["message"]))
+		_content.add_child(_repair_button)
 
 
 ## Botón «Salir a bolsa» (null si el panel está cerrado o la empresa ya cotiza).

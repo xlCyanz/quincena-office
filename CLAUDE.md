@@ -313,6 +313,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `promote` lo reinicia. Leal: renuncia tras el doble de días malos (`quit_days_factor`). Historial (`describe_history`, en la ficha): contratos,
   `bugs_caused` (`Production.handle_bugs` anota `item["bugs"]` y `Staff.note_bugs_caused`), `late_count`, `absent_count`, `on_time_count` y
   puntualidad (`get_punctuality`, −1 sin datos). `test_phase4` quita impuntual y adicto y olvida la espera del ambicioso (la política no asciende).
+- Baños (hito 52, `bathrooms` en `data/staff.json`): capacidad (`Staff.get_toilet_capacity`) = inodoros (`is_toilet`) de los Baños que funcionan
+  (`OfficeState.count_working_toilets`) − `broken_toilets`; hace falta 1 cada 10 presentes (`count_present(at)`: quienes trabajan esa hora y el CEO
+  si está en el trabajo; `get_toilets_needed`, hacia arriba). Siempre aplica, también sin baño (el CEO solo rinde 95 %). Por inodoro que falta
+  (`get_bathroom_shortage`) la producción de todos ×(1 − 5 %), hasta −20 % (`get_bathroom_factor`, en `Projects.get_workers` vía `shared["bathroom"]`);
+  cada hora `_check_bathrooms` anota `bathroom_short_day` y la meta de ánimo baja 10 ese día y el siguiente. Los que no caben salen del edificio a
+  buscar un baño y vuelven: `main._send_bathroom_trips` manda cada hora 2 por inodoro que falta (`OfficeCharacter.step_out`, actividad
+  `STEPPING_OUT`; no vacía la oficina). «Baño dañado»: «Poner un cartel» aplica `break_toilet` (un inodoro deja de contar) y Empresa muestra la
+  sección Baños con «Reparar el baño ($400)» (`Staff.repair_toilet`, «Reparación del baño»). `Staff.bathrooms_enabled` (no se guarda) es solo para
+  pruebas: `test_all` lo apaga en las partes anteriores a `bathrooms` (oficinas sin baño con números exactos).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -378,3 +387,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 49 | Comprobación de la fase | ✅ Completado (sigue la empresa de la fase 4 desde Mediana empresa; bolsa ~20 meses después sin quebrar; productos 40–70 % de los ingresos del último año (~60 %); medianos y grandes pagan ×3 y valen 540 días de ingreso; eventos y etapas sin cambios; la prueba tarda ~40 s) |
 | 50 | Rasgos de producción | ✅ Completado (noctámbulo +20 % de noche y −10 % de día sin perder ánimo de noche; perfeccionista −15 % de puntos, −40 % de errores y QA encuentra 25 % más; sociable −5 % y +5 a la meta de ánimo de su equipo; mentor +15 % a Pasantes y Juniors de su equipo en su turno y un contrato menos para ascender; un rasgo más se descubre cada 15 días; la ficha explica los conocidos) |
 | 51 | Rasgos de conducta e historial | ✅ Completado (impuntual 20 % tarde una hora y 2 % falta la jornada, sorteado al empezar el turno; adicto al café −15 % sin Sala de descanso o con el café agotado por el evento, +2 de energía por hora con café; ambicioso −15 de ánimo tras 15 días sin ascenso pudiendo; leal renuncia con el doble de días malos; historial en la ficha: contratos, errores causados, tardanzas, ausencias y puntualidad) |
+| 52 | Baños con capacidad | ✅ Completado (1 inodoro cada 10 presentes con el CEO; siempre aplica, también sin baño: salen del edificio a buscar uno y vuelven; por inodoro que falta −5 % de producción hasta −20 % y −10 a la meta de ánimo ese día y el siguiente; «Baño dañado» con cartel quita un inodoro hasta repararlo desde Empresa por $400; las pruebas anteriores corren sin baños) |

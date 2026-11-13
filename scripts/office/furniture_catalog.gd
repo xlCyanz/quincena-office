@@ -41,6 +41,11 @@ static func get_monthly_cost(id: String) -> int:
 
 
 ## Indica si es un rack de servidores (capacidad para productos).
+## Indica si es un inodoro (hito 52: capacidad de los baños).
+static func is_toilet(id: String) -> bool:
+	return bool(get_item(id).get("is_toilet", false))
+
+
 static func is_server_rack(id: String) -> bool:
 	return bool(get_item(id).get("server_rack", false))
 
@@ -112,6 +117,7 @@ static func _load() -> void:
 			"energy_per_work_hour": int(raw.get("energy_per_work_hour", 0)),
 			"mood_bonus": int(raw.get("mood_bonus", 0)),
 			"presentation_screen": bool(raw.get("presentation_screen", false)),
+			"is_toilet": bool(raw.get("is_toilet", false)),
 		}
 
 

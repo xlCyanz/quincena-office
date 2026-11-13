@@ -11,7 +11,8 @@ signal sat_down
 ## Salió del local por la entrada.
 signal left_office
 
-enum Activity { AWAY, WALKING_TO_DESK, SEATED, WALKING_OUT }
+## STEPPING_OUT: sale del edificio a buscar un baño (faltan inodoros, hito 52) y vuelve.
+enum Activity { AWAY, WALKING_TO_DESK, SEATED, WALKING_OUT, STEPPING_OUT }
 
 # Arte provisional: colores y medidas del muñeco (unos 32×64 px de pie).
 const PANTS_COLOR := Color("2f3b52")
@@ -87,8 +88,18 @@ func update_routine(expected: bool) -> void:
 			grid_position = Vector2(_entrance)
 			visible = true
 		_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
-	elif not expected and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK):
+	elif not expected and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK
+			or activity == Activity.STEPPING_OUT):
 		_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
+
+
+## Sentado, sale del edificio a buscar un baño y vuelve a su silla. Devuelve false si no
+## estaba sentado.
+func step_out() -> bool:
+	if activity != Activity.SEATED:
+		return false
+	_walk_to(_entrance, Activity.STEPPING_OUT, [_outside])
+	return true
 
 
 ## Cambia su silla (por ejemplo, si le asignan otro puesto). Si estaba en la oficina,
@@ -108,6 +119,8 @@ func replan() -> void:
 			_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 		Activity.WALKING_OUT:
 			_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
+		Activity.STEPPING_OUT:
+			_walk_to(_entrance, Activity.STEPPING_OUT, [_outside])
 
 
 func _process(delta: float) -> void:
@@ -143,7 +156,7 @@ func import_state(state: Dictionary) -> void:
 	var saved: Activity = int(state.get("activity", Activity.AWAY)) as Activity
 	_path.clear()
 	match saved:
-		Activity.WALKING_TO_DESK:
+		Activity.WALKING_TO_DESK, Activity.STEPPING_OUT:
 			_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 		Activity.WALKING_OUT:
 			_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
@@ -194,6 +207,9 @@ func _on_destination_reached() -> void:
 			_set_activity(Activity.AWAY)
 			visible = false
 			left_office.emit()
+		Activity.STEPPING_OUT:
+			# Ya afuera: vuelve a entrar y a su silla.
+			_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 
 
 func _set_activity(new_activity: Activity) -> void:

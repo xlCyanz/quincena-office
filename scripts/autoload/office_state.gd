@@ -7,6 +7,8 @@ extends Node
 const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
 ## Tipo de la Sala de servidores (data/rooms.json).
 const SERVER_ROOM: String = "server_room"
+## Baño: sus inodoros dan la capacidad (hito 52).
+const BATHROOM: String = "bathroom"
 
 ## Casillas que ocupa el local (hito 25: crece al comprar terreno y puede no ser un rectángulo).
 var lot := Lot.new()
@@ -276,6 +278,19 @@ func count_racks(room: Dictionary) -> int:
 func get_server_capacity() -> int:
 	var room: Dictionary = get_server_room()
 	return 0 if room.is_empty() else count_racks(room)
+
+
+## Inodoros dentro de los Baños que funcionan (hito 52).
+func count_working_toilets() -> int:
+	var count: int = 0
+	for room: Dictionary in rooms:
+		if room["type"] != BATHROOM or not RoomRules.function_problems(room, furniture).is_empty():
+			continue
+		var cells: Array[Vector2i] = room["cells"]
+		for item: Dictionary in furniture:
+			if FurnitureCatalog.is_toilet(item["id"]) and cells.has(item["cell"]):
+				count += 1
+	return count
 
 
 ## Lo que cuestan al mes los muebles con costo mensual (los racks, estén donde estén),

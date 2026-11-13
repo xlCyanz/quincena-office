@@ -116,7 +116,9 @@ func _ready() -> void:
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.visits_changed.connect(_sync_visitors)
 	EventBus.dirt_changed.connect(_on_dirt_changed)
-	EventBus.hour_changed.connect(func(_hour: int) -> void: _update_routines())
+	EventBus.hour_changed.connect(func(_hour: int) -> void:
+		_update_routines()
+		_send_bathroom_trips())
 	EventBus.presence_changed.connect(_update_routines)
 	EventBus.game_over.connect(_on_game_over)
 	_game_over_screen.menu_requested.connect(_on_quit_requested)
@@ -284,6 +286,22 @@ func _update_routines() -> void:
 	_update_ceo_button()
 
 
+## Faltan inodoros (hito 52): cada hora algunos de los que están sentados salen del
+## edificio a buscar un baño y vuelven (solo se ve; la producción ya lo cuenta).
+## Devuelve cuántos salieron.
+func _send_bathroom_trips() -> int:
+	var shortage: int = Staff.get_bathroom_shortage(Staff.get_absolute_hour())
+	if shortage <= 0:
+		return 0
+	var seated: Array[OfficeCharacter] = get_characters().filter(func(character: OfficeCharacter) -> bool:
+		return character.activity == OfficeCharacter.Activity.SEATED and not (character is Employee and _departing.has(character)))
+	seated.shuffle()
+	var count: int = mini(seated.size(), shortage * int(StaffCatalog.get_bathrooms("trips_per_missing")))
+	for index: int in range(count):
+		seated[index].step_out()
+	return count
+
+
 ## Qué está haciendo un empleado, para su ficha.
 func describe_employee_activity(employee_id: int) -> String:
 	var character: Employee = employees.get(employee_id)
@@ -297,6 +315,8 @@ func describe_employee_activity(employee_id: int) -> String:
 			return "trabajando"
 		OfficeCharacter.Activity.WALKING_OUT:
 			return "saliendo a almorzar" if lunch else "yéndose a casa"
+		OfficeCharacter.Activity.STEPPING_OUT:
+			return "buscando un baño fuera del edificio"
 	return "almorzando fuera" if lunch else "fuera de su horario"
 
 
