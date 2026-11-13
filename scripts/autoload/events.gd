@@ -267,7 +267,7 @@ func _pay_scheduled() -> void:
 	for payment: Dictionary in due:
 		scheduled.erase(payment)
 		Economy.earn(int(payment["amount"]), CONCEPT_LATE_PAYMENT)
-		EventBus.notice.emit("El cliente pagó lo que retenía: %s." % MoneyFormat.format(int(payment["amount"])))
+		EventBus.send_notice(EventBus.target_menu("bank"), "El cliente pagó lo que retenía: %s." % MoneyFormat.format(int(payment["amount"])))
 
 
 func _meets(conditions: Dictionary) -> bool:

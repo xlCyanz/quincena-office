@@ -202,7 +202,7 @@ func accept(offer_id: int) -> Dictionary:
 		Economy.earn(int(offer["advance"]), CONCEPT_ADVANCE)
 		message += " Anticipo cobrado: %s." % MoneyFormat.format(offer["advance"])
 	EventBus.projects_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_contract(int(contract["id"])), message)
 	return {"ok": true, "message": message}
 
 
@@ -474,7 +474,7 @@ func _add_visit(offer: Dictionary) -> void:
 	var now: int = Staff.get_absolute_hour()
 	var wait: int = get_visit_wait_hours()
 	visits.append({"id": offer["id"], "offer": offer, "arrived_at": now, "leaves_at": now + wait})
-	EventBus.notice.emit("Llegó un cliente de %s a la Recepción: espera hasta las %d:00." % [offer["client"],
+	EventBus.send_notice(EventBus.target_menu("projects"), "Llegó un cliente de %s a la Recepción: espera hasta las %d:00." % [offer["client"],
 		posmod(now + wait, GameConstants.HOURS_PER_DAY)])
 
 
@@ -493,9 +493,9 @@ func _update_visits() -> void:
 			staying.append(visit)
 		elif attended:
 			offers.append(offer)
-			EventBus.notice.emit("Atendieron al cliente de %s: su oferta está en Proyectos." % offer["client"])
+			EventBus.send_notice(EventBus.target_menu("projects"), "Atendieron al cliente de %s: su oferta está en Proyectos." % offer["client"])
 		elif now >= int(visit["leaves_at"]):
-			EventBus.notice.emit("El cliente de %s se fue sin que nadie lo atendiera: perdiste su oferta." % offer["client"])
+			EventBus.send_notice(EventBus.target_menu("projects"), "El cliente de %s se fue sin que nadie lo atendiera: perdiste su oferta." % offer["client"])
 		else:
 			staying.append(visit)
 	if staying.size() == visits.size():
@@ -643,7 +643,7 @@ func _unlock_room_for(size: String) -> void:
 	if room.is_empty() or not RoomCatalog.is_unlocked_by_offer(room) or meeting_room_unlocked:
 		return
 	meeting_room_unlocked = true
-	EventBus.notice.emit("Llegó la primera oferta %s: ya puedes construir una %s (con mesa de reuniones) para aceptarla." % [
+	EventBus.send_notice(EventBus.target_menu("projects"), "Llegó la primera oferta %s: ya puedes construir una %s (con mesa de reuniones) para aceptarla." % [
 		ContractCatalog.get_size_name(size).to_lower(), RoomCatalog.get_display_name(room)])
 	EventBus.rooms_unlocked.emit()
 
@@ -895,7 +895,7 @@ func _produce() -> void:
 		Staff.note_bugs_caused(done)
 		changed = true
 		if not was_finished and Production.is_finished(contract):
-			EventBus.notice.emit("Terminado: %s. Listo para entregar." % describe_title(contract))
+			EventBus.send_notice(EventBus.target_contract(int(contract["id"])), "Terminado: %s. Listo para entregar." % describe_title(contract))
 	if changed:
 		EventBus.projects_changed.emit()
 
@@ -909,7 +909,7 @@ func _check_late_contracts(today: int) -> void:
 			continue
 		if int(contract["cancel_day"]) == NO_CANCEL_DAY:
 			contract["cancel_day"] = int(contract["deadline_day"]) + _rng.randi_range(int(limits[0]), int(limits[1]))
-			EventBus.notice.emit("%s está atrasado: el cliente puede cancelarlo en cualquier momento." % describe_title(contract))
+			EventBus.send_notice(EventBus.target_contract(int(contract["id"])), "%s está atrasado: el cliente puede cancelarlo en cualquier momento." % describe_title(contract))
 		if today >= int(contract["cancel_day"]):
 			_client_cancel(contract)
 	EventBus.projects_changed.emit()
@@ -950,7 +950,7 @@ func _finish(contract: Dictionary, result: String, paid: int, change: float, mes
 		"reputation_change": change, "day": GameClock.get_day_count()})
 	history.resize(mini(history.size(), int(ContractCatalog.get_delivery("history_size"))))
 	EventBus.projects_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("projects"), message)
 
 
 ## Quién lleva un proyecto nuevo: el primer equipo con miembros que no lleva ninguno

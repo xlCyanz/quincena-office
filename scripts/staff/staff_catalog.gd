@@ -312,6 +312,11 @@ static func get_lunch(key: String) -> float:
 
 
 ## Valor de las pausas (data/staff.json, breaks; hito 54).
+## Valor de los iconos de estado (data/staff.json, status_icons; hito 57).
+static func get_status_icons(key: String) -> Variant:
+	return _staff_data()["status_icons"][key]
+
+
 static func get_breaks(key: String) -> float:
 	return float(_staff_data()["breaks"][key])
 

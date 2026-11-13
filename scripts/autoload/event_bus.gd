@@ -42,9 +42,49 @@ signal visits_changed
 ## Cambió la suciedad de alguna habitación (hito 37).
 signal dirt_changed
 
-## Un aviso para el jugador (por ejemplo, la nómina pagada). Lo muestra el Hud.
+## Un aviso para el jugador (por ejemplo, la nómina pagada). Lo muestra el Hud. Para que
+## lleve a algo al hacerle clic se manda con send_notice.
 @warning_ignore("unused_signal")
 signal notice(text: String)
+
+## Destino del aviso que se está mandando (hito 57): {} o uno de los de target_*. Solo vale
+## mientras se emite notice; el Hud lo lee en ese momento.
+var _notice_target: Dictionary = {}
+
+
+## Manda un aviso que lleva a target al hacerle clic (target_employee, target_contract,
+## target_product, target_room o target_menu).
+func send_notice(target: Dictionary, text: String) -> void:
+	_notice_target = target
+	notice.emit(text)
+	_notice_target = {}
+
+
+## Destino del aviso que se está emitiendo ({} si no lleva a nada).
+func get_notice_target() -> Dictionary:
+	return _notice_target
+
+
+func target_employee(employee_id: int) -> Dictionary:
+	return {"type": "employee", "id": employee_id}
+
+
+func target_contract(contract_id: int) -> Dictionary:
+	return {"type": "contract", "id": contract_id}
+
+
+func target_product(product_id: int) -> Dictionary:
+	return {"type": "product", "id": product_id}
+
+
+## Una habitación, por una de sus casillas.
+func target_room(cell: Vector2i) -> Dictionary:
+	return {"type": "room", "cell": cell}
+
+
+## Un menú: "staff", "projects", "teams", "bank" o "company".
+func target_menu(menu: String) -> Dictionary:
+	return {"type": "menu", "menu": menu}
 
 ## Cambió quién tiene que estar en la oficina fuera del cambio de hora (por ejemplo,
 ## el jugador mandó al CEO a casa). La emite Staff.

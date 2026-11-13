@@ -306,7 +306,7 @@ func request_loan(amount: int, months: int) -> Dictionary:
 	var message: String = "Préstamo de %s a %d meses: cuota de %s desde el día 1." % [
 		MoneyFormat.format(amount), months, MoneyFormat.format(get_installment(loan))]
 	EventBus.bank_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("bank"), message)
 	return {"ok": true, "message": message}
 
 
@@ -322,7 +322,7 @@ func prepay(loan_id: int) -> Dictionary:
 	loans.erase(loan)
 	var message: String = "Préstamo saldado por %s (ahorras %s de intereses)." % [MoneyFormat.format(cost), MoneyFormat.format(maxi(0, saved))]
 	EventBus.bank_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("bank"), message)
 	return {"ok": true, "message": message}
 
 
@@ -377,7 +377,7 @@ func refinance(loan_id: int, extra_months: int) -> Dictionary:
 	loan["refinanced"] = true
 	var message: String = "Préstamo refinanciado: %d cuotas de %s." % [terms["months"], MoneyFormat.format(terms["installment"])]
 	EventBus.bank_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("bank"), message)
 	return {"ok": true, "message": message}
 
 
@@ -395,12 +395,12 @@ func _charge_installments() -> void:
 			EventBus.payment_recorded.emit(CONCEPT_INSTALLMENT, true)
 			if get_remaining_months(loan) <= 0:
 				loans.erase(loan)
-				EventBus.notice.emit("Pagaste la última cuota de un préstamo de %s." % MoneyFormat.format(int(loan["amount"])))
+				EventBus.send_notice(EventBus.target_menu("bank"), "Pagaste la última cuota de un préstamo de %s." % MoneyFormat.format(int(loan["amount"])))
 			continue
 		var late: int = roundi(installment * (1.0 + fee))
 		loan["overdue"] = int(loan.get("overdue", 0)) + late
 		EventBus.payment_recorded.emit(CONCEPT_INSTALLMENT, false)
-		EventBus.notice.emit("No alcanza para la cuota de %s: queda atrasada con recargo (%s)." % [
+		EventBus.send_notice(EventBus.target_menu("bank"), "No alcanza para la cuota de %s: queda atrasada con recargo (%s)." % [
 			MoneyFormat.format(installment), MoneyFormat.format(late)])
 	if get_overdue() == 0:
 		overdue_months = 0
@@ -409,7 +409,7 @@ func _charge_installments() -> void:
 	if overdue_months >= int(get_config("seizure_months")):
 		_seize()
 	elif overdue_months >= int(get_config("warning_months")):
-		EventBus.notice.emit("Aviso de embargo: llevas %d meses con cuotas atrasadas. El banco no presta más y al tercero embarga." % overdue_months)
+		EventBus.send_notice(EventBus.target_menu("bank"), "Aviso de embargo: llevas %d meses con cuotas atrasadas. El banco no presta más y al tercero embarga." % overdue_months)
 	EventBus.bank_changed.emit()
 
 
@@ -430,7 +430,7 @@ func _pay_overdue() -> void:
 	_paying_overdue = false
 	if get_overdue() == 0:
 		overdue_months = 0
-		EventBus.notice.emit("Pagaste las cuotas atrasadas: estás al día con el banco.")
+		EventBus.send_notice(EventBus.target_menu("bank"), "Pagaste las cuotas atrasadas: estás al día con el banco.")
 	EventBus.bank_changed.emit()
 
 
@@ -445,7 +445,7 @@ func _seize() -> void:
 	var result: Dictionary = preview_seizure()
 	if not bool(result["covers"]):
 		game_over = true
-		EventBus.notice.emit("El banco embargó la empresa: los muebles (%s) no cubren la deuda (%s)." % [
+		EventBus.send_notice(EventBus.target_menu("bank"), "El banco embargó la empresa: los muebles (%s) no cubren la deuda (%s)." % [
 			MoneyFormat.format(int(result["value"])), MoneyFormat.format(debt)])
 		EventBus.game_over.emit(get_game_over_stats(debt, int(result["value"])))
 		return
@@ -461,7 +461,7 @@ func _seize() -> void:
 	EventBus.office_changed.emit()
 	if surplus > 0:
 		Economy.earn(surplus, CONCEPT_SURPLUS)
-	EventBus.notice.emit("Embargo: el banco se llevó %d %s (%s) y saldó la deuda de %s; te devuelve %s." % [
+	EventBus.send_notice(EventBus.target_menu("bank"), "Embargo: el banco se llevó %d %s (%s) y saldó la deuda de %s; te devuelve %s." % [
 		take.size(), "mueble" if take.size() == 1 else "muebles", MoneyFormat.format(int(result["recovered"])),
 		MoneyFormat.format(debt), MoneyFormat.format(maxi(0, surplus))])
 
@@ -501,7 +501,7 @@ func accept_emergency() -> Dictionary:
 		MoneyFormat.format(int(offer["amount"])), int(offer["months"]), MoneyFormat.format(int(offer["installment"])),
 		describe_day(int(offer["first_due_day"]))]
 	EventBus.bank_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("bank"), message)
 	return {"ok": true, "message": message}
 
 
@@ -562,7 +562,7 @@ func _recalculate(announce: bool) -> void:
 	rating = letter_for(score)
 	if announce and rating != previous:
 		var up: bool = rating < previous  # "A" < "B": una letra menor es mejor.
-		EventBus.notice.emit("La calificación de crédito %s a %s." % ["sube" if up else "baja", rating])
+		EventBus.send_notice(EventBus.target_menu("bank"), "La calificación de crédito %s a %s." % ["sube" if up else "baja", rating])
 	EventBus.bank_changed.emit()
 
 

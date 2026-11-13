@@ -11,6 +11,8 @@ extends CanvasLayer
 signal pause_pressed
 ## Se eligió una velocidad (índice en GameConstants.CLOCK_SPEEDS).
 signal speed_pressed(index: int)
+## Se hizo clic en un aviso que lleva a algo (hito 57): el destino de EventBus.send_notice.
+signal notice_clicked(target: Dictionary)
 
 const MARGIN: float = 12.0
 const WEEKDAY_NAMES: Array[String] = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
@@ -23,6 +25,9 @@ const PANEL_PADDING: float = 8.0
 const PANEL_RADIUS: int = 6
 ## Segundos reales que se ve un aviso.
 const NOTICE_SECONDS: float = 6.0
+## Color del texto de un aviso al que se le puede hacer clic, y lo que se le agrega.
+const LINK_COLOR := Color(0.65, 0.88, 1.0)
+const LINK_SUFFIX: String = "  ›"
 ## Tamaño de los botones de la barra de menús de abajo (caben nueve en 1280 px).
 const MENU_BUTTON_SIZE := Vector2(124.0, 44.0)
 
@@ -38,6 +43,7 @@ var _controls_enabled: bool = true
 var _notice_panel: PanelContainer
 var _notice_label: Label
 var _notice_timer: Timer
+var _notice_target: Dictionary = {}
 var _money_panel: PanelContainer
 var _clock_panel: PanelContainer
 
@@ -117,7 +123,8 @@ func _ready() -> void:
 	_notice_timer.ignore_time_scale = true
 	_notice_timer.timeout.connect(func() -> void: _notice_panel.visible = false)
 	add_child(_notice_timer)
-	EventBus.notice.connect(show_notice)
+	EventBus.notice.connect(func(text: String) -> void: show_notice(text, EventBus.get_notice_target()))
+	_notice_panel.gui_input.connect(_on_notice_input)
 	get_viewport().size_changed.connect(_fit_notice)
 	_notice_panel.minimum_size_changed.connect(_place_notice)
 
@@ -177,11 +184,40 @@ func get_balance_text() -> String:
 
 
 ## Muestra un aviso arriba al centro durante NOTICE_SECONDS (reemplaza al anterior).
-func show_notice(text: String) -> void:
-	_notice_label.text = text
+## Con target (EventBus.target_*) el aviso se ve como enlace y un clic avisa notice_clicked.
+func show_notice(text: String, target: Dictionary = {}) -> void:
+	_notice_target = target.duplicate()
+	_notice_label.text = text + (LINK_SUFFIX if not target.is_empty() else "")
+	if target.is_empty():
+		_notice_label.remove_theme_color_override("font_color")
+	else:
+		_notice_label.add_theme_color_override("font_color", LINK_COLOR)
+	_notice_panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if not target.is_empty() else Control.CURSOR_ARROW
 	_notice_panel.visible = true
 	_fit_notice()
 	_notice_timer.start(NOTICE_SECONDS)
+
+
+## Destino del aviso visible ({} si no lleva a nada o no hay aviso).
+func get_notice_target() -> Dictionary:
+	return _notice_target if _notice_panel.visible else {}
+
+
+## Hace lo mismo que un clic en el aviso: si lleva a algo, lo cierra y avisa notice_clicked.
+func click_notice() -> void:
+	if not _notice_panel.visible or _notice_target.is_empty():
+		return
+	var target: Dictionary = _notice_target
+	_notice_panel.visible = false
+	_notice_timer.stop()
+	notice_clicked.emit(target)
+
+
+func _on_notice_input(event: InputEvent) -> void:
+	var button := event as InputEventMouseButton
+	if button != null and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
+		click_notice()
+		_notice_panel.accept_event()
 
 
 ## Rectángulo del aviso en pantalla (para las pruebas).
@@ -224,7 +260,7 @@ func _place_notice() -> void:
 
 ## Texto del aviso visible, o "" si no hay.
 func get_notice_text() -> String:
-	return _notice_label.text if _notice_panel.visible else ""
+	return _notice_label.text.trim_suffix(LINK_SUFFIX) if _notice_panel.visible else ""
 
 
 func get_clock_text() -> String:

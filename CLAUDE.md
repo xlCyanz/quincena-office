@@ -354,6 +354,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   «Premio de la industria» (efecto `candidates`, 7 días) suma 1 por día a cada vacante (`Staff.award_until`, guardado). Personal muestra el
   pronóstico bajo el sueldo (`describe_hiring_outlook`). `Staff.company_hiring_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga
   en las partes anteriores a `candidates` (cuentan candidatos y habilidades exactos; las simulaciones de fase siguen iguales).
+- Iconos de estado y avisos con destino (hito 57, `status_icons` en `data/staff.json`): `Staff.get_status_icon(empleado)` da el primero de `order`
+  que se cumple: `no_station` (sin silla), `tired` (energía < 30), `upset` (ánimo < 30 o aviso de renuncia), `stressed` (estrés ≥ 70) e `idle`
+  (`is_idle`). `main.update_status_icons` lo pone en cada `Employee` (`OfficeCharacter.set_status_icon`, globo con signo de `STATUS_ICONS`) al
+  cambiar la hora, el personal, la oficina o los proyectos; nunca por cuadro. Avisos: `EventBus.send_notice(destino, texto)` emite `notice` con
+  `get_notice_target()` válido mientras dura; destinos `target_employee/contract/product/room/menu` ("staff", "projects", "teams", "bank",
+  "company"). El `Hud` muestra el aviso con destino en celeste con «›»; un clic (`click_notice`) lo cierra y emite `notice_clicked`, y
+  `main.open_notice_target` abre la ficha, Proyectos en su pestaña, el menú o centra la cámara en la habitación. `notice.emit(texto)` sigue
+  siendo un aviso sin destino. Llevan destino los avisos del personal (renuncia, aumento, oferta de otra empresa, falta, rasgo, ascenso),
+  contratos, productos, Banco, Empresa y la habitación sucia.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -424,3 +433,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 54 | Sala de descanso y pausas | ✅ Completado (sofá $500 con 2 lugares: quien produce con energía bajo 40 descansa una hora sin producir y recupera +15, +3 con café, también en el almuerzo; dispensador de agua $120 +2, ping pong $700 +8 y −3 % de puntos, máquina expendedora $900 +3 y $2 por persona al día; uno de cada uno y solo en la Sala de descanso que funciona) |
 | 55 | Impresora, pizarra y ventanas | ✅ Completado (impresora $350 en el Área de trabajo del contador: sus efectos ×1.25 y cobra el pago atrasado en 2 días; pizarra de pared $250 en la Sala de reuniones: reunión inútil 1 h en vez de 2 y grandes y de élite con 10 % más de plazo; ventana $200 solo en paredes exteriores, +4 puntos de ambiente a la habitación, nada colgado; el terreno devuelve la mitad de las ventanas del borde que abre) |
 | 56 | Candidatos según la empresa | ✅ Completado (primera tanda de 3 ± 1 por estrella sobre 3, al menos 1, +1 con publicidad, después como antes; sueldo ofrecido y ambiente medio de las Áreas de trabajo corren las habilidades dentro del rango del nivel, hasta ±80 %; el premio suma 1 candidato por día a cada vacante durante 7 días; pronóstico en el formulario de Personal; las pruebas anteriores corren sin la regla nueva) |
+| 57 | Iconos de estado y avisos | ✅ Completado (un icono por empleado: sin puesto, cansado bajo 30, molesto bajo 30 o con aviso de renuncia, estresado desde 70 y sin tarea, en ese orden; se recalcula al cambiar la hora o el personal, no por cuadro; avisos con destino en celeste con «›»: un clic abre la ficha, Proyectos en Contratos o Productos, Banco, Empresa, Personal o centra la cámara en la habitación) |

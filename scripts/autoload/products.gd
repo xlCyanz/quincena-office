@@ -97,7 +97,7 @@ func start(type_id: String, size: String) -> Dictionary:
 	products.append(product)
 	var message: String = "Empezaste %s: %s." % [describe_title(product), Projects.describe_owner(product)]
 	EventBus.products_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_product(int(product["id"])), message)
 	return {"ok": true, "message": message, "id": product["id"]}
 
 
@@ -144,7 +144,7 @@ func abandon(product_id: int) -> Dictionary:
 		product.erase("update")
 		message = "Abandonaste la actualización de %s." % product["name"]
 	EventBus.products_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("projects"), message)
 	return {"ok": true, "message": message}
 
 
@@ -184,7 +184,7 @@ func launch(product_id: int) -> Dictionary:
 		"" if product["production_bugs"] == 0 else ", con %d %s" % [product["production_bugs"],
 			"error" if product["production_bugs"] == 1 else "errores"]]
 	EventBus.products_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_product(product_id), message)
 	return {"ok": true, "message": message}
 
 
@@ -217,7 +217,7 @@ func start_update(product_id: int) -> Dictionary:
 	}
 	var message: String = "Empezaste la actualización de %s: %s." % [product["name"], Projects.describe_owner(product["update"])]
 	EventBus.products_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_product(product_id), message)
 	return {"ok": true, "message": message}
 
 
@@ -230,7 +230,7 @@ func retire(product_id: int) -> Dictionary:
 	var message: String = "Retiraste %s; libera %d %s." % [describe_title(product), ProductCatalog.get_racks(product["size"]),
 		"rack" if ProductCatalog.get_racks(product["size"]) == 1 else "racks"]
 	EventBus.products_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("projects"), message)
 	return {"ok": true, "message": message}
 
 
@@ -498,7 +498,7 @@ func _produce() -> void:
 			if project.has("product_id"):
 				_finish_update(get_product(int(project["product_id"])))
 			else:
-				EventBus.notice.emit("Terminado: %s. Listo para lanzar." % describe_title(project))
+				EventBus.send_notice(EventBus.target_product(int(project["id"])), "Terminado: %s. Listo para lanzar." % describe_title(project))
 	if changed:
 		EventBus.products_changed.emit()
 
@@ -524,7 +524,7 @@ func _finish_update(product: Dictionary) -> void:
 	product["phase"] = PHASE_PLATEAU
 	product["phase_days"] = 0
 	product.erase("update")
-	EventBus.notice.emit("Actualización terminada: %s vuelve a su mejor momento." % describe_title(product))
+	EventBus.send_notice(EventBus.target_product(int(product["id"])), "Actualización terminada: %s vuelve a su mejor momento." % describe_title(product))
 
 
 # Un día de vida de los productos lanzados: avanza el ciclo, los errores en producción

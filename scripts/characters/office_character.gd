@@ -18,6 +18,16 @@ enum Activity { AWAY, WALKING_TO_DESK, SEATED, WALKING_OUT, STEPPING_OUT }
 const PANTS_COLOR := Color("2f3b52")
 const SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.25)
 const SEAT_HEIGHT_PX: float = 14.0
+## Iconos de estado (hito 57, Staff.get_status_icon): color del globo y signo.
+const STATUS_ICONS: Dictionary[String, Array] = {
+	"no_station": [Color("8a8f99"), "?"],
+	"tired": [Color("5b8bd9"), "z"],
+	"upset": [Color("d9534f"), "!"],
+	"stressed": [Color("e08a2c"), "#"],
+	"idle": [Color("a6a6a6"), "…"],
+}
+const ICON_RADIUS: float = 7.0
+const ICON_FONT_SIZE: int = 11
 ## Zona en la que un clic toca al personaje, relativa a su punto de apoyo.
 const CLICK_AREA := Rect2(-12.0, -62.0, 24.0, 66.0)
 
@@ -32,6 +42,8 @@ var skin_color := Color("d9a47a")
 var hair_color := Color("3b2a20")
 
 var activity: Activity = Activity.AWAY
+## Icono de estado que se dibuja sobre la cabeza ("" ninguno; claves de STATUS_ICONS).
+var status_icon: String = ""
 ## Posición en la cuadrícula; con decimales mientras camina entre dos casillas.
 var grid_position := Vector2.ZERO
 
@@ -217,6 +229,14 @@ func _set_activity(new_activity: Activity) -> void:
 	queue_redraw()
 
 
+## Cambia el icono de estado (lo calcula la escena de juego al cambiar la hora).
+func set_status_icon(icon: String) -> void:
+	if icon == status_icon:
+		return
+	status_icon = icon if STATUS_ICONS.has(icon) else ""
+	queue_redraw()
+
+
 func _update_position() -> void:
 	position = _grid.grid_to_world(grid_position)
 
@@ -245,3 +265,17 @@ func _draw() -> void:
 	var head_center := Vector2(0.0, torso.position.y - 8.0)
 	draw_circle(head_center, 8.0, skin_color)
 	draw_rect(Rect2(head_center.x - 8.0, head_center.y - 9.0, 16.0, 6.0), hair_color)
+	if not status_icon.is_empty():
+		_draw_status_icon(head_center + Vector2(10.0, -14.0))
+
+
+# Globo con el signo del icono de estado, arriba a la derecha de la cabeza.
+func _draw_status_icon(center: Vector2) -> void:
+	var icon: Array = STATUS_ICONS[status_icon]
+	draw_circle(center, ICON_RADIUS + 1.0, Color(0.1, 0.1, 0.12, 0.9))
+	draw_circle(center, ICON_RADIUS, icon[0])
+	var font: Font = ThemeDB.fallback_font
+	var glyph: String = String(icon[1])
+	var size: Vector2 = font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, ICON_FONT_SIZE)
+	draw_string(font, center + Vector2(-size.x / 2.0, size.y * 0.32), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0,
+		ICON_FONT_SIZE, Color.WHITE)

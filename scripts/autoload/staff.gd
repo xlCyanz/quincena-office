@@ -534,7 +534,7 @@ func fire(employee_id: int) -> Dictionary:
 	var message: String = "Despediste a %s: %s." % [employee["name"], MoneyFormat.format(cost)]
 	EventBus.office_changed.emit()
 	EventBus.staff_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("staff"), message)
 	return {"ok": true, "message": message}
 
 
@@ -552,7 +552,7 @@ func give_raise(employee_id: int, new_salary: int) -> Dictionary:
 	messages.append_array(_apply_raise(employee, new_salary))
 	var message: String = " ".join(messages)
 	EventBus.staff_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_employee(employee_id), message)
 	return {"ok": true, "message": message}
 
 
@@ -673,7 +673,7 @@ func promote(employee_id: int, new_salary: int) -> Dictionary:
 	messages.append_array(_apply_raise(employee, new_salary))
 	var message: String = " ".join(messages)
 	EventBus.staff_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_employee(employee_id), message)
 	return {"ok": true, "message": message}
 
 
@@ -715,7 +715,7 @@ func _promote_to_role(employee: Dictionary, role: String, new_salary: int) -> Di
 	messages.append_array(_apply_raise(employee, new_salary))
 	var message: String = " ".join(messages)
 	_schedules_changed()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_employee(int(employee["id"])), message)
 	return {"ok": true, "message": message}
 
 
@@ -808,7 +808,7 @@ func set_executive_department(executive_id: int, department: String) -> Dictiona
 	executive["department"] = department
 	var message: String = _describe_direction(executive).replace("Dirige", "%s dirige" % executive["name"])
 	_schedules_changed()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_employee(executive_id), message)
 	return {"ok": true, "message": message}
 
 
@@ -901,7 +901,7 @@ func _leave_for_offer(employee: Dictionary) -> String:
 	var cost: int = _remove_employee(employee, CONCEPT_POACHED)
 	EventBus.office_changed.emit()
 	var message: String = "%s se fue a otra empresa; se le pagó %s." % [employee["name"], MoneyFormat.format(cost)]
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("staff"), message)
 	return message
 
 
@@ -915,7 +915,7 @@ func _maybe_get_offer(employee: Dictionary, today: int) -> void:
 	var amount: int = maxi(step, roundi(int(employee["salary"]) * ratio / step) * step)
 	var days: int = int(StaffCatalog.get_competition("days"))
 	employee["outside_offer"] = {"salary": int(employee["salary"]) + amount, "until_day": today + days}
-	EventBus.notice.emit("Otra empresa le ofrece a %s %s al mes: se va en %d días si no igualas la oferta." % [
+	EventBus.send_notice(EventBus.target_employee(int(employee["id"])), "Otra empresa le ofrece a %s %s al mes: se va en %d días si no igualas la oferta." % [
 		employee["name"], MoneyFormat.format(int(employee["salary"]) + amount), days])
 
 
@@ -1185,7 +1185,7 @@ func repair_toilet() -> Dictionary:
 	broken_toilets -= 1
 	var message: String = "Se reparó el baño por %s." % MoneyFormat.format(cost)
 	EventBus.staff_changed.emit()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("company"), message)
 	return {"ok": true, "message": message}
 
 
@@ -1217,7 +1217,7 @@ func _check_arrivals() -> void:
 			employee["missing_from"] = now
 			employee["missing_until"] = now + schedule.get_duration()
 			employee["absent_count"] = int(employee.get("absent_count", 0)) + 1
-			EventBus.notice.emit("%s faltó hoy al trabajo." % employee["name"])
+			EventBus.send_notice(EventBus.target_employee(int(employee["id"])), "%s faltó hoy al trabajo." % employee["name"])
 		elif roll < absent + late:
 			employee["missing_from"] = now
 			employee["missing_until"] = now + 1
@@ -1393,7 +1393,7 @@ func _discover_traits() -> void:
 		for trait_id: Variant in employee.get("traits", []):
 			if not known.has(trait_id):
 				known.append(String(trait_id))
-				EventBus.notice.emit("Descubriste que %s es %s." % [employee["name"],
+				EventBus.send_notice(EventBus.target_employee(int(employee["id"])), "Descubriste que %s es %s." % [employee["name"],
 					StaffCatalog.get_trait_name(String(trait_id)).to_lower()])
 				break
 
@@ -1434,6 +1434,31 @@ func change_all(key: String, amount: int, ids: Array[int] = []) -> void:
 ## no lo necesitan).
 func is_idle(employee: Dictionary) -> bool:
 	return not Production.get_role_phase(employee["role"]).is_empty() and _contract_of(employee).is_empty()
+
+
+## Icono de estado de un empleado (hito 57): el primero de status_icons.order que se
+## cumple ("no_station", "tired", "upset", "stressed" o "idle"), o "" si ninguno.
+func get_status_icon(employee: Dictionary) -> String:
+	for icon: Variant in StaffCatalog.get_status_icons("order"):
+		if _has_status(employee, String(icon)):
+			return String(icon)
+	return ""
+
+
+func _has_status(employee: Dictionary, icon: String) -> bool:
+	match icon:
+		"no_station":
+			return _seat_of(employee_key(int(employee["id"]))).is_empty()
+		"tired":
+			return float(employee["energy"]) < float(StaffCatalog.get_status_icons("tired_below"))
+		"upset":
+			return float(employee["mood"]) < float(StaffCatalog.get_status_icons("upset_below")) \
+				or int(employee["quit_day"]) != NO_QUIT
+		"stressed":
+			return float(employee["stress"]) >= float(StaffCatalog.get_status_icons("stressed_from"))
+		"idle":
+			return is_idle(employee)
+	return false
 
 
 ## Días que le quedan a quien avisó que renuncia, o -1.
@@ -1491,7 +1516,7 @@ func _update_morale() -> void:
 		if not request.is_empty() and today >= int(request["until_day"]):
 			employee["raise_request"] = {}
 			_change_mood(employee, int(StaffCatalog.get_morale("raise_deny_mood")))
-			EventBus.notice.emit("%s se quedó sin respuesta a su pedido de aumento." % employee["name"])
+			EventBus.send_notice(EventBus.target_employee(int(employee["id"])), "%s se quedó sin respuesta a su pedido de aumento." % employee["name"])
 		var bad: bool = int(employee["mood"]) < int(StaffCatalog.get_morale("quit_mood_below")) \
 			or int(employee["stress"]) > int(StaffCatalog.get_morale("quit_stress_above"))
 		employee["bad_days"] = int(employee["bad_days"]) + 1 if bad else 0
@@ -1506,7 +1531,7 @@ func _update_morale() -> void:
 			continue
 		if int(employee["bad_days"]) >= roundi(StaffCatalog.get_morale("quit_bad_days") * _trait_product(employee, "quit_days_factor")):
 			employee["quit_day"] = today + int(StaffCatalog.get_morale("notice_days"))
-			EventBus.notice.emit("%s avisa que renuncia: se va en %d días si no le das un aumento." % [
+			EventBus.send_notice(EventBus.target_employee(int(employee["id"])), "%s avisa que renuncia: se va en %d días si no le das un aumento." % [
 				employee["name"], int(StaffCatalog.get_morale("notice_days"))])
 			continue
 		_maybe_get_offer(employee, today)
@@ -1528,14 +1553,14 @@ func _maybe_ask_raise(employee: Dictionary, today: int) -> void:
 	var step: int = int(StaffCatalog.get_hiring("salary_step"))
 	var amount: int = maxi(step, roundi(int(employee["salary"]) * StaffCatalog.get_morale("raise_request_ratio") / step) * step)
 	employee["raise_request"] = {"amount": amount, "until_day": today + int(StaffCatalog.get_morale("raise_request_days"))}
-	EventBus.notice.emit("%s pide un aumento de %s." % [employee["name"], MoneyFormat.format(amount)])
+	EventBus.send_notice(EventBus.target_employee(int(employee["id"])), "%s pide un aumento de %s." % [employee["name"], MoneyFormat.format(amount)])
 
 
 # Un empleado se va por su cuenta: cobra lo ganado y lo debido.
 func _resign(employee: Dictionary) -> void:
 	var cost: int = _remove_employee(employee, CONCEPT_RESIGNATION)
 	EventBus.office_changed.emit()
-	EventBus.notice.emit("%s renunció y se fue; se le pagó %s." % [employee["name"], MoneyFormat.format(cost)])
+	EventBus.send_notice(EventBus.target_menu("staff"), "%s renunció y se fue; se le pagó %s." % [employee["name"], MoneyFormat.format(cost)])
 
 
 static func _approach(value: int, target: int, step: int) -> int:
@@ -1738,7 +1763,7 @@ func set_manager(leader_id: int, manager_id: int) -> Dictionary:
 	leader["manager_id"] = manager_id
 	var message: String = "%s queda a cargo de %s." % [leader["name"], _boss_name(manager_id)]
 	_schedules_changed()
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_employee(leader_id), message)
 	return {"ok": true, "message": message}
 
 
@@ -2409,7 +2434,7 @@ func _accountant_warning(day: int) -> void:
 		what.append("las cuotas y el mantenimiento")
 	if due <= 0 or Economy.balance >= due:
 		return
-	EventBus.notice.emit("El contador avisa: el día %d no alcanza para %s (faltan %s)." % [
+	EventBus.send_notice(EventBus.target_menu("bank"), "El contador avisa: el día %d no alcanza para %s (faltan %s)." % [
 		target, " ni ".join(what), MoneyFormat.format(due - Economy.balance)])
 
 
@@ -2466,7 +2491,7 @@ func _update_dirt() -> void:
 		return
 	for index: int in range(OfficeState.rooms.size()):
 		if not was_dirty[index] and OfficeState.is_room_dirty(OfficeState.rooms[index]):
-			EventBus.notice.emit("%s está sucia: baja el ánimo de quienes trabajan ahí." % RoomCatalog.get_display_name(OfficeState.rooms[index]["type"]))
+			EventBus.send_notice(EventBus.target_room(OfficeState.rooms[index]["cells"][0]), "%s está sucia: baja el ánimo de quienes trabajan ahí." % RoomCatalog.get_display_name(OfficeState.rooms[index]["type"]))
 	EventBus.dirt_changed.emit()
 
 
@@ -2612,7 +2637,7 @@ func _payroll_unpaid(total: int) -> void:
 	for employee: Dictionary in employees:
 		_change_mood(employee, StaffCatalog.get_payroll("unpaid_mood"))
 	EventBus.staff_changed.emit()
-	EventBus.notice.emit("No alcanza el dinero para la nómina: se deben %s. Se pagará apenas alcance." % MoneyFormat.format(total))
+	EventBus.send_notice(EventBus.target_menu("bank"), "No alcanza el dinero para la nómina: se deben %s. Se pagará apenas alcance." % MoneyFormat.format(total))
 
 
 # Respuesta al préstamo de emergencia: aceptado, la nómina ya se pagó con él y cuenta a
@@ -2648,7 +2673,7 @@ func _pay_debt_if_possible() -> bool:
 	if night > 0:
 		Economy.spend(night, CONCEPT_NIGHT)
 	EventBus.staff_changed.emit()
-	EventBus.notice.emit("Nómina pagada: %s." % MoneyFormat.format(total))
+	EventBus.send_notice(EventBus.target_menu("bank"), "Nómina pagada: %s." % MoneyFormat.format(total))
 	return true
 
 

@@ -147,7 +147,7 @@ func go_public() -> Dictionary:
 		return {"ok": false, "message": problem}
 	public_day = GameClock.get_day_count()
 	var message: String = "¡La empresa salió a bolsa! La partida sigue en modo libre."
-	EventBus.notice.emit(message)
+	EventBus.send_notice(EventBus.target_menu("company"), message)
 	EventBus.went_public.emit(get_ipo_stats())
 	return {"ok": true, "message": message}
 
@@ -165,7 +165,7 @@ func _announce_ipo() -> void:
 	if _ipo_announced or _loading or not ipo_problem().is_empty():
 		return
 	_ipo_announced = true
-	EventBus.notice.emit("La empresa ya puede salir a bolsa: es la meta final. Hazlo desde Empresa.")
+	EventBus.send_notice(EventBus.target_menu("company"), "La empresa ya puede salir a bolsa: es la meta final. Hazlo desde Empresa.")
 
 
 # --- Etapas (hito 27) ---
@@ -254,7 +254,7 @@ func check_stage(notify: bool = true) -> void:
 		var unlocks: Array[String] = get_new_unlocks(stage)
 		if not unlocks.is_empty():
 			text += " Desbloquea: %s." % ", ".join(PackedStringArray(unlocks)).to_lower()
-		EventBus.notice.emit(text)
+		EventBus.send_notice(EventBus.target_menu("company"), text)
 
 
 ## Lo que trae una etapa al llegar: su lista unlocks más el tope por préstamo si cambia.
@@ -400,7 +400,7 @@ func _complete(objective: Dictionary, reward: bool) -> void:
 		var text: String = "Objetivo cumplido: %s." % String(objective["text"])
 		if not parts.is_empty():
 			text += " Recompensa: %s." % " y ".join(PackedStringArray(parts))
-		EventBus.notice.emit(text)
+		EventBus.send_notice(EventBus.target_menu("company"), text)
 		EventBus.objective_completed.emit(String(objective["id"]))
 	EventBus.objectives_changed.emit()
 

@@ -68,6 +68,7 @@ func _ready() -> void:
 	_spawn_ceo()
 	_sync_employees()
 	_update_routines()
+	update_status_icons()
 	_restore_scene_state(SaveManager.take_scene_state())
 	_sync_visitors()
 	SaveManager.scene_state_provider = _export_scene_state
@@ -79,6 +80,7 @@ func _ready() -> void:
 	_build_panel.land_buy_requested.connect(func() -> void: _build_controller.buy_land())
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
+	_hud.notice_clicked.connect(open_notice_target)
 	_add_frame_button(_build_panel.get_menu_bar())
 	_staff_panel.attach_button(_build_panel.get_menu_bar())
 	_staff_panel.employee_selected.connect(_employee_card.open_employee)
@@ -114,10 +116,14 @@ func _ready() -> void:
 	_settings_panel.quit_requested.connect(_on_quit_requested)
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
+	EventBus.staff_changed.connect(update_status_icons)
+	EventBus.office_changed.connect(update_status_icons)
+	EventBus.projects_changed.connect(update_status_icons)
 	EventBus.visits_changed.connect(_sync_visitors)
 	EventBus.dirt_changed.connect(_on_dirt_changed)
 	EventBus.hour_changed.connect(func(_hour: int) -> void:
 		_update_routines()
+		update_status_icons()
 		_send_bathroom_trips())
 	EventBus.presence_changed.connect(_update_routines)
 	EventBus.game_over.connect(_on_game_over)
@@ -352,6 +358,38 @@ func describe_employee_activity(employee_id: int) -> String:
 		OfficeCharacter.Activity.STEPPING_OUT:
 			return "buscando un baño fuera del edificio"
 	return "almorzando fuera" if lunch else "fuera de su horario"
+
+
+## Pone a cada empleado su icono de estado (hito 57). Se llama al cambiar la hora, el
+## personal, la oficina o los proyectos; no cada cuadro.
+func update_status_icons() -> void:
+	for employee_id: int in employees:
+		var employee: Dictionary = Staff.get_employee(employee_id)
+		employees[employee_id].set_status_icon("" if employee.is_empty() else Staff.get_status_icon(employee))
+
+
+## Abre lo que señala un aviso (EventBus.send_notice): la ficha del empleado, Proyectos en
+## su pestaña, el menú o la cámara sobre la habitación.
+func open_notice_target(target: Dictionary) -> void:
+	match String(target.get("type", "")):
+		"employee":
+			if not Staff.get_employee(int(target["id"])).is_empty():
+				_employee_card.open_employee(int(target["id"]))
+		"contract":
+			_projects_panel.set_open(true)
+			_projects_panel.set_tab(ProjectsPanel.TAB_CONTRACTS)
+		"product":
+			_projects_panel.set_open(true)
+			_projects_panel.set_tab(ProjectsPanel.TAB_PRODUCTS)
+		"room":
+			var cell: Vector2i = target["cell"]
+			_camera.center_on(_office_grid.grid_to_world(Vector2(cell)))
+		"menu":
+			var panels: Dictionary[String, CanvasLayer] = {"staff": _staff_panel, "projects": _projects_panel,
+				"teams": _teams_panel, "bank": _bank_panel, "company": _company_panel}
+			var panel: CanvasLayer = panels.get(String(target["menu"]))
+			if panel != null:
+				panel.call("set_open", true)
 
 
 func _on_office_changed() -> void:

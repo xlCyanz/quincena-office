@@ -180,6 +180,13 @@
 		"energy_factor": 2.0,
 		"work_factor": 0.5
 	},
+	"status_icons": {
+		"_comentario": "Hito 57: icono sobre cada empleado, uno a la vez, el primero de order que se cumple: no_station (sin puesto), tired (energía bajo tired_below), upset (ánimo bajo upset_below o aviso de renuncia), stressed (estrés desde stressed_from) e idle (cargo que produce y su equipo no lleva proyecto, como idle_mood). Se recalcula al cambiar la hora y cuando cambia el personal.",
+		"order": ["no_station", "tired", "upset", "stressed", "idle"],
+		"tired_below": 30,
+		"upset_below": 30,
+		"stressed_from": 70
+	},
 	"breaks": {
 		"_comentario": "Hito 54: al empezar cada hora, quien trabaja en un cargo que produce con energía bajo below_energy toma una pausa de una hora en la Sala de descanso si hay un lugar libre (rest_places de los sofás), primero los más cansados: no produce y recupera energy. Con café (Staff.has_coffee) quien descansa o almuerza dentro recupera coffee_energy más.",
 		"below_energy": 40,
