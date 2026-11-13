@@ -244,7 +244,7 @@ La partida empieza con el CEO solo, en un local pequeño con su oficina. Todo lo
 - **Requisito:** hace falta un puesto de trabajo libre. Un gerente o un ejecutivo necesitan su oficina.
 - **Lo que se ve del candidato:** nombre, cargo, nivel, sueldo que pide y habilidades en rangos aproximados.
 - **Lo que no se ve:** sus rasgos de personalidad y sus valores exactos.
-- **Entrevista:** opcional. Ocupa unas horas de quien la hace y revela un rasgo y los valores reales. Al inicio las hace el CEO; cuando hay un ejecutivo de Administración, el jugador puede delegárselas y las hace él.
+- **Entrevista:** opcional. Ocupa media hora de juego de quien la hace, desde el minuto en que empieza (el CEO rinde la mitad de esa hora), y revela un rasgo y los valores reales. Al inicio las hace el CEO; cuando hay un ejecutivo de Administración, el jugador puede delegárselas y las hace él.
 - **Caducidad:** un candidato espera pocos días; después lo contrata otra empresa.
 - **Oferta:** si el sueldo propuesto iguala o supera lo que pide, acepta. Si queda por debajo, puede rechazar o hacer una contraoferta.
 

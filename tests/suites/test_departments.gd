@@ -253,7 +253,7 @@ func _check_interviews() -> void:
 	Staff.set_ceo_at_work(false)
 	_expect(not Staff.interview.is_empty(), "si el CEO se va, la del ejecutivo sigue")
 	Staff.set_ceo_at_work(true)
-	GameClock.fast_forward_hours(int(StaffCatalog.get_hiring("interview_hours")))
+	GameClock.fast_forward_hours(1)  # Dura media hora.
 	_expect(bool(Staff.get_candidate(candidate["id"]).get("interviewed", false)), "termina y queda entrevistado")
 	# De noche el ejecutivo no está.
 	while GameClock.get_hour() != 20:

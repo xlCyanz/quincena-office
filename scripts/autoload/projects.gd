@@ -815,7 +815,9 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		if Staff.is_ceo_producing(at) or ceo_lunch:
 			var ceo_bonus: float = Workstations.bonus_of(OfficeState.furniture, "ceo")
 			var ceo_level: String = String(StaffCatalog.get_production("ceo_level"))
-			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": (lunch_factor if ceo_lunch else 1.0) * bathroom * Production.get_rate(ceo_level, 100.0,
+			# Una entrevista de media hora le quita media hora de trabajo.
+			var interview_factor: float = 1.0 if ceo_lunch else Staff.get_ceo_interview_factor(at)
+			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": (lunch_factor if ceo_lunch else interview_factor) * bathroom * Production.get_rate(ceo_level, 100.0,
 				ceo_bonus), "bug_chance": get_bug_chance(ceo_level, 100.0)})
 		return workers
 	var team: Dictionary = Staff.get_team(team_id)

@@ -19,8 +19,8 @@
 # asignado a su silla con assigned_to = employee_key(id) y la vacante se cierra. Un
 # empleado guarda los datos del candidato más "salary" (lo acordado) y "hired_day".
 #
-# La entrevista ocupa interview_hours horas del CEO mientras está en la oficina; solo hay
-# una a la vez. interview es {"candidate_id", "ends_at"} (ends_at en horas desde el inicio
+# La entrevista ocupa interview_minutes minutos de juego desde que empieza; solo hay
+# una a la vez. interview es {"candidate_id", "starts_at", "ends_at"} (en minutos desde el inicio
 # de la partida, ver _absolute_hour) o vacío.
 #
 # Jornada (hito 12): cada empleado tiene un horario ("schedule", el de su cargo por
@@ -191,7 +191,8 @@ var _next_id: int = 1
 var _next_team_id: int = 1
 var _next_template_id: int = 1
 # Hora (como _absolute_hour) en que terminó la última entrevista; no se guarda.
-var _last_interview_end: int = NO_FIRING
+# Entrevistas del CEO ya terminadas: (inicio, fin) en minutos absolutos, las últimas.
+var _interview_spans: Array[Vector2i] = []
 var _rng := RandomNumberGenerator.new()
 # Ambiente por habitación y muebles (ver _ambiance_detail).
 var _ambiance_cache: Dictionary[int, Dictionary] = {}
@@ -246,7 +247,7 @@ func new_game() -> void:
 	present_today.clear()
 	_next_id = 1
 	_next_team_id = 1
-	_last_interview_end = NO_FIRING
+	_interview_spans.clear()
 	_rng.randomize()
 	EventBus.staff_changed.emit()
 
@@ -349,12 +350,36 @@ func start_interview(candidate_id: int, by_executive: bool = false) -> Dictionar
 	var problem: String = interview_problem(candidate_id, by_executive)
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
-	var hours: int = int(StaffCatalog.get_hiring("interview_hours"))
 	var by: String = "ceo" if not by_executive else employee_key(get_interviewer()["id"])
-	interview = {"candidate_id": candidate_id, "ends_at": _absolute_hour() + hours, "by": by}
+	var now: int = get_absolute_minute()
+	interview = {"candidate_id": candidate_id, "starts_at": now,
+		"ends_at": now + int(StaffCatalog.get_hiring("interview_minutes")), "by": by}
 	EventBus.staff_changed.emit()
-	return {"ok": true, "message": "%s entrevista a %s hasta las %02d:00." % [_interviewer_name(by),
-		get_candidate(candidate_id)["name"], (GameClock.get_hour() + hours) % GameConstants.HOURS_PER_DAY]}
+	return {"ok": true, "message": "%s entrevista a %s hasta las %s." % [_interviewer_name(by),
+		get_candidate(candidate_id)["name"], format_clock_minute(int(interview["ends_at"]))]}
+
+
+## Minutos desde el inicio de la partida (hora absoluta × 60 + minuto del reloj).
+func get_absolute_minute() -> int:
+	return _absolute_hour() * 60 + GameClock.get_minute()
+
+
+## «09:30» para un minuto absoluto.
+static func format_clock_minute(minute: int) -> String:
+	@warning_ignore("integer_division")
+	return "%02d:%02d" % [posmod(minute / 60, GameConstants.HOURS_PER_DAY), posmod(minute, 60)]
+
+
+## Termina la entrevista si ya pasó su hora de fin. Lo llama _process cada cuadro y la
+## revisión de cada hora (los saltos de horas no pasan por los cuadros).
+func check_interview() -> void:
+	if not interview.is_empty() and get_absolute_minute() >= int(interview["ends_at"]):
+		_finish_interview()
+
+
+func _process(_delta: float) -> void:
+	if not interview.is_empty():
+		check_interview()
 
 
 ## Ejecutivo que puede hacer entrevistas (el de departments.interviews_department), o vacío.
@@ -382,15 +407,18 @@ func interview_problem(candidate_id: int, by_executive: bool = false) -> String:
 			return "Hace falta un ejecutivo de %s para delegar las entrevistas." % StaffCatalog.get_department_name(
 				String(StaffCatalog.get_departments("interviews_department")))
 		by = employee_key(interviewer["id"])
-	var hours: int = int(StaffCatalog.get_hiring("interview_hours"))
+	var minutes: int = int(StaffCatalog.get_hiring("interview_minutes"))
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()
+	# Horas que toca la entrevista desde ahora: quien la hace tiene que estar en todas.
+	@warning_ignore("integer_division")
+	var hours: int = (GameClock.get_minute() + minutes - 1) / 60 + 1
 	for offset: int in range(hours):
 		if hour + offset >= GameConstants.HOURS_PER_DAY or not is_expected(by, weekday, hour + offset):
 			if by != "ceo":
-				return "%s tiene que estar en la oficina las %d horas de la entrevista." % [_interviewer_name(by), hours]
-			return "El CEO tiene que estar en la oficina las %d horas de la entrevista, sin cruzar el almuerzo (%02d:00) ni la medianoche." % [
-				hours, get_ceo_lunch_hour()]
+				return "%s tiene que estar en la oficina los %d minutos de la entrevista." % [_interviewer_name(by), minutes]
+			return "El CEO tiene que estar en la oficina los %d minutos de la entrevista, sin cruzar el almuerzo (%02d:00) ni la medianoche." % [
+				minutes, get_ceo_lunch_hour()]
 	return ""
 
 
@@ -459,16 +487,25 @@ func is_at_lunch(key: String) -> bool:
 
 
 ## Indica si el CEO produce en esa hora (contada como get_absolute_hour): está
-## trabajando, no almuerza, no está en una entrevista y no se quedó dormido (desde
-## sleep_hour hasta su hora de llegada).
+## trabajando, no almuerza, no se quedó dormido (desde sleep_hour hasta su hora de
+## llegada) y no pasó la hora entera en entrevistas.
 func is_ceo_producing(at: int) -> bool:
 	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
 	if not is_expected("ceo", get_weekday_at(at), hour) or is_ceo_asleep(hour):
 		return false
-	var hours: int = int(StaffCatalog.get_hiring("interview_hours"))
-	var ceo_interview: bool = not interview.is_empty() and String(interview.get("by", "ceo")) == "ceo"
-	var ends_at: int = int(interview["ends_at"]) if ceo_interview else _last_interview_end
-	return not (at >= ends_at - hours and at < ends_at)
+	return get_ceo_interview_factor(at) > 0.0
+
+
+## Parte de la hora at (absoluta) en que el CEO no estuvo en una entrevista: 1 sin
+## entrevistas, 0.5 con una de media hora dentro de esa hora.
+func get_ceo_interview_factor(at: int) -> float:
+	var spans: Array[Vector2i] = _interview_spans.duplicate()
+	if not interview.is_empty() and String(interview.get("by", "ceo")) == "ceo":
+		spans.append(Vector2i(int(interview["starts_at"]), int(interview["ends_at"])))
+	var busy: int = 0
+	for span: Vector2i in spans:
+		busy += maxi(0, mini(span.y, at * 60 + 60) - maxi(span.x, at * 60))
+	return clampf(1.0 - busy / 60.0, 0.0, 1.0)
 
 
 ## Indica si a esa hora el CEO, si sigue en la oficina, está dormido.
@@ -2463,8 +2500,7 @@ func _on_hour_changed(hour: int) -> void:
 	if not ceo_at_work and hour == StaffCatalog.get_ceo_arrival_hour() \
 			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
 		set_ceo_at_work(true)
-	if not interview.is_empty() and _absolute_hour() >= int(interview["ends_at"]):
-		_finish_interview()
+	check_interview()
 	if ceo_at_work and hour == StaffCatalog.get_ceo_sleep_hour():
 		EventBus.notice.emit("El CEO se quedó dormido en la oficina: no rinde hasta las %d:00. Mándalo a casa." % StaffCatalog.get_ceo_arrival_hour())
 	if hour == int(StaffCatalog.get_hiring("arrival_hour")):
@@ -2875,7 +2911,9 @@ func _absolute_hour() -> int:
 # La entrevista revela los valores reales y un rasgo (el primero que aún no se conoce).
 func _finish_interview() -> void:
 	if String(interview.get("by", "ceo")) == "ceo":
-		_last_interview_end = int(interview["ends_at"])
+		_interview_spans.append(Vector2i(int(interview["starts_at"]), int(interview["ends_at"])))
+		if _interview_spans.size() > 4:
+			_interview_spans.pop_front()
 	var candidate: Dictionary = get_interviewed_now()
 	interview = {}
 	if candidate.is_empty():
@@ -3145,8 +3183,15 @@ func import_state(state: Dictionary) -> void:
 	var saved_interview: Dictionary = state.get("interview", {})
 	interview = {}
 	if saved_interview.has("candidate_id"):
-		interview = {"candidate_id": int(saved_interview["candidate_id"]),
-			"ends_at": int(saved_interview.get("ends_at", 0)), "by": String(saved_interview.get("by", "ceo"))}
+		var ends_at: int = int(saved_interview.get("ends_at", 0))
+		var starts_at: int = int(saved_interview.get("starts_at", -1))
+		if starts_at < 0:
+			# Partida de antes de las entrevistas de media hora: ends_at estaba en horas
+			# y duraba 2; termina a esa hora en punto.
+			starts_at = ends_at * 60 - 120
+			ends_at *= 60
+		interview = {"candidate_id": int(saved_interview["candidate_id"]), "starts_at": starts_at,
+			"ends_at": ends_at, "by": String(saved_interview.get("by", "ceo"))}
 		# Si la hacía un ejecutivo que ya no está, se corta.
 		if interview["by"] != "ceo" and get_employee_by_key(interview["by"]).is_empty():
 			interview = {}
@@ -3203,7 +3248,7 @@ func import_state(state: Dictionary) -> void:
 	present_today.clear()
 	for key: Variant in state.get("present_today", []):
 		present_today[String(key)] = true
-	_last_interview_end = NO_FIRING
+	_interview_spans.clear()
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))
 	hired_count = int(state.get("hired_count", employees.size()))

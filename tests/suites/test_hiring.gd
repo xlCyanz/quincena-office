@@ -219,10 +219,15 @@ func _check_interview() -> void:
 	var result: Dictionary = Staff.start_interview(first["id"])
 	_expect(result["ok"] and Staff.get_interviewed_now() == first, "empieza la entrevista: %s" % result["message"])
 	_expect(not Staff.interview_problem(second["id"]).is_empty(), "una entrevista a la vez")
-	GameClock.fast_forward_hours(1)
-	_expect(not first["interviewed"], "a la hora todavía no termina")
-	GameClock.fast_forward_hours(1)
-	_expect(first["interviewed"] and Staff.interview.is_empty(), "termina a las 2 horas")
+	_expect(int(StaffCatalog.get_hiring("interview_minutes")) == 30 and String(result["message"]).ends_with("hasta las 09:30."),
+		"dura media hora desde que empieza: %s" % result["message"])
+	_expect(is_equal_approx(Staff.get_ceo_interview_factor(Staff.get_absolute_hour()), 0.5), "el CEO rinde media hora")
+	_advance_minutes(29)
+	_expect(not first["interviewed"], "a los 29 minutos todavía no termina")
+	_advance_minutes(1)
+	_expect(first["interviewed"] and Staff.interview.is_empty() and GameClock.get_minute() == 30, "termina a las 9:30")
+	_expect(is_equal_approx(Staff.get_ceo_interview_factor(Staff.get_absolute_hour()), 0.5)
+		and Staff.get_ceo_interview_factor(Staff.get_absolute_hour() + 1) == 1.0, "esa hora el CEO rinde la mitad, la siguiente entera")
 	_expect(first["known_traits"].size() == 1 and first["traits"].has(first["known_traits"][0]),
 		"revela un rasgo: %s" % [first["known_traits"]])
 	var skills: String = Staff.describe_skills(first)
@@ -230,9 +235,12 @@ func _check_interview() -> void:
 		"revela los valores reales: %s" % skills)
 	_expect(not Staff.interview_problem(first["id"]).is_empty(), "no se entrevista dos veces")
 
-	# La entrevista no cruza el almuerzo: a las 11:00 terminaría a las 13:00.
+	# La entrevista no cruza el almuerzo: a las 11:45 terminaría a las 12:15.
+	GameClock.fast_forward_hours(2)
 	_expect(GameClock.get_hour() == 11, "son las 11: %d" % GameClock.get_hour())
-	_expect(Staff.interview_problem(second["id"]).contains("almuerzo"), "11:00 cruza el almuerzo: %s" % Staff.interview_problem(second["id"]))
+	_expect(Staff.interview_problem(second["id"]).is_empty(), "a las 11:00 sí cabe antes del almuerzo")
+	_advance_minutes(45)
+	_expect(Staff.interview_problem(second["id"]).contains("almuerzo"), "11:45 cruza el almuerzo: %s" % Staff.interview_problem(second["id"]))
 	GameClock.fast_forward_hours(2)
 	_expect(Staff.start_interview(second["id"])["ok"], "a las 13:00 sí")
 	# Si el CEO se va a casa, la entrevista se corta y no puede empezar otra.
@@ -245,6 +253,13 @@ func _check_interview() -> void:
 	_expect(Staff.interview.is_empty(), "descartar al entrevistado termina la entrevista")
 
 
+# Adelanta el reloj unos minutos de juego y revisa si terminó la entrevista.
+func _advance_minutes(minutes: int) -> void:
+	GameClock.set_paused(false)
+	GameClock.advance(minutes * GameConstants.SECONDS_PER_GAME_HOUR / 60.0 / GameClock.get_time_scale())
+	Staff.check_interview()
+
+
 func _check_save() -> void:
 	_new_game()
 	var builder := Builder.new()
@@ -254,7 +269,7 @@ func _check_save() -> void:
 	var hired: Dictionary = vacancy["candidates"][0]
 	var other: Dictionary = vacancy["candidates"][1]
 	_expect(Staff.start_interview(hired["id"])["ok"], "entrevistar antes de contratar")
-	GameClock.fast_forward_hours(int(StaffCatalog.get_hiring("interview_hours")))
+	GameClock.fast_forward_hours(1)  # Dura media hora.
 	_expect(Staff.make_offer(hired["id"], hired["asked_salary"])["result"] == "hired", "contratar al entrevistado")
 	_expect(Staff.employees[0]["interviewed"] and Staff.employees[0]["known_traits"].size() == 1,
 		"el empleado conserva lo que reveló la entrevista")

@@ -127,7 +127,9 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Producción (`Production`, funciones puras; `Projects._produce` al terminar cada hora): puntos/h por nivel (13.3) × energía
   (100 % desde 50, baja hasta 50 % en 0) × ánimo (100 % desde 50, baja hasta 70 % en 0) × (1 + `production_bonus` de la computadora). Cada uno suma en la fase de su cargo; si
   está cerrada o llena ayuda al 50 % en la primera con lugar. Una fase abre con la anterior al 50 % y nunca pasa su %. El CEO es
-  generalista (SemiSenior) y no rinde en entrevistas ni dormido (de 22 a su llegada). `progress` guarda puntos con decimales.
+  generalista (SemiSenior) y no rinde en entrevistas ni dormido (de 22 a su llegada). La entrevista dura `interview_minutes` (30) minutos de juego
+  desde que empieza (`interview`: `starts_at`/`ends_at` en minutos absolutos, `Staff.get_absolute_minute`; termina en `Staff._process` o en la hora
+  con `check_interview`); el CEO rinde esa hora × `get_ceo_interview_factor` (0.5); las partidas viejas (ends_at en horas) terminan a esa hora. `progress` guarda puntos con decimales.
 - Errores (`data/contracts.json`, bugs): programar genera `bugs_hidden` (1 cada 20/30/45/70 puntos por nivel, el doble cansado o con estrés ≥70, sin acumularse);
   cada punto de pruebas encuentra cada oculto con probabilidad cobertura × puntos / pruebas del contrato (QA 3, otros 0.2) y
   pasan a `bugs_found`; programadores o CEO los corrigen a 3 puntos (`bugs_fixed`) antes de programar. Con pruebas al 100 % QA

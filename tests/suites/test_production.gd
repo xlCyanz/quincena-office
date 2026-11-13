@@ -130,7 +130,7 @@ func _check_ceo() -> void:
 	GameClock.fast_forward_hours(24)
 	_expect(_near(_total(contract), 24.0 + 13.0 * 3.0), "quedándose rinde 13 horas: %.1f" % (_total(contract) - 24.0))
 	_expect(_notices.any(func(text: String) -> bool: return text.contains("dormido")), "aviso de que se durmió")
-	# Una entrevista le quita sus horas.
+	# Una entrevista le quita su media hora.
 	_new_game()
 	contract = _big_contract(1000)
 	var vacancy: int = Staff.open_vacancy("programmer", "junior", 1200, true)["id"]
@@ -138,7 +138,8 @@ func _check_ceo() -> void:
 	var before: float = _total(contract)
 	_expect(Staff.start_interview(Staff.get_vacancy(vacancy)["candidates"][0]["id"])["ok"], "empezar una entrevista a las 9")
 	GameClock.fast_forward_hours(3)  # 12:00
-	_expect(_near(_total(contract) - before, 3.0), "durante la entrevista (9 y 10) no produce: %.1f" % (_total(contract) - before))
+	# Dura media hora (9:00–9:30): esa hora rinde la mitad y las 10 y las 11 enteras.
+	_expect(_near(_total(contract) - before, 1.5 + 3.0 + 3.0), "durante la entrevista (9:00–9:30) no produce: %.1f" % (_total(contract) - before))
 
 
 # Empleados de mentira sentados en puestos de verdad.

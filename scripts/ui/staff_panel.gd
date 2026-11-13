@@ -567,8 +567,8 @@ func _add_candidate(candidate: Dictionary) -> void:
 	var candidate_id: int = candidate["id"]
 	if Staff.get_interviewed_now().get("id", -1) == candidate_id:
 		var by: String = String(Staff.interview.get("by", "ceo"))
-		lines.append("En entrevista con %s hasta las %02d:00." % ["el CEO" if by == "ceo" else Staff.get_employee_by_key(by).get("name", "?"),
-			int(Staff.interview["ends_at"]) % GameConstants.HOURS_PER_DAY])
+		lines.append("En entrevista con %s hasta las %s." % ["el CEO" if by == "ceo" else Staff.get_employee_by_key(by).get("name", "?"),
+			Staff.format_clock_minute(int(Staff.interview["ends_at"]))])
 	var counter: int = int(candidate.get("counter_offer", 0))
 	if counter > 0:
 		lines.append("Contraoferta: aceptaría %s al mes." % MoneyFormat.format(counter))
@@ -581,7 +581,7 @@ func _add_candidate(candidate: Dictionary) -> void:
 	interview_button.text = "Entrevistar"
 	var problem: String = Staff.interview_problem(candidate_id)
 	interview_button.disabled = not problem.is_empty()
-	interview_button.tooltip_text = problem if not problem.is_empty() else "Ocupa %d horas del CEO y revela un rasgo y los valores reales." % int(StaffCatalog.get_hiring("interview_hours"))
+	interview_button.tooltip_text = problem if not problem.is_empty() else "Ocupa %d minutos del CEO y revela un rasgo y los valores reales." % int(StaffCatalog.get_hiring("interview_minutes"))
 	interview_button.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id)["message"])
 	actions.add_child(interview_button)
 	_interview_buttons[candidate_id] = interview_button
@@ -592,7 +592,7 @@ func _add_candidate(candidate: Dictionary) -> void:
 		var delegate_problem: String = Staff.interview_problem(candidate_id, true)
 		delegate.disabled = not delegate_problem.is_empty()
 		delegate.tooltip_text = delegate_problem if not delegate_problem.is_empty() else \
-			"Entrevista %s (ejecutivo): %d horas suyas, el CEO sigue trabajando." % [interviewer["name"], int(StaffCatalog.get_hiring("interview_hours"))]
+			"Entrevista %s (ejecutivo): %d minutos suyos, el CEO sigue trabajando." % [interviewer["name"], int(StaffCatalog.get_hiring("interview_minutes"))]
 		delegate.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id, true)["message"])
 		actions.add_child(delegate)
 		_delegate_buttons[candidate_id] = delegate
