@@ -15,6 +15,9 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
     las partes de `tests/suites/` (una por hito, `test_<nombre>.gd`, más `test_starting_company`); cada parte emite `finished(fallos,
     comprobaciones)` en vez de cerrar el juego, y `test_all` quita entre partes las conexiones de señales que dejó. Solo algunas:
     `… res://tests/test_all.tscn -- --only=reception,administration`. Una parte nueva se agrega a `SUITES` en `tests/test_all.gd`.
+  - Exportación de prueba: `tests/export_desktop.sh` (exporta macOS, Windows y Linux a `build/`, que no se versiona, revisa cada
+    paquete con `tests/export_check.gd` y arranca la app de macOS; imprime `RESULTADO: OK`). Necesita las plantillas de exportación
+    de 4.7.2 en `~/Library/Application Support/Godot/export_templates/4.7.2.stable` (instaladas solo las de escritorio).
 
 ## Herramientas de desarrollo
 
@@ -30,7 +33,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `qo.set_energy(10)`, `qo.event("birthday")`. Cada comando usa las funciones públicas de los sistemas; su texto de ayuda es una constante
   `_HELP_<función>`. No se modifica el código del addon.
 - En una exportación release `DevTools` no hace nada y `panku/disable_on_release=true` quita el autoload `Panku`.
-  Al crear el primer preset de exportación, excluir también `addons/panku_console/*` y `scripts/debug/*`.
+  Los presets (`export_presets.cfg`) excluyen `addons/panku_console/*`, `scripts/debug/*`, `tests/*` y `addons/quincena_export/*`, y el
+  plugin del editor `QuincenaExport` (`addons/quincena_export/`) quita los autoloads `Panku` y `DevTools` de toda exportación (también debug).
 
 ## Convenciones de código
 
@@ -421,6 +425,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   ancho y las desplaza si no entran entre `top_space` y abajo. La tarjeta del tutorial va entre el dinero y el reloj o, si no entra, bajo el
   reloj (`corners_provider` = `Hud.get_corner_rects`). Los botones sin palabras (−, +, <, >, ?, escala) tienen `tooltip_text`. Las pruebas
   sin ventana simulan 1280×720 con `content_scale_aspect = KEEP` (`test_ui_scale`).
+- Exportación de escritorio (hito 66): `export_presets.cfg` con macOS (universal, firma ad hoc, `com.quincenaoffice.game`), Windows y Linux
+  (x86_64, `.pck` aparte) a `build/`; todos exportan los recursos más `data/*.json` (el juego los lee con `FileAccess`) y excluyen lo de
+  desarrollo. macOS universal pide `import_etc2_astc`. Nombre «Quincena Office», `config/version` 0.7.0 (los presets la repiten) e icono
+  propio (`icon.svg`). Un autoload nuevo cuyo archivo no viaja se suma a `DEV_AUTOLOADS` del plugin. `test_export` revisa presets, plugin,
+  icono y que ningún archivo que viaja nombre lo excluido; `export_desktop.sh` hace la exportación real. Con `--main-pack` lo que falta en el
+  paquete se busca en la carpeta actual: la revisión corre desde una vacía.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -500,3 +510,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 63 | Tutorial: primeros pasos | ✅ Completado (6 pasos: cámara, Construir, Área de trabajo, puesto, vacante de programador y primera contratación; marco y flecha sobre el botón o el local sin bloquear la interfaz; los pasos ya cumplidos se saltan solos; se ve en partidas nuevas hasta terminarlo o saltarlo una vez; «Retomar el tutorial» en Ajustes; se guarda en la partida y las viejas cargan sin él) |
 | 64 | Tutorial: el negocio y ayuda | ✅ Completado (4 pasos más: aceptar un contrato, la nómina y la velocidad, el Banco y la primera entrega, que termina el tutorial; botón «?» en Personal, Proyectos, Horarios, Banco, Empresa y Construir con su texto de `data/help.json`, sin pausar y se cierra con Entendido o Esc; las partidas viejas cargan sin tutorial; las descripciones emergentes de los botones sin texto quedan para el hito 65) |
 | 65 | Interfaz escalable | ✅ Completado (Tamaño de la interfaz 100/125/150 % en Opciones; a 150 % en 1280×720 la barra se parte en dos filas y los paneles, la ficha, Construir, Ajustes, eventos, tutorial, ayuda, pausa y pantallas de cierre entran en pantalla sin tapar la barra, con desplazamiento donde no entran; todo botón mide al menos 44 px; −, +, <, > y la escala con descripción emergente) |
+| 66 | Exportación de escritorio | ✅ Completado (presets de macOS, Windows y Linux en `build/` sin Panku, DevTools ni pruebas, también en debug; icono propio, nombre y versión 0.7.0; la exportación de prueba arranca la app de macOS y cada paquete llega al menú principal; sin firma de Windows ni notarización de macOS) |

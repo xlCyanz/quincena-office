@@ -11,6 +11,8 @@ config_version=5
 [application]
 
 config/name="Quincena Office"
+config/description="Juego de gestión de oficina: contrata, construye y paga la nómina cada 15 días."
+config/version="0.7.0"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
@@ -42,7 +44,7 @@ window/stretch/aspect="expand"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/panku_console/plugin.cfg")
+enabled=PackedStringArray("res://addons/panku_console/plugin.cfg", "res://addons/quincena_export/plugin.cfg")
 
 [panku]
 
@@ -53,4 +55,5 @@ disable_on_release=true
 textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
 2d/snap/snap_2d_transforms_to_pixel=true
