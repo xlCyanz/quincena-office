@@ -32,7 +32,7 @@ func _ready() -> void:
 	_check_lot_shape()
 	for index: int in range(GameConstants.CAMERA_ZOOM_LEVELS.size()):
 		_camera.zoom_index = index
-		_camera.import_state({"zoom_index": index, "x": _camera.position.x, "y": _camera.position.y})
+		_camera.import_state({"zoom": GameConstants.CAMERA_ZOOM_LEVELS[index], "x": _camera.position.x, "y": _camera.position.y})
 		for target: Vector2 in _camera_targets():
 			_camera.position = target
 			_camera.call("_clamp_position")
@@ -180,7 +180,7 @@ func _check_drag_and_zoom() -> void:
 
 	# Zoom con la rueda: niveles fijos, sin pasarse de los extremos.
 	_camera.set_map_area(_grid.get_site_world_area())
-	_camera.import_state({"zoom_index": GameConstants.CAMERA_START_ZOOM_INDEX})
+	_camera.import_state({"zoom": GameConstants.CAMERA_ZOOM_LEVELS[GameConstants.CAMERA_START_ZOOM_INDEX]})
 	_camera.position = lot_center
 	var levels: Array[float] = GameConstants.CAMERA_ZOOM_LEVELS
 	for i: int in range(levels.size() + 1):
@@ -200,7 +200,7 @@ func _check_drag_and_zoom() -> void:
 	_expect(_grid.screen_to_cell(anchor) == corner_cell, "la casilla bajo el ratón cambió al hacer zoom")
 
 	# Arrastre con el botón izquierdo: el mundo sigue al ratón.
-	_camera.import_state({"zoom_index": levels.size() - 1, "x": lot_center.x, "y": lot_center.y})
+	_camera.import_state({"zoom": levels[levels.size() - 1], "x": lot_center.x, "y": lot_center.y})
 	await _next_frame()
 	var start: Vector2 = view_size / 2.0
 	var grabbed: Vector2 = _grid.screen_to_world(start)
@@ -216,7 +216,7 @@ func _check_drag_and_zoom() -> void:
 		"tras arrastrar, el punto agarrado no quedó bajo el ratón %s vs %s" % [_grid.screen_to_world(finish), grabbed])
 
 	# Movimiento libre: se puede llevar la vista lejos del local, dentro del mapa.
-	_camera.import_state({"zoom_index": GameConstants.CAMERA_START_ZOOM_INDEX, "x": lot_center.x, "y": lot_center.y})
+	_camera.import_state({"zoom": levels[GameConstants.CAMERA_START_ZOOM_INDEX], "x": lot_center.x, "y": lot_center.y})
 	var far_cell: Vector2i = OfficeState.site_rect.position + Vector2i(2, 2)
 	_camera.center_on(_grid.cell_to_world(far_cell))
 	_expect(_camera.position == _grid.cell_to_world(far_cell), "la cámara no llega a una esquina del mapa")
@@ -230,7 +230,7 @@ func _check_drag_and_zoom() -> void:
 
 	# Límites: arrastrar muy lejos deja el centro de la vista en el borde del mapa.
 	for index: int in range(levels.size()):
-		_camera.import_state({"zoom_index": index, "x": lot_center.x, "y": lot_center.y})
+		_camera.import_state({"zoom": levels[index], "x": lot_center.x, "y": lot_center.y})
 		for direction: Vector2 in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
 			_camera.position = lot_center
 			var from: Vector2 = view_size / 2.0

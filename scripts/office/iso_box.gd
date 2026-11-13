@@ -8,16 +8,25 @@ const LEFT_FACE_DARKEN: float = 0.25
 const RIGHT_FACE_DARKEN: float = 0.4
 
 
-## base son las cuatro esquinas de la base (arriba, derecha, abajo, izquierda) en las
-## coordenadas locales del nodo; height, la altura en píxeles.
+## base son las cuatro esquinas de la base, en orden alrededor del rectángulo, en las
+## coordenadas locales del nodo; height, la altura en píxeles. Con la vista girada
+## (OfficeGrid.view_rotation) la primera esquina ya no es la de arriba: se busca.
 static func draw(canvas: CanvasItem, base: PackedVector2Array, height: float, color: Color) -> void:
 	if base.size() != 4:
 		return
 	var lift := Vector2(0.0, -height)
-	var top_corner: Vector2 = base[0]
-	var right: Vector2 = base[1]
-	var bottom: Vector2 = base[2]
-	var left: Vector2 = base[3]
+	var top_index: int = 0
+	for i: int in range(1, 4):
+		if base[i].y < base[top_index].y or (base[i].y == base[top_index].y and base[i].x < base[top_index].x):
+			top_index = i
+	var top_corner: Vector2 = base[top_index]
+	var bottom: Vector2 = base[(top_index + 2) % 4]
+	var right: Vector2 = base[(top_index + 1) % 4]
+	var left: Vector2 = base[(top_index + 3) % 4]
+	if right.x < left.x:
+		var swap: Vector2 = right
+		right = left
+		left = swap
 	canvas.draw_colored_polygon(PackedVector2Array([left, bottom, bottom + lift, left + lift]),
 		color.darkened(LEFT_FACE_DARKEN))
 	canvas.draw_colored_polygon(PackedVector2Array([bottom, right, right + lift, bottom + lift]),

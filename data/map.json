@@ -1,0 +1,24 @@
+{
+	"_comentario": "Arte provisional del mapa alrededor del local (MapDecor). styles: colores de cada estilo de casilla; cada casilla elige uno de la lista al azar fijo por su posición. grass = terreno del solar sin comprar; path = camino de la entrada a la calle (sobre terreno que se puede comprar: al comprarlo desaparece); outside = lo que queda fuera del solar (no se compra, más oscuro); sidewalk y road = acera y calle del lado de la entrada, fuera del solar. surround_width = casillas que se dibujan fuera del solar por cada lado; sidewalk_width y road_width en casillas, la línea de la calle va en la fila road_line_row (desde 0) y se corta cada road_line_gap casillas. trees: árboles de adorno; site_chance en el terreno del solar a lot_margin casillas o más del local y fuera del camino, outside_chance en lo de afuera. border: línea que marca el límite del solar.",
+	"surround_width": 10,
+	"sidewalk_width": 1,
+	"road_width": 4,
+	"road_line_row": 2,
+	"road_line_gap": 3,
+	"styles": {
+		"grass": ["5f8a4c", "5a8447", "64904f", "567e44"],
+		"path": ["b9ae98", "afa38c"],
+		"outside": ["3e5b34", "3a5630", "425f38", "37522e"],
+		"sidewalk": ["a8a7a1", "9e9d97"],
+		"road": ["46494f", "42454b"]
+	},
+	"road_line_color": "e0cf78",
+	"trees": {
+		"site_chance": 0.035,
+		"outside_chance": 0.09,
+		"lot_margin": 2,
+		"trunk_color": "6b4a32",
+		"leaf_colors": ["3f7a3a", "4a8a40", "356f31"]
+	},
+	"border": { "color": "f3ecd6", "alpha": 0.6, "width": 2.0, "dash_cells": 0.5 }
+}

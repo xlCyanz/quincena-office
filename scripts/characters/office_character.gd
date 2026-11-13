@@ -241,6 +241,12 @@ func _update_position() -> void:
 	position = _grid.grid_to_world(grid_position)
 
 
+## Vuelve a ponerse en su lugar de la cuadrícula (al girar la vista).
+func refresh_position() -> void:
+	if _grid != null:
+		_update_position()
+
+
 # Muñeco provisional. El origen es el punto de apoyo en el centro de su casilla.
 # Sentado, la cadera queda sobre el asiento y las piernas cuelgan por delante.
 func _draw() -> void:

@@ -40,13 +40,33 @@ const CLOCK_SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 ## Días del mes en que se paga la nómina.
 const PAYROLL_DAYS: Array[int] = [15, 30]
 
-## Niveles fijos de zoom de la cámara, de lejos a cerca. Desde 1 son enteros para que
-## el pixel art se vea nítido; los menores que 1 sirven para ver todo el solar.
-const CAMERA_ZOOM_LEVELS: Array[float] = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+## Niveles fijos de zoom de la cámara, de lejos a cerca. Los menores que 1 sirven para
+## ver todo el solar con sus alrededores; la rueda pasa de uno a otro con una animación.
+const CAMERA_ZOOM_LEVELS: Array[float] = [0.25, 0.375, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0]
 
-## Nivel de zoom de referencia (índice dentro de CAMERA_ZOOM_LEVELS). Al empezar, la
+## Niveles de antes (hasta el hito 67): una partida vieja guarda solo el índice en esta lista.
+const CAMERA_LEGACY_ZOOM_LEVELS: Array[float] = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+
+## Nivel de zoom de referencia (índice dentro de CAMERA_ZOOM_LEVELS, el 2.0). Al empezar, la
 ## cámara encuadra la oficina completa con el nivel más cercano en que cabe.
-const CAMERA_START_ZOOM_INDEX: int = 3
+const CAMERA_START_ZOOM_INDEX: int = 7
+
+## Cámara suave: qué tan rápido llega el zoom (y el encuadre) a su destino (1/s; con 12
+## recorre el 95 % en un cuarto de segundo).
+const CAMERA_SMOOTH_SPEED: float = 12.0
+
+## Inercia al soltar un arrastre: frenado (1/s), velocidad mínima para seguir (píxeles de
+## pantalla por segundo), tope y cuánto puede pasar entre el último movimiento y soltar.
+const CAMERA_INERTIA_FRICTION: float = 5.0
+const CAMERA_INERTIA_MIN_SPEED: float = 40.0
+const CAMERA_INERTIA_MAX_SPEED: float = 3000.0
+const CAMERA_INERTIA_RELEASE_MS: int = 80
+
+## Movimiento con el teclado (WASD o flechas) y con el ratón en el borde de la ventana,
+## en píxeles de pantalla por segundo, y ancho del borde que mueve la cámara.
+const CAMERA_KEY_PAN_SPEED: float = 900.0
+const CAMERA_EDGE_PAN_SPEED: float = 700.0
+const CAMERA_EDGE_PAN_PX: float = 12.0
 
 ## Margen alrededor de la oficina al encuadrarla, como fracción de la pantalla (deja
 ## sitio a los paneles de arriba y abajo).

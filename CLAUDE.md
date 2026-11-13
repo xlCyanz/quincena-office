@@ -57,7 +57,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
 - El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
-  fuera del local se dibuja terreno. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
+  fuera del local se dibuja terreno (`MapDecor`, hito 68). La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
@@ -439,6 +439,20 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   más); entre pasos solo deja correr el reloj (`GameClock.advance`, con el reloj detenido para que no salgan eventos). Con ventana el cursor
   real se mezcla con los eventos de la prueba: se corre sin ventana. Comprueba que el marco del tutorial encierra cada botón que pulsa y que no llegó ninguna tecla. Tres semillas; termina
   a tiempo hacia el día 6–9 con unos $22,000. Sin cambios de datos ni de balance.
+- Mapa y cámara (hito 68, fuera de la lista del diseño): `CAMERA_ZOOM_LEVELS` 0.25–4 en 11 niveles (referencia 2.0, índice 7); la cámara
+  guarda `{"zoom": nivel, x, y}` y una partida vieja con solo `zoom_index` lo lee en `CAMERA_LEGACY_ZOOM_LEVELS`. Estado lógico = `position` y
+  `zoom_index`; lo que se ve (`get_shown_zoom`) llega con una animación que deja fijo el punto bajo el ratón; `fit_rect`/`center_on(…, animate)`
+  se deslizan («Ver oficina», F y los avisos de habitación); al soltar un arrastre rápido sigue con inercia; WASD/flechas (por posición, no con
+  un campo de texto activo) y el ratón en el borde de la ventana (no sobre la interfaz, solo con ventana y foco) la mueven; `pan_blocker` lo
+  corta con un menú encima. Opciones `smooth_camera` y `edge_pan` (Ajustes). `OfficeCamera.smoothing_enabled` (no se guarda) es solo para
+  pruebas: `test_all` lo apaga antes de `camera_view`; `finish_motion()` termina la animación. Girar la vista: `OfficeGrid.view_rotation`
+  (0–3, `_to_view`/`_from_view` alrededor del solar) cambia solo dónde se dibuja cada casilla: todo lo que pasa por `cell_to_world`,
+  `grid_to_world` y `world_to_cell` gira solo, e `IsoBox.draw` busca la esquina de arriba. `main.rotate_view` (botón ↻ en la barra, Q/E)
+  deja en el centro lo mismo, redibuja y llama `OfficeCharacter.refresh_position`; la escena guarda `view_rotation`. Mapa (`MapDecor`,
+  funciones puras, `data/map.json`): pasto variado en el solar, camino de la puerta al borde, afuera (`Surroundings`, otra capa debajo del
+  piso, 10 casillas) acera y calle del lado de la salida y pasto oscuro, árboles (`TreeView`) a 2 casillas o más del local, y la línea
+  discontinua del límite (`SiteBorder`); se rehace solo si cambia el local, la entrada o el giro. «Ver oficina» es más angosto para que la
+  barra entre en una fila a 1280.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -520,3 +534,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 65 | Interfaz escalable | ✅ Completado (Tamaño de la interfaz 100/125/150 % en Opciones; a 150 % en 1280×720 la barra se parte en dos filas y los paneles, la ficha, Construir, Ajustes, eventos, tutorial, ayuda, pausa y pantallas de cierre entran en pantalla sin tapar la barra, con desplazamiento donde no entran; todo botón mide al menos 44 px; −, +, <, > y la escala con descripción emergente) |
 | 66 | Exportación de escritorio | ✅ Completado (presets de macOS, Windows y Linux en `build/` sin Panku, DevTools ni pruebas, también en debug; icono propio, nombre y versión 0.7.0; la exportación de prueba arranca la app de macOS y cada paquete llega al menú principal; sin firma de Windows ni notarización de macOS) |
 | 67 | Comprobación de la fase | ✅ Completado (del menú a la primera entrega solo con el ratón siguiendo el tutorial, en tres semillas, hacia el día 6–9; el marco del tutorial encierra cada botón que se pulsa; test_all falla si una parte pasa de 60 s: la más larga es la fase 6, ~54 s; sin cambios de datos) |
+| 68 | Mapa y cámara | ✅ Completado (pedido aparte de la lista del diseño: zoom de 0.25 a 4 en 11 niveles con animación que deja fijo el punto bajo el ratón; inercia al soltar un arrastre; WASD, flechas y el borde de la ventana mueven la cámara; girar la vista de a 90° con ↻, Q y E, guardado en la partida; pasto variado, camino a la calle, acera, calle, árboles y el límite del solar marcado; opciones Cámara suave y borde de la pantalla) |

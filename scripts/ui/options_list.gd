@@ -11,6 +11,8 @@ const TOGGLES: Dictionary[String, String] = {
 	"autosave": "Guardar solo al empezar cada día",
 	"pause_on_build": "Pausar al construir",
 	"pause_on_focus_loss": "Pausar cuando la ventana pierde el foco",
+	"smooth_camera": "Cámara suave",
+	"edge_pan": "Mover la cámara con el borde de la pantalla",
 }
 
 var _toggles: Dictionary[String, CheckBox] = {}

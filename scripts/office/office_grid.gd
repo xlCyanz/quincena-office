@@ -1,6 +1,10 @@
-# Cuadrícula isométrica de la oficina: dibuja el piso del local y resalta la casilla
-# que está bajo el cursor. Es el único lugar que convierte entre píxeles y casillas;
-# el resto del juego trabaja siempre con casillas (Vector2i).
+# Cuadrícula isométrica de la oficina: dibuja el piso del local, el mapa de alrededor
+# (MapDecor) y resalta la casilla que está bajo el cursor. Es el único lugar que convierte
+# entre píxeles y casillas; el resto del juego trabaja siempre con casillas (Vector2i).
+#
+# La vista se puede girar de a un cuarto de vuelta (view_rotation): las casillas de la
+# lógica no cambian, solo dónde se dibujan. Todo lo que pasa por cell_to_world,
+# grid_to_world y world_to_cell gira solo.
 class_name OfficeGrid
 extends Node2D
 
@@ -12,11 +16,23 @@ const TILE_OVERLAP_PX: float = 1.0
 
 var hovered_cell: Vector2i = NO_CELL
 
+## Cuartos de vuelta de la vista, de 0 a 3, en el sentido de las agujas del reloj.
+var view_rotation: int = 0
+
 var _floor_source_id: int = -1
 var _lot := Lot.new()
 var _site_rect := Rect2i()
-# Fila del atlas de cada tipo de piso (los colores vienen de ConstructionCatalog).
+# Casilla de fuera del local junto a la entrada (de ahí sale el camino a la calle).
+var _entrance_outside := Vector2i(-1, -1)
+# Fila del atlas de cada tipo de piso o estilo del mapa, y cuántas variantes tiene.
 var _atlas_rows: Dictionary[String, int] = {}
+var _atlas_columns: Dictionary[String, int] = {}
+# Plano del mapa (MapDecor.plan) y con qué datos se hizo, para no rehacerlo si no cambió.
+var _map_plan: Dictionary = {}
+var _map_signature: String = ""
+# Lo que se dibuja fuera del solar, debajo del piso, y la línea del límite del solar.
+var _surroundings := TileMapLayer.new()
+var _site_border := SiteBorder.new()
 
 @onready var _floor: TileMapLayer = $Floor
 @onready var _highlight: CellHighlight = $CellHighlight
@@ -30,6 +46,13 @@ var _dirt_overlay := DirtOverlay.new()
 
 func _ready() -> void:
 	_floor.tile_set = _build_tile_set()
+	_surroundings.name = "Surroundings"
+	_surroundings.tile_set = _floor.tile_set
+	add_child(_surroundings)
+	move_child(_surroundings, _floor.get_index())
+	_site_border.name = "SiteBorder"
+	add_child(_site_border)
+	move_child(_site_border, _floor.get_index() + 1)
 	_highlight.visible = false
 	_room_overlay.setup(self)
 	_dirt_overlay.name = "DirtOverlay"
@@ -48,16 +71,18 @@ func _process(_delta: float) -> void:
 func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
 		furniture: Array[Dictionary], rooms: Array[Dictionary] = []) -> void:
 	_lot = lot
+	_update_map()
 	_floor.clear()
+	var tiles: Dictionary = _map_plan.get("tiles", {})
 	for x: int in range(_site_rect.position.x, _site_rect.end.x):
 		for y: int in range(_site_rect.position.y, _site_rect.end.y):
-			if not lot.has_point(Vector2i(x, y)):
-				_floor.set_cell(Vector2i(x, y), _floor_source_id,
-					Vector2i(posmod(x + y, 2), _atlas_rows[ConstructionCatalog.TERRAIN]))
+			var cell := Vector2i(x, y)
+			if not lot.has_point(cell):
+				_floor.set_cell(_to_view(cell), _floor_source_id, _map_tile(cell, tiles.get(cell, MapDecor.GRASS)))
 	for cell: Vector2i in lot.get_cells():
 		var floor_type: String = floors.get(cell, ConstructionCatalog.BARE_FLOOR)
 		var row: int = _atlas_rows.get(floor_type, _atlas_rows[ConstructionCatalog.BARE_FLOOR])
-		_floor.set_cell(cell, _floor_source_id, Vector2i(posmod(cell.x + cell.y, 2), row))
+		_floor.set_cell(_to_view(cell), _floor_source_id, Vector2i(posmod(cell.x + cell.y, 2), row))
 	hovered_cell = NO_CELL
 	_highlight.visible = false
 	_place_edge_pieces(edges)
@@ -133,9 +158,106 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 			backrest.setup(self, item, FurnitureView.PART_BACKREST)
 
 
-## Fija el solar: el mapa fijo de terreno que rodea al local. Se dibuja en build().
-func set_site(site_rect: Rect2i) -> void:
+## Fija el solar: el mapa fijo de terreno que rodea al local, y la casilla de fuera de la
+## entrada (de ahí sale el camino a la calle). Se dibuja en build().
+func set_site(site_rect: Rect2i, entrance_outside: Vector2i = Vector2i(-1, -1)) -> void:
 	_site_rect = site_rect
+	_entrance_outside = entrance_outside
+
+
+## Gira la vista a quarter_turns cuartos de vuelta (se dibuja en el próximo build()).
+func set_view_rotation(quarter_turns: int) -> void:
+	view_rotation = posmod(quarter_turns, 4)
+
+
+## Plano del mapa con que se dibujó (MapDecor.plan; para las pruebas).
+func get_map_plan() -> Dictionary:
+	return _map_plan
+
+
+## Árboles de adorno dibujados.
+func get_trees() -> Array[TreeView]:
+	var trees: Array[TreeView] = []
+	for child: Node in _objects.get_children():
+		if child is TreeView and not child.is_queued_for_deletion():
+			trees.append(child)
+	return trees
+
+
+## Línea del límite del solar.
+func get_site_border() -> SiteBorder:
+	return _site_border
+
+
+## Casilla donde se dibuja una casilla de la lógica con la vista girada.
+func _to_view(cell: Vector2i) -> Vector2i:
+	if view_rotation == 0:
+		return cell
+	var origin: Vector2i = _site_rect.position
+	var last: int = maxi(_site_rect.size.x, _site_rect.size.y) - 1
+	var local: Vector2i = cell - origin
+	match view_rotation:
+		1:
+			local = Vector2i(last - local.y, local.x)
+		2:
+			local = Vector2i(last - local.x, last - local.y)
+		_:
+			local = Vector2i(local.y, last - local.x)
+	return origin + local
+
+
+## La inversa de _to_view.
+func _from_view(cell: Vector2i) -> Vector2i:
+	if view_rotation == 0:
+		return cell
+	var origin: Vector2i = _site_rect.position
+	var last: int = maxi(_site_rect.size.x, _site_rect.size.y) - 1
+	var local: Vector2i = cell - origin
+	match view_rotation:
+		1:
+			local = Vector2i(local.y, last - local.x)
+		2:
+			local = Vector2i(last - local.x, last - local.y)
+		_:
+			local = Vector2i(last - local.y, local.x)
+	return origin + local
+
+
+# Rehace el plano del mapa, lo de fuera del solar, los árboles y el borde si cambió el
+# local, el solar, la entrada o la orientación (comprar terreno o girar la vista).
+func _update_map() -> void:
+	var signature: String = "%s|%s|%d|%s|%d" % [_site_rect, _entrance_outside, _lot.get_cells().size(),
+		_lot.get_bounds(), view_rotation]
+	if signature == _map_signature:
+		return
+	_map_signature = signature
+	_map_plan = MapDecor.plan(_site_rect, _lot, _entrance_outside)
+	_surroundings.clear()
+	var tiles: Dictionary = _map_plan["tiles"]
+	for cell: Vector2i in tiles:
+		if not _site_rect.has_point(cell):
+			_surroundings.set_cell(_to_view(cell), _floor_source_id, _map_tile(cell, tiles[cell]))
+	for child: Node in _objects.get_children():
+		if child is TreeView:
+			_objects.remove_child(child)
+			child.queue_free()
+	for cell: Vector2i in _map_plan["trees"]:
+		var tree := TreeView.new()
+		tree.name = "Tree_%d_%d" % [cell.x, cell.y]
+		_objects.add_child(tree)
+		tree.setup(self, cell)
+	_site_border.setup(self, _site_rect)
+
+
+# Casilla del atlas de un estilo del mapa: una variante al azar fijo; la línea de la
+# calle va en la columna de su dirección en pantalla.
+func _map_tile(cell: Vector2i, style: String) -> Vector2i:
+	var row: int = _atlas_rows.get(style, _atlas_rows[MapDecor.GRASS])
+	if style == MapDecor.ROAD_LINE:
+		var axis: int = int(_map_plan.get("road_axis", GridEdge.AXIS_X))
+		return Vector2i(axis if view_rotation % 2 == 0 else 1 - axis, row)
+	var count: int = _atlas_columns.get(style, 1)
+	return Vector2i(mini(floori(MapDecor.noise(cell, MapDecor.SALT_STYLE) * count), count - 1), row)
 
 
 ## Rombo del solar en píxeles del mundo, como Transform2D: origin es la esquina de
@@ -160,12 +282,12 @@ func is_in_lot(cell: Vector2i) -> bool:
 
 ## Casilla que contiene un punto del mundo (en píxeles).
 func world_to_cell(world_position: Vector2) -> Vector2i:
-	return _floor.local_to_map(_floor.to_local(world_position))
+	return _from_view(_floor.local_to_map(_floor.to_local(world_position)))
 
 
 ## Centro de una casilla en píxeles del mundo.
 func cell_to_world(cell: Vector2i) -> Vector2:
-	return _floor.to_global(_floor.map_to_local(cell))
+	return _floor.to_global(_floor.map_to_local(_to_view(cell)))
 
 
 ## Convierte un punto de la pantalla (por ejemplo, el ratón) a píxeles del mundo,
@@ -201,31 +323,49 @@ func update_hover(world_position: Vector2) -> void:
 	hovered_cell = cell
 	_highlight.visible = cell != NO_CELL
 	if _highlight.visible:
-		_highlight.position = _floor.position + _floor.map_to_local(cell)
+		_highlight.position = _floor.position + _floor.map_to_local(_to_view(cell))
 
 
 # Crea el TileSet en código con rombos de colores generados (arte provisional).
-# Cada fila del atlas es un estilo de piso; cada columna, una casilla del tablero.
+# Cada fila del atlas es un estilo de piso o del mapa; cada columna, una variante (los
+# pisos usan dos, en tablero). La calle con línea tiene una columna por dirección.
 func _build_tile_set() -> TileSet:
 	var floor_types: Array[String] = [ConstructionCatalog.BARE_FLOOR, ConstructionCatalog.TERRAIN]
 	floor_types.append_array(ConstructionCatalog.get_floor_types())
 	var styles: Array[Array] = []
 	_atlas_rows = {}
+	_atlas_columns = {}
 	for floor_type: String in floor_types:
 		_atlas_rows[floor_type] = styles.size()
 		styles.append(ConstructionCatalog.get_floor_colors(floor_type))
+	var map_styles: Dictionary[String, Array] = MapDecor.get_styles()
+	for style: String in map_styles:
+		_atlas_rows[style] = styles.size()
+		styles.append(map_styles[style])
+	var road: Array = map_styles.get(MapDecor.ROAD, [Color.DIM_GRAY])
+	_atlas_rows[MapDecor.ROAD_LINE] = styles.size()
+	styles.append([road[0], road[0]])
+	var columns: int = 2
+	for row_colors: Array in styles:
+		columns = maxi(columns, row_colors.size())
+	for style: String in _atlas_rows:
+		_atlas_columns[style] = styles[_atlas_rows[style]].size()
 
 	var tile_size: Vector2i = GameConstants.TILE_SIZE
-	var image := Image.create_empty(tile_size.x * 2, tile_size.y * styles.size(), false, Image.FORMAT_RGBA8)
+	var image := Image.create_empty(tile_size.x * columns, tile_size.y * styles.size(), false, Image.FORMAT_RGBA8)
 	for row: int in range(styles.size()):
-		for column: int in range(2):
+		for column: int in range(styles[row].size()):
 			_draw_diamond(image, Vector2i(column, row) * tile_size, styles[row][column])
+	var line_color := Color(String(MapDecor.get_data().get("road_line_color", "e0cf78")))
+	var line_row: int = _atlas_rows[MapDecor.ROAD_LINE]
+	_draw_road_line(image, Vector2i(0, line_row) * tile_size, Vector2(2.0, 1.0), line_color)
+	_draw_road_line(image, Vector2i(1, line_row) * tile_size, Vector2(-2.0, 1.0), line_color)
 
 	var source := TileSetAtlasSource.new()
 	source.texture = ImageTexture.create_from_image(image)
 	source.texture_region_size = tile_size
 	for row: int in range(styles.size()):
-		for column: int in range(2):
+		for column: int in range(styles[row].size()):
 			source.create_tile(Vector2i(column, row))
 
 	var tile_set := TileSet.new()
@@ -234,6 +374,19 @@ func _build_tile_set() -> TileSet:
 	tile_set.tile_size = tile_size
 	_floor_source_id = tile_set.add_source(source)
 	return tile_set
+
+
+# Pinta la línea de la calle por el centro de una casilla, en la dirección direction
+# (en píxeles: (2, 1) es el eje x de la pantalla isométrica, (-2, 1) el eje y).
+func _draw_road_line(image: Image, offset: Vector2i, direction: Vector2, color: Color) -> void:
+	var half: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
+	var unit: Vector2 = direction.normalized()
+	var normal := Vector2(-unit.y, unit.x)
+	for y: int in range(GameConstants.TILE_SIZE.y):
+		for x: int in range(GameConstants.TILE_SIZE.x):
+			var point := Vector2(x + 0.5, y + 0.5) - half
+			if absf(point.dot(normal)) <= 1.2 and absf(point.dot(unit)) <= half.x * 0.6:
+				image.set_pixel(offset.x + x, offset.y + y, color)
 
 
 # Pinta un rombo que llena una casilla. Usa el centro de cada píxel y se pasa
