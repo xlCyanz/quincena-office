@@ -295,6 +295,16 @@ static func get_trait_name(trait_id: String) -> String:
 	return String(_names_data()["traits"].get(trait_id, trait_id))
 
 
+## Un efecto de un rasgo (data/staff.json, traits.effects), o default si no lo tiene.
+static func get_trait_effect(trait_id: String, key: String, default: Variant = null) -> Variant:
+	return (_staff_data()["traits"]["effects"].get(trait_id, {}) as Dictionary).get(key, default)
+
+
+## Cada cuántos días en la empresa se descubre un rasgo más.
+static func get_trait_discover_days() -> int:
+	return int(_staff_data()["traits"]["discover_days"])
+
+
 static func get_traits_per_person() -> Vector2i:
 	return _pair(_names_data()["traits_per_person"])
 

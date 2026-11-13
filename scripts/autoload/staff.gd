@@ -555,8 +555,9 @@ func get_promotion_progress(employee: Dictionary) -> Dictionary:
 	var needs: Dictionary = StaffCatalog.get_promotion(next_level) if not next_level.is_empty() else {}
 	var projects: int = int(employee.get("projects_worked", 0))
 	var days: int = GameClock.get_day_count() - int(employee["hired_day"])
+	var projects_needed: int = maxi(0, int(needs.get("projects", 0)) - get_mentor_projects(employee))
 	var progress: Dictionary = {"next_level": next_level, "projects": projects, "days": days,
-		"projects_needed": int(needs.get("projects", 0)), "days_needed": int(needs.get("days", 0))}
+		"projects_needed": projects_needed, "days_needed": int(needs.get("days", 0))}
 	progress["ready"] = not needs.is_empty() and projects >= int(progress["projects_needed"]) \
 		and days >= int(progress["days_needed"])
 	progress["next_role"] = next_role
@@ -884,13 +885,181 @@ func get_mood_target(employee: Dictionary) -> int:
 		target += StaffCatalog.get_morale("owed_mood")
 	if int(employee["stress"]) >= int(StaffCatalog.get_morale("stressed_from")):
 		target += StaffCatalog.get_morale("stressed_mood")
-	if get_schedule(employee).get_night_hours() > 0:
+	if get_schedule(employee).get_night_hours() > 0 and not _trait_flag(employee, "night_mood_free"):
 		target += float(StaffCatalog.get_overtime("night_mood"))
+	target += get_team_trait_mood(employee)
 	if works_in_dirty_room(employee_key(employee["id"])):
 		target += float(StaffCatalog.get_cleaning("dirty_mood"))
 	target += get_ambiance(employee_key(employee["id"]))
 	target += get_desk_mood(employee_key(employee["id"]))
 	return clampi(roundi(target), 0, 100)
+
+
+## Indica si alguien tiene un rasgo (los tenga descubiertos o no: todos hacen efecto).
+static func has_trait(person: Dictionary, trait_id: String) -> bool:
+	return (person.get("traits", []) as Array).has(trait_id)
+
+
+# Efectos sumados de una lista de rasgos, guardados por lista (se piden por persona cada
+# hora): "points", "night_points", "day_points" (factores), "bug_factor", "find_factor",
+# "team_mood", "mentor_points", "mentor_projects" (el mayor) y "night_mood_free".
+static var _trait_summaries: Dictionary[int, Dictionary] = {}
+
+
+static func _trait_summary(person: Dictionary) -> Dictionary:
+	var traits: Array = person.get("traits", [])
+	var key: int = traits.hash()
+	if _trait_summaries.has(key):
+		return _trait_summaries[key]
+	var summary: Dictionary = {"points": 1.0, "night_points": 1.0, "day_points": 1.0, "bug_factor": 1.0, "find_factor": 1.0,
+		"team_mood": 0.0, "mentor_points": 0.0, "mentor_projects": 0.0, "night_mood_free": false}
+	for trait_id: Variant in traits:
+		for factor_key: String in ["points", "night_points", "day_points"]:
+			summary[factor_key] = float(summary[factor_key]) * (1.0 + float(StaffCatalog.get_trait_effect(String(trait_id), factor_key, 0.0)))
+		for factor_key: String in ["bug_factor", "find_factor"]:
+			summary[factor_key] = float(summary[factor_key]) * float(StaffCatalog.get_trait_effect(String(trait_id), factor_key, 1.0))
+		for best_key: String in ["team_mood", "mentor_points", "mentor_projects"]:
+			summary[best_key] = maxf(float(summary[best_key]), float(StaffCatalog.get_trait_effect(String(trait_id), best_key, 0.0)))
+		if bool(StaffCatalog.get_trait_effect(String(trait_id), "night_mood_free", false)):
+			summary["night_mood_free"] = true
+	_trait_summaries[key] = summary
+	return summary
+
+
+# Indica si algún rasgo de alguien tiene ese efecto en true.
+static func _trait_flag(person: Dictionary, key: String) -> bool:
+	return bool(_trait_summary(person)[key])
+
+
+# Producto de los factores de un efecto numérico de los rasgos de alguien.
+static func _trait_product(person: Dictionary, key: String) -> float:
+	return float(_trait_summary(person)[key])
+
+
+## Cuánto rinden los puntos de alguien a esa hora por sus rasgos (hito 50): el
+## perfeccionista y el sociable menos, el noctámbulo más de noche y menos de día.
+static func get_trait_points_factor(person: Dictionary, hour: int) -> float:
+	var factor: float = _trait_product(person, "points")
+	return factor * _trait_product(person, "night_points" if WorkSchedule.is_night_hour(hour) else "day_points")
+
+
+## Por cuánto se multiplican los errores que genera alguien al programar (perfeccionista).
+static func get_trait_bug_factor(person: Dictionary) -> float:
+	return _trait_product(person, "bug_factor")
+
+
+## Por cuánto se multiplican los errores que encuentra alguien al probar (perfeccionista).
+static func get_trait_find_factor(person: Dictionary) -> float:
+	return _trait_product(person, "find_factor")
+
+
+# Quienes están en el equipo de un empleado (miembros y líder), incluido él.
+func _team_people(employee: Dictionary) -> Array[Dictionary]:
+	var people: Array[Dictionary] = []
+	var team: Dictionary = get_team_of(employee["id"])
+	if team.is_empty():
+		return people
+	var ids: Array = (team["members"] as Array).duplicate()
+	if int(team.get("leader_id", 0)) != 0:
+		ids.append(int(team["leader_id"]))
+	for id: Variant in ids:
+		var person: Dictionary = get_employee(int(id))
+		if not person.is_empty():
+			people.append(person)
+	return people
+
+
+## Lo que suma a la meta de ánimo de alguien tener un compañero sociable en su equipo
+## (él mismo incluido; una vez aunque haya varios).
+func get_team_trait_mood(employee: Dictionary) -> float:
+	var best: float = 0.0
+	for person: Dictionary in _team_people(employee):
+		best = maxf(best, float(_trait_value(person, "team_mood")))
+	return best
+
+
+# El mayor valor de un efecto numérico entre los rasgos de alguien (0 si ninguno lo tiene).
+static func _trait_value(person: Dictionary, key: String) -> float:
+	return float(_trait_summary(person)[key])
+
+
+# Mentores del equipo de un empleado, sin contarlo a él.
+func _mentors_of(employee: Dictionary) -> Array[Dictionary]:
+	var mentors: Array[Dictionary] = []
+	for person: Dictionary in _team_people(employee):
+		if person["id"] != employee["id"] and _trait_value(person, "mentor_points") > 0.0:
+			mentors.append(person)
+	return mentors
+
+
+# Indica si un nivel es de los que ayuda un mentor.
+static func _is_mentee(employee: Dictionary, mentor: Dictionary) -> bool:
+	for trait_id: Variant in mentor.get("traits", []):
+		if (StaffCatalog.get_trait_effect(String(trait_id), "mentor_levels", []) as Array).has(employee.get("level", "")):
+			return true
+	return false
+
+
+## Cuánto más rinde alguien por un mentor de su equipo presente a esa hora (1 si no hay;
+## una vez aunque haya varios).
+func get_mentor_factor(employee: Dictionary, weekday: int, hour: int) -> float:
+	return float(get_team_mentor_factors(get_team_of(employee["id"]), weekday, hour).get(int(employee["id"]), 1.0))
+
+
+## get_mentor_factor de todos los de un equipo de una vez (id → factor; sin mentores
+## presentes, vacío): Projects.get_workers lo pide por cada contrato cada hora.
+func get_team_mentor_factors(team: Dictionary, weekday: int, hour: int) -> Dictionary[int, float]:
+	var factors: Dictionary[int, float] = {}
+	if team.is_empty():
+		return factors
+	var ids: Array = (team["members"] as Array).duplicate()
+	if int(team.get("leader_id", 0)) != 0:
+		ids.append(int(team["leader_id"]))
+	var people: Array[Dictionary] = []
+	var mentors: Array[Dictionary] = []
+	for id: Variant in ids:
+		var person: Dictionary = get_employee(int(id))
+		if person.is_empty():
+			continue
+		people.append(person)
+		if _trait_value(person, "mentor_points") > 0.0 and _is_working_at(person, weekday, hour):
+			mentors.append(person)
+	if mentors.is_empty():
+		return factors
+	for person: Dictionary in people:
+		var best: float = 0.0
+		for mentor: Dictionary in mentors:
+			if mentor["id"] != person["id"] and _is_mentee(person, mentor):
+				best = maxf(best, _trait_value(mentor, "mentor_points"))
+		if best > 0.0:
+			factors[int(person["id"])] = 1.0 + best
+	return factors
+
+
+## Cuántos contratos menos necesita alguien para ascender por tener un mentor en su equipo.
+func get_mentor_projects(employee: Dictionary) -> int:
+	var best: int = 0
+	for mentor: Dictionary in _mentors_of(employee):
+		if _is_mentee(employee, mentor):
+			best = maxi(best, int(_trait_value(mentor, "mentor_projects")))
+	return best
+
+
+# Cada discover_days días en la empresa se descubre el siguiente rasgo de cada empleado.
+func _discover_traits() -> void:
+	var every: int = StaffCatalog.get_trait_discover_days()
+	var today: int = GameClock.get_day_count()
+	for employee: Dictionary in employees:
+		var days: int = today - int(employee.get("hired_day", today))
+		if days <= 0 or days % every != 0:
+			continue
+		var known: Array = employee.get_or_add("known_traits", [] as Array[String])
+		for trait_id: Variant in employee.get("traits", []):
+			if not known.has(trait_id):
+				known.append(String(trait_id))
+				EventBus.notice.emit("Descubriste que %s es %s." % [employee["name"],
+					StaffCatalog.get_trait_name(String(trait_id)).to_lower()])
+				break
 
 
 ## Meta del estrés de un empleado hoy.
@@ -1728,6 +1897,47 @@ static func describe_skills(candidate: Dictionary) -> String:
 
 
 ## Rasgos que se conocen: "Rasgos: Perfeccionista" o "" si no se conoce ninguno.
+## Qué hace un rasgo, armado con sus efectos de data/staff.json (y la competencia);
+## "" si todavía no hace nada.
+static func describe_trait(trait_id: String) -> String:
+	var parts: Array[String] = []
+	var percent: Callable = func(value: float) -> String:
+		return "%s%d %%" % ["+" if value > 0.0 else "−", absi(roundi(value * 100.0))]
+	var points: Variant = StaffCatalog.get_trait_effect(trait_id, "points")
+	if points != null:
+		parts.append("%s de puntos" % percent.call(float(points)))
+	var night: Variant = StaffCatalog.get_trait_effect(trait_id, "night_points")
+	if night != null:
+		parts.append("%s de puntos de noche" % percent.call(float(night)))
+	var day: Variant = StaffCatalog.get_trait_effect(trait_id, "day_points")
+	if day != null:
+		parts.append("%s de día" % percent.call(float(day)))
+	if bool(StaffCatalog.get_trait_effect(trait_id, "night_mood_free", false)):
+		parts.append("el turno de noche no le baja el ánimo")
+	var bugs: Variant = StaffCatalog.get_trait_effect(trait_id, "bug_factor")
+	if bugs != null:
+		parts.append("%s de errores al programar" % percent.call(float(bugs) - 1.0))
+	var find: Variant = StaffCatalog.get_trait_effect(trait_id, "find_factor")
+	if find != null:
+		parts.append("encuentra %s de errores al probar" % percent.call(float(find) - 1.0))
+	var team_mood: Variant = StaffCatalog.get_trait_effect(trait_id, "team_mood")
+	if team_mood != null:
+		parts.append("+%d al ánimo de su equipo" % int(team_mood))
+	var mentor: Variant = StaffCatalog.get_trait_effect(trait_id, "mentor_points")
+	if mentor != null:
+		var levels: Array[String] = []
+		for level: Variant in StaffCatalog.get_trait_effect(trait_id, "mentor_levels", []):
+			levels.append(StaffCatalog.get_level_name(String(level)))
+		parts.append("%s de su equipo rinden %s si está presente y ascienden con %d contrato menos" % [
+			" y ".join(levels), percent.call(float(mentor)), int(StaffCatalog.get_trait_effect(trait_id, "mentor_projects", 0))])
+	var offers: float = float((StaffCatalog.get_competition("traits") as Dictionary).get(trait_id, 1.0))
+	if offers < 1.0:
+		parts.append("otras empresas lo tientan menos")
+	elif offers > 1.0:
+		parts.append("otras empresas lo tientan más")
+	return "; ".join(parts)
+
+
 static func describe_known_traits(person: Dictionary) -> String:
 	var names: Array[String] = []
 	for trait_id: String in person.get("known_traits", []):
@@ -1759,6 +1969,7 @@ func _on_day_changed(day: int, _month: int) -> void:
 	if GameConstants.PAYROLL_DAYS.has(day):
 		_run_payroll()
 	_update_morale()
+	_discover_traits()
 	_accountant_warning(day)
 
 

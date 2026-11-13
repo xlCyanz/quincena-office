@@ -32,6 +32,9 @@ const TEAM_COUNT: int = 4
 ## Un equipo recibe contratos desde que tiene estos miembros.
 const TEAM_READY: int = 4
 
+## Rasgos del hito 50 que esta simulación no usa todavía.
+const PRODUCTION_TRAITS: Array[String] = ["night_owl", "perfectionist", "sociable", "mentor"]
+
 var _failures: int = 0
 var _checks: int = 0
 var _month_rows: Array[String] = []
@@ -262,6 +265,9 @@ func _hire_arrived() -> void:
 	if Staff.employees.size() == before:
 		return
 	var employee: Dictionary = Staff.employees[-1]
+	# Sin los rasgos del hito 50 hasta que el hito 59 ajuste el balance con ellos (leal y
+	# ambicioso ya contaban en la competencia).
+	_drop_production_traits(employee)
 	var plan: Dictionary = _pending["plan"]
 	_pending = {}
 	if String(plan["role"]) == StaffCatalog.get_manager_role():
@@ -473,6 +479,7 @@ func _check_departments() -> void:
 	var without: int = _income_over_months(3)
 	SaveManager.load_game("slot_5")
 	var executive: Dictionary = Staff.hire_directly(StaffCatalog.get_executive_role(), "senior")
+	_drop_production_traits(executive)
 	_expect(not executive.is_empty(), "un ejecutivo para la comparación")
 	if not executive.is_empty():
 		Staff.set_executive_department(executive["id"], "development")
@@ -525,3 +532,10 @@ func _record_month(month: int) -> void:
 	_month_rows.append("  mes %d: contratos +%d · productos +%d · gastos −%d · saldo %d · %d empleados · %d equipos · %s · %d entregados · %.1f ★ · %s" % [
 		month, income, totals.get(Products.CONCEPT_INCOME, 0), spent, Economy.balance, Staff.employees.size(), Staff.get_active_team_count(), Company.get_stage_name(),
 		Projects.delivered_count, Projects.reputation, Bank.rating])
+
+
+# Quita los rasgos de producción (hito 50) y deja los demás.
+func _drop_production_traits(employee: Dictionary) -> void:
+	var traits: Array = employee.get("traits", [])
+	traits.assign(traits.filter(func(trait_id: Variant) -> bool:
+		return not PRODUCTION_TRAITS.has(String(trait_id))))

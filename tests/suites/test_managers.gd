@@ -96,6 +96,8 @@ func _hire(role: String, level: String) -> Dictionary:
 	var candidate: Dictionary = _candidate(role, level)
 	var result: Dictionary = Staff.make_offer(candidate["id"], candidate["asked_salary"])
 	var employee: Dictionary = Staff.get_employee(candidate["id"])
+	# Sin rasgos (hito 50): esta prueba mide rendimientos exactos.
+	(employee.get("traits", []) as Array).clear()
 	_expect(not employee.is_empty(), "contratado: %s %s (%s)" % [role, level, result["message"]])
 	return employee
 

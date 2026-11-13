@@ -297,6 +297,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   $1,800/día y grandes $6,600 (×3; el pequeño sigue en $150) y `value_days` 540. Un equipo de 8 en contratos apenas paga su costo:
   la ganancia del final viene de los productos. La empresa de `data/starting_company.json` no se sostiene (≈$110k/mes de nómina,
   mucha dirección para 24 productores).
+- Rasgos de producción (hito 50, `traits` en `data/staff.json`; ids y nombres en `data/names.json`): cada rasgo es un diccionario de efectos
+  que leen las funciones de siempre. `Staff.get_trait_points_factor(persona, hora)` (perfeccionista −15 %, sociable −5 %, noctámbulo +20 % de 22 a 6
+  y −10 % de día), `get_trait_bug_factor` (perfeccionista ×0.6 al programar) y `get_trait_find_factor` (×1.25 al probar; `worker["find_factor"]` en
+  `Production.handle_bugs`) entran en `Projects.get_workers`; `get_mentor_factor` (+15 % a Pasantes y Juniors de su equipo con el mentor en turno,
+  sin contarse a sí mismo) y `get_mentor_projects` (un contrato menos para ascender). Sociable: +5 a la meta de ánimo de todo su equipo, una vez
+  (`get_team_trait_mood`); el noctámbulo no pierde ánimo por la noche (`night_mood_free`). Todos hacen efecto aunque no se conozcan; la ficha solo
+  explica los conocidos (`Staff.describe_trait`) y «Rinde N %» no los cuenta. `_discover_traits` cada 15 días en la empresa revela el siguiente con aviso.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -360,3 +367,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 47 | Contratos grandes y Sala de reuniones | ✅ Completado (grandes desde Mediana empresa con 4 ★; de élite desde Corporación con 5 ★, pago ×1.5 y clientes propios; los dos exigen Sala de reuniones con mesa 2×2 $1,200; la sala se habilita para siempre con la primera oferta grande; pantalla de presentaciones $800 en la pared: +25 % de peso a grandes y de élite; pizarra pendiente) |
 | 48 | Corporación y salir a bolsa | ✅ Completado (Corporación con 4 ejecutivos y 3 productos activos; bolsa siendo Corporación con valor > $5,000,000, solo cierre sin dinero; botón en Empresa con confirmación y aviso al cumplirse; pantalla de cierre con estadísticas, «Seguir jugando» en modo libre o «Volver al menú»; terreno sin tope hasta llenar el solar) |
 | 49 | Comprobación de la fase | ✅ Completado (sigue la empresa de la fase 4 desde Mediana empresa; bolsa ~20 meses después sin quebrar; productos 40–70 % de los ingresos del último año (~60 %); medianos y grandes pagan ×3 y valen 540 días de ingreso; eventos y etapas sin cambios; la prueba tarda ~40 s) |
+| 50 | Rasgos de producción | ✅ Completado (noctámbulo +20 % de noche y −10 % de día sin perder ánimo de noche; perfeccionista −15 % de puntos, −40 % de errores y QA encuentra 25 % más; sociable −5 % y +5 a la meta de ánimo de su equipo; mentor +15 % a Pasantes y Juniors de su equipo en su turno y un contrato menos para ascender; un rasgo más se descubre cada 15 días; la ficha explica los conocidos) |

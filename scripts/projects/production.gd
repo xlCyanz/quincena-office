@@ -179,7 +179,7 @@ static func handle_bugs(project: Dictionary, done: Array[Dictionary], rng: Rando
 			project["bugs_hidden"] = int(project["bugs_hidden"]) + roll(amount * float(worker["bug_chance"]), rng)
 		elif item["phase"] == "testing" and int(project["bugs_hidden"]) > 0:
 			var coverage: float = float(ContractCatalog.get_bugs("qa_coverage" if worker["phase"] == "testing" else "other_coverage"))
-			var chance: float = minf(1.0, coverage * amount / testing_total)
+			var chance: float = minf(1.0, coverage * float(worker.get("find_factor", 1.0)) * amount / testing_total)
 			var found: int = 0
 			for bug: int in range(int(project["bugs_hidden"])):
 				if rng.randf() < chance:

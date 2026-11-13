@@ -415,6 +415,11 @@ func _refresh() -> void:
 	var details: Array[String] = ["Habilidades: %s" % Staff.describe_skills(employee)]
 	var known: String = Staff.describe_known_traits(employee)
 	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
+	# Qué hace cada rasgo conocido (hito 50); los demás se descubren con el tiempo.
+	for trait_id: String in employee.get("known_traits", []):
+		var effect: String = Staff.describe_trait(trait_id)
+		if not effect.is_empty():
+			details.append("· %s: %s" % [StaffCatalog.get_trait_name(trait_id), effect])
 	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
 	if not room.is_empty():
 		details.append("Trabaja en: %s · %s" % [RoomCatalog.get_display_name(room["type"]),

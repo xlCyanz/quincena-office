@@ -772,7 +772,7 @@ func import_state(state: Dictionary) -> void:
 
 ## Quienes trabajan en un contrato en una hora (contada como Staff.get_absolute_hour):
 ## una lista de {"key", "phase", "level", "rate", "bug_chance"} (key como en Staff.is_expected; phase = "" si
-## es generalista). shared sirve para pedir varios contratos en la misma hora: guarda ahí
+## es generalista) y, para los empleados, "find_factor" (rasgos que encuentran más errores). shared sirve para pedir varios contratos en la misma hora: guarda ahí
 ## lo que es igual para todos (puestos, bonos y factores de departamento) y no lo vuelve a
 ## calcular; vacío = calcular todo.
 func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Array[Dictionary]:
@@ -799,6 +799,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 	var stations: Dictionary = shared["stations"]
 	var bonuses: Dictionary = shared["bonuses"]
 	var departments: Dictionary = shared["departments"]
+	var mentored: Dictionary[int, float] = Staff.get_team_mentor_factors(team, weekday, hour)
 	for member: Variant in team["members"]:
 		var employee: Dictionary = Staff.get_employee(int(member))
 		var key: String = Staff.employee_key(int(member))
@@ -809,9 +810,12 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		if not departments.has(department_id):
 			departments[department_id] = Staff.get_department_factor(department_id)
 		var department: float = departments[department_id]
-		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * Production.get_rate(employee["level"],
-			float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
-			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))})
+		# Rasgos (hito 50): puntos según la hora, mentor del equipo, errores al programar y al probar.
+		var traits: float = Staff.get_trait_points_factor(employee, hour) * mentored.get(int(member), 1.0)
+		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits
+			* Production.get_rate(employee["level"], float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
+			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))
+			* Staff.get_trait_bug_factor(employee), "find_factor": Staff.get_trait_find_factor(employee)})
 	return workers
 
 
