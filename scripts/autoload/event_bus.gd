@@ -169,3 +169,12 @@ signal went_public(stats: Dictionary)
 ## Cambió una opción del jugador (hito 60, Settings).
 @warning_ignore("unused_signal")
 signal settings_changed(key: String)
+
+## El jugador hizo algo en la interfaz que el tutorial puede pedir (hito 63):
+## "camera_moved" (arrastró o acercó la cámara) o "build_opened" (abrió Construir).
+@warning_ignore("unused_signal")
+signal ui_action(action: String)
+
+## Cambió el estado del tutorial: activo, paso o terminado (hito 63, Tutorial).
+@warning_ignore("unused_signal")
+signal tutorial_changed

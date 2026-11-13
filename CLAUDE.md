@@ -77,7 +77,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`Staff.hire_directly`, `Projects.create_offer`). `test_starting_company` y `test_dev_tools` lo ponen en true un momento.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
-- Autoloads (en este orden): `EventBus`, `Settings`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `Events`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
+- Autoloads (en este orden): `EventBus`, `Settings`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `Events`, `Tutorial`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
   en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
@@ -397,6 +397,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   cierra paneles y ficha, oculta la barra, apaga el reloj del `Hud` y guarda `_was_paused_before_pause`; Seguir (o Esc) lo devuelve.
   Guardar, Cargar y Ajustes cierran la pausa (el reloj vuelve a como estaba) y abren Ajustes en su pestaña; al cerrarlo
   (`_settings_from_pause`) se vuelve a la pausa, así se guarda con el reloj de antes. Salir al menú pregunta en la misma pausa.
+- Tutorial (hito 63, autoload `Tutorial`; pasos en `data/tutorial.json`, la cabecera explica las claves): cada paso tiene `text`, `highlight`
+  (lista; se resalta lo primero que se vea: `office` o botones `build`, `build_exit`, `tool:<herramienta>`, `staff`, `staff_publish`, que da
+  `main.tutorial_target_rect`) y `condition`: `action` (`EventBus.ui_action`: `camera_moved` desde `OfficeCamera`, una vez por arrastre o paso de
+  zoom, y `build_opened`; se anotan en `Tutorial.actions` aunque sean de antes), `workstations`, `vacancies` o los tipos de los objetivos
+  (`Company.get_objective_progress`). `check` (con `staff/office/projects_changed`) salta todos los pasos ya cumplidos; al terminar avisa. Una
+  partida nueva lo muestra si la opción `tutorial_seen` es false; terminarlo o saltarlo («Saltar», `Tutorial.skip`) la pone en true. Ajustes →
+  Opciones: «Retomar el tutorial» (desde el paso donde quedó) o «Volver a empezar» (`resume`). Se guarda (`tutorial`: active, step por id,
+  finished, actions); sin estado carga como terminado y la empresa de prueba empieza sin él. `SaveManager` lo envuelve en
+  `begin_load`/`finish_load`. `TutorialPanel` (capa 5): tarjeta arriba entre los paneles izquierdos y el reloj, marco y flecha que no atrapan clics.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -473,3 +482,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 60 | Opciones y Ajustes | ✅ Completado (autoload `Settings` con `user://settings.cfg`: pantalla completa, autoguardado, velocidad inicial, pausa al construir y al perder el foco; un valor roto vuelve al de `data/settings.json`; Ajustes con pestañas Guardar, Cargar y Opciones; cargar y salir piden confirmación; la escala de la interfaz queda para el hito 65) |
 | 61 | Menú principal | ✅ Completado (Continuar carga la partida guardada más reciente y no aparece sin partidas; Nueva partida pregunta si hay autoguardado, que se reemplaza, y deja las ranuras manuales; Ajustes con las mismas opciones que en la partida; Salir cierra el juego) |
 | 62 | Menú de pausa | ✅ Completado (Esc cierra la pregunta, Ajustes, la pausa, construcción, la ficha o los paneles izquierdos, en ese orden; sin nada abierto abre la pausa con Seguir, Guardar, Cargar, Ajustes y Salir al menú y detiene el reloj; Seguir lo deja como estaba; Guardar, Cargar y Ajustes abren Ajustes en su pestaña y vuelven a la pausa; salir pregunta; las pantallas de fin, bolsa y préstamo de emergencia no se cierran con Esc) |
+| 63 | Tutorial: primeros pasos | ✅ Completado (6 pasos: cámara, Construir, Área de trabajo, puesto, vacante de programador y primera contratación; marco y flecha sobre el botón o el local sin bloquear la interfaz; los pasos ya cumplidos se saltan solos; se ve en partidas nuevas hasta terminarlo o saltarlo una vez; «Retomar el tutorial» en Ajustes; se guarda en la partida y las viejas cargan sin él) |

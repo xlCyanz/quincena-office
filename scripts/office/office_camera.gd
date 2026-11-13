@@ -15,6 +15,8 @@ const WHEEL_STEP: float = 1.0
 ## Cuánto hay que pellizcar en el trackpad para cambiar un nivel.
 const PINCH_STEP: float = 0.25
 
+# Ya se avisó EventBus.ui_action de este arrastre.
+var _drag_reported: bool = false
 var zoom_index: int = GameConstants.CAMERA_START_ZOOM_INDEX
 
 ## Si el botón izquierdo arrastra la cámara. En modo construcción se apaga, porque el
@@ -117,6 +119,7 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 			if event.pressed and _drag_button == MOUSE_BUTTON_NONE:
 				_drag_button = event.button_index
 				_drag_start = event.position
+				_drag_reported = false
 				# Con el botón central o derecho se arrastra desde el primer píxel.
 				_is_dragging = event.button_index != MOUSE_BUTTON_LEFT
 			elif not event.pressed and event.button_index == _drag_button:
@@ -137,6 +140,10 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 		position -= (event.position - event.relative - _drag_start) / get_zoom_level()
 	position -= event.relative / get_zoom_level()
 	_clamp_position()
+	# El tutorial (hito 63) se entera una vez por arrastre.
+	if not _drag_reported:
+		_drag_reported = true
+		EventBus.ui_action.emit("camera_moved")
 	get_viewport().set_input_as_handled()
 
 
@@ -151,6 +158,7 @@ func _handle_wheel(event: InputEventMouseButton) -> void:
 	if absf(_wheel_accumulator) >= WHEEL_STEP:
 		_wheel_accumulator = 0.0
 		set_zoom_index(zoom_index + int(direction), event.position)
+		EventBus.ui_action.emit("camera_moved")
 	get_viewport().set_input_as_handled()
 
 
@@ -160,6 +168,7 @@ func _handle_pinch(event: InputEventMagnifyGesture) -> void:
 		var direction: int = 1 if _pinch_accumulator > 0.0 else -1
 		_pinch_accumulator = 0.0
 		set_zoom_index(zoom_index + direction, event.position)
+		EventBus.ui_action.emit("camera_moved")
 	get_viewport().set_input_as_handled()
 
 

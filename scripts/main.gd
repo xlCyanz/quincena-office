@@ -39,6 +39,8 @@ var _was_paused_before_pause: bool = false
 var _settings_from_pause: bool = false
 # Menú de pausa (hito 62); se arma en código.
 var _pause_menu: PauseMenu
+# Tarjeta del tutorial (hito 63); se arma en código.
+var _tutorial_panel: TutorialPanel
 # Pantalla de cierre al salir a bolsa (hito 48); se arma en código.
 var _ipo_screen: IpoScreen
 # Dónde se apretó el botón izquierdo (para distinguir un clic de un arrastre).
@@ -129,6 +131,10 @@ func _ready() -> void:
 	_pause_menu.resume_requested.connect(func() -> void: set_pause_menu_open(false))
 	_pause_menu.settings_requested.connect(_open_settings_from_pause)
 	_pause_menu.quit_requested.connect(_on_quit_requested)
+	_tutorial_panel = TutorialPanel.new()
+	_tutorial_panel.name = "TutorialPanel"
+	_tutorial_panel.target_provider = tutorial_target_rect
+	add_child(_tutorial_panel)
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.staff_changed.connect(update_status_icons)
@@ -440,6 +446,7 @@ func _close_side_panels(keep: CanvasLayer) -> void:
 func _on_build_mode_changed(active: bool) -> void:
 	if active:
 		_close_side_panels(null)
+		EventBus.ui_action.emit("build_opened")
 	_build_controller.set_active(active)
 	_hud.set_controls_enabled(not active)
 	_office_grid.set_rooms_visible(active)
@@ -456,6 +463,33 @@ func _on_build_mode_changed(active: bool) -> void:
 		_build_paused = bool(Settings.get_value("pause_on_build"))
 	if _build_paused:
 		_set_menu_pause(active)
+
+
+## Rectángulo en pantalla de lo que el tutorial resalta (claves de data/tutorial.json), o
+## Rect2() si no se ve.
+func tutorial_target_rect(key: String) -> Rect2:
+	if key == "office":
+		return get_canvas_transform() * _office_grid.get_lot_world_rect()
+	var control: Control = null
+	match key:
+		"build":
+			control = _build_panel.get_open_button()
+		"build_exit":
+			control = _build_panel.get_exit_button()
+		"staff":
+			control = _staff_panel.get_open_button()
+		"staff_publish":
+			control = _staff_panel.get_publish_button()
+		_:
+			if key.begins_with("tool:"):
+				control = _build_panel.get_tool_button(key.trim_prefix("tool:"))
+	if control == null or not control.is_visible_in_tree():
+		return Rect2()
+	return control.get_global_rect()
+
+
+func get_tutorial_panel() -> TutorialPanel:
+	return _tutorial_panel
 
 
 func _on_settings_mode_changed(active: bool) -> void:

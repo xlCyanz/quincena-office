@@ -31,6 +31,7 @@ var _tab: String = TAB_SAVE
 var _slot_buttons: Dictionary[String, Button] = {}
 var _load_buttons: Dictionary[String, Button] = {}
 var _options: OptionsList
+var _tutorial_button: Button
 var _status_label: Label
 var _quit_button: Button
 var _close_button: Button
@@ -97,6 +98,13 @@ func _ready() -> void:
 		_load_buttons[slot] = button
 	_options = OptionsList.new()
 	_sections[TAB_OPTIONS].add_child(_options)
+	# Tutorial (hito 63): se retoma donde quedó o se vuelve a empezar si se terminó.
+	_tutorial_button = Button.new()
+	_tutorial_button.custom_minimum_size = Vector2(0, 44)
+	_tutorial_button.pressed.connect(_on_tutorial_pressed)
+	_sections[TAB_OPTIONS].add_child(_tutorial_button)
+	EventBus.tutorial_changed.connect(_refresh_tutorial_button)
+	_refresh_tutorial_button()
 
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -199,6 +207,27 @@ func refresh_slots() -> void:
 ## Pone los controles de Opciones como están las opciones (sin volver a guardarlas).
 func refresh_options() -> void:
 	_options.refresh()
+
+
+func _refresh_tutorial_button() -> void:
+	_tutorial_button.disabled = Tutorial.active
+	if Tutorial.active:
+		_tutorial_button.text = "El tutorial está en curso"
+	elif Tutorial.finished:
+		_tutorial_button.text = "Volver a empezar el tutorial"
+	else:
+		_tutorial_button.text = "Retomar el tutorial"
+
+
+# Retoma el tutorial y cierra Ajustes para que se vea el paso.
+func _on_tutorial_pressed() -> void:
+	Tutorial.resume()
+	set_open(false)
+
+
+## Botón para retomar o volver a empezar el tutorial (pestaña Opciones).
+func get_tutorial_button() -> Button:
+	return _tutorial_button
 
 
 func show_status(text: String) -> void:

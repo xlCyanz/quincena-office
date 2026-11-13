@@ -168,7 +168,7 @@ func get_exit_button() -> Button:
 
 
 func get_tool_button(tool: String) -> Button:
-	return _tool_buttons[tool]
+	return _tool_buttons.get(tool, null)
 
 
 # Pone los botones en filas de hasta MAX_ROW_BUTTONS para que el panel quepa en pantalla.

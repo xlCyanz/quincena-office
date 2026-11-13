@@ -1,0 +1,11 @@
+{
+	"_comentario": "Tutorial guiado (diseño 21.2; hito 63 los primeros pasos, el 64 suma el negocio). Pasos en orden: text se muestra en la tarjeta; highlight es la lista de lo que se puede resaltar, se usa el primero que se vea (office = el local; build, build_exit, tool:<herramienta>, staff, staff_publish = botones); condition da el paso por cumplido. Tipos de condition: action (EventBus.ui_action: camera_moved, build_opened; cuenta aunque haya pasado antes), workstations (puestos en Áreas de trabajo ≥ count), vacancies (vacantes abiertas ≥ count) y los de data/objectives.json (room, role, employees, …; Company.get_objective_progress). Un paso que ya se cumple se salta solo.",
+	"steps": [
+		{ "id": "camera", "text": "Bienvenido a tu empresa. Mueve la cámara: arrastra la oficina con el ratón y acerca o aleja con la rueda.", "highlight": ["office"], "condition": { "type": "action", "action": "camera_moved" } },
+		{ "id": "build", "text": "Para trabajar hacen falta puestos. Abre Construir: el tiempo se detiene mientras construyes.", "highlight": ["build"], "condition": { "type": "action", "action": "build_opened" } },
+		{ "id": "work_area", "text": "Elige Área de trabajo y haz clic dentro del espacio libre del local para marcarlo. Una habitación es un espacio cerrado por paredes con una puerta.", "highlight": ["tool:work_area", "build"], "condition": { "type": "room", "room": "work_area" } },
+		{ "id": "workstation", "text": "Arma un puesto dentro del Área de trabajo: un escritorio, una computadora encima y una silla delante del escritorio.", "highlight": ["tool:simple_desk", "build"], "condition": { "type": "workstations", "count": 1 } },
+		{ "id": "vacancy", "text": "Ahora contrata. Sal de Construir, abre Personal y publica una vacante de programador.", "highlight": ["staff_publish", "build_exit", "staff"], "condition": { "type": "vacancies", "count": 1 } },
+		{ "id": "hire", "text": "Los candidatos llegan a las 9:00. Entrevista a uno desde Personal y hazle una oferta igual o mayor a lo que pide.", "highlight": ["staff"], "condition": { "type": "employees", "count": 1 } }
+	]
+}

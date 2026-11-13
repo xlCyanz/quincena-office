@@ -43,6 +43,7 @@ func new_game() -> void:
 	_pending_scene_state = {}
 	_game_over = false
 	Company.begin_load()
+	Tutorial.begin_load()
 	OfficeState.new_game()
 	Staff.new_game()
 	GameClock.new_game()
@@ -52,12 +53,16 @@ func new_game() -> void:
 	Bank.new_game()
 	Company.new_game()
 	Events.new_game()
+	Tutorial.new_game()
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.new_game()
 	if start_with_demo:
 		StartingCompany.apply()
+		# La empresa de prueba no es una primera partida: empieza sin tutorial.
+		Tutorial.import_state({})
 	Company.finish_load()
+	Tutorial.finish_load()
 
 
 ## Ids de las ranuras manuales: "slot_1" … "slot_5".
@@ -107,6 +112,7 @@ func save_game(slot: String) -> bool:
 		"bank": Bank.export_state(),
 		"company": Company.export_state(),
 		"events": Events.export_state(),
+		"tutorial": Tutorial.export_state(),
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
@@ -130,6 +136,7 @@ func load_game(slot: String) -> bool:
 		return false
 	_game_over = false
 	Company.begin_load()
+	Tutorial.begin_load()
 	OfficeState.import_state(data["office"])
 	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
 	Staff.import_state(data.get("staff", {}))
@@ -142,11 +149,14 @@ func load_game(slot: String) -> bool:
 	Company.import_state(data.get("company", {}))
 	# Las partidas de antes del hito 43 no tienen eventos: se cargan sin tarjeta abierta.
 	Events.import_state(data.get("events", {}))
+	# Las partidas de antes del hito 63 no tienen tutorial: cargan sin él (como terminado).
+	Tutorial.import_state(data.get("tutorial", {}))
 	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
 	# de esta partida, no las de la anterior.
 	Economy.import_state(data["economy"])
 	# Los objetivos se revisan con la partida ya entera.
 	Company.finish_load()
+	Tutorial.finish_load()
 	_pending_scene_state = data.get("scene", {})
 	return true
 
