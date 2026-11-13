@@ -1,5 +1,5 @@
 # Prueba de cómo caminan los personajes (pedido aparte, después del hito 69): van a una
-# casilla por segundo a 1x y nunca hay dos en la misma casilla del local. Quien encuentra
+# casilla por segundo a 1x (el doble con prisa) y nunca hay dos en la misma casilla del local. Quien encuentra
 # ocupada la siguiente espera y busca otro camino; dos de frente en un pasillo de una
 # casilla se destraban tras GameConstants.CHARACTER_PASS_WAIT; si la entrada está ocupada,
 # el que llega espera en la calle sin verse.
@@ -130,6 +130,16 @@ func _check_speed() -> void:
 	_expect(absf(walker.grid_position.distance_to(Vector2(_cell(4, 3))) - 1.0) < 0.06,
 		"a %sx camina %s casillas por segundo" % [speed, speed])
 	GameClock.set_speed_index(0)
+	# Con prisa camina el doble y al llegar vuelve a su paso normal.
+	walker.grid_position = Vector2(_cell(4, 3))
+	walker.call("_release_cells")
+	walker.hurry = true
+	_send(walker, _cell(4, 7))
+	_run(1.0)
+	_expect(absf(walker.grid_position.distance_to(Vector2(_cell(4, 3))) - GameConstants.CHARACTER_HURRY_FACTOR) < 0.06,
+		"con prisa camina %s casillas por segundo" % GameConstants.CHARACTER_HURRY_FACTOR)
+	_run(2.0)
+	_expect(not walker.hurry and walker.get_cell() == _cell(4, 7), "al llegar se le pasa la prisa")
 	_clear()
 
 

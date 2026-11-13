@@ -135,6 +135,7 @@ func _check_ceo() -> void:
 	_expect(game.interviewee != null and game.interviewee == waiting, "el que esperaba es el entrevistado")
 	_expect(waiting != null and waiting.get_seat_cell() == guest and not waiting.standing, "va a la silla de visita")
 	_expect(Staff.get_appointment(int(first["id"])).is_empty(), "la cita se cumple")
+	_expect(waiting != null and waiting.hurry, "lo llaman y va apurado")
 	var steps: int = 0
 	while waiting != null and waiting.activity != OfficeCharacter.Activity.SEATED and steps < 2000:
 		# Camina con los demás (el CEO, que abrió, puede seguir en la entrada).
@@ -144,6 +145,7 @@ func _check_ceo() -> void:
 		steps += 1
 	_expect(waiting != null and waiting.activity == OfficeCharacter.Activity.SEATED, "llega a la silla: %s %s %s %s %s" % [
 		waiting.activity, waiting.get_cell(), waiting.get_path_cells(), waiting.get("_blocked_time"), GameClock.get_time_scale()])
+	_expect(waiting != null and not waiting.hurry, "sentado ya no tiene prisa")
 	var started: int = int(Staff.interview.get("starts_at", -1))
 	_expect(Staff.is_interview_started() and started == Staff.get_absolute_minute(),
 		"al sentarse empieza la entrevista: %s" % [Staff.interview])

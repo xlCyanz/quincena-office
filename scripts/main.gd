@@ -316,6 +316,7 @@ func _sync_interview() -> void:
 		# Ya estaba esperando: camina hasta la silla de visita.
 		appointment_visitors.erase(int(candidate["id"]))
 		interviewee = waiting
+		interviewee.hurry = not Staff.is_interview_started()
 		interviewee.sat_down.connect(_on_interviewee_seated.bind(interviewee))
 		interviewee.standing = Staff.get_guest_chair(by).is_empty()
 		interviewee.set_seat(_interview_spot(by))
@@ -327,6 +328,7 @@ func _sync_interview() -> void:
 	_office_grid.add_object(interviewee)
 	interviewee.left_office.connect(_remove_left_visitors)
 	interviewee.sat_down.connect(_on_interviewee_seated.bind(interviewee))
+	interviewee.hurry = not Staff.is_interview_started()
 	interviewee.setup(_office_grid, pathfinder, _interview_spot(String(Staff.interview.get("by", "ceo"))),
 		OfficeState.entrance, OfficeState.get_outside_of_entrance())
 	interviewee.update_routine(true)
@@ -530,6 +532,8 @@ func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_
 			return false
 		var late_at: int = hour_start + Staff.get_late_minutes(key)
 		if late_at <= now:
+			# Entra después de su hora: llega apurado.
+			character.hurry = now > hour_start or Staff.get_late_minutes(key) > 0
 			return false
 		_arrivals[key] = late_at
 		character.set_seat(_home_spot(key))

@@ -96,7 +96,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   jugador lo manda a casa (`Staff.ceo_at_work`, botón «CEO: irse a casa»). Con la oficina vacía el tiempo salta a la próxima llegada.
   Un clic en un empleado abre su ficha (`EmployeeCard`). El muñeco se dibuja a `OfficeCharacter.BODY_SCALE` (0.8, unos 50 px de pie, a la escala
   de los muebles); sentado la cadera queda a `SEAT_HEIGHT_PX` y el icono de estado no se achica; `CLICK_AREA` ya va escalado.
-  Caminan a `CHARACTER_WALK_SPEED` (1 casilla/s a 1x) y hay una persona por casilla del local: cada uno ocupa la suya y, al
+  Caminan a `CHARACTER_WALK_SPEED` (1 casilla/s a 1x; con prisa, `OfficeCharacter.hurry`, × `CHARACTER_HURRY_FACTOR` 2 hasta llegar: quien entra después de su hora (`main._arrive_staggered`) y el candidato llamado a la entrevista) y hay una persona por casilla del local: cada uno ocupa la suya y, al
   caminar, la siguiente (`OfficeCharacter._occupants`, estático; `is_cell_taken`, `get_held_cells`). Si la siguiente está ocupada
   espera; cada `CHARACTER_REPATH_WAIT` busca un camino que esquive a los demás (`OfficePathfinder.find_path(…, avoid)`) y tras
   `CHARACTER_PASS_WAIT` pasa igual (dos de frente en un pasillo de una casilla). Aparece en la entrada si está libre; si no,

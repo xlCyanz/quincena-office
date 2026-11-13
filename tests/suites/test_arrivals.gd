@@ -186,6 +186,15 @@ func _check_in_game() -> void:
 		if Staff.is_expected_now(character.person_key):
 			all_in = all_in and character.activity != OfficeCharacter.Activity.AWAY
 	_expect(all_in, "a las 8:10 llegaron todos los que tenían que estar")
+	# Los que llegaron tarde entran apurados; los que esperaban van a paso normal.
+	var hurry_ok: bool = true
+	for character: Employee in day_shift:
+		var walking: bool = character.activity == OfficeCharacter.Activity.WALKING_TO_DESK
+		if late.has(character.person_key):
+			hurry_ok = hurry_ok and (character.hurry or not walking)
+		elif pending.has(character.person_key):
+			hurry_ok = hurry_ok and not character.hurry
+	_expect(hurry_ok and not late.is_empty(), "solo los que llegan tarde caminan rápido")
 
 	# Oficina vacía: el reloj salta a la hora anterior y hasta el primero que entra.
 	# Al terminar la jornada se van entre la hora en punto y 20 minutos después.

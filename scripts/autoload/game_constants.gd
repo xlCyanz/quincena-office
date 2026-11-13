@@ -76,6 +76,8 @@ const CAMERA_FIT_MARGIN: float = 0.2
 ## Velocidad al caminar de los personajes, en casillas por segundo real a 1x
 ## (se multiplica por la velocidad del reloj; en pausa nadie se mueve).
 const CHARACTER_WALK_SPEED: float = 1.0
+## Con prisa (llega tarde, el candidato al que llaman a la entrevista) camina este tanto más rápido.
+const CHARACTER_HURRY_FACTOR: float = 2.0
 ## Una persona por casilla: quien encuentra ocupada la siguiente espera; tras
 ## CHARACTER_REPATH_WAIT segundos (a 1x) busca otro camino que esquive a los que están
 ## parados, y tras CHARACTER_PASS_WAIT pasa igual (para que dos de frente en un pasillo

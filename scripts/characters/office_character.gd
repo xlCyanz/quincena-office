@@ -56,6 +56,9 @@ var standing: bool = false:
 	set(value):
 		standing = value
 		queue_redraw()
+## Tiene prisa: camina GameConstants.CHARACTER_HURRY_FACTOR veces más rápido hasta llegar
+## adonde va (llega tarde, el candidato al que llaman). Si no, camina normal.
+var hurry: bool = false
 ## Posición en la cuadrícula; con decimales mientras camina entre dos casillas.
 var grid_position := Vector2.ZERO
 
@@ -135,6 +138,7 @@ func update_routine(expected: bool) -> void:
 			_set_activity(Activity.WALKING_OUT)
 			_on_destination_reached()
 			return
+		hurry = false
 		_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
 
 
@@ -184,7 +188,8 @@ func _process(delta: float) -> void:
 	if _path.is_empty():
 		return
 	var scaled_delta: float = GameClock.get_time_scale() * delta
-	var step: float = GameConstants.CHARACTER_WALK_SPEED * scaled_delta
+	var step: float = GameConstants.CHARACTER_WALK_SPEED * scaled_delta \
+		* (GameConstants.CHARACTER_HURRY_FACTOR if hurry else 1.0)
 	while step > 0.0 and not _path.is_empty():
 		var next: Vector2i = _path[0]
 		# Dentro del local, tras esperar mucho, pasa igual; afuera espera siempre (nadie
@@ -363,6 +368,7 @@ func _find_path(from: Vector2i, to: Vector2i, avoid: Array[Vector2i]) -> Array[V
 
 
 func _on_destination_reached() -> void:
+	hurry = false
 	match activity:
 		Activity.WALKING_TO_DESK:
 			_set_activity(Activity.SEATED)
