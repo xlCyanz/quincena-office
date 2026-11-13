@@ -165,3 +165,7 @@ signal rooms_unlocked
 ## estas estadísticas (Company.get_ipo_stats).
 @warning_ignore("unused_signal")
 signal went_public(stats: Dictionary)
+
+## Cambió una opción del jugador (hito 60, Settings).
+@warning_ignore("unused_signal")
+signal settings_changed(key: String)

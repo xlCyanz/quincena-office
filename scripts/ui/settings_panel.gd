@@ -1,6 +1,8 @@
-# Menú Ajustes mínimo (diseño, 12.3): guardar en una de las ranuras y salir al menú
-# principal. Sonido y opciones llegan en una fase siguiente. Se construye en código; su
-# botón va en la barra de menús (attach_button) y los botones avisan con señales.
+# Menú Ajustes (diseño, 12.3 y hito 60): tres pestañas, Guardar (en una ranura manual),
+# Cargar (el autoguardado o una ranura) y Opciones (las de Settings), y Salir al menú.
+# Cargar y salir piden confirmación: lo que no se guardó se pierde. El sonido llega en la
+# fase 8. Se construye en código; su botón va en la barra de menús (attach_button) y los
+# botones avisan con señales.
 class_name SettingsPanel
 extends CanvasLayer
 
@@ -8,17 +10,44 @@ extends CanvasLayer
 signal settings_mode_changed(active: bool)
 ## Se pidió guardar en una ranura (ver SaveManager).
 signal save_requested(slot: String)
-## Se pidió volver al menú principal.
+## Se pidió cargar una ranura (ya confirmado).
+signal load_requested(slot: String)
+## Se pidió volver al menú principal (ya confirmado).
 signal quit_requested
 
 const PANEL_WIDTH: float = 460.0
+## Ancho de los textos que se parten en líneas (sin ancho fijo calculan un alto enorme).
+const TEXT_WIDTH: float = PANEL_WIDTH - 40.0
+const TAB_SAVE: String = "save"
+const TAB_LOAD: String = "load"
+const TAB_OPTIONS: String = "options"
+const TAB_NAMES: Dictionary[String, String] = {TAB_SAVE: "Guardar", TAB_LOAD: "Cargar", TAB_OPTIONS: "Opciones"}
+## Opciones de sí o no, en orden, con su texto.
+const TOGGLES: Dictionary[String, String] = {
+	"fullscreen": "Pantalla completa",
+	"autosave": "Guardar solo al empezar cada día",
+	"pause_on_build": "Pausar al construir",
+	"pause_on_focus_loss": "Pausar cuando la ventana pierde el foco",
+}
 
 var _open_button: Button
 var _panel: PanelContainer
+var _tab_buttons: Dictionary[String, Button] = {}
+var _sections: Dictionary[String, VBoxContainer] = {}
+var _tab: String = TAB_SAVE
 var _slot_buttons: Dictionary[String, Button] = {}
+var _load_buttons: Dictionary[String, Button] = {}
+var _toggles: Dictionary[String, CheckBox] = {}
+var _speed_button: OptionButton
 var _status_label: Label
 var _quit_button: Button
 var _close_button: Button
+var _main_rows: VBoxContainer
+var _confirm_box: VBoxContainer
+var _confirm_label: Label
+var _confirm_button: Button
+var _cancel_button: Button
+var _pending: Callable
 
 
 func _ready() -> void:
@@ -34,38 +63,128 @@ func _ready() -> void:
 	_panel = Hud.make_panel()
 	_panel.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	root.add_child(_panel)
-	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 8)
-	_panel.add_child(rows)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 8)
+	_panel.add_child(outer)
 	var title := Label.new()
 	title.text = "Ajustes"
 	title.add_theme_font_size_override("font_size", 24)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rows.add_child(title)
-	var save_label := Label.new()
-	save_label.text = "Guardar en:"
-	rows.add_child(save_label)
+	outer.add_child(title)
+
+	_main_rows = VBoxContainer.new()
+	_main_rows.add_theme_constant_override("separation", 8)
+	outer.add_child(_main_rows)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	_main_rows.add_child(tabs)
+	for tab: String in TAB_NAMES:
+		var tab_button := Button.new()
+		tab_button.text = TAB_NAMES[tab]
+		tab_button.toggle_mode = true
+		tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab_button.pressed.connect(set_tab.bind(tab))
+		tabs.add_child(tab_button)
+		_tab_buttons[tab] = tab_button
+		var section := VBoxContainer.new()
+		section.add_theme_constant_override("separation", 6)
+		_main_rows.add_child(section)
+		_sections[tab] = section
+
 	for slot: String in SaveManager.get_manual_slots():
-		var button := Button.new()
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var button := _slot_button()
 		button.pressed.connect(func() -> void: save_requested.emit(slot))
-		rows.add_child(button)
+		_sections[TAB_SAVE].add_child(button)
 		_slot_buttons[slot] = button
+	var load_slots: Array[String] = [SaveManager.AUTOSAVE]
+	load_slots.append_array(SaveManager.get_manual_slots())
+	for slot: String in load_slots:
+		var button := _slot_button()
+		button.pressed.connect(_ask_load.bind(slot))
+		_sections[TAB_LOAD].add_child(button)
+		_load_buttons[slot] = button
+	_build_options(_sections[TAB_OPTIONS])
+
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rows.add_child(_status_label)
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status_label.custom_minimum_size = Vector2(TEXT_WIDTH, 0)
+	_main_rows.add_child(_status_label)
 	_quit_button = Button.new()
-	_quit_button.text = "Salir al menú (lo que no se guardó se pierde)"
-	_quit_button.pressed.connect(func() -> void: quit_requested.emit())
-	rows.add_child(_quit_button)
+	_quit_button.text = "Salir al menú"
+	_quit_button.pressed.connect(_ask_quit)
+	_main_rows.add_child(_quit_button)
 	_close_button = Button.new()
 	_close_button.text = "Cerrar"
 	_close_button.pressed.connect(func() -> void: set_open(false))
-	rows.add_child(_close_button)
-	_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+	_main_rows.add_child(_close_button)
+
+	_confirm_box = VBoxContainer.new()
+	_confirm_box.add_theme_constant_override("separation", 8)
+	_confirm_box.visible = false
+	outer.add_child(_confirm_box)
+	_confirm_label = Label.new()
+	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_confirm_label.custom_minimum_size = Vector2(TEXT_WIDTH, 0)
+	_confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_confirm_box.add_child(_confirm_label)
+	_confirm_button = Button.new()
+	_confirm_button.pressed.connect(_confirm)
+	_confirm_box.add_child(_confirm_button)
+	_cancel_button = Button.new()
+	_cancel_button.text = "Cancelar"
+	_cancel_button.pressed.connect(_cancel_confirm)
+	_confirm_box.add_child(_cancel_button)
+
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_panel.visible = false
+	EventBus.settings_changed.connect(func(_key: String) -> void: refresh_options())
+	set_tab(TAB_SAVE)
+
+
+# Al cambiar de pestaña o de pregunta cambia el alto: se vuelve a centrar con su tamaño
+# mínimo (después de que los contenedores lo recalculen).
+func _fit() -> void:
+	_panel.reset_size()
+	_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+
+
+func _queue_fit() -> void:
+	_fit()
+	_fit.call_deferred()
+
+
+func _slot_button() -> Button:
+	var button := Button.new()
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(0, 40)
+	return button
+
+
+func _build_options(section: VBoxContainer) -> void:
+	for key: String in TOGGLES:
+		var check := CheckBox.new()
+		check.text = TOGGLES[key]
+		check.custom_minimum_size = Vector2(0, 36)
+		check.toggled.connect(func(on: bool) -> void: Settings.set_value(key, on))
+		section.add_child(check)
+		_toggles[key] = check
+	var speed_row := HBoxContainer.new()
+	section.add_child(speed_row)
+	var speed_label := Label.new()
+	speed_label.text = "Velocidad al empezar una partida"
+	speed_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	speed_row.add_child(speed_label)
+	_speed_button = OptionButton.new()
+	for speed: float in GameConstants.CLOCK_SPEEDS:
+		_speed_button.add_item("%dx" % roundi(speed))
+	_speed_button.item_selected.connect(func(index: int) -> void: Settings.set_value("start_speed", index))
+	speed_row.add_child(_speed_button)
+	var reset := Button.new()
+	reset.text = "Valores por defecto"
+	reset.pressed.connect(Settings.reset_to_defaults)
+	section.add_child(reset)
 
 
 ## Pone el botón "Ajustes" en la barra de menús.
@@ -76,6 +195,8 @@ func attach_button(menu_bar: Container) -> void:
 func set_open(open: bool) -> void:
 	if open:
 		refresh_slots()
+		refresh_options()
+		_cancel_confirm()
 		_status_label.text = "El tiempo está en pausa."
 	_panel.visible = open
 	_open_button.disabled = open
@@ -86,26 +207,121 @@ func is_open() -> bool:
 	return _panel.visible
 
 
+## Muestra una pestaña (TAB_SAVE, TAB_LOAD o TAB_OPTIONS).
+func set_tab(tab: String) -> void:
+	_tab = tab
+	for name: String in _sections:
+		_sections[name].visible = name == tab
+		_tab_buttons[name].button_pressed = name == tab
+	_queue_fit()
+
+
+func get_tab() -> String:
+	return _tab
+
+
 ## Vuelve a leer qué hay en cada ranura.
 func refresh_slots() -> void:
 	for slot: String in _slot_buttons:
 		_slot_buttons[slot].text = SaveManager.describe_slot(slot)
+	for slot: String in _load_buttons:
+		_load_buttons[slot].text = SaveManager.describe_slot(slot)
+		_load_buttons[slot].disabled = not SaveManager.has_save(slot)
+
+
+## Pone los controles de Opciones como están las opciones (sin volver a guardarlas).
+func refresh_options() -> void:
+	if _speed_button == null:
+		return
+	for key: String in _toggles:
+		_toggles[key].set_pressed_no_signal(bool(Settings.get_value(key)))
+	_speed_button.select(int(Settings.get_value("start_speed")))
 
 
 func show_status(text: String) -> void:
 	_status_label.text = text
 
 
+func _ask_load(slot: String) -> void:
+	_ask("¿Cargar la %s? Lo que no se guardó de esta partida se pierde." % SaveManager.get_slot_name(slot).to_lower(),
+		"Cargar", func() -> void: load_requested.emit(slot))
+
+
+func _ask_quit() -> void:
+	_ask("¿Salir al menú? Lo que no se guardó se pierde.", "Salir al menú", func() -> void: quit_requested.emit())
+
+
+func _ask(text: String, confirm_text: String, action: Callable) -> void:
+	_pending = action
+	_confirm_label.text = text
+	_confirm_button.text = confirm_text
+	_main_rows.visible = false
+	_confirm_box.visible = true
+	_queue_fit()
+
+
+func _confirm() -> void:
+	var action: Callable = _pending
+	_cancel_confirm()
+	if action.is_valid():
+		action.call()
+
+
+func _cancel_confirm() -> void:
+	_pending = Callable()
+	_confirm_box.visible = false
+	_main_rows.visible = true
+	_queue_fit()
+
+
+## Indica si está preguntando antes de cargar o salir.
+func is_confirming() -> bool:
+	return _confirm_box.visible
+
+
+func get_confirm_text() -> String:
+	return _confirm_label.text
+
+
+## Rectángulo del panel en pantalla (para comprobar que cabe).
+func get_panel_rect() -> Rect2:
+	return _panel.get_global_rect()
+
+
 func get_open_button() -> Button:
 	return _open_button
+
+
+func get_tab_button(tab: String) -> Button:
+	return _tab_buttons[tab]
 
 
 func get_slot_button(slot: String) -> Button:
 	return _slot_buttons[slot]
 
 
+func get_load_button(slot: String) -> Button:
+	return _load_buttons[slot]
+
+
+func get_option_toggle(key: String) -> CheckBox:
+	return _toggles[key]
+
+
+func get_speed_button() -> OptionButton:
+	return _speed_button
+
+
 func get_quit_button() -> Button:
 	return _quit_button
+
+
+func get_confirm_button() -> Button:
+	return _confirm_button
+
+
+func get_cancel_button() -> Button:
+	return _cancel_button
 
 
 func get_close_button() -> Button:

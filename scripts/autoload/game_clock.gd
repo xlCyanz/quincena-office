@@ -148,12 +148,14 @@ func get_day_count() -> int:
 	return _day_count
 
 
-## Prepara el reloj de una partida nueva: día 1, mes 1, a la hora de entrada, a 1x.
+## Prepara el reloj de una partida nueva: día 1, mes 1, a la hora de entrada, a la velocidad
+## inicial de las opciones.
 func new_game() -> void:
 	_day_count = 0
 	_hour = GameConstants.START_HOUR
 	_seconds_into_hour = 0.0
-	speed_index = 0
+	# La velocidad con que empieza una partida nueva es una opción del jugador (hito 60).
+	speed_index = clampi(int(Settings.get_value("start_speed")), 0, GameConstants.CLOCK_SPEEDS.size() - 1)
 	is_paused = false
 
 

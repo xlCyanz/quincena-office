@@ -9,13 +9,13 @@ extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 59) y la empresa inicial.
+## Partes en el orden de los hitos (1 a 60) y la empresa inicial.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "starting_company", "dev_tools",
 ]
 ## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
 ## oficinas sin baño y corren con Staff.bathrooms_enabled en false.
@@ -40,6 +40,9 @@ func _ready() -> void:
 	# Las partes esperan una partida nueva con el CEO solo y guardan en otra carpeta.
 	SaveManager.save_dir = "user://test_saves"
 	SaveManager.start_with_demo = false
+	# Y con las opciones por defecto en otro archivo, no las del jugador (hito 60).
+	Settings.path = "user://test_settings.cfg"
+	Settings.reset_to_defaults()
 	var only: Array[String] = _only_suites()
 	var failed: Array[String] = []
 	var total_checks: int = 0

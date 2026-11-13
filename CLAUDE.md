@@ -77,7 +77,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`Staff.hire_directly`, `Projects.create_offer`). `test_starting_company` y `test_dev_tools` lo ponen en true un momento.
   Las partidas se guardan en `user://saves/` (`autosave.json` y `slot_1.json` … `slot_5.json`); las pruebas
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
-- Autoloads (en este orden): `EventBus`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `Events`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
+- Autoloads (en este orden): `EventBus`, `Settings`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`, `Bank`, `Company`, `Events`, `SaveManager`, y para desarrollo `Panku` y `DevTools` (ver Herramientas de desarrollo).
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
   en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
@@ -381,6 +381,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `new_game` e `import_state`) y `Staff` quién está presente y quién almuerza dentro (`get_present_keys`, `_present_cache`, `_lunch_cache`;
   se borran con la hora, `staff_changed`, `office_changed` y tras sortear las tardanzas). Las cachés solo se usan mientras el reloj procesa
   una hora (`GameClock.in_hour_tick`); fuera, por ejemplo en pruebas que cambian cosas a mano, se calcula de nuevo.
+- Opciones (`Settings`, hito 60; `data/settings.json`): `user://settings.cfg` (`ConfigFile`, sección `options`), aparte de las partidas;
+  `get_value`, `set_value` (valida tipo y rango, aplica, guarda y emite `EventBus.settings_changed`), `load_settings` (lo que falta o no sirve
+  vuelve a su valor por defecto) y `reset_to_defaults`. Opciones: `fullscreen` (no hace nada sin ventana), `autosave` (`SaveManager`),
+  `start_speed` (`GameClock.new_game`), `pause_on_build` y `pause_on_focus_loss` (`main.gd`, `on_focus_lost`). `test_all` usa
+  `Settings.path = "user://test_settings.cfg"` con los valores por defecto. Ajustes (`SettingsPanel`) tiene las pestañas Guardar, Cargar y
+  Opciones (`set_tab`); cargar y salir piden confirmación (`is_confirming`) y emiten `load_requested`/`quit_requested`; `main.gd` carga la
+  ranura y vuelve a abrir la escena de juego.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -388,7 +395,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/` y la suma a `test_all`.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39), en la 19.3 (fase 5, hitos 40–49) y en la 20.3 (fase 6, hitos 50–59; el arte y el sonido pasan a la fase 7).
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39), en la 19.3 (fase 5, hitos 40–49) en la 20.3 (fase 6, hitos 50–59) y en la 21.3 (fase 7 de pulido, hitos 60–67; solo escritorio, sin Android ni iOS; el arte y el sonido pasan a la fase 8).
 
 ## Estado actual
 
@@ -454,3 +461,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 57 | Iconos de estado y avisos | ✅ Completado (un icono por empleado: sin puesto, cansado bajo 30, molesto bajo 30 o con aviso de renuncia, estresado desde 70 y sin tarea, en ese orden; se recalcula al cambiar la hora o el personal, no por cuadro; avisos con destino en celeste con «›»: un clic abre la ficha, Proyectos en Contratos o Productos, Banco, Empresa, Personal o centra la cámara en la habitación) |
 | 58 | Inversionista | ✅ Completado (evento desde Pequeña empresa con valor positivo e ingresos del mes pasado desde $5,000; ofrece 10–25 % del valor por una parte de los ingresos de contratos y productos durante 12–24 meses, calculada para devolverle 1.6 veces, entre 5 y 40 %; aceptar da el efectivo como «Inversión», aparte de los ingresos; cada día 1 «Pago al inversionista» aunque deje saldo negativo; el valor descuenta lo que falta estimado con el mes pasado; uno a la vez; rechazar no cambia nada) |
 | 59 | Comprobación de la fase | ✅ Completado (la empresa de la fase 5 con rasgos, baños, almuerzo, pausas, candidatos e inversionista llega a la bolsa sin quebrar en ~16 meses desde Mediana empresa; baños y Sala de descanso (~$17,000) suman ~40 % de puntos y se pagan en días; los rasgos suman ~6 %; sin cambios de datos; consultas de muebles y presencia guardadas por hora para que la prueba dure menos de un minuto) |
+| 60 | Opciones y Ajustes | ✅ Completado (autoload `Settings` con `user://settings.cfg`: pantalla completa, autoguardado, velocidad inicial, pausa al construir y al perder el foco; un valor roto vuelve al de `data/settings.json`; Ajustes con pestañas Guardar, Cargar y Opciones; cargar y salir piden confirmación; la escala de la interfaz queda para el hito 65) |

@@ -100,6 +100,12 @@ Este documento reúne las decisiones de diseño tomadas hasta ahora, en trece se
   - [20.3 Hitos](#203-hitos)
   - [20.4 Orden y dependencias](#204-orden-y-dependencias)
   - [20.5 Riesgos de esta fase](#205-riesgos-de-esta-fase)
+* [21. Plan de desarrollo: fase 7](#21-plan-de-desarrollo-fase-7)
+  - [21.1 Alcance](#211-alcance)
+  - [21.2 Decisiones técnicas](#212-decisiones-técnicas)
+  - [21.3 Hitos](#213-hitos)
+  - [21.4 Orden y dependencias](#214-orden-y-dependencias)
+  - [21.5 Riesgos de esta fase](#215-riesgos-de-esta-fase)
 
 ## 1. Visión general
 
@@ -110,7 +116,7 @@ El jugador es el CEO de una empresa de tecnología y software: contrata empleado
 | Nombre | Quincena Office |
 | Género | Gestión de oficina en pixel art |
 | Vista | Isométrica |
-| Plataforma | PC primero; móvil en el futuro |
+| Plataforma | Solo escritorio (macOS, Windows y Linux) |
 | Motor | Godot 4, desarrollado con Claude Code |
 | Arte | Muebles y sprites generados por Claude Code mediante MCP con una herramienta de arte |
 | Tiempo | Reloj de 24 horas con pausa y velocidades |
@@ -491,7 +497,7 @@ La oficina es el fondo a pantalla completa y toda la interfaz flota superpuesta 
 ### 12.1 Principios
 
 - **Oficina de fondo:** no hay barras de borde a borde. La oficina se ve entre los paneles y hasta las esquinas.
-- **Todo con ratón:** ninguna acción depende del teclado, para facilitar el paso a móvil. Los atajos de teclado son un extra.
+- **Todo con ratón:** ninguna acción depende del teclado. Los atajos de teclado son un extra.
 - **Menús superpuestos:** al abrir un menú, su panel aparece encima de la oficina sin taparla entera.
 - **Clic para inspeccionar:** un clic en un empleado, un mueble o una habitación abre su ficha.
 - **Cámara:** se arrastra para mover y tiene zoom en niveles fijos. Se mueve libre por todo el solar (el mapa fijo de 40×40 con la oficina en el centro) y se detiene en su borde. Al empezar encuadra la oficina completa; el botón «Ver oficina» (o la tecla F) la vuelve a encuadrar.
@@ -648,7 +654,7 @@ Un puesto básico completo (escritorio, silla y computadora) cuesta $710. Los ob
 Ideas aprobadas que no entran en la primera versión.
 
 - **Inversionista:** un evento donde un inversionista ofrece efectivo inmediato a cambio de un porcentaje de los ingresos futuros de la empresa. Entra en la fase 6 (hito 58).
-- **Versión móvil:** el juego sale primero en PC.
+- **Versión móvil:** descartada; el juego sale solo en escritorio.
 - **Otros idiomas:** la primera versión sale solo en español.
 
 ## 15. Plan de desarrollo: fase 1
@@ -994,13 +1000,13 @@ La fase 5 agrega lo que hace a la empresa algo más que un taller de contratos: 
 
 ## 20. Plan de desarrollo: fase 6
 
-La fase 6 llena de vida la oficina: los rasgos de cada empleado cambian cómo trabaja, los baños y la Sala de descanso pasan a importar, llegan los muebles que faltaban del catálogo, los candidatos dependen de la fama y el ambiente de la empresa, la interfaz avisa con iconos qué le pasa a cada uno y aparece el inversionista. Es la última fase de mecánicas: el arte final y el sonido pasan a la fase 7. Se construye en diez hitos, numerados después de los de la fase 5.
+La fase 6 llena de vida la oficina: los rasgos de cada empleado cambian cómo trabaja, los baños y la Sala de descanso pasan a importar, llegan los muebles que faltaban del catálogo, los candidatos dependen de la fama y el ambiente de la empresa, la interfaz avisa con iconos qué le pasa a cada uno y aparece el inversionista. Es la última fase de mecánicas: el pulido pasa a la fase 7 y el arte final y el sonido a la fase 8. Se construye en diez hitos, numerados después de los de la fase 5.
 
 ### 20.1 Alcance
 
 | Entra en la fase 6 | Queda para fases siguientes |
 | --- | --- |
-| Rasgos con efecto en el trabajo, el ánimo y la carrera (5) | Arte final, animaciones y sonido (fase 7) |
+| Rasgos con efecto en el trabajo, el ánimo y la carrera (5) | Arte final, animaciones y sonido (fase 8) |
 | Historial y puntualidad en la ficha (5 y 12.4) | Versión móvil y otros idiomas (14) |
 | Baños con capacidad (2.1 y 11.2) | Baños por sexo y necesidades individuales |
 | Almuerzo en la oficina y pausas en la Sala de descanso (2.1 y 11.2) | |
@@ -1066,3 +1072,58 @@ La fase 6 llena de vida la oficina: los rasgos de cada empleado cambian cómo tr
 - **Personajes:** almorzar dentro y tomar pausas cambia adónde caminan; los caminos deben seguir funcionando con la Sala de descanso llena.
 - **Ventanas:** cambian la regla de que el contorno del local no se toca; hay que cuidar el terreno nuevo y el embargo.
 - **Partidas viejas:** cada sistema nuevo debe cargar sin error un guardado de la fase 5.
+
+## 21. Plan de desarrollo: fase 7
+
+La fase 7 pule el juego para que alguien que nunca lo vio pueda jugarlo de principio a fin sin ayuda: menús completos, opciones que se recuerdan, un tutorial guiado con ayuda en cada menú, interfaz escalable y exportaciones listas para escritorio. El juego sale solo en escritorio (macOS, Windows y Linux): no hay versión para Android ni iOS. No agrega mecánicas ni cambia el balance. El arte final, las animaciones y el sonido quedan para la fase 8. Se construye en ocho hitos, numerados después de los de la fase 6.
+
+### 21.1 Alcance
+
+| Entra en la fase 7 | Queda para fases siguientes |
+| --- | --- |
+| Ajustes completos que se guardan entre partidas (12.3) | Arte final, animaciones y sonido (fase 8) |
+| Menú principal completo: continuar, nueva partida, cargar, ajustes, salir | Versiones para Android e iOS y controles táctiles (no se harán) |
+| Menú de pausa y confirmaciones al salir o pisar una partida | Otros idiomas (14) |
+| Tutorial guiado de la primera partida y ayuda en cada menú | Logros, estadísticas en línea y nube |
+| Interfaz escalable (12.1) | Mecánicas nuevas o cambios de balance |
+| Exportación de escritorio (macOS, Windows y Linux) | |
+
+### 21.2 Decisiones técnicas
+
+- **Opciones:** un autoload nuevo `Settings` guarda las opciones del jugador en `user://settings.cfg` (`ConfigFile`), aparte de las partidas: pantalla completa, escala de la interfaz, autoguardado, velocidad inicial del reloj, pausa al abrir Construir y pausa automática al perder el foco. Se aplican al iniciar y al cambiarlas; un valor que falta o no sirve vuelve a su valor por defecto (en `data/settings.json`). Las pruebas usan otro archivo, como con `SaveManager.save_dir`.
+- **Ajustes en la partida:** el panel de Ajustes suma Cargar (con el resumen de cada ranura) y la sección Opciones; cargar o salir sin guardar pide confirmación. El sonido aparece en la fase 8.
+- **Menú principal:** Continuar carga la partida más reciente (autoguardado o ranura); Nueva partida avisa si va a reemplazar el autoguardado; Ajustes abre las mismas opciones; Salir cierra el juego.
+- **Pausa:** el botón Pausa del reloj sigue igual; Esc abre un menú de pausa con Seguir, Guardar, Cargar, Ajustes y Salir al menú, y cierra primero el panel que esté abierto.
+- **Tutorial:** una lista de pasos en `data/tutorial.json` (texto, qué resaltar y la condición que lo da por cumplido, leída del estado de los sistemas como los objetivos). Arranca en la primera partida nueva, se puede saltar y retomar desde Ajustes, y se guarda en la partida. Resalta el botón o la zona de la oficina con un marco y una flecha; no bloquea el resto de la interfaz.
+- **Ayuda en los menús:** cada panel izquierdo y el modo construcción tienen un botón «?» que muestra un texto corto de `data/help.json`. Los botones sin texto llevan una descripción emergente.
+- **Interfaz escalable:** la escala (100, 125 o 150 %) cambia `content_scale_factor`; los paneles se acomodan sin taparse a 1280×720 con 150 %. Todo botón mide al menos 44 px de alto para que el clic sea cómodo; nada depende de pasar el ratón por encima.
+- **Exportación:** `export_presets.cfg` con macOS, Windows y Linux; todos excluyen `addons/panku_console/*` y `scripts/debug/*` (ver CLAUDE.md). Una prueba revisa que la versión de lanzamiento arranque sin las herramientas de desarrollo.
+- **Datos fuera del código:** opciones por defecto en `data/settings.json`, pasos del tutorial en `data/tutorial.json` y ayudas en `data/help.json`.
+- **Guardado:** una partida de la fase 6 carga sin tutorial (como si ya lo hubiera terminado).
+
+### 21.3 Hitos
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 60. Opciones y Ajustes | Autoload `Settings` con `user://settings.cfg`; Ajustes con Cargar, Opciones y confirmaciones | Una opción cambiada se aplica y sigue igual al reiniciar; un archivo roto vuelve a los valores por defecto; cargar desde la partida pide confirmación y carga la ranura |
+| 61. Menú principal | Continuar, Nueva partida con aviso, Cargar, Ajustes y Salir | Continuar abre la partida más reciente; sin partidas no aparece; nueva partida avisa si hay autoguardado |
+| 62. Menú de pausa | Esc abre la pausa con Seguir, Guardar, Cargar, Ajustes y Salir; cierra primero el panel abierto | Con un panel abierto Esc lo cierra; sin panel abre la pausa y el reloj se detiene; Seguir vuelve a como estaba |
+| 63. Tutorial: primeros pasos | Motor de pasos con resaltado y flecha; pasos de cámara, Construir, puestos y la primera contratación | Una partida nueva muestra el primer paso; al cumplir la condición pasa al siguiente; saltarlo lo cierra y se guarda |
+| 64. Tutorial: el negocio y ayuda | Pasos de contratos, nómina y Banco; botón «?» en cada menú con su texto | El tutorial llega hasta la primera entrega; cada menú abre su ayuda; una partida vieja carga sin tutorial |
+| 65. Interfaz escalable | Escala de 100/125/150 %, botones de 44 px, descripciones emergentes | A 150 % en 1280×720 ningún panel se sale de la pantalla ni tapa la barra; todos los botones miden al menos 44 px |
+| 66. Exportación de escritorio | Presets de macOS, Windows y Linux sin herramientas de desarrollo; icono y nombre | La exportación de prueba arranca, llega al menú principal y no carga Panku ni DevTools |
+| 67. Comprobación de la fase | Recorrido completo de una partida nueva solo con el ratón siguiendo el tutorial; revisión de tiempos | Se juega del menú a la primera entrega sin teclado; todas las pruebas anteriores siguen pasando y ninguna larga pasa de un minuto |
+
+### 21.4 Orden y dependencias
+
+- **Opciones primero:** el 60 antes del 61 y el 62, que reutilizan el panel de Ajustes y las confirmaciones.
+- **Tutorial:** el 63 antes del 64; los dos después del 62 para que el tutorial pueda pausar y retomar.
+- **Interfaz:** el 65 antes del 66, para exportar con la escala ya resuelta.
+- **Cierre:** el 67 al final.
+
+### 21.5 Riesgos de esta fase
+
+- **Pruebas sin ventana:** la escala, la pantalla completa y el foco no existen en `--headless`; las pruebas comprueban el valor aplicado, no la ventana.
+- **Tutorial frágil:** si los pasos dependen de nombres de nodos, cambiar la interfaz lo rompe; cada panel expone sus botones con funciones (`get_…_button`) como hoy.
+- **Exportación:** necesita las plantillas de exportación de Godot; si no están, el hito deja el preset y la prueba lo reporta en vez de fallar en silencio.
+- **Partidas viejas:** el estado del tutorial se importa tolerando su falta.

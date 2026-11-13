@@ -182,7 +182,7 @@ func take_scene_state() -> Dictionary:
 
 
 func _on_day_changed(_day: int, _month: int) -> void:
-	if scene_state_provider.is_valid() and not _game_over:
+	if scene_state_provider.is_valid() and not _game_over and bool(Settings.get_value("autosave")):
 		save_game(AUTOSAVE)
 
 

@@ -1,0 +1,10 @@
+{
+	"_comentario": "Hito 60: opciones del jugador y su valor por defecto. Settings las guarda en user://settings.cfg, aparte de las partidas; un valor que falta o no sirve (otro tipo o fuera de rango) vuelve al de aquí. fullscreen = pantalla completa; autosave = guardar solo al empezar cada día; start_speed = índice de GameConstants.CLOCK_SPEEDS con que empieza una partida nueva; pause_on_build = el modo construcción pausa el tiempo; pause_on_focus_loss = pausar cuando la ventana pierde el foco.",
+	"defaults": {
+		"fullscreen": false,
+		"autosave": true,
+		"start_speed": 0,
+		"pause_on_build": true,
+		"pause_on_focus_loss": true
+	}
+}

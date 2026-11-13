@@ -29,6 +29,8 @@ var pathfinder := OfficePathfinder.new()
 
 # Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
 var _was_paused_before_menu: bool = false
+# El modo construcción pausó el tiempo al entrar (opción pause_on_build, hito 60).
+var _build_paused: bool = false
 var _was_paused_before_emergency: bool = false
 var _was_paused_before_ipo: bool = false
 # Pantalla de cierre al salir a bolsa (hito 48); se arma en código.
@@ -114,6 +116,7 @@ func _ready() -> void:
 	_settings_panel.settings_mode_changed.connect(_on_settings_mode_changed)
 	_settings_panel.save_requested.connect(_on_save_requested)
 	_settings_panel.quit_requested.connect(_on_quit_requested)
+	_settings_panel.load_requested.connect(_on_load_requested)
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.staff_changed.connect(update_status_icons)
@@ -421,7 +424,7 @@ func _close_side_panels(keep: CanvasLayer) -> void:
 		_company_panel.set_open(false)
 
 
-# El modo construcción pausa el tiempo y, al salir, lo deja como estaba.
+# El modo construcción pausa el tiempo (si la opción lo pide) y, al salir, lo deja como estaba.
 func _on_build_mode_changed(active: bool) -> void:
 	if active:
 		_close_side_panels(null)
@@ -435,7 +438,12 @@ func _on_build_mode_changed(active: bool) -> void:
 		if active and character.visible:
 			occupied.append(character.get_cell())
 	_build_controller.builder.occupied_cells = occupied
-	_set_menu_pause(active)
+	# Pausar al construir es una opción (hito 60); se recuerda si pausó al entrar para
+	# devolver el tiempo como estaba al salir.
+	if active:
+		_build_paused = bool(Settings.get_value("pause_on_build"))
+	if _build_paused:
+		_set_menu_pause(active)
 
 
 func _on_settings_mode_changed(active: bool) -> void:
@@ -516,6 +524,31 @@ func _on_emergency_dialog_closed() -> void:
 
 func _on_quit_requested() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE_PATH)
+
+
+# Cargar desde Ajustes (hito 60, ya confirmado): se lee la ranura y se vuelve a abrir la
+# escena de juego con ella; si no sirve, la partida sigue como estaba.
+func _on_load_requested(slot: String) -> void:
+	if SaveManager.load_game(slot):
+		get_tree().change_scene_to_file(scene_file_path)
+	else:
+		_settings_panel.show_status("No se pudo cargar la %s." % SaveManager.get_slot_name(slot).to_lower())
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		on_focus_lost()
+
+
+## La ventana perdió el foco: si la opción lo pide, se pausa (hito 60). Al volver sigue en
+## pausa hasta que el jugador la quite.
+func on_focus_lost() -> void:
+	if not bool(Settings.get_value("pause_on_focus_loss")):
+		return
+	if _is_menu_open():
+		# Con un menú que pausa abierto, al cerrarlo no debe volver a correr solo.
+		_was_paused_before_menu = true
+	GameClock.set_paused(true)
 
 
 ## Indica si no queda nadie en la oficina (todos fuera, ninguno llegando ni saliendo).
