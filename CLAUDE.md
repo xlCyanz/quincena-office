@@ -88,6 +88,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
 - Un puesto de trabajo (`Workstations`) es una silla delante del frente de un escritorio con computadora, ambos dentro
   de un Área de trabajo que funciona; cada escritorio sirve a una sola silla. Sus muebles no se venden ni giran mientras está ocupado.
+- Tiempo: 1 hora de juego = `GameConstants.SECONDS_PER_GAME_HOUR` (60 s reales a 1x; hasta el hito 69 eran 10 s). Las pruebas que
+  esperan con topes en segundos (`test_ceo`, `test_workday`) los escalan por `SECONDS_PER_GAME_HOUR / 10`.
 - Jornada: `Staff.is_expected(key, día, hora)` dice quién debe estar en la oficina; `main.gd` se lo pasa cada hora a los
   personajes (`OfficeCharacter`, base de `Ceo` y `Employee`). Cada empleado tiene el turno de su equipo o, sin equipo, el horario
   de su cargo (`data/staff.json`); `WorkSchedule` admite turnos que cruzan la medianoche y cada uno almuerza a la 4.ª hora de su jornada. El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el

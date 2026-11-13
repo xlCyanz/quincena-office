@@ -20,7 +20,7 @@ const STARTING_CAPITAL: int = 20000
 const MAINTENANCE_PER_M2: int = 5
 
 ## Segundos reales que dura una hora de juego a velocidad 1x.
-const SECONDS_PER_GAME_HOUR: float = 10.0
+const SECONDS_PER_GAME_HOUR: float = 60.0
 
 ## Horas que tiene un día de juego (reloj de 24 horas).
 const HOURS_PER_DAY: int = 24

@@ -73,6 +73,8 @@ func _expect(condition: bool, message: String) -> void:
 
 # Avanza el reloj y al CEO fotograma a fotograma hasta que se cumpla la condición.
 func _walk_until(condition: Callable, max_seconds: float, label: String) -> void:
+	# Los topes están pensados con horas de 10 s reales; con horas más largas crecen igual.
+	max_seconds *= GameConstants.SECONDS_PER_GAME_HOUR / 10.0
 	var lot: Rect2i = OfficeState.lot_rect
 	var elapsed: float = 0.0
 	var previous_cell: Vector2i = _ceo.get_cell()

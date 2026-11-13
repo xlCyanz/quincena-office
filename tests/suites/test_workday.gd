@@ -137,6 +137,8 @@ func _character(employee: Dictionary) -> Employee:
 # Avanza el reloj y a todos los personajes fotograma a fotograma hasta que se cumpla la
 # condición, comprobando que nadie atraviese muebles ni paredes.
 func _walk_until(condition: Callable, max_seconds: float, label: String) -> void:
+	# Los topes están pensados con horas de 10 s reales; con horas más largas crecen igual.
+	max_seconds *= GameConstants.SECONDS_PER_GAME_HOUR / 10.0
 	var elapsed: float = 0.0
 	var blocked: Array[Vector2i] = OfficeState.get_furniture_cells()
 	var previous: Dictionary[OfficeCharacter, Vector2i] = {}

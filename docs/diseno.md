@@ -269,7 +269,7 @@ Los horarios se asignan por equipo o por empleado, sobre un reloj de 24 horas.
 
 ### 6.1 Reloj y calendario
 
-Un día de juego dura 4 minutos reales a velocidad normal: cada hora del reloj son 10 segundos.
+Un día de juego dura 24 minutos reales a velocidad normal: cada hora del reloj es 1 minuto real (antes 10 segundos; cambiado después del hito 69). Una quincena dura 6 horas reales a 1x y 1 h 30 min a 4x; con la oficina vacía el reloj salta a la próxima llegada.
 
 | Elemento | Valor |
 | --- | --- |
