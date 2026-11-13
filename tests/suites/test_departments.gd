@@ -332,8 +332,8 @@ func _check_ui() -> void:
 	_expect(delegate != null and not delegate.disabled, "con ejecutivo de Administración aparece Delegar")
 	delegate.pressed.emit()
 	await get_tree().process_frame
-	_expect(Staff.interview.get("by", "") == Staff.employee_key(executive["id"]), "Delegar inicia la entrevista del ejecutivo")
-	_expect(staff_panel.get_list_text().contains("En entrevista con %s" % executive["name"]), "la lista dice quién entrevista")
+	_expect(Staff.get_appointment(candidate["id"]).get("by", "") == Staff.employee_key(executive["id"]), "Delegar cita la entrevista con el ejecutivo")
+	_expect(staff_panel.get_list_text().contains("con %s." % executive["name"]), "la lista dice quién entrevista: %s" % staff_panel.get_list_text())
 	staff_panel.set_open(false)
 	card.open_employee(executive["id"])
 	await get_tree().process_frame

@@ -151,6 +151,10 @@ const NO_CLOSET_MESSAGE: String = "No hay ningún armario de limpieza libre: hac
 var vacancies: Array[Dictionary] = []
 var employees: Array[Dictionary] = []
 var interview: Dictionary = {}
+## Entrevistas citadas (pedido después del hito 69): {"candidate_id", "by", "at"} con at en
+## minutos absolutos (get_absolute_minute), ordenadas por hora. El candidato llega antes,
+## espera y a esa hora empieza la entrevista si quien la hace está en la oficina.
+var appointments: Array[Dictionary] = []
 ## El CEO está trabajando (en la oficina o almorzando) hasta que el jugador lo manda a casa.
 var ceo_at_work: bool = true
 ## Día (GameClock.get_day_count) del último despido; -1000 si no hubo.
@@ -233,6 +237,7 @@ func new_game() -> void:
 	vacancies.clear()
 	employees.clear()
 	interview = {}
+	appointments.clear()
 	ceo_at_work = true
 	last_firing_day = NO_FIRING
 	teams.clear()
@@ -350,13 +355,162 @@ func start_interview(candidate_id: int, by_executive: bool = false) -> Dictionar
 	var problem: String = interview_problem(candidate_id, by_executive)
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
-	var by: String = "ceo" if not by_executive else employee_key(get_interviewer()["id"])
+	var by: String = _interviewer_key(by_executive)
+	_begin_interview(candidate_id, by)
+	return {"ok": true, "message": "%s entrevista a %s hasta las %s." % [_interviewer_name(by),
+		get_candidate(candidate_id)["name"], format_clock_minute(int(interview["ends_at"]))]}
+
+
+## Cita la entrevista de un candidato para el próximo día en que trabaja quien la hace (el
+## CEO o, con by_executive, el ejecutivo de Administración), a su hora de entrada; si ese
+## día ya hay citas, en el siguiente hueco de interview_minutes. Devuelve {"ok", "message"}.
+func schedule_interview(candidate_id: int, by_executive: bool = false) -> Dictionary:
+	var problem: String = appointment_problem(candidate_id, by_executive)
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	var by: String = _interviewer_key(by_executive)
+	var at: int = _next_appointment_slot(by)
+	appointments.append({"candidate_id": candidate_id, "by": by, "at": at})
+	appointments.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["at"]) < int(b["at"]))
+	EventBus.staff_changed.emit()
+	return {"ok": true, "message": "%s entrevistará a %s %s." % [_interviewer_name(by),
+		get_candidate(candidate_id)["name"], describe_appointment_time(at)]}
+
+
+## Por qué no se puede citar ahora a un candidato ("" si se puede).
+func appointment_problem(candidate_id: int, by_executive: bool = false) -> String:
+	var candidate: Dictionary = get_candidate(candidate_id)
+	if candidate.is_empty():
+		return "Ese candidato ya no está."
+	if bool(candidate["interviewed"]):
+		return "Ya lo entrevistaste."
+	if int(interview.get("candidate_id", -1)) == candidate_id:
+		return "Ya está en la entrevista."
+	if not get_appointment(candidate_id).is_empty():
+		return "Ya tiene entrevista citada."
+	if by_executive and get_interviewer().is_empty():
+		return "Hace falta un ejecutivo de %s para delegar las entrevistas." % StaffCatalog.get_department_name(
+			String(StaffCatalog.get_departments("interviews_department")))
+	var by: String = _interviewer_key(by_executive)
+	if RoomRules.counts_enabled and get_guest_chair(by).is_empty():
+		return "%s necesita una silla de visita en su oficina para entrevistar." % _interviewer_name(by)
+	if _next_appointment_slot(by) < 0:
+		return "%s no tiene un hueco para entrevistar en los próximos días." % _interviewer_name(by)
+	return ""
+
+
+## La cita de un candidato, o vacío si no tiene.
+func get_appointment(candidate_id: int) -> Dictionary:
+	for appointment: Dictionary in appointments:
+		if int(appointment["candidate_id"]) == candidate_id:
+			return appointment
+	return {}
+
+
+## Minuto absoluto en que el candidato de una cita llega a la oficina: entre
+## appointment_early_max y appointment_early_min minutos antes, fijo por candidato.
+func get_appointment_arrival(appointment: Dictionary) -> int:
+	var earliest: int = int(StaffCatalog.get_hiring("appointment_early_max"))
+	var latest: int = int(StaffCatalog.get_hiring("appointment_early_min"))
+	var early: int = latest + posmod(hash([_rng.seed, int(appointment["candidate_id"]), "appointment"]), earliest - latest + 1)
+	return int(appointment["at"]) - early
+
+
+## «mañana a las 08:00», «hoy a las 08:30» o «el jue a las 08:00».
+func describe_appointment_time(at: int) -> String:
+	@warning_ignore("integer_division")
+	var days: int = at / (60 * GameConstants.HOURS_PER_DAY) - _absolute_hour() / GameConstants.HOURS_PER_DAY
+	var day: String = "hoy" if days == 0 else ("mañana" if days == 1 else "el " + WorkSchedule.DAY_NAMES[
+		posmod(GameClock.get_weekday() + days, GameConstants.DAYS_PER_WEEK)])
+	return "%s a las %s" % [day, format_clock_minute(at)]
+
+
+func _interviewer_key(by_executive: bool) -> String:
+	if not by_executive:
+		return "ceo"
+	var interviewer: Dictionary = get_interviewer()
+	return "" if interviewer.is_empty() else employee_key(interviewer["id"])
+
+
+# Primer hueco libre para una entrevista de quien la hace, desde mañana: su hora de entrada
+# del primer día que trabaja (el CEO, su hora de llegada) o los siguientes huecos de
+# interview_minutes de esa jornada sin cruzar el almuerzo ni pisar otra cita. -1 si no hay
+# en appointment_max_days días.
+func _next_appointment_slot(by: String) -> int:
+	var minutes: int = int(StaffCatalog.get_hiring("interview_minutes"))
+	var hours_per_day: int = GameConstants.HOURS_PER_DAY
+	var today_start: int = (_absolute_hour() - GameClock.get_hour()) * 60
+	var schedule: WorkSchedule = null
+	if by != "ceo":
+		var employee: Dictionary = get_employee_by_key(by)
+		if employee.is_empty():
+			return -1
+		schedule = get_schedule(employee)
+	for offset: int in range(1, int(StaffCatalog.get_hiring("appointment_max_days")) + 1):
+		var weekday: int = posmod(GameClock.get_weekday() + offset, GameConstants.DAYS_PER_WEEK)
+		var start_hour: int
+		if by == "ceo":
+			if not StaffCatalog.get_ceo_arrival_days().has(weekday):
+				continue
+			start_hour = StaffCatalog.get_ceo_arrival_hour()
+		else:
+			if not schedule.days.has(weekday):
+				continue
+			start_hour = schedule.start_hour
+		var day_start: int = today_start + offset * hours_per_day * 60
+		var slot: int = day_start + start_hour * 60
+		# Hasta el almuerzo de esa jornada (la mitad de arriba de la jornada no hace falta).
+		var lunch: int = day_start + (start_hour + WorkSchedule.get_lunch_offset()) * 60
+		while slot + minutes <= lunch:
+			if not _slot_taken(slot, minutes):
+				return slot
+			slot += minutes
+	return -1
+
+
+func _slot_taken(slot: int, minutes: int) -> bool:
+	for appointment: Dictionary in appointments:
+		var at: int = int(appointment["at"])
+		if slot < at + minutes and at < slot + minutes:
+			return true
+	return false
+
+
+# A la hora de cada cita empieza la entrevista si quien la hace está en la oficina y no
+# hay otra en curso; si pasan appointment_grace_minutes sin que esté, se cancela con aviso.
+func _check_appointments() -> void:
+	if appointments.is_empty():
+		return
+	var now: int = get_absolute_minute()
+	var changed: bool = false
+	for appointment: Dictionary in appointments.duplicate():
+		if now < int(appointment["at"]):
+			break
+		var by: String = String(appointment["by"])
+		var candidate: Dictionary = get_candidate(int(appointment["candidate_id"]))
+		var present: bool = (by == "ceo" and ceo_at_work and is_expected(by, GameClock.get_weekday(), GameClock.get_hour())) \
+			or (by != "ceo" and is_expected(by, GameClock.get_weekday(), GameClock.get_hour()))
+		if candidate.is_empty() or (by != "ceo" and get_employee_by_key(by).is_empty()):
+			appointments.erase(appointment)
+			changed = true
+		elif present and interview.is_empty() and (not RoomRules.counts_enabled or not get_guest_chair(by).is_empty()):
+			appointments.erase(appointment)
+			_begin_interview(int(appointment["candidate_id"]), by)
+			changed = true
+		elif now >= int(appointment["at"]) + int(StaffCatalog.get_hiring("appointment_grace_minutes")):
+			appointments.erase(appointment)
+			changed = true
+			EventBus.send_notice(EventBus.target_menu("staff"),
+				"%s no pudo entrevistar a %s a la hora citada: vuelve a citarlo." % [_interviewer_name(by), candidate["name"]])
+	if changed:
+		EventBus.staff_changed.emit()
+
+
+func _begin_interview(candidate_id: int, by: String) -> void:
 	var now: int = get_absolute_minute()
 	interview = {"candidate_id": candidate_id, "starts_at": now,
 		"ends_at": now + int(StaffCatalog.get_hiring("interview_minutes")), "by": by}
 	EventBus.staff_changed.emit()
-	return {"ok": true, "message": "%s entrevista a %s hasta las %s." % [_interviewer_name(by),
-		get_candidate(candidate_id)["name"], format_clock_minute(int(interview["ends_at"]))]}
 
 
 ## Minutos desde el inicio de la partida (hora absoluta × 60 + minuto del reloj).
@@ -380,6 +534,8 @@ func check_interview() -> void:
 func _process(_delta: float) -> void:
 	if not interview.is_empty():
 		check_interview()
+	if not appointments.is_empty():
+		_check_appointments()
 
 
 ## Silla de visita de la oficina de alguien ("ceo" o clave): una silla sin dueño en la
@@ -1664,6 +1820,9 @@ func _remove_employee(employee: Dictionary, concept: String) -> int:
 	# Si hacía una entrevista, se corta.
 	if String(interview.get("by", "")) == employee_key(employee["id"]):
 		interview = {}
+	for appointment: Dictionary in appointments.duplicate():
+		if String(appointment["by"]) == employee_key(employee["id"]):
+			appointments.erase(appointment)
 	Economy.charge(cost, concept)
 	var key: String = employee_key(employee["id"])
 	for item: Dictionary in OfficeState.furniture:
@@ -2517,6 +2676,7 @@ func _on_hour_changed(hour: int) -> void:
 			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
 		set_ceo_at_work(true)
 	check_interview()
+	_check_appointments()
 	if ceo_at_work and hour == StaffCatalog.get_ceo_sleep_hour():
 		EventBus.notice.emit("El CEO se quedó dormido en la oficina: no rinde hasta las %d:00. Mándalo a casa." % StaffCatalog.get_ceo_arrival_hour())
 	if hour == int(StaffCatalog.get_hiring("arrival_hour")):
@@ -2948,6 +3108,9 @@ func _finish_interview() -> void:
 func _drop_missing_interview() -> void:
 	if not interview.is_empty() and get_interviewed_now().is_empty():
 		interview = {}
+	for appointment: Dictionary in appointments.duplicate():
+		if get_candidate(int(appointment["candidate_id"])).is_empty():
+			appointments.erase(appointment)
 
 
 # Contrata a un candidato por un sueldo: ocupa el primer puesto libre, deja de ser
@@ -3001,7 +3164,8 @@ func _process_arrivals(today: int) -> void:
 	for vacancy: Dictionary in vacancies:
 		var staying: Array[Dictionary] = []
 		for candidate: Dictionary in vacancy["candidates"]:
-			if today < int(candidate["arrived_day"]) + waiting_days:
+			# Quien tiene entrevista citada la espera.
+			if today < int(candidate["arrived_day"]) + waiting_days or not get_appointment(int(candidate["id"])).is_empty():
 				staying.append(candidate)
 		vacancy["candidates"] = staying
 		var arriving: int = _roll_arrivals(vacancy, today)
@@ -3150,7 +3314,7 @@ func _take_id() -> int:
 ## porque JSON guarda los números como decimales y perdería precisión.
 func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
-		"interview": interview.duplicate(), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
+		"interview": interview.duplicate(), "appointments": appointments.duplicate(true), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
 		"shift_templates": shift_templates.duplicate(true), "next_template_id": _next_template_id,
 		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held,
@@ -3211,6 +3375,9 @@ func import_state(state: Dictionary) -> void:
 		# Si la hacía un ejecutivo que ya no está, se corta.
 		if interview["by"] != "ceo" and get_employee_by_key(interview["by"]).is_empty():
 			interview = {}
+	appointments.clear()
+	for saved: Dictionary in state.get("appointments", []):
+		appointments.append({"candidate_id": int(saved["candidate_id"]), "by": String(saved["by"]), "at": int(saved["at"])})
 	_drop_missing_interview()
 	# Antes del hito 35 no había plantillas: empieza con las de data/staff.json.
 	if state.has("shift_templates"):

@@ -559,6 +559,9 @@ func _add_candidate(candidate: Dictionary) -> void:
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var days_left: int = Staff.candidate_days_left(candidate)
 	var leaving: String = "se va hoy" if days_left == 0 else ("se va mañana" if days_left == 1 else "se va en %d días" % days_left)
+	var appointment: Dictionary = Staff.get_appointment(int(candidate["id"]))
+	if not appointment.is_empty():
+		leaving = "espera su entrevista"
 	var lines: Array[String] = ["%s, %d años · pide %s · %s" % [candidate["name"], candidate["age"],
 		MoneyFormat.format(candidate["asked_salary"]), leaving], Staff.describe_skills(candidate)]
 	var known: String = Staff.describe_known_traits(candidate)
@@ -569,6 +572,10 @@ func _add_candidate(candidate: Dictionary) -> void:
 		var by: String = String(Staff.interview.get("by", "ceo"))
 		lines.append("En entrevista con %s hasta las %s." % ["el CEO" if by == "ceo" else Staff.get_employee_by_key(by).get("name", "?"),
 			Staff.format_clock_minute(int(Staff.interview["ends_at"]))])
+	elif not appointment.is_empty():
+		var by_key: String = String(appointment["by"])
+		lines.append("Entrevista citada %s con %s." % [Staff.describe_appointment_time(int(appointment["at"])),
+			"el CEO" if by_key == "ceo" else Staff.get_employee_by_key(by_key).get("name", "?")])
 	var counter: int = int(candidate.get("counter_offer", 0))
 	if counter > 0:
 		lines.append("Contraoferta: aceptaría %s al mes." % MoneyFormat.format(counter))
@@ -579,21 +586,21 @@ func _add_candidate(candidate: Dictionary) -> void:
 	_list.add_child(actions)
 	var interview_button := Button.new()
 	interview_button.text = "Entrevistar"
-	var problem: String = Staff.interview_problem(candidate_id)
+	var problem: String = Staff.appointment_problem(candidate_id)
 	interview_button.disabled = not problem.is_empty()
-	interview_button.tooltip_text = problem if not problem.is_empty() else "Ocupa %d minutos del CEO y revela un rasgo y los valores reales." % int(StaffCatalog.get_hiring("interview_minutes"))
-	interview_button.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id)["message"])
+	interview_button.tooltip_text = problem if not problem.is_empty() else "Lo cita para el próximo día del CEO: ocupa %d minutos suyos y revela un rasgo y los valores reales." % int(StaffCatalog.get_hiring("interview_minutes"))
+	interview_button.pressed.connect(func() -> void: _status_label.text = Staff.schedule_interview(candidate_id)["message"])
 	actions.add_child(interview_button)
 	_interview_buttons[candidate_id] = interview_button
 	var interviewer: Dictionary = Staff.get_interviewer()
 	if not interviewer.is_empty():
 		var delegate := Button.new()
 		delegate.text = "Delegar"
-		var delegate_problem: String = Staff.interview_problem(candidate_id, true)
+		var delegate_problem: String = Staff.appointment_problem(candidate_id, true)
 		delegate.disabled = not delegate_problem.is_empty()
 		delegate.tooltip_text = delegate_problem if not delegate_problem.is_empty() else \
-			"Entrevista %s (ejecutivo): %d minutos suyos, el CEO sigue trabajando." % [interviewer["name"], int(StaffCatalog.get_hiring("interview_minutes"))]
-		delegate.pressed.connect(func() -> void: _status_label.text = Staff.start_interview(candidate_id, true)["message"])
+			"Lo cita con %s (ejecutivo) en su próxima jornada: %d minutos suyos, el CEO sigue trabajando." % [interviewer["name"], int(StaffCatalog.get_hiring("interview_minutes"))]
+		delegate.pressed.connect(func() -> void: _status_label.text = Staff.schedule_interview(candidate_id, true)["message"])
 		actions.add_child(delegate)
 		_delegate_buttons[candidate_id] = delegate
 

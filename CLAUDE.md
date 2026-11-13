@@ -101,7 +101,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   espera; cada `CHARACTER_REPATH_WAIT` busca un camino que esquive a los demás (`OfficePathfinder.find_path(…, avoid)`) y tras
   `CHARACTER_PASS_WAIT` pasa igual (dos de frente en un pasillo de una casilla). Aparece en la entrada si está libre; si no,
   espera en la calle sin verse. Fuera del local no hay límite. `main.gd` no manda a dos al mismo lugar: limpieza, almuerzo,
-  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Desde la calle se entra por turno (`_door_queue`, primero el que espera hace más). Prueba `test_walking`.
+  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Desde la calle se entra por turno (`_door_queue`, primero el que espera hace más); quien está afuera y debe irse se va sin cruzar la puerta (`update_routine`, `_walk_to` con `WALKING_OUT`). Prueba `test_walking`.
   Llegadas escalonadas (`arrivals` en `data/staff.json`): al empezar la jornada cada empleado entra entre −30 y +10 minutos de su hora
   (`Staff.get_arrival_offset(empleado, hora absoluta)`, fijo por persona y hora; 10 % tarde, impuntual 50 % y desde −10). `get_early_minutes`
   (turno que empieza la hora siguiente, sin tardanza sorteada: `_lateness_roll` predice `_check_arrivals`) y `get_late_minutes` (llegada de ahora).
@@ -133,6 +133,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   Se ve: `main.interviewee` (un `Visitor` con `configure_candidate`, de pie) entra y espera del otro lado del escritorio de quien entrevista
   (`_interview_spot`, en su habitación) y se va al terminar o cortarse (`_sync_interview` con `staff_changed`); la ficha del ejecutivo dice
   «entrevistando a X». Prueba `test_interview_view`.
+  Citas (`Staff.appointments`: `{candidate_id, by, at}` en minutos absolutos, guardadas): «Entrevistar»/«Delegar» llaman a `schedule_interview`
+  (`appointment_problem`), que cita para el próximo día en que trabaja quien entrevista a su hora de entrada (el CEO a su llegada) o el siguiente
+  hueco de media hora antes de su almuerzo (`_next_appointment_slot`, hasta `appointment_max_days`). `_check_appointments` (en `_process` y cada hora)
+  empieza la entrevista a la hora si quien entrevista está y no hay otra (`_begin_interview`); a los `appointment_grace_minutes` sin él la cancela con
+  aviso. El citado no se va (`_process_arrivals`). `get_appointment_arrival` (10–25 min antes, fijo por candidato): `main._sync_appointments` lo
+  dibuja (`appointment_visitors`) de pie en la Recepción o junto a la entrada y `_sync_interview` lo pasa a `interviewee`. `start_interview` sigue
+  empezando una al momento (pruebas). Prueba `test_appointments`.
 - Silla de visita: la Oficina Ejecutiva y la Oficina única piden dos sillas (`count` en un requisito de `data/rooms.json`,
   `RoomRules.function_problems`): la de quien trabaja ahí y una de visita (`Staff.get_guest_chair`, silla sin dueño de su habitación), donde se
   sienta el candidato; sin ella la oficina no funciona (sin puesto) y no se entrevista. La oficina inicial y la empresa de prueba la traen.

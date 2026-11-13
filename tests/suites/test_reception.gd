@@ -325,6 +325,8 @@ func _check_ui() -> void:
 	Projects.visits.clear()
 	EventBus.visits_changed.emit()
 	await get_tree().process_frame
-	_expect(not visitors.has(int(offer["id"])) and visitor.activity == OfficeCharacter.Activity.WALKING_OUT, "el cliente se va caminando")
+	# Si todavía esperaba en la calle para entrar, se va sin entrar (y se borra).
+	_expect(not visitors.has(int(offer["id"])) and (not is_instance_valid(visitor)
+		or visitor.activity == OfficeCharacter.Activity.WALKING_OUT), "el cliente se va caminando")
 	game.queue_free()
 	await get_tree().process_frame

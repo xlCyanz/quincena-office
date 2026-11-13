@@ -313,11 +313,15 @@ func _check_panel() -> void:
 	_expect(panel.get_offer(candidate_id) == 1200, "la oferta arranca en el sueldo de la vacante: %d" % panel.get_offer(candidate_id))
 
 	await _click(panel.get_interview_button(candidate_id))
-	_expect(not Staff.interview.is_empty(), "entrevistar desde el panel")
+	_expect(not Staff.get_appointment(candidate_id).is_empty(), "entrevistar desde el panel la cita")
 	await get_tree().process_frame
-	_expect(panel.get_list_text().contains("En entrevista con el CEO"), "se ve la entrevista: %s" % panel.get_list_text())
-	_expect(panel.get_interview_button(candidate_id).disabled, "no se entrevista otra vez")
-	GameClock.fast_forward_hours(2)
+	_expect(panel.get_list_text().contains("Entrevista citada ") and panel.get_list_text().contains("con el CEO"),
+		"se ve la cita: %s" % panel.get_list_text())
+	_expect(panel.get_interview_button(candidate_id).disabled, "no se cita otra vez")
+	var hours: int = 0
+	while not bool(candidate["interviewed"]) and hours < 80:
+		GameClock.fast_forward_hours(1)
+		hours += 1
 	await get_tree().process_frame
 	_expect(panel.get_list_text().contains("Rasgos: "), "se ve el rasgo revelado: %s" % panel.get_list_text())
 

@@ -127,6 +127,14 @@ func update_routine(expected: bool) -> void:
 		_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 	elif not expected and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK
 			or activity == Activity.STEPPING_OUT):
+		if not _grid.is_in_lot(get_cell()) and (_door_queue.has(self) or not visible):
+			# Todavía en la calle (esperando para entrar o de vuelta del baño): se va
+			# sin cruzar la puerta, así no le tapa la entrada a nadie.
+			_path.clear()
+			_door_queue.erase(self)
+			_set_activity(Activity.WALKING_OUT)
+			_on_destination_reached()
+			return
 		_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
 
 
@@ -311,6 +319,13 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 		avoid: Array[Vector2i] = []) -> void:
 	# Fuera del local (recién salido por la entrada) primero vuelve a entrar.
 	if not _grid.is_in_lot(get_cell()):
+		if new_activity == Activity.WALKING_OUT:
+			# Ya afuera y saliendo: sigue a la calle sin volver a cruzar la puerta.
+			_door_queue.erase(self)
+			_path = [_outside] as Array[Vector2i]
+			_set_activity(new_activity)
+			_update_position()
+			return
 		_path = [_entrance] as Array[Vector2i]
 		if destination != _entrance:
 			var inside: Array[Vector2i] = _find_path(_entrance, destination, avoid)

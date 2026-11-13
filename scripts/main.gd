@@ -28,6 +28,9 @@ var _leaving_visitors: Array[Visitor] = []
 ## El candidato que está en su entrevista (camina hasta el escritorio de quien lo
 ## entrevista, el CEO o el ejecutivo, y se va al terminar); null si no hay entrevista.
 var interviewee: Visitor = null
+## Candidatos citados que ya llegaron y esperan su entrevista: id del candidato → personaje.
+## Al empezar la entrevista el suyo pasa a ser interviewee.
+var appointment_visitors: Dictionary[int, Visitor] = {}
 var pathfinder := OfficePathfinder.new()
 # Llegadas escalonadas: clave → minuto absoluto (hora absoluta × 60 + minuto) en que entra
 # quien todavía no llegó. Se recalcula en cada _update_routines.
@@ -305,6 +308,17 @@ func _sync_interview() -> void:
 		interviewee = null
 		_remove_left_visitors()
 	if candidate.is_empty() or interviewee != null:
+		_sync_appointments()
+		return
+	var by: String = String(Staff.interview.get("by", "ceo"))
+	var waiting: Visitor = appointment_visitors.get(int(candidate["id"]))
+	if waiting != null:
+		# Ya estaba esperando: camina hasta la silla de visita.
+		appointment_visitors.erase(int(candidate["id"]))
+		interviewee = waiting
+		interviewee.standing = Staff.get_guest_chair(by).is_empty()
+		interviewee.set_seat(_interview_spot(by))
+		_sync_appointments()
 		return
 	interviewee = VISITOR_SCENE.instantiate()
 	interviewee.configure_candidate(candidate)
@@ -314,6 +328,45 @@ func _sync_interview() -> void:
 	interviewee.setup(_office_grid, pathfinder, _interview_spot(String(Staff.interview.get("by", "ceo"))),
 		OfficeState.entrance, OfficeState.get_outside_of_entrance())
 	interviewee.update_routine(true)
+	_sync_appointments()
+
+
+# Los candidatos citados llegan antes de su hora (Staff.get_appointment_arrival) y esperan
+# de pie en la Recepción o junto a la entrada; si se cancela la cita se van.
+func _sync_appointments() -> void:
+	var now: int = get_arrival_minute()
+	var due: Array[int] = []
+	for appointment: Dictionary in Staff.appointments:
+		if Staff.get_appointment_arrival(appointment) <= now:
+			due.append(int(appointment["candidate_id"]))
+	var used: Dictionary[Vector2i, bool] = {}
+	for visitor: Visitor in visitors.values():
+		used[visitor.get_seat_cell()] = true
+	var spots: Array[Vector2i] = Projects.get_waiting_spots()
+	if spots.is_empty() and not due.is_empty():
+		spots = _cells_near(OfficeState.entrance, due.size() + used.size() + 1)
+		spots.erase(OfficeState.entrance)
+	for index: int in range(due.size()):
+		var candidate_id: int = due[index]
+		var spot: Vector2i = _free_spot_near(spots[index % spots.size()], used) if not spots.is_empty() \
+			else OfficeState.entrance
+		if appointment_visitors.has(candidate_id):
+			appointment_visitors[candidate_id].set_seat(spot)
+			continue
+		var character: Visitor = VISITOR_SCENE.instantiate()
+		character.configure_candidate(Staff.get_candidate(candidate_id))
+		_office_grid.add_object(character)
+		character.left_office.connect(_remove_left_visitors)
+		character.setup(_office_grid, pathfinder, spot, OfficeState.entrance, OfficeState.get_outside_of_entrance())
+		appointment_visitors[candidate_id] = character
+		character.update_routine(true)
+	for candidate_id: int in appointment_visitors.keys():
+		if not due.has(candidate_id):
+			var leaving: Visitor = appointment_visitors[candidate_id]
+			appointment_visitors.erase(candidate_id)
+			_leaving_visitors.append(leaving)
+			leaving.update_routine(false)
+	_remove_left_visitors()
 
 
 ## Casilla donde se para el candidato: del otro lado del escritorio de quien entrevista
@@ -535,12 +588,15 @@ func _waiting_spot(key: String, now: int, used: Dictionary[Vector2i, bool]) -> V
 # Revisa una vez por minuto de juego si le toca entrar a alguien y, cada wander_minutes,
 # mueve a los que dan vueltas esperando su hora.
 func _process(_delta: float) -> void:
-	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty():
+	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty() \
+			and Staff.appointments.is_empty() and appointment_visitors.is_empty():
 		return
 	var now: int = get_arrival_minute()
 	if now == _last_arrival_check:
 		return
 	_last_arrival_check = now
+	if not Staff.appointments.is_empty() or not appointment_visitors.is_empty():
+		_sync_appointments()
 	var due: bool = false
 	for key: String in _arrivals:
 		if _arrivals[key] <= now:
@@ -692,6 +748,7 @@ func _on_office_changed() -> void:
 		interviewee.standing = Staff.get_guest_chair(String(Staff.interview.get("by", "ceo"))).is_empty()
 	for visitor: Visitor in _leaving_visitors:
 		visitor.replan()
+	_sync_appointments()
 
 
 # Pliega los objetivos si hay algún panel del lado izquierdo abierto.

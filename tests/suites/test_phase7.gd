@@ -352,8 +352,10 @@ func _play(seed: int) -> void:
 	if interview_button == null:
 		return
 	await _click(interview_button)
-	_expect(not Staff.interview.is_empty(), "la entrevista empezó")
-	waited = await _wait_until(func() -> bool: return staff_panel.get_offer_button(candidate_id) != null, 12)
+	_expect(not Staff.get_appointment(candidate_id).is_empty(), "la entrevista quedó citada")
+	# El candidato vuelve el próximo día del CEO a las 8 y la entrevista dura media hora.
+	waited = await _wait_until(func() -> bool: return bool(candidate["interviewed"]), 80)
+	_expect(bool(candidate["interviewed"]), "el CEO lo entrevistó a la hora citada (%d h)" % waited)
 	var offer_button: Button = staff_panel.get_offer_button(candidate_id)
 	_expect(offer_button != null, "tras la entrevista se puede ofrecer (%d h)" % waited)
 	if offer_button == null:
