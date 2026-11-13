@@ -428,6 +428,12 @@ func _resolve(effect: Dictionary, target: Dictionary) -> Dictionary:
 			return {"type": "money", "amount": -FurnitureCatalog.get_price(String(target.get("computer", "")))}
 		"withhold":
 			resolved["amount"] = int(target.get("amount", 0))
+			if bool(effect.get("by_accountant", false)):
+				resolved["days"] = maxi(1, roundi(int(effect["days"]) / Staff.get_printer_factor()))
+		"lose_work":
+			var halved_by: Dictionary = effect.get("halved_by", {})
+			if not halved_by.is_empty() and Projects.has_room_item(String(halved_by["room"]), String(halved_by["field"])):
+				resolved["hours"] = maxi(1, int(effect["hours"]) / 2)
 	return resolved
 
 

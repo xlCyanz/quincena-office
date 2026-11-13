@@ -137,6 +137,8 @@ static func _load() -> void:
 			"lunch_part": String(raw.get("lunch_part", "")),
 			"dining_seats": int(raw.get("dining_seats", 0)),
 			"rest_places": int(raw.get("rest_places", 0)),
+			"accountant_boost": float(raw.get("accountant_boost", 0.0)),
+			"meeting_board": bool(raw.get("meeting_board", false)),
 			"break_mood": float(raw.get("break_mood", 0.0)),
 			"distraction": float(raw.get("distraction", 0.0)),
 			"vending_income": float(raw.get("vending_income", 0.0)),

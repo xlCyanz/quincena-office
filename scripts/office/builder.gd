@@ -43,15 +43,18 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 		return {"ok": false, "cost": 0, "message": "No hay nada que cambiar ahí."}
 	var cost: int = 0
 	for change: Dictionary in effective:
-		var old_kind: String = _current_kind(change)
+		var old_kind: String = _paid_kind(change, _current_kind(change))
 		if _is_owned(old_kind):
 			cost -= ConstructionCatalog.get_refund(old_kind)
-		if _is_owned(change["kind"]):
+		if _is_owned(_paid_kind(change, change["kind"])):
 			cost += ConstructionCatalog.get_price(change["kind"])
 	for change: Dictionary in effective:
 		if change.has("edge") and not GridEdge.touches_lot(change["edge"], OfficeState.lot):
 			return {"ok": false, "cost": cost, "message": "Ese borde está fuera del local."}
-		if change.has("edge") and GridEdge.is_exterior(change["edge"], OfficeState.lot):
+		var exterior: bool = change.has("edge") and GridEdge.is_exterior(change["edge"], OfficeState.lot)
+		if change.has("edge") and change["kind"] == ConstructionCatalog.WINDOW and not exterior:
+			return {"ok": false, "cost": cost, "message": "Las ventanas solo van en las paredes exteriores del local."}
+		if exterior and not _is_window_swap(change):
 			return {"ok": false, "cost": cost, "message": "Las paredes exteriores no se pueden comprar ni vender."}
 		if change.has("cell") and not OfficeState.lot.has_point(change["cell"]):
 			return {"ok": false, "cost": cost, "message": "Esa casilla está fuera del local."}
@@ -110,11 +113,17 @@ func apply(changes: Array[Dictionary]) -> Dictionary:
 	return result
 
 
-# Quita los cambios que no cambian nada (poner lo que ya hay) y los repetidos.
+# Quita los cambios que no cambian nada (poner lo que ya hay) y los repetidos. Vender
+# una ventana del contorno la vuelve pared (el contorno siempre está cerrado).
 func _effective_changes(changes: Array[Dictionary]) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var seen: Dictionary = {}
-	for change: Dictionary in changes:
+	for original: Dictionary in changes:
+		var change: Dictionary = original
+		if change.has("edge") and String(change["kind"]).is_empty() \
+				and OfficeState.get_edge(change["edge"]) == ConstructionCatalog.WINDOW \
+				and GridEdge.is_exterior(change["edge"], OfficeState.lot):
+			change = {"edge": change["edge"], "kind": ConstructionCatalog.WALL}
 		var key: Variant = change.get("edge", change.get("cell"))
 		if seen.has(key) or _current_kind(change) == change["kind"]:
 			continue
@@ -132,6 +141,19 @@ func _current_kind(change: Dictionary) -> String:
 # Lo que se compró y se puede vender (no un borde libre ni una casilla sin piso).
 func _is_owned(kind: String) -> bool:
 	return not kind.is_empty() and kind != ConstructionCatalog.BARE_FLOOR
+
+
+# La pieza que cuenta para el precio: la pared del contorno no se compró ("").
+func _paid_kind(change: Dictionary, kind: String) -> String:
+	if change.has("edge") and kind == ConstructionCatalog.WALL and GridEdge.is_exterior(change["edge"], OfficeState.lot):
+		return ""
+	return kind
+
+
+# En el contorno solo se cambia pared por ventana o ventana por pared (hito 55).
+func _is_window_swap(change: Dictionary) -> bool:
+	var pieces: Array[String] = [ConstructionCatalog.WALL, ConstructionCatalog.WINDOW]
+	return pieces.has(_current_kind(change)) and pieces.has(String(change["kind"]))
 
 
 func _changes_passage(changes: Array[Dictionary]) -> bool:
@@ -195,7 +217,7 @@ func _describe(changes: Array[Dictionary], cost: int) -> String:
 	var bought: Dictionary[String, int] = {}
 	var sold: int = 0
 	for change: Dictionary in changes:
-		if _is_owned(change["kind"]):
+		if _is_owned(_paid_kind(change, change["kind"])):
 			bought[change["kind"]] = bought.get(change["kind"], 0) + 1
 		else:
 			sold += 1
@@ -605,6 +627,11 @@ func quote_land(side: String, width: int, depth: int, offset: int) -> Dictionary
 	var message: String = "Terreno de %d m² por %s (%s + %s %s) · mantenimiento +%s al mes." % [new_cells.size(),
 		MoneyFormat.format(cost), MoneyFormat.format(land_cost), ConstructionCatalog.get_display_name(floor_type).to_lower(),
 		MoneyFormat.format(floor_cost), MoneyFormat.format(Economy.get_maintenance(new_cells.size()))]
+	var windows: int = _opened_windows(new_edges)
+	result["window_refund"] = windows * ConstructionCatalog.get_refund(ConstructionCatalog.WINDOW)
+	if windows > 0:
+		message += " Se quitan %d %s del borde que se abre (+%s)." % [windows, "ventana" if windows == 1 else "ventanas",
+			MoneyFormat.format(int(result["window_refund"]))]
 	if not lost.is_empty():
 		var names: Array[String] = []
 		for type_id: String in lost:
@@ -624,6 +651,7 @@ func buy_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
 		return result
 	var new_cells: Array[Vector2i] = result["new_cells"]
 	var new_lot: Lot = OfficeState.lot.with_cells(new_cells)
+	var window_refund: int = int(result.get("window_refund", 0))
 	OfficeState.edges = _edges_with_land(new_lot)
 	OfficeState.lot = new_lot
 	var floor_type: String = String(ConstructionCatalog.get_land().get("floor", ConstructionCatalog.BARE_FLOOR))
@@ -634,9 +662,22 @@ func buy_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
 	result.erase("rooms")
 	OfficeState.land_paid += int(result["cost"])
 	Economy.spend(result["cost"], CONCEPT_LAND)
+	if window_refund > 0:
+		Economy.earn(window_refund, CONCEPT_CONSTRUCTION)
 	EventBus.office_changed.emit()
 	result["message"] = "Compraste %d m² de terreno por %s." % [new_cells.size(), MoneyFormat.format(int(result["cost"]))]
+	if window_refund > 0:
+		result["message"] += " Las ventanas del borde que se abrió devolvieron %s." % MoneyFormat.format(window_refund)
 	return result
+
+
+# Ventanas del contorno de ahora que el terreno nuevo quita (el borde que se abre).
+func _opened_windows(new_edges: Dictionary[Vector3i, String]) -> int:
+	var count: int = 0
+	for edge: Vector3i in OfficeState.edges:
+		if OfficeState.edges[edge] == ConstructionCatalog.WINDOW and not new_edges.has(edge):
+			count += 1
+	return count
 
 
 # Los bordes de la oficina con el contorno corrido al local nuevo: se abre el borde que
@@ -725,7 +766,7 @@ func _room_status(room: Dictionary, ok_if_working: bool) -> Dictionary:
 	if room["type"] == OfficeState.SERVER_ROOM:
 		var count: int = OfficeState.count_racks(room)
 		racks = " %d %s." % [count, "rack" if count == 1 else "racks"]
-	var ambiance: String = " %s." % Ambiance.describe(room, OfficeState.furniture)
+	var ambiance: String = " %s." % Ambiance.describe(room, OfficeState.furniture, OfficeState.count_room_windows(room))
 	if problems.is_empty():
 		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona.%s%s" % [type_name, cells.size(), racks, ambiance]}
 	return {"ok": false, "cost": 0,

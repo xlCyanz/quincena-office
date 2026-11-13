@@ -68,6 +68,7 @@ func _ready() -> void:
 	var structure: Array[Array] = [
 		[BuildController.TOOL_WALL, ConstructionCatalog.get_display_name(ConstructionCatalog.WALL)],
 		[BuildController.TOOL_DOOR, ConstructionCatalog.get_display_name(ConstructionCatalog.DOOR)],
+		[BuildController.TOOL_WINDOW, ConstructionCatalog.get_display_name(ConstructionCatalog.WINDOW)],
 	]
 	for floor_type: String in ConstructionCatalog.get_floor_types():
 		structure.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])

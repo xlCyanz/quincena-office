@@ -22,6 +22,7 @@ signal status_changed(text: String)
 
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
+const TOOL_WINDOW: String = "window"
 const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
@@ -323,6 +324,8 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 				changes.append({"edge": edge, "kind": ConstructionCatalog.WALL})
 		TOOL_DOOR:
 			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.DOOR})
+		TOOL_WINDOW:
+			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.WINDOW})
 		TOOL_SELL:
 			var edge: Vector3i = GridEdge.nearest(end)
 			if not OfficeState.get_edge(edge).is_empty() and GridEdge.distance_to(edge, end) <= SELL_EDGE_DISTANCE:
@@ -396,9 +399,10 @@ func _draw_room_labels() -> void:
 			[RoomCatalog.get_display_name(room["type"]), LABEL_COLOR],
 			["Funciona" if working else "No funciona", LABEL_OK_COLOR if working else LABEL_BAD_COLOR],
 		]
-		var ambiance: int = Ambiance.get_value(room, OfficeState.furniture)
+		var windows: int = OfficeState.count_room_windows(room)
+		var ambiance: int = Ambiance.get_value(room, OfficeState.furniture, windows)
 		if ambiance != 0:
-			lines.append([Ambiance.describe(room, OfficeState.furniture).split(" (")[0],
+			lines.append([Ambiance.describe(room, OfficeState.furniture, windows).split(" (")[0],
 				LABEL_OK_COLOR if ambiance > 0 else LABEL_BAD_COLOR])
 		# Escala inversa al zoom de la cámara, para que el texto no crezca ni se pixele.
 		draw_set_transform(center, 0.0, Vector2.ONE / _label_zoom)

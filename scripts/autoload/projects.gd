@@ -577,7 +577,7 @@ func _make_offer(today: int, forced_size: String = "") -> Dictionary:
 	var offer: Dictionary = {
 		"id": _take_id(), "client": clients[_rng.randi_range(0, clients.size() - 1)], "type": type_id,
 		"size": size, "points": {"design": design, "programming": programming, "testing": total - design - programming},
-		"total_points": total, "days": _rng.randi_range(days.x, days.y), "pay": pay, "advance": advance,
+		"total_points": total, "days": _offer_days(size, _rng.randi_range(days.x, days.y)), "pay": pay, "advance": advance,
 		"arrived_day": today, "expires_day": today + int(ContractCatalog.get_offers("expire_days")),
 	}
 	return offer
@@ -611,15 +611,30 @@ func get_size_weight(size: String) -> float:
 	return weight
 
 
-## Indica si hay una pantalla de presentaciones en una habitación de ese tipo que funciona.
-func has_presentation_screen(room_type: String) -> bool:
+# Plazo de una oferta: con pizarra en la Sala de reuniones (hito 55), los tamaños que la
+# exigen traen 10 % más, hacia arriba.
+func _offer_days(size: String, days: int) -> int:
+	var room: String = ContractCatalog.get_required_room(size)
+	if room.is_empty() or not has_room_item(room, "meeting_board"):
+		return days
+	return ceili(days * float(ContractCatalog.get_meetings("board_days_factor")))
+
+
+## Indica si una habitación de ese tipo que funciona tiene un mueble con ese valor
+## (por ejemplo "meeting_board", la pizarra).
+func has_room_item(room_type: String, field: String) -> bool:
 	for room: Dictionary in OfficeState.rooms:
 		if room["type"] != room_type or not RoomRules.function_problems(room, OfficeState.furniture).is_empty():
 			continue
 		for item: Dictionary in OfficeState.furniture:
-			if FurnitureCatalog.is_presentation_screen(item["id"]) and (room["cells"] as Array).has(item["cell"]):
+			if FurnitureCatalog.get_number(item["id"], field) > 0.0 and (room["cells"] as Array).has(item["cell"]):
 				return true
 	return false
+
+
+## Indica si hay una pantalla de presentaciones en una habitación de ese tipo que funciona.
+func has_presentation_screen(room_type: String) -> bool:
+	return has_room_item(room_type, "presentation_screen")
 
 
 # La primera oferta de un tamaño que exige Sala de reuniones la deja construir.

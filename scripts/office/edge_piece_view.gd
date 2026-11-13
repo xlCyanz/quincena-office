@@ -43,4 +43,17 @@ func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String) -> void:
 
 
 func _draw() -> void:
-	IsoBox.draw(self, _base, _height, _color)
+	if kind != ConstructionCatalog.WINDOW:
+		IsoBox.draw(self, _base, _height, _color)
+		return
+	# Ventana: pared hasta un tercio, vidrio en el medio y un dintel arriba.
+	var wall := Color(String(ConstructionCatalog.get_edge_piece(ConstructionCatalog.WALL).get("color", "d8d0c4")))
+	IsoBox.draw(self, _base, _height * 0.35, wall)
+	var glass := PackedVector2Array()
+	for corner: Vector2 in _base:
+		glass.append(corner + Vector2(0, -_height * 0.35))
+	IsoBox.draw(self, glass, _height * 0.5, _color)
+	var top := PackedVector2Array()
+	for corner: Vector2 in _base:
+		top.append(corner + Vector2(0, -_height * 0.85))
+	IsoBox.draw(self, top, _height * 0.15, wall)

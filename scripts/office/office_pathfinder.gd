@@ -43,7 +43,7 @@ func build(lot: Lot, blocked_cells: Array[Vector2i], edges: Dictionary[Vector3i,
 		if lot.has_point(cell):
 			_astar.set_point_solid(_cell_point(cell), true)
 	for edge: Vector3i in edges:
-		if edges[edge] == ConstructionCatalog.WALL and _edge_inside(edge):
+		if edges[edge] != ConstructionCatalog.DOOR and _edge_inside(edge):
 			_astar.set_point_solid(_edge_point(edge), true)
 
 

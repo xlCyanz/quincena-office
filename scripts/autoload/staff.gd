@@ -2342,14 +2342,32 @@ func has_accountant() -> bool:
 func get_maintenance_discount() -> float:
 	if not has_accountant():
 		return 0.0
-	return float(StaffCatalog.get_accounting("maintenance_discount")) * get_department_factor("administration")
+	return float(StaffCatalog.get_accounting("maintenance_discount")) * get_department_factor("administration") * get_printer_factor()
 
 
 ## Cuánto baja la tasa mensual de un préstamo nuevo (0.01 = 1 punto), o 0 sin contador.
 func get_loan_rate_discount() -> float:
 	if not has_accountant():
 		return 0.0
-	return float(StaffCatalog.get_accounting("loan_rate_discount")) * get_department_factor("administration")
+	return float(StaffCatalog.get_accounting("loan_rate_discount")) * get_department_factor("administration") * get_printer_factor()
+
+
+## Cuánto valen los efectos del contador (hito 55): accountant_boost de la impresora si
+## hay una en el Área de trabajo donde está la silla de algún contador; si no, 1.
+func get_printer_factor() -> float:
+	var role: String = String(StaffCatalog.get_accounting("role"))
+	var best: float = 1.0
+	for employee: Dictionary in employees:
+		if employee["role"] != role:
+			continue
+		var room: Dictionary = get_workplace_room(employee_key(int(employee["id"])))
+		if room.is_empty() or room["type"] != Workstations.WORK_AREA:
+			continue
+		for item: Dictionary in OfficeState.furniture:
+			var boost: float = FurnitureCatalog.get_number(item["id"], "accountant_boost")
+			if boost > best and (room["cells"] as Array).has(item["cell"]):
+				best = boost
+	return best
 
 
 ## Lo que costaría la nómina del día de pago que está a days_ahead días: lo ganado hasta
@@ -2475,11 +2493,12 @@ func get_ambiance(key: String) -> int:
 func _ambiance_detail(room: Dictionary) -> Dictionary:
 	var furniture_hash: int = int(_seat_lookup_cache["furniture_hash"]) if not _seat_lookup_cache.is_empty() \
 		else OfficeState.furniture.hash()
-	var key: int = [room.hash(), furniture_hash].hash()
+	var windows: int = OfficeState.count_room_windows(room)
+	var key: int = [room.hash(), furniture_hash, windows].hash()
 	if not _ambiance_cache.has(key):
 		if _ambiance_cache.size() >= AMBIANCE_CACHE_SIZE:
 			_ambiance_cache.clear()
-		_ambiance_cache[key] = Ambiance.get_detail(room, OfficeState.furniture)
+		_ambiance_cache[key] = Ambiance.get_detail(room, OfficeState.furniture, windows)
 	return _ambiance_cache[key]
 
 

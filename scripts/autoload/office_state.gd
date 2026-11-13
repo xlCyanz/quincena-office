@@ -28,7 +28,7 @@ var site_rect := Rect2i()
 ## Tipo de piso de cada casilla del local (ver ConstructionCatalog).
 var floors: Dictionary[Vector2i, String] = {}
 
-## Piezas en los bordes: GridEdge → ConstructionCatalog.WALL o DOOR. Un borde que no
+## Piezas en los bordes: GridEdge → ConstructionCatalog.WALL, DOOR o WINDOW. Un borde que no
 ## está en el diccionario está libre.
 var edges: Dictionary[Vector3i, String] = {}
 
@@ -173,7 +173,7 @@ func find_furniture_at(cell: Vector2i) -> int:
 	return -1
 
 
-## Pieza en un borde: ConstructionCatalog.WALL, DOOR o "" si está libre.
+## Pieza en un borde: ConstructionCatalog.WALL, DOOR, WINDOW o "" si está libre.
 func get_edge(edge: Vector3i) -> String:
 	return edges.get(edge, "")
 
@@ -198,7 +198,22 @@ func set_floor(cell: Vector2i, floor_type: String) -> void:
 
 ## Indica si una pared cierra el paso por un borde (las puertas y los bordes libres no).
 func blocks_passage(edge: Vector3i) -> bool:
-	return get_edge(edge) == ConstructionCatalog.WALL
+	var kind: String = get_edge(edge)
+	return kind == ConstructionCatalog.WALL or kind == ConstructionCatalog.WINDOW
+
+
+## Ventanas que dan a una habitación: bordes con ventana que tocan alguna de sus casillas.
+func count_room_windows(room: Dictionary) -> int:
+	var count: int = 0
+	var cells: Array = room["cells"]
+	for edge: Vector3i in edges:
+		if edges[edge] != ConstructionCatalog.WINDOW:
+			continue
+		for cell: Vector2i in GridEdge.get_cells(edge):
+			if cells.has(cell):
+				count += 1
+				break
+	return count
 
 
 ## Casilla de fuera del local a la que se sale por la entrada: la vecina fuera del

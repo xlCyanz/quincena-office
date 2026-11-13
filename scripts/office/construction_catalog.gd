@@ -12,6 +12,8 @@ const TERRAIN: String = "terrain"
 ## Tipos de pieza que pueden ir en un borde.
 const WALL: String = "wall"
 const DOOR: String = "door"
+## Ventana (hito 55): solo en el contorno, en lugar de un tramo de pared.
+const WINDOW: String = "window"
 
 static var _data: Dictionary = {}
 
@@ -39,7 +41,7 @@ static func get_edge_piece(kind: String) -> Dictionary:
 
 ## Precio de compra de un piso por casilla, de una pared o de una puerta.
 static func get_price(kind: String) -> int:
-	if kind == WALL or kind == DOOR:
+	if kind == WALL or kind == DOOR or kind == WINDOW:
 		return int(get_edge_piece(kind).get("price", 0))
 	return int(get_floor(kind).get("price_per_m2", 0))
 
@@ -51,9 +53,14 @@ static func get_refund(kind: String) -> int:
 
 ## Nombre visible para el jugador.
 static func get_display_name(kind: String) -> String:
-	if kind == WALL or kind == DOOR:
+	if kind == WALL or kind == DOOR or kind == WINDOW:
 		return String(get_edge_piece(kind).get("name", kind))
 	return String(get_floor(kind).get("name", kind))
+
+
+## Puntos de ambiente de una ventana para la habitación que da a ella.
+static func get_window_ambiance() -> int:
+	return int(get_edge_piece(WINDOW).get("ambiance", 0))
 
 
 ## Colores (tablero de ajedrez) de un tipo de piso.

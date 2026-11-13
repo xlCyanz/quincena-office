@@ -1,5 +1,5 @@
 {
-	"_comentario": "Precios y arte provisional de la construcción (hito 5). Los precios son provisionales: el diseño (13.7) los deja por definir. Vender devuelve sale_refund_ratio del precio; reemplazar algo vende lo anterior y compra lo nuevo. Terreno (hito 25, diseño 3.1 y 13.7): price_per_m2 por cada casilla nueva más el piso floor (que llega ya puesto) a floor_price_ratio de su precio.",
+	"_comentario": "Precios y arte provisional de la construcción (hito 5). Los precios son provisionales: el diseño (13.7) los deja por definir. Vender devuelve sale_refund_ratio del precio; reemplazar algo vende lo anterior y compra lo nuevo. Terreno (hito 25, diseño 3.1 y 13.7): price_per_m2 por cada casilla nueva más el piso floor (que llega ya puesto) a floor_price_ratio de su precio. Ventana (hito 55): solo en lugar de un tramo de pared del contorno (la pared del contorno no se cobra ni se devuelve; quitar la ventana deja pared); suma ambiance puntos al ambiente de la habitación que da a ella (Ambiance, como un adorno); nada se cuelga en ella; al comprar terreno las del borde que se abre se devuelven a sale_refund_ratio.",
 	"sale_refund_ratio": 0.5,
 	"floors": {
 		"carpet": { "name": "Alfombra", "price_per_m2": 15, "colors": ["5b6f8a", "52657e"] },
@@ -10,5 +10,6 @@
 	"terrain": { "name": "Terreno", "colors": ["5f8a4c", "567e44"] },
 	"wall": { "name": "Pared", "price": 50, "height": 20, "color": "d8d0c4" },
 	"door": { "name": "Puerta", "price": 200, "height": 20, "color": "8a5a34" },
+	"window": { "name": "Ventana", "price": 200, "height": 20, "color": "9fc7dc", "ambiance": 4 },
 	"land": { "price_per_m2": 150, "floor": "ceramic", "floor_price_ratio": 0.5 }
 }

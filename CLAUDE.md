@@ -337,6 +337,16 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   de todos (en `_seat_lookup_cache` durante `_update_morale`); el ping pong multiplica los puntos de cada empleado por 0.97 (`shared["distraction"]`).
   `_note_presence` anota cada hora quién está (`present_today`) y al cambiar de día `_collect_vending` cobra $2 por persona («Máquina expendedora»).
   `main._update_routines` lleva a los que descansan junto a un sofá (`get_rest_spots`); la ficha dice «descansando en la Sala de descanso».
+- Impresora, pizarra y ventanas (hito 55): impresora ($350, `accountant_boost` 1.25 en `data/furniture.json`): en el Área de trabajo donde está la
+  silla de un contador (`Staff.get_printer_factor`) multiplica sus descuentos de mantenimiento y de tasa y el cobro del pago atrasado (`withhold` con
+  `by_accountant`: días ÷ factor, 3 → 2; se resuelve en `Events._resolve`). Pizarra (de pared, $250, `meeting_board`): en una Sala de reuniones que
+  funciona (`Projects.has_room_item(tipo, campo)`, que también usa la pantalla) la reunión inútil pierde la mitad de horas (`lose_work` con
+  `halved_by {room, field}`) y los tamaños que exigen la sala traen `meetings.board_days_factor` 1.1 de plazo (`Projects._offer_days`, después del
+  sorteo para no mover el azar). Ventana (`ConstructionCatalog.WINDOW`, $200, `ambiance` 4 en `data/construction.json`): solo cambia un tramo de
+  pared del contorno (`Builder._is_window_swap`; la pared del contorno no se cobra ni devuelve, `_paid_kind`); venderla o pasarle Pared la deja
+  pared; cierra como pared (`blocks_passage`, caminos, espacios) y nada se cuelga en ella. Suma sus puntos al ambiente de la habitación a la que da
+  (`OfficeState.count_room_windows`, `Ambiance.get_detail(…, windows)`). Al comprar terreno las del borde que se abre se devuelven a la mitad
+  (`window_refund`, «Construcción»). No cuentan como bienes. Herramienta Ventana en la fila de estructura (`BuildController.TOOL_WINDOW`).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -405,3 +415,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 52 | Baños con capacidad | ✅ Completado (1 inodoro cada 10 presentes con el CEO; siempre aplica, también sin baño: salen del edificio a buscar uno y vuelven; por inodoro que falta −5 % de producción hasta −20 % y −10 a la meta de ánimo ese día y el siguiente; «Baño dañado» con cartel quita un inodoro hasta repararlo desde Empresa por $400; las pruebas anteriores corren sin baños) |
 | 53 | Almuerzo en la oficina | ✅ Completado (Sala de descanso con nevera $400, microondas $150 y mesas de comedor $300 de 4 asientos; almuerzan dentro el CEO y los más antiguos hasta llenar los asientos; dentro recuperan el doble de energía y rinden media hora; los demás salen; caminan a la mesa y vuelven a su silla) |
 | 54 | Sala de descanso y pausas | ✅ Completado (sofá $500 con 2 lugares: quien produce con energía bajo 40 descansa una hora sin producir y recupera +15, +3 con café, también en el almuerzo; dispensador de agua $120 +2, ping pong $700 +8 y −3 % de puntos, máquina expendedora $900 +3 y $2 por persona al día; uno de cada uno y solo en la Sala de descanso que funciona) |
+| 55 | Impresora, pizarra y ventanas | ✅ Completado (impresora $350 en el Área de trabajo del contador: sus efectos ×1.25 y cobra el pago atrasado en 2 días; pizarra de pared $250 en la Sala de reuniones: reunión inútil 1 h en vez de 2 y grandes y de élite con 10 % más de plazo; ventana $200 solo en paredes exteriores, +4 puntos de ambiente a la habitación, nada colgado; el terreno devuelve la mitad de las ventanas del borde que abre) |

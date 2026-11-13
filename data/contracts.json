@@ -6,7 +6,7 @@
 		"large": { "name": "Grande", "points": [4000, 8000], "points_per_day": 100, "pay": [38000, 76000], "min_reputation": 4, "min_stage": 4, "requires_room": "meeting_room", "weight": 1 },
 		"elite": { "name": "De élite", "points": [4000, 8000], "points_per_day": 100, "pay": [57000, 114000], "min_reputation": 5, "min_stage": 5, "requires_room": "meeting_room", "weight": 1, "elite": true }
 	},
-	"meetings": { "screen_weight_factor": 1.25 },
+	"meetings": { "screen_weight_factor": 1.25, "board_days_factor": 1.1 },
 	"types": {
 		"website": { "name": "Sitio web", "split": [35, 45, 20] },
 		"mobile_app": { "name": "App móvil", "split": [25, 55, 20] },
