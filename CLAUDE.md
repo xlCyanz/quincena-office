@@ -363,6 +363,14 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `main.open_notice_target` abre la ficha, Proyectos en su pestaña, el menú o centra la cámara en la habitación. `notice.emit(texto)` sigue
   siendo un aviso sin destino. Llevan destino los avisos del personal (renuncia, aumento, oferta de otra empresa, falta, rasgo, ascenso),
   contratos, productos, Banco, Empresa y la habitación sucia.
+- Inversionista (hito 58, `investor` en `data/bank.json` y evento `investor` en `data/events.json`, desde Pequeña empresa): el target `investor`
+  pide `Bank.make_investor_offer(rng)` (vacío si `investor_problem()`: ya hay uno, valor ≤ 0 o ingresos de contratos y productos del mes pasado bajo
+  $5,000): efectivo 10–25 % del valor (de a $1,000), 12–24 meses y parte `investor_share` = efectivo × 1.6 / (ingreso del mes pasado × meses),
+  entre 5 y 40 %. Aceptar (efecto `investor`, `Bank.accept_investor`) cobra «Inversión» (no es ingreso: Empresa lo muestra aparte) y guarda
+  `Bank.investor` (`income_before` = lo del mes que no le toca). Cada día 1 `_charge_investor` cobra la parte de los ingresos del mes que terminó
+  con `Economy.charge` («Pago al inversionista»), aunque deje el saldo negativo; al cumplir los meses termina con aviso. `get_investor_remaining`
+  (parte × ingreso del mes pasado × meses que faltan) resta del valor como una parte más de `Company.get_value_parts`. Empresa y Banco tienen su
+  sección. `Bank.investor_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga antes de `investor` (las simulaciones sortean igual).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -434,3 +442,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 55 | Impresora, pizarra y ventanas | ✅ Completado (impresora $350 en el Área de trabajo del contador: sus efectos ×1.25 y cobra el pago atrasado en 2 días; pizarra de pared $250 en la Sala de reuniones: reunión inútil 1 h en vez de 2 y grandes y de élite con 10 % más de plazo; ventana $200 solo en paredes exteriores, +4 puntos de ambiente a la habitación, nada colgado; el terreno devuelve la mitad de las ventanas del borde que abre) |
 | 56 | Candidatos según la empresa | ✅ Completado (primera tanda de 3 ± 1 por estrella sobre 3, al menos 1, +1 con publicidad, después como antes; sueldo ofrecido y ambiente medio de las Áreas de trabajo corren las habilidades dentro del rango del nivel, hasta ±80 %; el premio suma 1 candidato por día a cada vacante durante 7 días; pronóstico en el formulario de Personal; las pruebas anteriores corren sin la regla nueva) |
 | 57 | Iconos de estado y avisos | ✅ Completado (un icono por empleado: sin puesto, cansado bajo 30, molesto bajo 30 o con aviso de renuncia, estresado desde 70 y sin tarea, en ese orden; se recalcula al cambiar la hora o el personal, no por cuadro; avisos con destino en celeste con «›»: un clic abre la ficha, Proyectos en Contratos o Productos, Banco, Empresa, Personal o centra la cámara en la habitación) |
+| 58 | Inversionista | ✅ Completado (evento desde Pequeña empresa con valor positivo e ingresos del mes pasado desde $5,000; ofrece 10–25 % del valor por una parte de los ingresos de contratos y productos durante 12–24 meses, calculada para devolverle 1.6 veces, entre 5 y 40 %; aceptar da el efectivo como «Inversión», aparte de los ingresos; cada día 1 «Pago al inversionista» aunque deje saldo negativo; el valor descuenta lo que falta estimado con el mes pasado; uno a la vez; rechazar no cambia nada) |

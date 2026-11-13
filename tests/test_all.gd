@@ -9,13 +9,13 @@ extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 57) y la empresa inicial.
+## Partes en el orden de los hitos (1 a 58) y la empresa inicial.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "starting_company", "dev_tools",
 ]
 ## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
 ## oficinas sin baño y corren con Staff.bathrooms_enabled en false.
@@ -23,6 +23,9 @@ const FIRST_BATHROOM_SUITE: String = "bathrooms"
 ## Primera parte con candidatos según la empresa (hito 56): las anteriores cuentan
 ## candidatos y habilidades exactos y corren con Staff.company_hiring_enabled en false.
 const FIRST_CANDIDATES_SUITE: String = "candidates"
+## Primera parte con el evento del inversionista (hito 58): las anteriores sortean los
+## eventos con la lista de antes y corren con Bank.investor_enabled en false.
+const FIRST_INVESTOR_SUITE: String = "investor"
 ## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
 const AUTOLOADS: Array[String] = [
 	"EventBus", "GameClock", "Economy", "OfficeState", "Staff", "Projects", "Products", "Bank", "Company", "Events", "SaveManager",
@@ -69,6 +72,7 @@ func _run_suite(suite: String) -> Vector2i:
 	GameClock.stop()
 	Staff.bathrooms_enabled = SUITES.find(suite) >= SUITES.find(FIRST_BATHROOM_SUITE)
 	Staff.company_hiring_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CANDIDATES_SUITE)
+	Bank.investor_enabled = SUITES.find(suite) >= SUITES.find(FIRST_INVESTOR_SUITE)
 	var script: GDScript = load("%stest_%s.gd" % [SUITES_DIR, suite])
 	var node := Node.new()
 	node.name = suite

@@ -168,6 +168,13 @@ func _refresh() -> void:
 	_add_bathroom_section()
 	_add_ipo_section()
 
+	if not Bank.investor.is_empty():
+		_label("Inversionista", SECTION_FONT_SIZE)
+		_row("  Parte de los ingresos", "%d %%" % roundi(float(Bank.investor["share"]) * 100.0), Color.WHITE)
+		_row("  Meses que quedan", "%d de %d" % [Bank.get_investor_months_left(), int(Bank.investor["months"])], Color.WHITE)
+		_row("  Pagado", MoneyFormat.format(int(Bank.investor["paid_total"])), Color.WHITE)
+		_row("  Falta (estimado)", MoneyFormat.format(Bank.get_investor_remaining()), Hud.NEGATIVE_COLOR)
+
 	_label("Reputación", SECTION_FONT_SIZE)
 	_row("  Actual", ProjectsPanel.describe_reputation(Projects.reputation), Hud.REPUTATION_COLOR)
 	_row("  Mejor", "%.1f" % Projects.best_reputation, Color.WHITE)
@@ -182,11 +189,14 @@ func _refresh() -> void:
 	var income: int = 0
 	var expenses: int = 0
 	var borrowed: int = 0
+	var invested: int = 0
 	var totals: Dictionary[String, int] = Economy.get_month_totals(month)
 	for concept: String in totals:
 		# Un préstamo entra a la caja pero no es un ingreso: va aparte.
 		if concept == Bank.CONCEPT_LOAN or concept == Bank.CONCEPT_EMERGENCY:
 			borrowed += totals[concept]
+		elif concept == Bank.CONCEPT_INVESTMENT:
+			invested += totals[concept]
 		elif totals[concept] >= 0:
 			income += totals[concept]
 		else:
@@ -197,6 +207,8 @@ func _refresh() -> void:
 	_row("  Resultado", ("+" if result >= 0 else "") + MoneyFormat.format(result), Hud.NEGATIVE_COLOR if result < 0 else Color.WHITE)
 	if borrowed > 0:
 		_row("  Préstamos recibidos", "+" + MoneyFormat.format(borrowed), MUTED_COLOR)
+	if invested > 0:
+		_row("  Inversión recibida", "+" + MoneyFormat.format(invested), MUTED_COLOR)
 	_label("El detalle por concepto está en el Banco.", 0, MUTED_COLOR)
 
 

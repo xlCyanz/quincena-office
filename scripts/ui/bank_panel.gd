@@ -43,6 +43,8 @@ var _credit_rows: VBoxContainer
 var _company_label: Label
 var _company_rows: VBoxContainer
 var _loan_rows: VBoxContainer
+## Inversionista activo (hito 58).
+var _investor_label: Label
 var _overdue_label: Label
 var _amount_label: Label
 var _months_label: Label
@@ -148,6 +150,9 @@ func _ready() -> void:
 	content.add_child(_overdue_label)
 	_loan_rows = VBoxContainer.new()
 	content.add_child(_loan_rows)
+	_investor_label = Label.new()
+	_investor_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(_investor_label)
 	var amount_row := HBoxContainer.new()
 	content.add_child(amount_row)
 	_amount_minus = _step_button(amount_row, "−", func() -> void: _change_amount(-1))
@@ -418,6 +423,8 @@ func _refresh_loans() -> void:
 		_loan_rows.add_child(none)
 	if Bank.get_loan(_pending_loan).is_empty():
 		_pending_loan = 0
+	_investor_label.text = Bank.describe_investor_status()
+	_investor_label.visible = not _investor_label.text.is_empty()
 	_overdue_label.visible = Bank.get_overdue() > 0
 	if _overdue_label.visible:
 		var seizure: int = int(Bank.get_config("seizure_months"))
@@ -622,6 +629,11 @@ func _refresh_movements() -> void:
 
 # Una fila: fecha (opcional), concepto y monto con signo. Sin ajuste de línea: dentro de
 # un HBox una etiqueta con ajuste se aplasta.
+## Texto del inversionista ("" si no hay o el panel está cerrado).
+func get_investor_text() -> String:
+	return _investor_label.text if _investor_label != null and _investor_label.visible else ""
+
+
 func _row(date: String, concept: String, amount: int, color: Color, bold: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	if not date.is_empty():

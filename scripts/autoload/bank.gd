@@ -32,6 +32,9 @@ const CONCEPT_PREPAYMENT: String = "Pago anticipado de préstamo"
 const CONCEPT_OVERDUE: String = "Cuota atrasada"
 const CONCEPT_SURPLUS: String = "Sobrante del embargo"
 const CONCEPT_EMERGENCY: String = "Préstamo de emergencia"
+## Inversionista (hito 58): el efectivo que pone (no es ingreso) y lo que se le paga cada mes.
+const CONCEPT_INVESTMENT: String = "Inversión"
+const CONCEPT_INVESTOR: String = "Pago al inversionista"
 ## Letra actual ("A" … "E").
 var rating: String = "C"
 ## Puntaje con el que se calculó la letra (0 a 100).
@@ -52,6 +55,12 @@ var game_over: bool = false
 ## Préstamo de emergencia ofrecido y sin responder: {"amount", "shortfall", "rate",
 ## "months", "installment", "total", "first_due_day"}; vacío si no hay.
 var emergency_offer: Dictionary = {}
+## Inversionista activo (hito 58), o {}: {"cash", "share", "months", "paid_months",
+## "paid_total", "income_before" (ingresos del mes en que se aceptó, que no le tocan), "day"}.
+var investor: Dictionary = {}
+## Solo para pruebas: false deja fuera el evento del inversionista (las pruebas anteriores al
+## hito 58 sortean los eventos con la lista de antes). No se guarda.
+var investor_enabled: bool = true
 # Evita pagar atrasos dentro de otro pago (cada pago cambia el saldo).
 var _paying_overdue: bool = false
 
@@ -75,6 +84,7 @@ func new_game() -> void:
 	overdue_months = 0
 	game_over = false
 	emergency_offer = {}
+	investor = {}
 	_recalculate(false)
 
 
@@ -466,6 +476,124 @@ func _seize() -> void:
 		MoneyFormat.format(debt), MoneyFormat.format(maxi(0, surplus))])
 
 
+# --- Inversionista (hito 58) ---
+
+## Valor de configuración del inversionista (data/bank.json, investor).
+func get_investor_config(key: String) -> Variant:
+	return _config_data()["investor"][key]
+
+
+## Conceptos que cuentan como ingresos para el inversionista: contratos y productos.
+func get_investor_income_concepts() -> Array[String]:
+	var concepts: Array[String] = get_income_concepts()
+	concepts.append(Products.CONCEPT_INCOME)
+	return concepts
+
+
+## Ingresos de contratos y productos de un mes de la cuenta (0 si es negativo).
+func get_investor_income(month: int) -> int:
+	var totals: Dictionary[String, int] = Economy.get_month_totals(month)
+	var income: int = 0
+	for concept: String in get_investor_income_concepts():
+		income += totals.get(concept, 0)
+	return maxi(0, income)
+
+
+## Por qué no puede llegar un inversionista ahora ("" si puede).
+func investor_problem() -> String:
+	if not investor_enabled or game_over:
+		return "No hay inversionistas."
+	if not investor.is_empty():
+		return "Ya hay un inversionista."
+	if Company.get_value() <= 0:
+		return "El valor de la empresa no es positivo."
+	if get_investor_income(Economy.get_current_month() - 1) < int(get_investor_config("min_income")):
+		return "Faltan ingresos el mes pasado."
+	return ""
+
+
+## Oferta de un inversionista sorteada con rng: {"amount" (efectivo), "share" (0–1),
+## "months"}, o {} si no puede llegar uno.
+func make_investor_offer(rng: RandomNumberGenerator) -> Dictionary:
+	if not investor_problem().is_empty():
+		return {}
+	var ratios: Array = get_investor_config("cash_ratio")
+	var step: int = int(get_investor_config("cash_step"))
+	var cash: int = maxi(step, roundi(Company.get_value() * rng.randf_range(float(ratios[0]), float(ratios[1])) / step) * step)
+	var range_months: Array = get_investor_config("months")
+	var months: int = rng.randi_range(int(range_months[0]), int(range_months[1]))
+	return {"amount": cash, "months": months, "share": investor_share(cash, months, get_investor_income(Economy.get_current_month() - 1))}
+
+
+## Parte de los ingresos que pide por cash durante months meses con ese ingreso mensual:
+## la que le devuelve return_ratio veces lo que pone, entre share_range, redondeada a 1 %.
+func investor_share(cash: int, months: int, monthly: int) -> float:
+	var limits: Array = get_investor_config("share_range")
+	var share: float = cash * float(get_investor_config("return_ratio")) / maxf(1.0, float(monthly) * months)
+	return clampf(snappedf(share, 0.01), float(limits[0]), float(limits[1]))
+
+
+## Acepta una oferta de make_investor_offer: llega el efectivo y empieza a cobrar el día 1.
+func accept_investor(offer: Dictionary) -> String:
+	if not investor.is_empty() or not offer.has("amount"):
+		return ""
+	investor = {"cash": int(offer["amount"]), "share": float(offer["share"]), "months": int(offer["months"]),
+		"paid_months": 0, "paid_total": 0, "day": GameClock.get_day_count(),
+		"income_before": get_investor_income(Economy.get_current_month())}
+	Economy.earn(int(offer["amount"]), CONCEPT_INVESTMENT)
+	EventBus.bank_changed.emit()
+	return describe_investor(investor)
+
+
+## «recibes $X por el 12 % de los ingresos durante 18 meses».
+static func describe_investor(deal: Dictionary) -> String:
+	return "recibes %s por el %d %% de los ingresos de contratos y productos durante %d meses" % [
+		MoneyFormat.format(int(deal.get("cash", deal.get("amount", 0)))), roundi(float(deal["share"]) * 100.0), int(deal["months"])]
+
+
+## Estado del inversionista para Empresa y Banco ("" si no hay).
+func describe_investor_status() -> String:
+	if investor.is_empty():
+		return ""
+	return "Inversionista: puso %s por el %d %% de los ingresos de contratos y productos. Quedan %d de %d meses; pagado %s, falta unos %s (con el ingreso del mes pasado). Se cobra cada día 1." % [
+		MoneyFormat.format(int(investor["cash"])), roundi(float(investor["share"]) * 100.0), get_investor_months_left(),
+		int(investor["months"]), MoneyFormat.format(int(investor["paid_total"])), MoneyFormat.format(get_investor_remaining())]
+
+
+## Meses que faltan por pagarle (0 sin inversionista).
+func get_investor_months_left() -> int:
+	return 0 if investor.is_empty() else int(investor["months"]) - int(investor["paid_months"])
+
+
+## Lo que falta por pagarle, estimado con los ingresos del mes pasado (0 sin inversionista).
+func get_investor_remaining() -> int:
+	if investor.is_empty():
+		return 0
+	return roundi(float(investor["share"]) * get_investor_income(Economy.get_current_month() - 1) * get_investor_months_left())
+
+
+# El día 1: le paga su parte de los ingresos del mes que terminó (el primer mes, solo los
+# que llegaron después de aceptar) aunque deje el saldo negativo; al cumplir los meses termina.
+func _charge_investor(month: int) -> void:
+	if investor.is_empty():
+		return
+	var income: int = maxi(0, get_investor_income(month) - int(investor["income_before"]))
+	investor["income_before"] = 0
+	var payment: int = roundi(income * float(investor["share"]))
+	if payment > 0:
+		Economy.charge(payment, CONCEPT_INVESTOR)
+	investor["paid_months"] = int(investor["paid_months"]) + 1
+	investor["paid_total"] = int(investor["paid_total"]) + payment
+	if get_investor_months_left() <= 0:
+		EventBus.send_notice(EventBus.target_menu("bank"), "Último pago al inversionista: %s. En total le pagaste %s por %s." % [
+			MoneyFormat.format(payment), MoneyFormat.format(int(investor["paid_total"])), MoneyFormat.format(int(investor["cash"]))])
+		investor = {}
+	else:
+		EventBus.send_notice(EventBus.target_menu("bank"), "Pago al inversionista: %s (%d %% de %s). Quedan %d meses." % [
+			MoneyFormat.format(payment), roundi(float(investor["share"]) * 100.0), MoneyFormat.format(income), get_investor_months_left()])
+	EventBus.bank_changed.emit()
+
+
 ## Indica si hoy el banco ofrecería un préstamo de emergencia (no con meses debiendo).
 func can_offer_emergency() -> bool:
 	return not game_over and overdue_months < int(get_config("warning_months"))
@@ -538,6 +666,7 @@ func _on_day_changed(day: int, month: int) -> void:
 	if day != 1 or game_over:
 		return
 	_charge_installments()
+	_charge_investor(month - 1)
 	var totals: Dictionary[String, int] = Economy.get_month_totals(month - 1)
 	monthly_income = 0
 	for concept: String in get_income_concepts():
@@ -571,7 +700,7 @@ func export_state() -> Dictionary:
 	return {"rating": rating, "score": score, "monthly_income": monthly_income,
 		"on_time_payments": on_time_payments, "late_payments": late_payments,
 		"loans": loans.duplicate(true), "next_loan_id": _next_loan_id, "overdue_months": overdue_months,
-		"emergency_offer": emergency_offer.duplicate()}
+		"emergency_offer": emergency_offer.duplicate(), "investor": investor.duplicate()}
 
 
 ## Restaura el banco. Una partida de antes del hito 21 se calcula con lo que hay.
@@ -595,6 +724,13 @@ func import_state(state: Dictionary) -> void:
 		emergency_offer = {"amount": int(offer["amount"]), "shortfall": int(offer.get("shortfall", offer["amount"])),
 			"rate": float(offer["rate"]), "months": int(offer["months"]), "installment": int(offer["installment"]),
 			"total": int(offer["total"]), "first_due_day": int(offer.get("first_due_day", 0))}
+	investor = {}
+	var saved_investor: Dictionary = state.get("investor", {})
+	if saved_investor.has("cash"):
+		investor = {"cash": int(saved_investor["cash"]), "share": float(saved_investor["share"]),
+			"months": int(saved_investor["months"]), "paid_months": int(saved_investor.get("paid_months", 0)),
+			"paid_total": int(saved_investor.get("paid_total", 0)), "income_before": int(saved_investor.get("income_before", 0)),
+			"day": int(saved_investor.get("day", 0))}
 	if state.has("rating"):
 		rating = String(state["rating"])
 		score = int(state.get("score", compute_score()))

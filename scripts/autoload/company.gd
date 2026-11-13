@@ -94,14 +94,19 @@ func get_value() -> int:
 
 
 ## Partes del valor, en orden: [{"label", "amount"}] (la deuda va en negativo).
+## Con inversionista (hito 58) se agrega lo que falta pagarle, estimado.
 func get_value_parts() -> Array[Dictionary]:
-	return [
+	var parts: Array[Dictionary] = [
 		{"label": "Dinero", "amount": Economy.balance},
 		{"label": "Muebles y computadoras (reventa)", "amount": Bank.get_assets_value()},
 		{"label": "Terreno comprado", "amount": OfficeState.land_paid},
 		{"label": "Productos (%d días de ingreso)" % ProductCatalog.get_value_days(), "amount": Products.get_value()},
 		{"label": "Deuda con el banco", "amount": -Bank.get_seizable_debt()},
 	]
+	if not Bank.investor.is_empty():
+		parts.append({"label": "Pendiente con el inversionista (%d meses)" % Bank.get_investor_months_left(),
+			"amount": -Bank.get_investor_remaining()})
+	return parts
 
 
 func _notify() -> void:

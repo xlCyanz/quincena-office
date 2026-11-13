@@ -107,7 +107,8 @@ func _check_catalog() -> void:
 		ids.append(String(event["id"]))
 	for event_id: String in DESIGN_EVENTS:
 		_expect(ids.has(event_id), "está el evento %s" % event_id)
-	_expect(ids.size() == DESIGN_EVENTS.size(), "los 16 eventos de 10.2: %d" % ids.size())
+	# El inversionista (hito 58) es el único evento que no está en 10.2.
+	_expect(ids.size() == DESIGN_EVENTS.size() + 1 and ids.has("investor"), "los 16 eventos de 10.2 y el inversionista: %d" % ids.size())
 	var good: float = 0.0
 	var bad: float = 0.0
 	for event: Dictionary in Events._events_data()["events"]:

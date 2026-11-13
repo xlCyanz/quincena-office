@@ -197,6 +197,8 @@ static func describe_effect(effect: Dictionary) -> String:
 			return "los adictos al café rinden menos hoy"
 		"candidates":
 			return "llega un candidato más a cada vacante durante %d días" % int(effect["days"])
+		"investor":
+			return Bank.describe_investor(effect)
 		"break_toilet":
 			return "un inodoro deja de funcionar hasta repararlo (%s en Empresa)" % MoneyFormat.format(int(StaffCatalog.get_bathrooms("repair_cost")))
 	return ""
@@ -381,6 +383,9 @@ func _find_target(kind: String, args: Dictionary) -> Variant:
 						and today - int(entry["day"]) <= int(args.get("within_days", 7)):
 					return {"amount": roundi(int(entry["paid"]) * float(args.get("ratio", 0.3))), "client": String(entry["title"])}
 			return null
+		"investor":
+			var offer: Dictionary = Bank.make_investor_offer(_rng)
+			return null if offer.is_empty() else offer
 		"tax":
 			# Ingresos de contratos del mes pasado (los préstamos no son ingreso).
 			var income: int = 0
@@ -410,6 +415,10 @@ func _fill(text: String, target: Dictionary) -> String:
 		result = result.replace("{%s}" % key, String(target.get(key, "")))
 	if target.has("amount"):
 		result = result.replace("{amount}", MoneyFormat.format(int(target["amount"])))
+	if target.has("share"):
+		result = result.replace("{share}", "%d %%" % roundi(float(target["share"]) * 100.0))
+	if target.has("months"):
+		result = result.replace("{months}", str(int(target["months"])))
 	return result
 
 
@@ -428,6 +437,9 @@ func _resolve(effect: Dictionary, target: Dictionary) -> Dictionary:
 			return {"type": "money", "amount": -int(target.get("amount", 0))}
 		"replace_computer":
 			return {"type": "money", "amount": -FurnitureCatalog.get_price(String(target.get("computer", "")))}
+		"investor":
+			for key: String in ["amount", "share", "months"]:
+				resolved[key] = target.get(key, 0)
 		"withhold":
 			resolved["amount"] = int(target.get("amount", 0))
 			if bool(effect.get("by_accountant", false)):
@@ -502,6 +514,8 @@ func _apply(effect: Dictionary, target: Dictionary, title: String) -> String:
 		"candidates":
 			Staff.boost_candidates(int(effect["days"]))
 			return describe_effect(effect)
+		"investor":
+			return Bank.accept_investor(effect)
 		"break_toilet":
 			return describe_effect(effect) if Staff.break_toilet() else ""
 	push_error("Efecto de evento desconocido en %s: %s" % [title, effect])
