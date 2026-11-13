@@ -324,8 +324,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   si está en el trabajo; `get_toilets_needed`, hacia arriba). Siempre aplica, también sin baño (el CEO solo rinde 95 %). Por inodoro que falta
   (`get_bathroom_shortage`) la producción de todos ×(1 − 5 %), hasta −20 % (`get_bathroom_factor`, en `Projects.get_workers` vía `shared["bathroom"]`);
   cada hora `_check_bathrooms` anota `bathroom_short_day` y la meta de ánimo baja 10 ese día y el siguiente. Los que no caben salen del edificio a
-  buscar un baño y vuelven: `main._send_bathroom_trips(hora)` manda a cada sentado una vez cada `trip_every_hours` (4) horas, en su turno por `person_key.hash()`, hasta
-  los que no caben (10 por inodoro que falta) ÷ 4 por hora (`OfficeCharacter.step_out`, actividad
+  buscar un baño y vuelven: `main._send_bathroom_trips(hora)` manda a cada sentado una vez cada `trip_every_hours` (6) horas, en su turno por `person_key.hash()`, hasta
+  los que no caben (10 por inodoro que falta) ÷ 6 por hora (`OfficeCharacter.step_out`, actividad
   `STEPPING_OUT`; no vacía la oficina). «Baño dañado»: «Poner un cartel» aplica `break_toilet` (un inodoro deja de contar) y Empresa muestra la
   sección Baños con «Reparar el baño ($400)» (`Staff.repair_toilet`, «Reparación del baño»). `Staff.bathrooms_enabled` (no se guarda) es solo para
   pruebas: `test_all` lo apaga en las partes anteriores a `bathrooms` (oficinas sin baño con números exactos).

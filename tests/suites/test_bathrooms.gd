@@ -278,13 +278,15 @@ func _check_ui() -> void:
 	for character: OfficeCharacter in characters:
 		character.import_state({"activity": OfficeCharacter.Activity.SEATED,
 			"cell": [character.get_seat_cell().x, character.get_seat_cell().y]})
-	# Cada uno sale una vez cada 4 horas, repartidos: en 4 horas salen todos una vez y por
-	# hora como mucho 2 (6 personas que no caben / 4, hacia arriba).
+	# Cada uno sale una vez cada trip_every_hours (6) horas, repartidos: por hora como mucho
+	# los que no caben (6 personas) ÷ 6 = 1, y en 12 horas nadie sale más de dos veces.
+	var every: int = int(StaffCatalog.get_bathrooms("trip_every_hours"))
+	_expect(every == 6, "una salida cada 6 horas")
 	var hour: int = Staff.get_absolute_hour()
 	var trips: Dictionary[String, int] = {}
 	var per_hour: Array[int] = []
 	var out: Array[OfficeCharacter] = []
-	for step: int in range(8):
+	for step: int in range(every * 2):
 		for character: OfficeCharacter in characters:
 			character.import_state({"activity": OfficeCharacter.Activity.SEATED,
 				"cell": [character.get_seat_cell().x, character.get_seat_cell().y]})
@@ -299,9 +301,10 @@ func _check_ui() -> void:
 	var total: int = 0
 	for key: String in trips:
 		total += trips[key]
-	_expect(most <= 2 and total >= 6 and total <= 12 and trips.size() >= 4, "falta 1 inodoro: en 8 horas %d salidas %s" % [total, per_hour])
+	_expect(most <= 1 and total >= 4 and total <= 12 and trips.size() >= 3,
+		"falta 1 inodoro: en %d horas %d salidas %s" % [every * 2, total, per_hour])
 	for key: String in trips:
-		_expect(trips[key] <= 2, "%s salió %d veces en 8 horas (una cada 4)" % [key, trips[key]])
+		_expect(trips[key] <= 2, "%s salió %d veces en %d horas" % [key, trips[key], every * 2])
 	if out.is_empty():
 		for character: OfficeCharacter in characters:
 			character.step_out()

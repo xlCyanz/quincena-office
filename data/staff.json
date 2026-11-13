@@ -199,7 +199,7 @@
 		"short_mood": -10,
 		"points_per_missing": 0.05,
 		"max_points_loss": 0.2,
-		"trip_every_hours": 4,
+		"trip_every_hours": 6,
 		"repair_cost": 400
 	},
 	"traits": {
