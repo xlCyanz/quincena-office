@@ -56,15 +56,18 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   los caminos usan `AStarGrid2D` a doble resolución para que las paredes de borde bloqueen el paso.
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
+- El piso de cada casilla se dibuja como 2×2 losas (`OfficeGrid.FLOOR_TILES_PER_SIDE`, `_draw_floor_tiles`); es solo el dibujo.
 - El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
   fuera del local se dibuja terreno (`MapDecor`, hito 68). La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
-  terreno (`Builder.quote_land`/`buy_land`, herramienta Terreno: lado, ancho × fondo y posición; $150/m² más la cerámica a mitad de precio, en
-  `data/construction.json`): se apoya en la casilla más lejana de cada fila, así rellena huecos y cobra solo lo nuevo; no sale del
-  solar ni tapa la entrada; el borde compartido se abre y el contorno nuevo lleva pared. Una habitación puede crecer hacia el
-  terreno nuevo pero no juntarse con otro espacio. El mantenimiento se cobra por `lot.get_area()`.
+  terreno: en la herramienta Terreno se arrastra un rectángulo en el mapa (`BuildController.set_land_rect`/`get_land_rect`, `land_changed`;
+  Comprar en `BuildPanel`) y `Builder.quote_land_rect`/`buy_land_rect` (o `quote_land_cells`; `quote_land`/`buy_land` por lado siguen para
+  pruebas) toman sus casillas dentro del solar, fuera del local y de la calle de la entrada, conectadas al local ($150/m² más la cerámica a
+  mitad de precio, en `data/construction.json`). El contorno nuevo lleva pared; cada pedazo nuevo abre los bordes que comparte con un solo
+  espacio viejo (`_edges_with_land`: el que no es habitación antes, si no el de más bordes), así no junta habitaciones; una pared con algo
+  colgado queda cerrada. Solo se rechaza si se perdería una habitación. El mantenimiento se cobra por `lot.get_area()`.
 - Todo se controla con ratón; el teclado es un extra.
 
 ## Estructura

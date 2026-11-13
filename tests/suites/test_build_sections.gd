@@ -59,6 +59,8 @@ func _ready() -> void:
 	_expect(build.get_land_button("buy").is_visible_in_tree(), "se ve Comprar")
 	_expect(panel.get_global_rect().size.y < view_height * 0.25, "Terreno tapa menos de 25 %% de la pantalla: %d" % panel.get_global_rect().size.y)
 	var before: int = OfficeState.lot.get_area()
+	var corner: Vector2i = Vector2i(OfficeState.lot_rect.end.x, OfficeState.lot_rect.position.y)
+	(game.get_node("BuildController") as BuildController).set_land_rect(corner, corner + Vector2i(1, 1))
 	build.get_land_button("buy").pressed.emit()
 	await get_tree().process_frame
 	_expect(OfficeState.lot.get_area() > before, "Comprar compra el terreno: %d → %d m²" % [before, OfficeState.lot.get_area()])

@@ -126,12 +126,13 @@ func _check_wall_placement() -> void:
 	_expect(result["ok"] and Economy.balance == balance + FurnitureCatalog.get_resale("wall_clock"), "vender el reloj devuelve la reventa")
 	_expect(_builder.quote(wall)["ok"], "sin el reloj, la pared se puede vender")
 	_expect(not _builder.sell_wall_item(Vector2i(3, 0), 1)["ok"], "no queda nada que vender ahí")
-	# Comprar terreno no abre una pared con algo colgado.
+	# Comprar terreno no abre una pared con algo colgado: se compra igual y esa pared queda.
 	_builder.place("painting", Vector2i(5, 4), 3)
-	result = _builder.quote_land(Builder.SIDE_EAST, 2, 2, 3)
-	_expect(not result["ok"] and String(result["message"]).contains("colgado"), "el terreno no abre la pared del cuadro: %s" % result["message"])
-	_builder.sell_wall_item(Vector2i(5, 4), 3)
-	_expect(_builder.quote_land(Builder.SIDE_EAST, 2, 2, 3)["ok"], "sin cuadro sí")
+	var painted: Vector3i = FurnitureCatalog.get_wall_edge(Vector2i(5, 4), 3)
+	result = _builder.buy_land(Builder.SIDE_EAST, 2, 2, 3)
+	_expect(result["ok"], "con un cuadro en el borde el terreno se compra: %s" % result["message"])
+	_expect(OfficeState.get_edge(painted) == ConstructionCatalog.WALL
+		and OfficeState.find_wall_item(Vector2i(5, 4), 3) >= 0, "la pared del cuadro queda cerrada y con el cuadro")
 	# El modo construcción elige la pared más cercana al ratón, del lado del ratón.
 	var controller := BuildController.new()
 	controller.set("_pointer", Vector2(3.1, -0.35))

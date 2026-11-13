@@ -3,8 +3,8 @@
 # como Ajustes, añaden ahí su botón) o, en modo construcción, las herramientas, el
 # estado de la última acción y "Salir". Las herramientas van en secciones (Estructura,
 # Muebles, Habitaciones y Terreno): arriba se elige la sección y solo se ven las suyas, así
-# el panel tapa poco del mapa. Terreno (hito 25) muestra la fila para elegir el lado, el
-# ancho, el fondo y la posición del terreno, y Comprar.
+# el panel tapa poco del mapa. Terreno (hito 25) se elige arrastrando en el mapa: la
+# sección muestra cómo hacerlo y Comprar.
 class_name BuildPanel
 extends CanvasLayer
 
@@ -12,14 +12,9 @@ extends CanvasLayer
 signal build_mode_changed(active: bool)
 ## Se eligió una herramienta (ver BuildController).
 signal tool_selected(tool: String)
-## Cambió el terreno elegido (lado, ancho, fondo y posición a lo largo del lado).
-signal land_changed(side: String, width: int, depth: int, offset: int)
 ## Se pulsó Comprar en la fila del terreno.
 signal land_buy_requested
 
-const SIDE_NAMES: Dictionary[String, String] = {
-	Builder.SIDE_NORTH: "Norte", Builder.SIDE_SOUTH: "Sur", Builder.SIDE_EAST: "Este", Builder.SIDE_WEST: "Oeste",
-}
 ## Secciones del panel en orden: id → nombre del botón.
 const SECTION_STRUCTURE: String = "structure"
 const SECTION_FURNITURE: String = "furniture"
@@ -28,12 +23,8 @@ const SECTION_LAND: String = "land"
 const SECTION_NAMES: Dictionary[String, String] = {
 	SECTION_STRUCTURE: "Estructura", SECTION_FURNITURE: "Muebles", SECTION_ROOMS: "Habitaciones", SECTION_LAND: "Terreno",
 }
-const DEFAULT_LAND_WIDTH: int = 4
-const DEFAULT_LAND_DEPTH: int = 3
 
 const MARGIN_BOTTOM: float = 16.0
-## Para las descripciones emergentes de −/+ del terreno (hito 65).
-const LAND_NAMES: Dictionary[String, String] = {"width": "ancho", "depth": "fondo", "offset": "posición"}
 ## Ancho del panel de construcción si la pantalla lo deja (hito 65).
 const BUILD_PANEL_WIDTH: float = 1000.0
 
@@ -60,14 +51,7 @@ var _status_label: Label
 var _tool_buttons: Dictionary[String, Button] = {}
 var _exit_button: Button
 var _land_row: HFlowContainer
-var _side_buttons: Dictionary[String, Button] = {}
-var _land_labels: Dictionary[String, Label] = {}
-var _land_buttons: Dictionary[String, Button] = {}
 var _buy_button: Button
-var _land_side: String = Builder.SIDE_EAST
-var _land_width: int = DEFAULT_LAND_WIDTH
-var _land_depth: int = DEFAULT_LAND_DEPTH
-var _land_offset: int = 0
 
 
 func _ready() -> void:
@@ -330,32 +314,13 @@ func _show_section(section: String) -> void:
 		_fit_panel()
 
 
-## Elige el terreno como si se hubieran usado los botones de la fila.
-func set_land(side: String, width: int, depth: int, offset: int) -> void:
-	_land_side = side
-	_land_width = width
-	_land_depth = depth
-	_land_offset = offset
-	_refresh_land()
-
-
-## Terreno elegido: {"side", "width", "depth", "offset"}.
-func get_land() -> Dictionary:
-	return {"side": _land_side, "width": _land_width, "depth": _land_depth, "offset": _land_offset}
-
-
 func is_land_row_visible() -> bool:
 	return _land_row.visible
 
 
-## Botones de la fila del terreno: "north"…"west", "width-", "width+", "depth-", "depth+",
-## "offset-", "offset+" y "buy".
+## Botones de la fila del terreno: "buy" (Comprar).
 func get_land_button(key: String) -> Button:
-	if key == "buy":
-		return _buy_button
-	if _side_buttons.has(key):
-		return _side_buttons[key]
-	return _land_buttons[key]
+	return _buy_button if key == "buy" else null
 
 
 func show_status(text: String) -> void:
@@ -416,90 +381,28 @@ func _refresh_room_locks() -> void:
 
 func _on_tool_pressed(tool: String) -> void:
 	tool_selected.emit(tool)
-	if tool == BuildController.TOOL_LAND:
-		_refresh_land()
 
 
 func _build_land_row(parent: Container) -> void:
 	_land_row = HFlowContainer.new()
 	_land_row.alignment = FlowContainer.ALIGNMENT_CENTER
-	_land_row.add_theme_constant_override("h_separation", 4)
+	_land_row.add_theme_constant_override("h_separation", 8)
 	_land_row.add_theme_constant_override("v_separation", 4)
 	parent.add_child(_land_row)
-	var sides := ButtonGroup.new()
-	for side: String in Builder.SIDES:
-		var button := Button.new()
-		button.text = SIDE_NAMES[side]
-		button.toggle_mode = true
-		button.button_group = sides
-		button.pressed.connect(func() -> void:
-			_land_side = side
-			_land_offset = 0
-			_refresh_land())
-		_land_row.add_child(button)
-		_side_buttons[side] = button
-	for key: String in ["width", "depth", "offset"]:
-		var title := Label.new()
-		title.text = {"width": "  Ancho", "depth": "  Fondo", "offset": "  Posición"}[key]
-		_land_row.add_child(title)
-		var minus := Button.new()
-		minus.text = "−"
-		minus.tooltip_text = "Restar %s" % LAND_NAMES[key]
-		minus.pressed.connect(_step_land.bind(key, -1))
-		_land_row.add_child(minus)
-		_land_buttons[key + "-"] = minus
-		var value := Label.new()
-		value.custom_minimum_size = Vector2(28, 0)
-		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_land_row.add_child(value)
-		_land_labels[key] = value
-		var plus := Button.new()
-		plus.text = "+"
-		plus.tooltip_text = "Sumar %s" % LAND_NAMES[key]
-		plus.pressed.connect(_step_land.bind(key, 1))
-		_land_row.add_child(plus)
-		_land_buttons[key + "+"] = plus
+	var hint := Label.new()
+	hint.text = BuildController.LAND_HINT
+	_land_row.add_child(hint)
 	_buy_button = Button.new()
 	_buy_button.text = "Comprar"
+	_buy_button.disabled = true
 	_buy_button.pressed.connect(func() -> void: land_buy_requested.emit())
 	_land_row.add_child(_buy_button)
 	_land_row.visible = false
 
 
-func _step_land(key: String, step: int) -> void:
-	match key:
-		"width":
-			_land_width += step
-		"depth":
-			_land_depth += step
-		"offset":
-			_land_offset += step
-	_refresh_land()
-
-
-# Ajusta los valores a lo que cabe en el solar, actualiza la fila y avisa del cambio.
-func _refresh_land() -> void:
-	var site: Rect2i = OfficeState.site_rect
-	var bounds: Rect2i = OfficeState.lot.get_bounds()
-	var lengthwise: bool = _land_side == Builder.SIDE_NORTH or _land_side == Builder.SIDE_SOUTH
-	var side_length: int = bounds.size.x if lengthwise else bounds.size.y
-	var max_width: int = site.size.x if lengthwise else site.size.y
-	var max_depth: int = site.size.y if lengthwise else site.size.x
-	_land_width = clampi(_land_width, 1, max_width)
-	_land_depth = clampi(_land_depth, 1, max_depth)
-	# El terreno tiene que compartir al menos una fila (o columna) con el local.
-	_land_offset = clampi(_land_offset, 1 - _land_width, side_length - 1)
-	_side_buttons[_land_side].button_pressed = true
-	_land_labels["width"].text = str(_land_width)
-	_land_labels["depth"].text = str(_land_depth)
-	_land_labels["offset"].text = str(_land_offset)
-	_land_buttons["width-"].disabled = _land_width <= 1
-	_land_buttons["width+"].disabled = _land_width >= max_width
-	_land_buttons["depth-"].disabled = _land_depth <= 1
-	_land_buttons["depth+"].disabled = _land_depth >= max_depth
-	_land_buttons["offset-"].disabled = _land_offset <= 1 - _land_width
-	_land_buttons["offset+"].disabled = _land_offset >= side_length - 1
-	land_changed.emit(_land_side, _land_width, _land_depth, _land_offset)
+## Habilita Comprar si hay un terreno elegido que se puede comprar.
+func set_land_ready(ready: bool) -> void:
+	_buy_button.disabled = not ready
 
 
 # La barra de menús cambió de alto (o la pantalla de tamaño): se guarda cuánto reserva abajo

@@ -596,59 +596,80 @@ static func _side_direction(side: String) -> Vector2i:
 	return Vector2i(1, 0)
 
 
-## Calcula la compra de un terreno sin hacerla: {"ok", "cost", "message", "cells"
-## (el rectángulo, para la vista previa), "new_cells", "rooms"}.
+## Calcula la compra de un terreno de width × depth pegado a un lado (ver plan_land) sin
+## hacerla. Igual que quote_land_cells con esas casillas.
 func quote_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
+	if width < 1 or depth < 1:
+		return {"ok": false, "cost": 0, "message": "El terreno tiene que medir al menos 1 × 1.",
+			"cells": [] as Array[Vector2i], "new_cells": [] as Array[Vector2i]}
 	var plan: Dictionary = plan_land(OfficeState.lot, side, width, depth, offset)
-	var cells: Array[Vector2i] = plan["cells"]
-	var new_cells: Array[Vector2i] = plan["new_cells"]
+	return quote_land_cells(plan["cells"])
+
+
+## Compra el terreno de width × depth pegado a un lado si quote_land lo permite.
+func buy_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
+	return _commit_land(quote_land(side, width, depth, offset))
+
+
+## Calcula la compra del rectángulo de casillas entre dos esquinas (lo que se arrastra en
+## el mapa con la herramienta Terreno).
+func quote_land_rect(corner_a: Vector2i, corner_b: Vector2i) -> Dictionary:
+	var low := Vector2i(mini(corner_a.x, corner_b.x), mini(corner_a.y, corner_b.y))
+	var high := Vector2i(maxi(corner_a.x, corner_b.x), maxi(corner_a.y, corner_b.y))
+	var cells: Array[Vector2i] = []
+	for y: int in range(low.y, high.y + 1):
+		for x: int in range(low.x, high.x + 1):
+			cells.append(Vector2i(x, y))
+	return quote_land_cells(cells)
+
+
+## Compra el rectángulo entre dos esquinas si quote_land_rect lo permite.
+func buy_land_rect(corner_a: Vector2i, corner_b: Vector2i) -> Dictionary:
+	return _commit_land(quote_land_rect(corner_a, corner_b))
+
+
+## Calcula la compra de esas casillas sin hacerla: {"ok", "cost", "message", "cells" (las
+## pedidas, para la vista previa), "new_cells" (las que se compran), "rooms", "edges"}.
+## Se compran las que están dentro del solar, no son del local, no tapan la calle de la
+## entrada y tocan el local (directamente o a través de otras que se compran); las demás se
+## dejan afuera. El borde con el local se abre hacia un solo espacio por cada pedazo nuevo
+## (el espacio común si lo toca; si no, la habitación con más borde): hacia los demás queda
+## la pared, así ninguna habitación se junta con otro espacio. Un borde con algo colgado
+## también queda cerrado.
+func quote_land_cells(cells: Array[Vector2i]) -> Dictionary:
+	var lot: Lot = OfficeState.lot
+	var street: Vector2i = OfficeState.get_outside_of_entrance()
+	var wanted: Dictionary[Vector2i, bool] = {}
+	for cell: Vector2i in cells:
+		if OfficeState.site_rect.has_point(cell) and not lot.has_point(cell) and cell != street:
+			wanted[cell] = true
+	var new_cells: Array[Vector2i] = _connected_to_lot(lot, wanted)
 	var land_cost: int = new_cells.size() * ConstructionCatalog.get_land_price()
 	var floor_cost: int = ConstructionCatalog.get_land_floor_cost(new_cells.size())
 	var cost: int = land_cost + floor_cost
 	var result: Dictionary = {"ok": false, "cost": cost, "message": "", "cells": cells, "new_cells": new_cells}
-	if width < 1 or depth < 1:
-		result["message"] = "El terreno tiene que medir al menos 1 × 1."
-		return result
-	if cells.is_empty():
-		result["message"] = "Así el terreno no toca el local."
-		return result
-	for cell: Vector2i in cells:
-		if not OfficeState.site_rect.has_point(cell):
-			result["message"] = "Se sale del solar: no se puede crecer más por ahí."
-			return result
 	if new_cells.is_empty():
-		result["message"] = "Ese terreno ya es del local."
-		return result
-	if new_cells.has(OfficeState.get_outside_of_entrance()):
-		result["message"] = "No se puede tapar la puerta de entrada."
+		if cells.is_empty():
+			result["message"] = "El terreno tiene que tocar el local."
+		elif cells.all(func(cell: Vector2i) -> bool: return lot.has_point(cell)) and not cells.is_empty():
+			result["message"] = "Ese terreno ya es del local."
+		elif cells.all(func(cell: Vector2i) -> bool: return not OfficeState.site_rect.has_point(cell)):
+			result["message"] = "Eso está fuera del solar: no se puede crecer más por ahí."
+		else:
+			result["message"] = "El terreno tiene que tocar el local."
 		return result
 	if not Economy.can_afford(cost):
 		result["message"] = "No alcanza el dinero: %d m² cuestan %s." % [new_cells.size(), MoneyFormat.format(cost)]
 		return result
-	var new_lot: Lot = OfficeState.lot.with_cells(new_cells)
-	var new_edges: Dictionary[Vector3i, String] = _edges_with_land(new_lot)
-	for edge: Vector3i in OfficeState.edges:
-		if not new_edges.has(edge) and not OfficeState.wall_items_on(edge).is_empty():
-			result["message"] = "Hay algo colgado en la pared que se abriría: véndelo primero."
-			return result
+	var new_lot: Lot = lot.with_cells(new_cells)
+	var new_edges: Dictionary[Vector3i, String] = _edges_with_land(new_lot, new_cells)
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(new_lot, new_edges)
 	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, OfficeState.entrance, OfficeState.furniture)
 	var lost: Array[String] = _lost_rooms(rooms)
 	for type_id: String in lost:
 		if RoomCatalog.is_locked(type_id):
-			result["message"] = "Así se abriría la %s al terreno nuevo: elige otro lugar." % RoomCatalog.get_display_name(type_id)
+			result["message"] = "Así se perdería la %s: elige otro lugar." % RoomCatalog.get_display_name(type_id)
 			return result
-	# Una habitación puede crecer hacia el terreno nuevo, pero no juntarse con otro espacio.
-	for room: Dictionary in rooms:
-		var before: Array[Vector2i] = []
-		for old_room: Dictionary in OfficeState.rooms:
-			if old_room["type"] == room["type"] and RoomRules.shares_cells(old_room["cells"], room["cells"]):
-				before = old_room["cells"]
-		for cell: Vector2i in room["cells"]:
-			if not before.has(cell) and not new_cells.has(cell):
-				result["message"] = "Así la %s se juntaría con el resto de la oficina: compra el terreno solo junto a ella o junto al resto." % (
-					RoomCatalog.get_display_name(room["type"]))
-				return result
 	var floor_type: String = String(ConstructionCatalog.get_land().get("floor", ConstructionCatalog.BARE_FLOOR))
 	var message: String = "Terreno de %d m² por %s (%s + %s %s) · mantenimiento +%s al mes." % [new_cells.size(),
 		MoneyFormat.format(cost), MoneyFormat.format(land_cost), ConstructionCatalog.get_display_name(floor_type).to_lower(),
@@ -666,26 +687,26 @@ func quote_land(side: String, width: int, depth: int, offset: int) -> Dictionary
 	result["ok"] = true
 	result["message"] = message
 	result["rooms"] = rooms
+	result["edges"] = new_edges
 	return result
 
 
-## Compra el terreno si quote_land lo permite: el local crece, el contorno se corre al
-## nuevo borde (el borde compartido queda abierto) y las casillas nuevas traen piso.
-func buy_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
-	var result: Dictionary = quote_land(side, width, depth, offset)
+# Compra un terreno ya calculado: el local crece, el contorno se corre al nuevo borde y las
+# casillas nuevas traen piso.
+func _commit_land(result: Dictionary) -> Dictionary:
 	if not result["ok"]:
 		return result
 	var new_cells: Array[Vector2i] = result["new_cells"]
-	var new_lot: Lot = OfficeState.lot.with_cells(new_cells)
 	var window_refund: int = int(result.get("window_refund", 0))
-	OfficeState.edges = _edges_with_land(new_lot)
-	OfficeState.lot = new_lot
+	OfficeState.edges = result["edges"]
+	OfficeState.lot = OfficeState.lot.with_cells(new_cells)
 	var floor_type: String = String(ConstructionCatalog.get_land().get("floor", ConstructionCatalog.BARE_FLOOR))
 	for cell: Vector2i in new_cells:
 		OfficeState.set_floor(cell, floor_type)
 	var rooms: Array[Dictionary] = result["rooms"]
 	OfficeState.rooms = rooms
 	result.erase("rooms")
+	result.erase("edges")
 	OfficeState.land_paid += int(result["cost"])
 	Economy.spend(result["cost"], CONCEPT_LAND)
 	if window_refund > 0:
@@ -697,6 +718,30 @@ func buy_land(side: String, width: int, depth: int, offset: int) -> Dictionary:
 	return result
 
 
+# Las casillas pedidas que tocan el local, directamente o a través de otras pedidas.
+static func _connected_to_lot(lot: Lot, wanted: Dictionary[Vector2i, bool]) -> Array[Vector2i]:
+	var found: Dictionary[Vector2i, bool] = {}
+	var queue: Array[Vector2i] = []
+	for cell: Vector2i in wanted:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			if lot.has_point(cell + direction):
+				found[cell] = true
+				queue.append(cell)
+				break
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_back()
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var next: Vector2i = cell + direction
+			if wanted.has(next) and not found.has(next):
+				found[next] = true
+				queue.append(next)
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in wanted:
+		if found.has(cell):
+			cells.append(cell)
+	return cells
+
+
 # Ventanas del contorno de ahora que el terreno nuevo quita (el borde que se abre).
 func _opened_windows(new_edges: Dictionary[Vector3i, String]) -> int:
 	var count: int = 0
@@ -706,17 +751,58 @@ func _opened_windows(new_edges: Dictionary[Vector3i, String]) -> int:
 	return count
 
 
-# Los bordes de la oficina con el contorno corrido al local nuevo: se abre el borde que
-# ahora queda entre dos casillas del local y se pone pared en el contorno nuevo.
-func _edges_with_land(new_lot: Lot) -> Dictionary[Vector3i, String]:
+# Los bordes de la oficina con el contorno corrido al local nuevo: el contorno nuevo lleva
+# pared y, de cada pedazo de terreno nuevo, se abre el borde hacia un solo espacio de antes
+# (el que no es habitación si lo toca; si no, el de más borde). Los demás bordes con el
+# local y los que tienen algo colgado quedan como estaban.
+func _edges_with_land(new_lot: Lot, new_cells: Array[Vector2i]) -> Dictionary[Vector3i, String]:
 	var edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
-	var new_outline: Array[Vector3i] = new_lot.get_outline()
-	for edge: Vector3i in OfficeState.lot.get_outline():
-		if not new_outline.has(edge):
-			edges.erase(edge)
-	for edge: Vector3i in new_outline:
+	for edge: Vector3i in new_lot.get_outline():
 		if not edges.has(edge):
 			edges[edge] = ConstructionCatalog.WALL
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
+	var pending: Dictionary[Vector2i, bool] = {}
+	for cell: Vector2i in new_cells:
+		pending[cell] = true
+	for start: Vector2i in new_cells:
+		if not pending.has(start):
+			continue
+		# Un pedazo de terreno nuevo (casillas nuevas unidas entre sí).
+		var piece: Array[Vector2i] = [start]
+		pending.erase(start)
+		var index: int = 0
+		while index < piece.size():
+			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+				var next: Vector2i = piece[index] + direction
+				if pending.has(next):
+					pending.erase(next)
+					piece.append(next)
+			index += 1
+		# Bordes que comparte con cada espacio de antes.
+		var shared: Dictionary[int, Array] = {}
+		for cell: Vector2i in piece:
+			for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+				var old: Vector2i = cell + direction
+				if not OfficeState.lot.has_point(old):
+					continue
+				var space: int = RoomRules.space_index_at(spaces, old)
+				if not shared.has(space):
+					shared[space] = []
+				shared[space].append(GridEdge.between(cell, old))
+		var chosen: int = -1
+		var best: int = -1
+		for space: int in shared:
+			var cells: Array = spaces[space]["cells"] if space >= 0 else []
+			var is_room: bool = not cells.is_empty() and RoomRules.room_index_at(OfficeState.rooms, cells[0]) >= 0
+			# El espacio común vale más que cualquier habitación; después, el de más borde.
+			var score: int = shared[space].size() + (0 if is_room else 100000)
+			if score > best:
+				best = score
+				chosen = space
+		if chosen in shared:
+			for edge: Vector3i in shared[chosen]:
+				if OfficeState.wall_items_on(edge).is_empty():
+					edges.erase(edge)
 	return edges
 
 

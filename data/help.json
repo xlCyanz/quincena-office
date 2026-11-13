@@ -3,7 +3,7 @@
 	"topics": {
 		"build": {
 			"title": "Construir",
-			"text": "Mientras construyes el tiempo se detiene.\n• Pared, Puerta y Ventana van en los bordes de las casillas; los pisos se cambian, no se quitan.\n• Puerta de vidrio cambia la puerta de entrada (la de la Recepción) por una doble de vidrio que mejora el ambiente.\n• Los muebles se ponen en una casilla libre; Girar cambia hacia dónde miran y Vender devuelve parte del precio.\n• Una habitación se marca con un clic dentro de un espacio cerrado por paredes con una puerta; el cartel dice qué le falta para funcionar.\n• Un puesto es un escritorio con computadora y una silla delante, dentro de un Área de trabajo.\n• Arriba eliges la sección; Terreno compra más local."
+			"text": "Mientras construyes el tiempo se detiene.\n• Pared, Puerta y Ventana van en los bordes de las casillas; los pisos se cambian, no se quitan.\n• Puerta de vidrio cambia la de entrada por una que mejora el ambiente.\n• Los muebles se ponen en una casilla libre; Girar cambia hacia dónde miran y Vender devuelve parte del precio.\n• Una habitación se marca con un clic dentro de un espacio cerrado por paredes con una puerta; el cartel dice qué le falta para funcionar.\n• Un puesto es un escritorio con computadora y una silla delante, dentro de un Área de trabajo.\n• Arriba eliges la sección; en Terreno arrastras junto al local y compras."
 		},
 		"staff": {
 			"title": "Personal",

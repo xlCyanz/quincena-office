@@ -13,6 +13,10 @@ const NO_CELL := Vector2i(-1, -1)
 
 ## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos con zoom.
 const TILE_OVERLAP_PX: float = 1.0
+## Losas por lado en cada casilla de piso (2 = cuatro losas de 50 cm por m²).
+const FLOOR_TILES_PER_SIDE: int = 2
+## Ancho de la junta entre losas, en fracción de losa.
+const FLOOR_JOINT: float = 0.05
 
 var hovered_cell: Vector2i = NO_CELL
 
@@ -353,9 +357,16 @@ func _build_tile_set() -> TileSet:
 
 	var tile_size: Vector2i = GameConstants.TILE_SIZE
 	var image := Image.create_empty(tile_size.x * columns, tile_size.y * styles.size(), false, Image.FORMAT_RGBA8)
+	# Los pisos de verdad (no el terreno ni el mapa) van en losas: 2 × 2 por casilla.
+	var tiled_rows: Array[int] = [_atlas_rows[ConstructionCatalog.BARE_FLOOR]]
+	for floor_type: String in ConstructionCatalog.get_floor_types():
+		tiled_rows.append(_atlas_rows[floor_type])
 	for row: int in range(styles.size()):
 		for column: int in range(styles[row].size()):
-			_draw_diamond(image, Vector2i(column, row) * tile_size, styles[row][column])
+			if tiled_rows.has(row):
+				_draw_floor_tiles(image, Vector2i(column, row) * tile_size, styles[row])
+			else:
+				_draw_diamond(image, Vector2i(column, row) * tile_size, styles[row][column])
 	var line_color := Color(String(MapDecor.get_data().get("road_line_color", "e0cf78")))
 	var line_row: int = _atlas_rows[MapDecor.ROAD_LINE]
 	_draw_road_line(image, Vector2i(0, line_row) * tile_size, Vector2(2.0, 1.0), line_color)
@@ -374,6 +385,32 @@ func _build_tile_set() -> TileSet:
 	tile_set.tile_size = tile_size
 	_floor_source_id = tile_set.add_source(source)
 	return tile_set
+
+
+# Pinta una casilla de piso partida en FLOOR_TILES_PER_SIDE × FLOOR_TILES_PER_SIDE losas
+# en tablero (los dos colores del piso) con una junta un poco más oscura. Como cada lado
+# tiene un número par de losas, el tablero sigue igual en la casilla de al lado.
+func _draw_floor_tiles(image: Image, offset: Vector2i, colors: Array) -> void:
+	var half: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
+	var limit: float = 1.0 + TILE_OVERLAP_PX / half.y
+	var tiles: float = float(FLOOR_TILES_PER_SIDE)
+	var first: Color = colors[0]
+	var second: Color = colors[1] if colors.size() > 1 else colors[0]
+	for y: int in range(GameConstants.TILE_SIZE.y):
+		for x: int in range(GameConstants.TILE_SIZE.x):
+			var px: float = (x + 0.5 - half.x) / half.x
+			var py: float = (y + 0.5 - half.y) / half.y
+			if absf(px) + absf(py) > limit:
+				continue
+			# Coordenadas dentro de la casilla (0–1 en cada eje de la cuadrícula).
+			var u: float = clampf((py + px) / 2.0 + 0.5, 0.0, 0.9999) * tiles
+			var v: float = clampf((py - px) / 2.0 + 0.5, 0.0, 0.9999) * tiles
+			var color: Color = first if (floori(u) + floori(v)) % 2 == 0 else second
+			var edge_u: float = minf(u - floorf(u), 1.0 - (u - floorf(u)))
+			var edge_v: float = minf(v - floorf(v), 1.0 - (v - floorf(v)))
+			if minf(edge_u, edge_v) < FLOOR_JOINT:
+				color = color.darkened(0.12)
+			image.set_pixel(offset.x + x, offset.y + y, color)
 
 
 # Pinta la línea de la calle por el centro de una casilla, en la dirección direction

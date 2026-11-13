@@ -11,14 +11,16 @@
 #   pasando otro piso encima.
 # - Tipo de habitación: clic en un espacio cerrado con puerta lo marca con ese tipo.
 # - Quitar habitación: clic en una habitación la deja sin tipo.
-# - Terreno: el terreno se elige con la fila de BuildPanel (set_land) y se compra con
-#   buy_land; aquí solo se marca en el mapa.
+# - Terreno: se arrastra un rectángulo en el mapa junto al local (se marca lo que se
+#   compraría y su precio) y se compra con buy_land (el botón Comprar de BuildPanel).
 # En modo construcción se escribe sobre cada habitación su nombre y si funciona.
 class_name BuildController
 extends Node2D
 
 ## Cambió el texto de estado (costo de la vista previa, resultado o error).
 signal status_changed(text: String)
+## Cambió el terreno elegido con el ratón (o se compró).
+signal land_changed
 
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
@@ -29,6 +31,7 @@ const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
+const LAND_HINT: String = "Arrastra en el mapa junto al local para elegir el terreno."
 ## Mejorar la computadora de un escritorio o una silla a su calidad siguiente (hito 46).
 const TOOL_UPGRADE: String = "upgrade"
 
@@ -70,7 +73,9 @@ var _preview_front := Vector2i.ZERO
 var _preview_ok: bool = false
 var _apply_preview := Callable()
 # Terreno elegido en la fila de BuildPanel.
-var _land: Dictionary = {"side": Builder.SIDE_EAST, "width": 4, "depth": 3, "offset": 0}
+# Esquinas del terreno elegido (vacío si no hay) y si se está arrastrando.
+var _land_corners: Array[Vector2i] = []
+var _land_dragging: bool = false
 # Zoom con el que se dibujaron los nombres de las habitaciones.
 var _label_zoom: float = 0.0
 
@@ -91,25 +96,46 @@ func is_active() -> bool:
 	return _active
 
 
-## Elige el terreno que se va a comprar y actualiza la vista previa.
-func set_land(side: String, width: int, depth: int, offset: int) -> void:
-	_land = {"side": side, "width": width, "depth": depth, "offset": offset}
+## Elige el terreno que se va a comprar: el rectángulo entre dos casillas.
+func set_land_rect(corner_a: Vector2i, corner_b: Vector2i) -> void:
+	_land_corners = [corner_a, corner_b]
 	if tool == TOOL_LAND:
 		_update_preview()
+	land_changed.emit()
+
+
+## Esquinas del terreno elegido ([] si no hay).
+func get_land_rect() -> Array[Vector2i]:
+	return _land_corners.duplicate()
+
+
+## Indica si hay un terreno elegido que se puede comprar.
+func can_buy_land() -> bool:
+	return _land_corners.size() == 2 and bool(builder.quote_land_rect(_land_corners[0], _land_corners[1])["ok"])
 
 
 ## Compra el terreno elegido.
 func buy_land() -> Dictionary:
-	var result: Dictionary = builder.buy_land(_land["side"], _land["width"], _land["depth"], _land["offset"])
+	if _land_corners.size() != 2:
+		var hint: Dictionary = {"ok": false, "message": LAND_HINT}
+		status_changed.emit(hint["message"])
+		return hint
+	var result: Dictionary = builder.buy_land_rect(_land_corners[0], _land_corners[1])
+	if result["ok"]:
+		_land_corners.clear()
 	status_changed.emit(result["message"])
 	_update_preview(false)
+	land_changed.emit()
 	return result
 
 
 func set_tool(new_tool: String) -> void:
 	tool = new_tool
 	_dragging = false
+	_land_dragging = false
 	_update_preview()
+	if tool == TOOL_LAND and _land_corners.is_empty():
+		status_changed.emit(LAND_HINT)
 	if _is_room_tool():
 		var missing: Array[String] = RoomRules.missing_mandatory(OfficeState.rooms)
 		var hint: String = "Clic en un espacio cerrado con puerta."
@@ -140,10 +166,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var mouse := event as InputEventMouse
-	# El terreno se elige con los botones de BuildPanel, no con el ratón.
-	if mouse == null or tool == TOOL_LAND:
+	if mouse == null:
 		return
 	_pointer = _grid.world_to_grid(_grid.screen_to_world(mouse.position))
+	if tool == TOOL_LAND:
+		_land_input(event)
+		return
 	var button := event as InputEventMouseButton
 	if button != null and button.button_index == MOUSE_BUTTON_LEFT:
 		if button.pressed:
@@ -168,6 +196,28 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_preview()
 		if _dragging:
 			get_viewport().set_input_as_handled()
+
+
+# Terreno: con el botón izquierdo se arrastra el rectángulo; al soltar queda elegido.
+func _land_input(event: InputEvent) -> void:
+	var cell: Vector2i = Vector2i(_pointer.round())
+	var button := event as InputEventMouseButton
+	if button != null and button.button_index == MOUSE_BUTTON_LEFT:
+		if button.pressed:
+			_land_dragging = true
+			_land_corners = [cell, cell]
+			_update_preview()
+		elif _land_dragging:
+			_land_dragging = false
+			_land_corners[1] = cell
+			_update_preview()
+			land_changed.emit()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and _land_dragging:
+		if _land_corners[1] != cell:
+			_land_corners[1] = cell
+			_update_preview()
+		get_viewport().set_input_as_handled()
 
 
 func _is_room_tool() -> bool:
@@ -195,8 +245,11 @@ func _update_preview(announce: bool = true) -> void:
 	var quote: Dictionary = {}
 	var info: Dictionary = FurnitureCatalog.get_item(tool)
 	if tool == TOOL_LAND:
-		quote = builder.quote_land(_land["side"], _land["width"], _land["depth"], _land["offset"])
-		_preview_cells = quote["cells"]
+		if _land_corners.size() != 2:
+			queue_redraw()
+			return
+		quote = builder.quote_land_rect(_land_corners[0], _land_corners[1])
+		_preview_cells = quote["new_cells"] if quote["ok"] else quote["cells"]
 	elif _is_furniture_tool() and bool(info["wall_mounted"]):
 		# Objeto de pared: va en la pared más cercana al ratón, del lado donde está el ratón.
 		var slot: Array = _wall_slot()

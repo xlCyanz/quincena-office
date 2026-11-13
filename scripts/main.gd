@@ -104,7 +104,8 @@ func _ready() -> void:
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
-	_build_panel.land_changed.connect(_build_controller.set_land)
+	_build_controller.land_changed.connect(func() -> void:
+		_build_panel.set_land_ready(_build_controller.can_buy_land()))
 	_build_panel.land_buy_requested.connect(func() -> void: _build_controller.buy_land())
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
