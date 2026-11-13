@@ -321,13 +321,62 @@ func get_lunch_seats() -> int:
 ## Casillas libres de la Sala de descanso junto a las mesas de comedor, adonde caminan los
 ## que almuerzan dentro (en orden; puede haber menos que asientos).
 func get_lunch_spots() -> Array[Vector2i]:
+	return _spots_near(get_lunch_tables())
+
+
+## Muebles dentro de la Sala de descanso que funciona (hito 54).
+func get_break_room_items() -> Array[Dictionary]:
+	var items: Array[Dictionary] = []
+	var room: Dictionary = get_working_room(BREAK_ROOM)
+	if room.is_empty():
+		return items
+	var cells: Array[Vector2i] = room["cells"]
+	for item: Dictionary in furniture:
+		if cells.has(item["cell"]):
+			items.append(item)
+	return items
+
+
+## Suma de un valor de los muebles de la Sala de descanso que funciona, contando uno de
+## cada tipo (break_mood, distraction, vending_income).
+func get_break_room_effect(field: String) -> float:
+	var total: float = 0.0
+	var counted: Dictionary[String, bool] = {}
+	for item: Dictionary in get_break_room_items():
+		if not counted.has(item["id"]):
+			counted[item["id"]] = true
+			total += FurnitureCatalog.get_number(item["id"], field)
+	return total
+
+
+## Sofás de la Sala de descanso que funciona.
+func get_sofas() -> Array[Dictionary]:
+	return get_break_room_items().filter(func(item: Dictionary) -> bool:
+		return FurnitureCatalog.get_number(item["id"], "rest_places") > 0.0)
+
+
+## Lugares para tomar una pausa (2 por sofá).
+func get_rest_places() -> int:
+	var places: int = 0
+	for sofa: Dictionary in get_sofas():
+		places += int(FurnitureCatalog.get_number(sofa["id"], "rest_places"))
+	return places
+
+
+## Casillas libres junto a los sofás, adonde caminan los que toman una pausa.
+func get_rest_spots() -> Array[Vector2i]:
+	return _spots_near(get_sofas())
+
+
+# Casillas libres de la Sala de descanso alrededor de esos muebles, en orden.
+func _spots_near(items: Array[Dictionary]) -> Array[Vector2i]:
 	var spots: Array[Vector2i] = []
 	var room: Dictionary = get_working_room(BREAK_ROOM)
 	if room.is_empty():
 		return spots
 	var cells: Array[Vector2i] = room["cells"]
 	var taken: Array[Vector2i] = get_blocking_cells()
-	for table: Dictionary in get_lunch_tables():
+	for table: Dictionary in items:
 		for cell: Vector2i in FurnitureCatalog.get_footprint(table["id"], table["cell"], int(table["rotation"])):
 			for step: Vector2i in [Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0), Vector2i(-1, 0)]:
 				var spot: Vector2i = cell + step

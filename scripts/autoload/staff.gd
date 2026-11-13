@@ -114,6 +114,7 @@ const NO_TEMPLATE: int = 0
 const NO_TEAM_KEY: int = -1
 const NO_COFFEE_OUT: int = -1
 const CONCEPT_REPAIR: String = "Reparación del baño"
+const CONCEPT_VENDING: String = "Máquina expendedora"
 ## bathroom_short_day si nunca faltaron inodoros (lejos de cualquier día de juego).
 const NO_SHORT_DAY: int = -1000
 ## Habitación cuya cafetera necesitan los adictos al café (hito 51).
@@ -172,6 +173,11 @@ var bathroom_short_day: int = NO_SHORT_DAY
 ## Solo para pruebas: false hace como si siempre alcanzaran los inodoros (las pruebas de
 ## los hitos anteriores al 52 miden oficinas sin baño). No se guarda.
 var bathrooms_enabled: bool = true
+## Pausas (hito 54): hora absoluta → claves de quienes descansan esa hora (la actual y la
+## anterior, que la producción y la energía cobran al terminar).
+var breaks: Dictionary[int, Array] = {}
+## Quiénes estuvieron hoy en la oficina (para la máquina expendedora, hito 54).
+var present_today: Dictionary[String, bool] = {}
 
 var _next_id: int = 1
 var _next_team_id: int = 1
@@ -213,6 +219,8 @@ func new_game() -> void:
 	coffee_out_day = NO_COFFEE_OUT
 	broken_toilets = 0
 	bathroom_short_day = NO_SHORT_DAY
+	breaks.clear()
+	present_today.clear()
 	_next_id = 1
 	_next_team_id = 1
 	_last_interview_end = NO_FIRING
@@ -937,6 +945,7 @@ func get_mood_target(employee: Dictionary) -> int:
 		target += float(StaffCatalog.get_cleaning("dirty_mood"))
 	if is_bathroom_short_recently():
 		target += StaffCatalog.get_bathrooms("short_mood")
+	target += get_break_mood()
 	target += get_ambiance(employee_key(employee["id"]))
 	target += get_desk_mood(employee_key(employee["id"]))
 	return clampi(roundi(target), 0, 100)
@@ -1007,6 +1016,73 @@ static func get_trait_points_factor(person: Dictionary, hour: int, coffee: bool 
 ## evento de que se acabó.
 func has_coffee() -> bool:
 	return coffee_out_day != GameClock.get_day_count() and Projects.has_working_room(BREAK_ROOM)
+
+
+## Quiénes toman una pausa a esa hora absoluta (hito 54); vacío si nadie.
+func get_breaks(at: int) -> Array[String]:
+	var keys: Array[String] = []
+	keys.assign(breaks.get(at, []))
+	return keys
+
+
+## Indica si alguien está ahora en una pausa.
+func is_on_break(key: String) -> bool:
+	return get_breaks(_absolute_hour()).has(key)
+
+
+# Al empezar la hora: los que trabajan en un cargo que produce con energía baja toman una
+# pausa mientras haya lugares en los sofás, primero los más cansados.
+func _decide_breaks() -> void:
+	var now: int = _absolute_hour()
+	for hour: int in breaks.keys():
+		if hour < now - 1:
+			breaks.erase(hour)
+	var places: int = OfficeState.get_rest_places()
+	if places <= 0:
+		breaks.erase(now)
+		return
+	var weekday: int = GameClock.get_weekday()
+	var hour_of_day: int = GameClock.get_hour()
+	var below: float = StaffCatalog.get_breaks("below_energy")
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
+	var tired: Array[Dictionary] = []
+	for employee: Dictionary in employees:
+		if float(employee["energy"]) < below and not Production.get_role_phase(employee["role"]).is_empty() \
+				and _is_working_at(employee, weekday, hour_of_day, team_map):
+			tired.append(employee)
+	tired.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a["energy"]) < int(b["energy"]) or (int(a["energy"]) == int(b["energy"]) and int(a["id"]) < int(b["id"])))
+	var keys: Array[String] = []
+	for employee: Dictionary in tired.slice(0, places):
+		keys.append(employee_key(employee["id"]))
+	breaks[now] = keys
+
+
+# Anota quién estuvo hoy en la oficina para la máquina expendedora.
+func _note_presence() -> void:
+	if OfficeState.get_break_room_effect("vending_income") <= 0.0:
+		return
+	if is_expected_now("ceo"):
+		present_today["ceo"] = true
+	var team_map: Dictionary[int, Dictionary] = _get_team_map()
+	for employee: Dictionary in employees:
+		if _is_working_at(employee, GameClock.get_weekday(), GameClock.get_hour(), team_map):
+			present_today[employee_key(employee["id"])] = true
+
+
+# La máquina expendedora cobra lo de las personas que estuvieron ayer.
+func _collect_vending() -> void:
+	var income: int = roundi(OfficeState.get_break_room_effect("vending_income") * present_today.size())
+	present_today.clear()
+	if income > 0:
+		Economy.earn(income, CONCEPT_VENDING)
+
+
+func _export_breaks() -> Array[Dictionary]:
+	var saved: Array[Dictionary] = []
+	for hour: int in breaks:
+		saved.append({"hour": hour, "keys": breaks[hour].duplicate()})
+	return saved
 
 
 ## Quiénes almuerzan dentro a esa hora absoluta (hito 53): los que están en su hora de
@@ -2229,6 +2305,8 @@ func _on_hour_changed(hour: int) -> void:
 	_update_dirt()
 	_check_arrivals()
 	_check_bathrooms()
+	_decide_breaks()
+	_note_presence()
 	if not ceo_at_work and hour == StaffCatalog.get_ceo_arrival_hour() \
 			and StaffCatalog.get_ceo_arrival_days().has(GameClock.get_weekday()):
 		set_ceo_at_work(true)
@@ -2241,6 +2319,7 @@ func _on_hour_changed(hour: int) -> void:
 
 
 func _on_day_changed(day: int, _month: int) -> void:
+	_collect_vending()
 	if GameConstants.PAYROLL_DAYS.has(day):
 		_run_payroll()
 	_update_promotion_waits()
@@ -2428,12 +2507,20 @@ func _build_seat_lookup() -> void:
 		if not desks.has(owner):
 			desks[owner] = furniture[station["desk"]]
 	_seat_lookup_cache = {"seats": seats, "desks": desks, "furniture_hash": furniture.hash(),
-		"room_map": OfficeState.get_room_index_map()}
+		"room_map": OfficeState.get_room_index_map(), "break_mood": OfficeState.get_break_room_effect("break_mood")}
 
 
 # OfficeState.get_room_index_map, del recorrido de _update_morale si está en curso.
 func _room_map() -> Dictionary:
 	return _seat_lookup_cache["room_map"] if not _seat_lookup_cache.is_empty() else OfficeState.get_room_index_map()
+
+
+## Lo que suman a la meta de ánimo de todos el dispensador, el ping pong y la máquina
+## expendedora de la Sala de descanso (hito 54; uno de cada uno).
+func get_break_mood() -> float:
+	if not _seat_lookup_cache.is_empty():
+		return float(_seat_lookup_cache["break_mood"])
+	return OfficeState.get_break_room_effect("break_mood")
 
 
 ## Lo que suma a la meta de ánimo el escritorio del puesto de alguien (el amplio, hito 46).
@@ -2564,7 +2651,10 @@ func _update_energy() -> void:
 	var team_map: Dictionary[int, Dictionary] = _get_team_map()
 	var coffee: bool = has_coffee()
 	var lunch_inside: Dictionary[String, bool] = get_lunch_inside(ended)
-	var lunch_rest: int = roundi(rest * StaffCatalog.get_lunch("energy_factor"))
+	var coffee_rest: int = int(StaffCatalog.get_breaks("coffee_energy")) if coffee else 0
+	var lunch_rest: int = roundi(rest * StaffCatalog.get_lunch("energy_factor")) + coffee_rest
+	var on_break: Array[String] = get_breaks(ended)
+	var break_rest: int = int(StaffCatalog.get_breaks("energy")) + coffee_rest
 	for employee: Dictionary in employees:
 		# Lo mismo que is_expected, con el horario a mano para las horas extra (que se
 		# pagan aunque llegue tarde o falte).
@@ -2579,8 +2669,11 @@ func _update_energy() -> void:
 		var present: bool = working and not is_missing(employee, weekday, hour)
 		var change: int = rest
 		if lunch_inside.has(employee_key(employee["id"])):
-			# Almorzó dentro (hito 53): descansa el doble.
+			# Almorzó dentro (hito 53): descansa el doble, y con café un poco más (hito 54).
 			change = lunch_rest
+		elif on_break.has(employee_key(employee["id"])):
+			# Pausa en la Sala de descanso (hito 54).
+			change = break_rest
 		elif present:
 			change = _work_energy_of(seats.get(employee_key(employee["id"]), {}))
 			if coffee:
@@ -2756,7 +2849,8 @@ func export_state() -> Dictionary:
 		"teams": teams.duplicate(true), "next_team_id": _next_team_id, "next_id": _next_id,
 		"shift_templates": shift_templates.duplicate(true), "next_template_id": _next_template_id,
 		"rng_state": str(_rng.state), "hired_count": hired_count, "payroll_held": payroll_held,
-		"coffee_out_day": coffee_out_day, "broken_toilets": broken_toilets, "bathroom_short_day": bathroom_short_day}
+		"coffee_out_day": coffee_out_day, "broken_toilets": broken_toilets, "bathroom_short_day": bathroom_short_day,
+		"breaks": _export_breaks(), "present_today": present_today.keys()}
 
 
 ## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
@@ -2848,6 +2942,15 @@ func import_state(state: Dictionary) -> void:
 	coffee_out_day = int(state.get("coffee_out_day", NO_COFFEE_OUT))
 	broken_toilets = int(state.get("broken_toilets", 0))
 	bathroom_short_day = int(state.get("bathroom_short_day", NO_SHORT_DAY))
+	breaks.clear()
+	for saved: Variant in state.get("breaks", []):
+		var keys: Array[String] = []
+		for key: Variant in (saved as Dictionary).get("keys", []):
+			keys.append(String(key))
+		breaks[int((saved as Dictionary).get("hour", 0))] = keys
+	present_today.clear()
+	for key: Variant in state.get("present_today", []):
+		present_today[String(key)] = true
 	_last_interview_end = NO_FIRING
 	ceo_at_work = bool(state.get("ceo_at_work", true))
 	last_firing_day = int(state.get("last_firing_day", NO_FIRING))

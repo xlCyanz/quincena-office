@@ -294,6 +294,12 @@ func _update_routines() -> void:
 	if not lunch.is_empty():
 		spots = OfficeState.get_lunch_spots()
 	var next_spot: int = 0
+	# Pausas (hito 54): los cansados van junto a un sofá.
+	var resting: Array[String] = Staff.get_breaks(Staff.get_absolute_hour())
+	var rest_spots: Array[Vector2i] = []
+	if not resting.is_empty():
+		rest_spots = OfficeState.get_rest_spots()
+	var next_rest: int = 0
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
 		if leaving:
@@ -303,6 +309,9 @@ func _update_routines() -> void:
 		if eating:
 			character.set_seat(spots[next_spot % spots.size()])
 			next_spot += 1
+		elif resting.has(character.person_key) and not rest_spots.is_empty():
+			character.set_seat(rest_spots[next_rest % rest_spots.size()])
+			next_rest += 1
 		else:
 			character.set_seat(_home_spot(character.person_key))
 		character.update_routine(eating or Staff.is_expected_now(character.person_key))
@@ -335,7 +344,9 @@ func describe_employee_activity(employee_id: int) -> String:
 		OfficeCharacter.Activity.WALKING_TO_DESK:
 			return "llegando a su puesto"
 		OfficeCharacter.Activity.SEATED:
-			return "almorzando en la Sala de descanso" if lunch else "trabajando"
+			if lunch:
+				return "almorzando en la Sala de descanso"
+			return "descansando en la Sala de descanso" if Staff.is_on_break(character.person_key) else "trabajando"
 		OfficeCharacter.Activity.WALKING_OUT:
 			return "saliendo a almorzar" if lunch else "yéndose a casa"
 		OfficeCharacter.Activity.STEPPING_OUT:

@@ -328,6 +328,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   antigüedad en su 4.ª hora (sin tardanza ni ausencia) hasta llenar los asientos. Ellos recuperan `energy_factor` ×2 la energía de descanso y
   `Projects.get_workers` los suma a `work_factor` 0.5 (`shared["lunch"]`); los demás salen como siempre. `main._update_routines` los manda a una casilla
   libre junto a una mesa (`get_lunch_spots`, `set_seat`) y después a su lugar (`_home_spot`); la ficha dice «almorzando en la Sala de descanso».
+- Sala de descanso y pausas (hito 54, `breaks` en `data/staff.json`; sofá $500 2×1 `rest_places` 2, dispensador de agua $120 `break_mood` 2, ping pong
+  $700 2×2 `break_mood` 8 y `distraction` 0.03, máquina expendedora $900 `break_mood` 3 y `vending_income` 2): solo cuentan en la Sala de descanso que
+  funciona (`OfficeState.get_break_room_items`) y uno de cada tipo (`get_break_room_effect`). Al empezar cada hora `Staff._decide_breaks` manda a una
+  pausa a quienes trabajan en un cargo que produce con energía bajo 40, los más cansados primero, hasta llenar los lugares de los sofás
+  (`get_rest_places`); `Staff.breaks` guarda hora absoluta → claves (la actual y la anterior; `get_breaks(at)`, `is_on_break`). En la pausa no
+  produce (`Projects.get_workers`) y recupera +15; con café (`has_coffee`) +3 más, también al almorzar dentro. `get_break_mood` suma a la meta de ánimo
+  de todos (en `_seat_lookup_cache` durante `_update_morale`); el ping pong multiplica los puntos de cada empleado por 0.97 (`shared["distraction"]`).
+  `_note_presence` anota cada hora quién está (`present_today`) y al cambiar de día `_collect_vending` cobra $2 por persona («Máquina expendedora»).
+  `main._update_routines` lleva a los que descansan junto a un sofá (`get_rest_spots`); la ficha dice «descansando en la Sala de descanso».
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -395,3 +404,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 51 | Rasgos de conducta e historial | ✅ Completado (impuntual 20 % tarde una hora y 2 % falta la jornada, sorteado al empezar el turno; adicto al café −15 % sin Sala de descanso o con el café agotado por el evento, +2 de energía por hora con café; ambicioso −15 de ánimo tras 15 días sin ascenso pudiendo; leal renuncia con el doble de días malos; historial en la ficha: contratos, errores causados, tardanzas, ausencias y puntualidad) |
 | 52 | Baños con capacidad | ✅ Completado (1 inodoro cada 10 presentes con el CEO; siempre aplica, también sin baño: salen del edificio a buscar uno y vuelven; por inodoro que falta −5 % de producción hasta −20 % y −10 a la meta de ánimo ese día y el siguiente; «Baño dañado» con cartel quita un inodoro hasta repararlo desde Empresa por $400; las pruebas anteriores corren sin baños) |
 | 53 | Almuerzo en la oficina | ✅ Completado (Sala de descanso con nevera $400, microondas $150 y mesas de comedor $300 de 4 asientos; almuerzan dentro el CEO y los más antiguos hasta llenar los asientos; dentro recuperan el doble de energía y rinden media hora; los demás salen; caminan a la mesa y vuelven a su silla) |
+| 54 | Sala de descanso y pausas | ✅ Completado (sofá $500 con 2 lugares: quien produce con energía bajo 40 descansa una hora sin producir y recupera +15, +3 con café, también en el almuerzo; dispensador de agua $120 +2, ping pong $700 +8 y −3 % de puntos, máquina expendedora $900 +3 y $2 por persona al día; uno de cada uno y solo en la Sala de descanso que funciona) |

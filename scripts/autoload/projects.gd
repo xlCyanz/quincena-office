@@ -788,6 +788,12 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 	if not shared.has("lunch"):
 		shared["lunch"] = Staff.get_lunch_inside(at)
 	var lunch: Dictionary[String, bool] = shared["lunch"]
+	# Pausas y ping pong (hito 54): quien descansa no suma; el ping pong distrae a todos.
+	if not shared.has("breaks"):
+		shared["breaks"] = Staff.get_breaks(at)
+		shared["distraction"] = OfficeState.get_break_room_effect("distraction")
+	var on_break: Array[String] = shared["breaks"]
+	var focus: float = 1.0 - float(shared["distraction"])
 	var lunch_factor: float = StaffCatalog.get_lunch("work_factor")
 	if team_id == CEO_TEAM:
 		var ceo_lunch: bool = lunch.has("ceo")
@@ -816,7 +822,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		var key: String = Staff.employee_key(int(member))
 		var phase: String = Production.get_role_phase(employee["role"])
 		var eating: bool = lunch.has(key)
-		if phase.is_empty() or not (eating or Staff.is_expected(key, weekday, hour)) or not stations.has(key):
+		if phase.is_empty() or not (eating or Staff.is_expected(key, weekday, hour)) or not stations.has(key) or on_break.has(key):
 			continue
 		var department_id: String = StaffCatalog.get_role_department(employee["role"])
 		if not departments.has(department_id):
@@ -824,7 +830,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		var department: float = departments[department_id]
 		# Rasgos (hito 50): puntos según la hora, mentor del equipo, errores al programar y al probar.
 		var traits: float = Staff.get_trait_points_factor(employee, hour, bool(shared["coffee"])) * mentored.get(int(member), 1.0)
-		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits * bathroom * (lunch_factor if eating else 1.0)
+		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits * bathroom * focus * (lunch_factor if eating else 1.0)
 			* Production.get_rate(employee["level"], float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
 			"bug_chance": get_bug_chance(employee["level"], float(employee["energy"]), float(employee["stress"]))
 			* Staff.get_trait_bug_factor(employee), "find_factor": Staff.get_trait_find_factor(employee)})

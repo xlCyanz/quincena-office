@@ -179,7 +179,9 @@ func _check_energy() -> void:
 		person["energy"] = 50
 	GameClock.fast_forward_hours(1)
 	var rest: int = int(StaffCatalog.get_workday("energy_per_rest_hour"))
-	_expect(int(people[0]["energy"]) == 50 + rest * 2, "dentro +%d: %d" % [rest * 2, people[0]["energy"]])
+	# Con café (hito 54) quien almuerza dentro recupera un poco más.
+	var inside: int = rest * 2 + int(StaffCatalog.get_breaks("coffee_energy"))
+	_expect(int(people[0]["energy"]) == 50 + inside, "dentro +%d: %d" % [inside, people[0]["energy"]])
 	_expect(int(people[4]["energy"]) == 50 + rest, "fuera +%d: %d" % [rest, people[4]["energy"]])
 	# Sin microondas todos salen.
 	OfficeState.furniture = OfficeState.furniture.filter(func(item: Dictionary) -> bool: return item["id"] != "microwave")

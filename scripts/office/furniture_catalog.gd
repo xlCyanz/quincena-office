@@ -46,6 +46,12 @@ static func get_lunch_part(id: String) -> String:
 	return String(get_item(id).get("lunch_part", ""))
 
 
+## Valor numérico de un mueble (0 si no lo tiene): rest_places, break_mood, distraction,
+## vending_income (hito 54).
+static func get_number(id: String, field: String) -> float:
+	return float(get_item(id).get(field, 0.0))
+
+
 ## Asientos de una mesa de comedor (0 si no es mesa).
 static func get_dining_seats(id: String) -> int:
 	return int(get_item(id).get("dining_seats", 0))
@@ -130,6 +136,10 @@ static func _load() -> void:
 			"is_toilet": bool(raw.get("is_toilet", false)),
 			"lunch_part": String(raw.get("lunch_part", "")),
 			"dining_seats": int(raw.get("dining_seats", 0)),
+			"rest_places": int(raw.get("rest_places", 0)),
+			"break_mood": float(raw.get("break_mood", 0.0)),
+			"distraction": float(raw.get("distraction", 0.0)),
+			"vending_income": float(raw.get("vending_income", 0.0)),
 		}
 
 

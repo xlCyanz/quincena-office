@@ -173,6 +173,12 @@
 		"energy_factor": 2.0,
 		"work_factor": 0.5
 	},
+	"breaks": {
+		"_comentario": "Hito 54: al empezar cada hora, quien trabaja en un cargo que produce con energía bajo below_energy toma una pausa de una hora en la Sala de descanso si hay un lugar libre (rest_places de los sofás), primero los más cansados: no produce y recupera energy. Con café (Staff.has_coffee) quien descansa o almuerza dentro recupera coffee_energy más.",
+		"below_energy": 40,
+		"energy": 15,
+		"coffee_energy": 3
+	},
 	"bathrooms": {
 		"_comentario": "Hito 52: capacidad = inodoros de los Baños que funcionan menos los dañados; hace falta 1 cada people_per_toilet personas presentes (hacia arriba, con el CEO). Si faltan, la meta de ánimo de todos suma short_mood (el día que faltó y el siguiente) y la producción baja points_per_missing por inodoro que falta, hasta max_points_loss; los que no caben salen del edificio a buscar un baño y vuelven (trips_per_missing por inodoro que falta cada hora). repair_cost = reparar un inodoro dañado (evento «Baño dañado»).",
 		"people_per_toilet": 10,
