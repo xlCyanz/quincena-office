@@ -568,7 +568,10 @@ func _add_candidate(candidate: Dictionary) -> void:
 	if not known.is_empty():
 		lines.append(known)
 	var candidate_id: int = candidate["id"]
-	if Staff.get_interviewed_now().get("id", -1) == candidate_id:
+	if Staff.get_interviewed_now().get("id", -1) == candidate_id and not Staff.is_interview_started():
+		var called_by: String = String(Staff.interview.get("by", "ceo"))
+		lines.append("Entrando a la entrevista con %s." % ("el CEO" if called_by == "ceo" else Staff.get_employee_by_key(called_by).get("name", "?")))
+	elif Staff.get_interviewed_now().get("id", -1) == candidate_id:
 		var by: String = String(Staff.interview.get("by", "ceo"))
 		lines.append("En entrevista con %s hasta las %s." % ["el CEO" if by == "ceo" else Staff.get_employee_by_key(by).get("name", "?"),
 			Staff.format_clock_minute(int(Staff.interview["ends_at"]))])

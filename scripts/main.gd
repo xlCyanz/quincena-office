@@ -316,6 +316,7 @@ func _sync_interview() -> void:
 		# Ya estaba esperando: camina hasta la silla de visita.
 		appointment_visitors.erase(int(candidate["id"]))
 		interviewee = waiting
+		interviewee.sat_down.connect(_on_interviewee_seated.bind(interviewee))
 		interviewee.standing = Staff.get_guest_chair(by).is_empty()
 		interviewee.set_seat(_interview_spot(by))
 		_sync_appointments()
@@ -325,10 +326,17 @@ func _sync_interview() -> void:
 	interviewee.standing = Staff.get_guest_chair(String(Staff.interview.get("by", "ceo"))).is_empty()
 	_office_grid.add_object(interviewee)
 	interviewee.left_office.connect(_remove_left_visitors)
+	interviewee.sat_down.connect(_on_interviewee_seated.bind(interviewee))
 	interviewee.setup(_office_grid, pathfinder, _interview_spot(String(Staff.interview.get("by", "ceo"))),
 		OfficeState.entrance, OfficeState.get_outside_of_entrance())
 	interviewee.update_routine(true)
 	_sync_appointments()
+
+
+# El candidato llamado llegó a la silla de visita: empieza la entrevista.
+func _on_interviewee_seated(character: Visitor) -> void:
+	if character == interviewee and character.person_key == "candidate_%d" % int(Staff.interview.get("candidate_id", -1)):
+		Staff.start_called_interview()
 
 
 # Los candidatos citados llegan antes de su hora (Staff.get_appointment_arrival) y esperan

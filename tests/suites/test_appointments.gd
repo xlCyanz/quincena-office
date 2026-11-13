@@ -127,23 +127,45 @@ func _check_ceo() -> void:
 	_expect(waiting != null and waiting.get_seat_cell() != guest, "no espera en la silla de visita")
 	_expect(Staff.interview.is_empty(), "todavía no empieza")
 
-	# A la hora citada empieza: camina a la silla de visita y se sienta.
+	# A la hora citada lo llaman: camina a la silla de visita y al sentarse empieza.
 	await _advance_to(at)
-	_expect(int(Staff.interview.get("candidate_id", -1)) == int(first["id"]) and int(Staff.interview["starts_at"]) == at,
-		"a las 8 empieza la entrevista: %s" % [Staff.interview])
+	_expect(int(Staff.interview.get("candidate_id", -1)) == int(first["id"]) and not Staff.is_interview_started(),
+		"a las 8 lo llaman, todavía sin empezar: %s" % [Staff.interview])
+	_expect(Staff.get_ceo_interview_factor(Staff.get_absolute_hour()) == 1.0, "mientras camina el CEO sigue rindiendo")
 	_expect(game.interviewee != null and game.interviewee == waiting, "el que esperaba es el entrevistado")
 	_expect(waiting != null and waiting.get_seat_cell() == guest and not waiting.standing, "va a la silla de visita")
 	_expect(Staff.get_appointment(int(first["id"])).is_empty(), "la cita se cumple")
+	var steps: int = 0
+	while waiting != null and waiting.activity != OfficeCharacter.Activity.SEATED and steps < 2000:
+		# Camina con los demás (el CEO, que abrió, puede seguir en la entrada).
+		for character: OfficeCharacter in game.get_characters():
+			character._process(0.5)
+		waiting._process(0.5)
+		steps += 1
+	_expect(waiting != null and waiting.activity == OfficeCharacter.Activity.SEATED, "llega a la silla: %s %s %s %s %s" % [
+		waiting.activity, waiting.get_cell(), waiting.get_path_cells(), waiting.get("_blocked_time"), GameClock.get_time_scale()])
+	var started: int = int(Staff.interview.get("starts_at", -1))
+	_expect(Staff.is_interview_started() and started == Staff.get_absolute_minute(),
+		"al sentarse empieza la entrevista: %s" % [Staff.interview])
+	_expect(int(Staff.interview["ends_at"]) == started + 30, "dura media hora desde que se sienta")
 
-	# A la media hora termina y empieza la siguiente; el segundo ya esperaba su turno.
-	await _advance_to(at + 29)
+	# A la media hora termina y llaman al siguiente, que ya esperaba su turno.
+	await _advance_to(started + 29)
 	_expect(game.appointment_visitors.has(int(second["id"])), "el segundo ya espera su turno")
-	await _advance_to(at + 30)
+	await _advance_to(started + 30)
 	Staff.check_interview()
 	Staff.call("_check_appointments")
 	_expect(bool(first["interviewed"]), "el primero quedó entrevistado")
-	_expect(int(Staff.interview.get("candidate_id", -1)) == int(second["id"]), "a las 8:30 el segundo")
-	await _advance_to(at + 60)
+	_expect(int(Staff.interview.get("candidate_id", -1)) == int(second["id"]), "después llaman al segundo")
+	# Si no llega a sentarse (aquí no se lo deja caminar), empieza igual al tope.
+	var called: int = Staff.get_absolute_minute()
+	if game.interviewee != null:
+		game.interviewee.set_process(false)
+	await _advance_to(called + int(StaffCatalog.get_hiring("interview_walk_max_minutes")))
+	Staff.check_interview()
+	_expect(Staff.is_interview_started() and int(Staff.interview["candidate_id"]) == int(second["id"]),
+		"sin sentarse empieza a los %d minutos" % int(StaffCatalog.get_hiring("interview_walk_max_minutes")))
+	await _advance_to(Staff.get_absolute_minute() + 30)
 	Staff.check_interview()
 
 	# Si quien entrevista no está, la cita se cancela con aviso: el CEO se fue a casa.

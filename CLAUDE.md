@@ -136,7 +136,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   Citas (`Staff.appointments`: `{candidate_id, by, at}` en minutos absolutos, guardadas): «Entrevistar»/«Delegar» llaman a `schedule_interview`
   (`appointment_problem`), que cita para el próximo día en que trabaja quien entrevista a su hora de entrada (el CEO a su llegada) o el siguiente
   hueco de media hora antes de su almuerzo (`_next_appointment_slot`, hasta `appointment_max_days`). `_check_appointments` (en `_process` y cada hora)
-  empieza la entrevista a la hora si quien entrevista está y no hay otra (`_begin_interview`); a los `appointment_grace_minutes` sin él la cancela con
+  a la hora, si quien entrevista está y no hay otra, llama al candidato (`_call_interview`: `called_at`, `starts_at`/`ends_at` = `INTERVIEW_NOT_STARTED`, `is_interview_started`); la media hora empieza cuando se sienta en la silla de visita (`main._on_interviewee_seated` → `start_called_interview`) o a los `interview_walk_max_minutes` (90) sin escena que lo dibuje; mientras camina el CEO rinde entero; a los `appointment_grace_minutes` sin él la cancela con
   aviso. El citado no se va (`_process_arrivals`). `get_appointment_arrival` (10–25 min antes, fijo por candidato): `main._sync_appointments` lo
   dibuja (`appointment_visitors`) de pie en la Recepción o junto a la entrada y `_sync_interview` lo pasa a `interviewee`. `start_interview` sigue
   empezando una al momento (pruebas). Prueba `test_appointments`.

@@ -155,6 +155,8 @@ var interview: Dictionary = {}
 ## minutos absolutos (get_absolute_minute), ordenadas por hora. El candidato llega antes,
 ## espera y a esa hora empieza la entrevista si quien la hace está en la oficina.
 var appointments: Array[Dictionary] = []
+## starts_at y ends_at de una entrevista llamada cuyo candidato todavía camina a la silla.
+const INTERVIEW_NOT_STARTED: int = -1
 ## El CEO está trabajando (en la oficina o almorzando) hasta que el jugador lo manda a casa.
 var ceo_at_work: bool = true
 ## Día (GameClock.get_day_count) del último despido; -1000 si no hubo.
@@ -495,7 +497,7 @@ func _check_appointments() -> void:
 			changed = true
 		elif present and interview.is_empty() and (not RoomRules.counts_enabled or not get_guest_chair(by).is_empty()):
 			appointments.erase(appointment)
-			_begin_interview(int(appointment["candidate_id"]), by)
+			_call_interview(int(appointment["candidate_id"]), by)
 			changed = true
 		elif now >= int(appointment["at"]) + int(StaffCatalog.get_hiring("appointment_grace_minutes")):
 			appointments.erase(appointment)
@@ -504,6 +506,30 @@ func _check_appointments() -> void:
 				"%s no pudo entrevistar a %s a la hora citada: vuelve a citarlo." % [_interviewer_name(by), candidate["name"]])
 	if changed:
 		EventBus.staff_changed.emit()
+
+
+# A la hora citada se llama al candidato: camina a la silla de visita y la entrevista
+# empieza cuando se sienta (start_called_interview, lo llama la escena de juego) o, sin
+# nadie que lo dibuje, a los interview_walk_max_minutes.
+func _call_interview(candidate_id: int, by: String) -> void:
+	interview = {"candidate_id": candidate_id, "called_at": get_absolute_minute(),
+		"starts_at": INTERVIEW_NOT_STARTED, "ends_at": INTERVIEW_NOT_STARTED, "by": by}
+	EventBus.staff_changed.emit()
+
+
+## Indica si la entrevista en curso ya empezó (false mientras el candidato llamado camina).
+func is_interview_started() -> bool:
+	return not interview.is_empty() and int(interview["starts_at"]) != INTERVIEW_NOT_STARTED
+
+
+## El candidato llamado se sentó: empieza la media hora de entrevista.
+func start_called_interview() -> void:
+	if interview.is_empty() or is_interview_started():
+		return
+	var now: int = get_absolute_minute()
+	interview["starts_at"] = now
+	interview["ends_at"] = now + int(StaffCatalog.get_hiring("interview_minutes"))
+	EventBus.staff_changed.emit()
 
 
 func _begin_interview(candidate_id: int, by: String) -> void:
@@ -527,7 +553,13 @@ static func format_clock_minute(minute: int) -> String:
 ## Termina la entrevista si ya pasó su hora de fin. Lo llama _process cada cuadro y la
 ## revisión de cada hora (los saltos de horas no pasan por los cuadros).
 func check_interview() -> void:
-	if not interview.is_empty() and get_absolute_minute() >= int(interview["ends_at"]):
+	if interview.is_empty():
+		return
+	if not is_interview_started():
+		if get_absolute_minute() >= int(interview.get("called_at", 0)) + int(StaffCatalog.get_hiring("interview_walk_max_minutes")):
+			start_called_interview()
+		return
+	if get_absolute_minute() >= int(interview["ends_at"]):
 		_finish_interview()
 
 
@@ -672,7 +704,7 @@ func is_ceo_producing(at: int) -> bool:
 ## entrevistas, 0.5 con una de media hora dentro de esa hora.
 func get_ceo_interview_factor(at: int) -> float:
 	var spans: Array[Vector2i] = _interview_spans.duplicate()
-	if not interview.is_empty() and String(interview.get("by", "ceo")) == "ceo":
+	if is_interview_started() and String(interview.get("by", "ceo")) == "ceo":
 		spans.append(Vector2i(int(interview["starts_at"]), int(interview["ends_at"])))
 	var busy: int = 0
 	for span: Vector2i in spans:
@@ -3364,14 +3396,16 @@ func import_state(state: Dictionary) -> void:
 	interview = {}
 	if saved_interview.has("candidate_id"):
 		var ends_at: int = int(saved_interview.get("ends_at", 0))
-		var starts_at: int = int(saved_interview.get("starts_at", -1))
-		if starts_at < 0:
+		var starts_at: int = int(saved_interview.get("starts_at", INTERVIEW_NOT_STARTED))
+		if not saved_interview.has("starts_at"):
 			# Partida de antes de las entrevistas de media hora: ends_at estaba en horas
 			# y duraba 2; termina a esa hora en punto.
 			starts_at = ends_at * 60 - 120
 			ends_at *= 60
 		interview = {"candidate_id": int(saved_interview["candidate_id"]), "starts_at": starts_at,
 			"ends_at": ends_at, "by": String(saved_interview.get("by", "ceo"))}
+		if saved_interview.has("called_at"):
+			interview["called_at"] = int(saved_interview["called_at"])
 		# Si la hacía un ejecutivo que ya no está, se corta.
 		if interview["by"] != "ceo" and get_employee_by_key(interview["by"]).is_empty():
 			interview = {}
