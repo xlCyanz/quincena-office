@@ -9,13 +9,13 @@ extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 66) y la empresa inicial.
+## Partes en el orden de los hitos (1 a 67) y la empresa inicial.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "starting_company", "dev_tools",
 ]
 ## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
 ## oficinas sin baño y corren con Staff.bathrooms_enabled en false.
@@ -26,6 +26,8 @@ const FIRST_CANDIDATES_SUITE: String = "candidates"
 ## Primera parte con el evento del inversionista (hito 58): las anteriores sortean los
 ## eventos con la lista de antes y corren con Bank.investor_enabled en false.
 const FIRST_INVESTOR_SUITE: String = "investor"
+## Ninguna parte puede tardar más que esto (hito 67: las largas son las simulaciones de fase).
+const MAX_SUITE_SECONDS: float = 60.0
 ## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
 const AUTOLOADS: Array[String] = [
 	"EventBus", "GameClock", "Economy", "OfficeState", "Staff", "Projects", "Products", "Bank", "Company", "Events", "SaveManager",
@@ -54,6 +56,10 @@ func _ready() -> void:
 		var suite_started: int = Time.get_ticks_msec()
 		var result: Vector2i = await _run_suite(suite)
 		var seconds: float = (Time.get_ticks_msec() - suite_started) / 1000.0
+		result.y += 1
+		if seconds > MAX_SUITE_SECONDS:
+			printerr("FALLO: %s tardó %.1f s (el tope es %d s)" % [suite, seconds, int(MAX_SUITE_SECONDS)])
+			result.x += 1
 		total_failures += result.x
 		total_checks += result.y
 		if result.x > 0:

@@ -15,6 +15,7 @@ El diseño completo vive en `docs/diseno.md`; es la fuente de verdad.
     las partes de `tests/suites/` (una por hito, `test_<nombre>.gd`, más `test_starting_company`); cada parte emite `finished(fallos,
     comprobaciones)` en vez de cerrar el juego, y `test_all` quita entre partes las conexiones de señales que dejó. Solo algunas:
     `… res://tests/test_all.tscn -- --only=reception,administration`. Una parte nueva se agrega a `SUITES` en `tests/test_all.gd`.
+    Una parte que tarda más de `MAX_SUITE_SECONDS` (60 s) cuenta como fallo (hito 67).
   - Exportación de prueba: `tests/export_desktop.sh` (exporta macOS, Windows y Linux a `build/`, que no se versiona, revisa cada
     paquete con `tests/export_check.gd` y arranca la app de macOS; imprime `RESULTADO: OK`). Necesita las plantillas de exportación
     de 4.7.2 en `~/Library/Application Support/Godot/export_templates/4.7.2.stable` (instaladas solo las de escritorio).
@@ -431,6 +432,13 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   propio (`icon.svg`). Un autoload nuevo cuyo archivo no viaja se suma a `DEV_AUTOLOADS` del plugin. `test_export` revisa presets, plugin,
   icono y que ningún archivo que viaja nombre lo excluido; `export_desktop.sh` hace la exportación real. Con `--main-pack` lo que falta en el
   paquete se busca en la carpeta actual: la revisión corre desde una vacía.
+- Comprobación de la fase 7 (`test_phase7`, hito 67): en una pantalla de 1280×720 (`content_scale_aspect = KEEP`), desde el menú principal
+  (Nueva partida) hasta la primera entrega siguiendo el tutorial solo con eventos del ratón (clics en lo que resalta, arrastre de la cámara,
+  clic en casillas del local con `grid.get_canvas_transform() * cell_to_world`, y si la interfaz las tapa (`gui_get_hovered_control`) arrastra
+  la cámara con el clic derecho; clic derecho para girar muebles, rueda para llegar a botones de listas desplazables, «+» si el candidato pide
+  más); entre pasos solo deja correr el reloj (`GameClock.advance`, con el reloj detenido para que no salgan eventos). Con ventana el cursor
+  real se mezcla con los eventos de la prueba: se corre sin ventana. Comprueba que el marco del tutorial encierra cada botón que pulsa y que no llegó ninguna tecla. Tres semillas; termina
+  a tiempo hacia el día 6–9 con unos $22,000. Sin cambios de datos ni de balance.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -511,3 +519,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 64 | Tutorial: el negocio y ayuda | ✅ Completado (4 pasos más: aceptar un contrato, la nómina y la velocidad, el Banco y la primera entrega, que termina el tutorial; botón «?» en Personal, Proyectos, Horarios, Banco, Empresa y Construir con su texto de `data/help.json`, sin pausar y se cierra con Entendido o Esc; las partidas viejas cargan sin tutorial; las descripciones emergentes de los botones sin texto quedan para el hito 65) |
 | 65 | Interfaz escalable | ✅ Completado (Tamaño de la interfaz 100/125/150 % en Opciones; a 150 % en 1280×720 la barra se parte en dos filas y los paneles, la ficha, Construir, Ajustes, eventos, tutorial, ayuda, pausa y pantallas de cierre entran en pantalla sin tapar la barra, con desplazamiento donde no entran; todo botón mide al menos 44 px; −, +, <, > y la escala con descripción emergente) |
 | 66 | Exportación de escritorio | ✅ Completado (presets de macOS, Windows y Linux en `build/` sin Panku, DevTools ni pruebas, también en debug; icono propio, nombre y versión 0.7.0; la exportación de prueba arranca la app de macOS y cada paquete llega al menú principal; sin firma de Windows ni notarización de macOS) |
+| 67 | Comprobación de la fase | ✅ Completado (del menú a la primera entrega solo con el ratón siguiendo el tutorial, en tres semillas, hacia el día 6–9; el marco del tutorial encierra cada botón que se pulsa; test_all falla si una parte pasa de 60 s: la más larga es la fase 6, ~54 s; sin cambios de datos) |
