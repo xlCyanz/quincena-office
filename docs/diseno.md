@@ -137,8 +137,8 @@ El jugador decora la oficina y organiza las habitaciones sobre la cuadrícula is
 
 | Habitación | Cantidad | Función |
 | --- | --- | --- |
-| Oficina Ejecutiva | Una sola, obligatoria | Oficina del CEO; donde atiende eventos y clientes |
-| Oficina única | Varias | Oficina individual para altos cargos |
+| Oficina Ejecutiva | Una sola, obligatoria | Oficina del CEO; donde atiende eventos y clientes. Funciona con dos sillas: la suya y una de visita, donde se sienta el entrevistado |
+| Oficina única | Varias | Oficina individual para altos cargos. Como la Ejecutiva, necesita una silla de visita además de la de quien la usa |
 | Sala de reuniones | Varias | Necesaria para cerrar contratos grandes |
 | Baños | Varios; mínimo dos obligatorios, uno por sexo | Necesidad básica de los empleados |
 | Sala de descanso y cafetería | Una sola | Recupera energía y ánimo |

@@ -22,7 +22,8 @@
 	],
 	"furniture": [
 		{ "id": "executive_desk", "cell": [1, 0], "rotation": 2, "computer": "basic_computer" },
-		{ "id": "basic_chair", "cell": [1, 1], "rotation": 0, "assigned_to": "ceo" }
+		{ "id": "basic_chair", "cell": [1, 1], "rotation": 0, "assigned_to": "ceo" },
+		{ "id": "basic_chair", "cell": [0, 0], "rotation": 1 }
 	],
 	"entrance": [3, 7]
 }

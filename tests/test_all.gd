@@ -15,7 +15,7 @@ const SUITES: Array[String] = [
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "interview_view", "starting_company", "dev_tools",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "office_chairs", "interview_view", "starting_company", "dev_tools",
 ]
 ## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
 ## oficinas sin baño y corren con Staff.bathrooms_enabled en false.
@@ -32,6 +32,9 @@ const FIRST_CAMERA_VIEW_SUITE: String = "camera_view"
 ## Primera parte con llegadas escalonadas: las anteriores miden quién entra a cada hora en
 ## punto y corren con Staff.arrival_spread_enabled en false.
 const FIRST_ARRIVALS_SUITE: String = "arrivals"
+## Primera parte con la silla de visita de las oficinas: las anteriores arman oficinas con
+## una sola silla y corren con RoomRules.counts_enabled en false.
+const FIRST_OFFICE_CHAIRS_SUITE: String = "office_chairs"
 ## Ninguna parte puede tardar más que esto (hito 67: las largas son las simulaciones de fase).
 const MAX_SUITE_SECONDS: float = 60.0
 ## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
@@ -90,6 +93,7 @@ func _run_suite(suite: String) -> Vector2i:
 	Bank.investor_enabled = SUITES.find(suite) >= SUITES.find(FIRST_INVESTOR_SUITE)
 	OfficeCamera.smoothing_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CAMERA_VIEW_SUITE)
 	Staff.arrival_spread_enabled = SUITES.find(suite) >= SUITES.find(FIRST_ARRIVALS_SUITE)
+	RoomRules.counts_enabled = SUITES.find(suite) >= SUITES.find(FIRST_OFFICE_CHAIRS_SUITE)
 	var script: GDScript = load("%stest_%s.gd" % [SUITES_DIR, suite])
 	var node := Node.new()
 	node.name = suite

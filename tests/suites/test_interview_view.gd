@@ -1,5 +1,5 @@
 # Prueba de cómo se ve una entrevista (pedido después del hito 69): el candidato entra y
-# se para del otro lado del escritorio de quien lo entrevista, el CEO en su oficina o el
+# se sienta en la silla de visita de la oficina de quien lo entrevista, el CEO en su oficina o el
 # ejecutivo de Administración en la suya; al terminar la media hora se va. La ficha del
 # ejecutivo dice a quién entrevista.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=interview_view
@@ -55,7 +55,7 @@ func _candidate() -> Dictionary:
 	return {} if candidates.is_empty() else candidates[0]
 
 
-# Junto a uno de los escritorios que están al lado de la silla y lejos de ella.
+# Sentado en la silla de visita de la oficina de quien entrevista.
 func _check_spot(game: Node, by: String, label: String) -> void:
 	var visitor: Visitor = game.interviewee
 	_expect(visitor != null and visitor.person_key == "candidate_%d" % int(Staff.get_interviewed_now()["id"]),
@@ -67,10 +67,11 @@ func _check_spot(game: Node, by: String, label: String) -> void:
 	var room: Dictionary = Staff.get_workplace_room(by)
 	var finder: OfficePathfinder = game.get("pathfinder")
 	_expect(not room.is_empty() and Array(room["cells"]).has(spot), "%s: espera en la habitación de quien entrevista" % label)
-	_expect(finder.is_walkable(spot) and spot != chair and (spot - chair).abs().x + (spot - chair).abs().y >= 2,
-		"%s: del otro lado del escritorio, no pegado a la silla: %s / %s" % [label, spot, chair])
-	_expect(visitor.activity == OfficeCharacter.Activity.WALKING_TO_DESK and visitor.standing and visitor.visible,
-		"%s: camina hasta ahí y espera de pie" % label)
+	var guest: Dictionary = Staff.get_guest_chair(by)
+	_expect(not guest.is_empty() and spot == guest["cell"] and spot != chair and finder != null,
+		"%s: en la silla de visita: %s / %s" % [label, spot, chair])
+	_expect(visitor.activity == OfficeCharacter.Activity.WALKING_TO_DESK and not visitor.standing and visitor.visible,
+		"%s: camina hasta ahí y se sienta" % label)
 
 
 func _check_ceo() -> void:

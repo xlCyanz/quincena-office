@@ -161,7 +161,8 @@ func _check_plan() -> void:
 	var plan: Dictionary = Embargo.plan(furniture, rooms, 1)
 	_expect(plan["covers"] and (plan["take"] as Array).size() == 1 and furniture[plan["take"][0]]["id"] == "simple_desk"
 		and not String(furniture[plan["take"][0]].get("computer", "")).is_empty(), "primero lo que más vale de la decoración: %s" % plan)
-	var decor_value: int = 4 * desk_value + 2 * Embargo.get_value({"id": "small_plant"})
+	# La silla de visita de la oficina del CEO cuenta como decoración.
+	var decor_value: int = 4 * desk_value + 2 * Embargo.get_value({"id": "small_plant"}) + Embargo.get_value({"id": "basic_chair"})
 	var station_indices: Array[int] = []
 	for station: Dictionary in Workstations.find_all(furniture, rooms):
 		station_indices.append_array([station["chair"], station["desk"]])
@@ -171,7 +172,7 @@ func _check_plan() -> void:
 	plan = Embargo.plan(furniture, rooms, decor_value + 1)
 	var take: Array = plan["take"]
 	var free_desk: int = OfficeState.find_furniture_at(Vector2i(3, 0))
-	_expect(take.size() == 7 and take[6] == free_desk, "después, el puesto libre (escritorio primero): %s" % [take])
+	_expect(take.size() == 8 and take[7] == free_desk, "después, el puesto libre (escritorio primero): %s" % [take])
 	_expect(not take.has(occupied_chair), "el puesto ocupado queda para el final")
 	plan = Embargo.plan(furniture, rooms, int(plan["value"]) + 1)
 	_expect(not plan["covers"] and (plan["take"] as Array).is_empty(), "si no alcanza no se lleva nada: %s" % plan)
@@ -264,7 +265,8 @@ func _check_game_over() -> void:
 	_expect(text.contains("La empresa quebró") and text.contains("Días jugados: %d" % (GameClock.get_day_count() + 1))
 		and text.contains("Empleados contratados: 2") and text.contains("Contratos entregados: 0") and text.contains("Mejor reputación"),
 		"estadísticas: %s" % text)
-	_expect(int(stats[0]["assets"]) == 0 and int(stats[0]["debt"]) > 0 if not stats.is_empty() else false, "deuda y bienes: %s" % [stats])
+	# Queda solo la silla de visita del CEO: el embargo no se lleva nada si no alcanza.
+	_expect(int(stats[0]["assets"]) == Embargo.get_value({"id": "basic_chair"}) and int(stats[0]["debt"]) > 0 if not stats.is_empty() else false, "deuda y bienes: %s" % [stats])
 	# Después del fin no se autoguarda más ni se cobran cuotas.
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * GameConstants.DAYS_PER_MONTH)
 	_expect(not SaveManager.has_save(SaveManager.AUTOSAVE), "no vuelve a autoguardar")

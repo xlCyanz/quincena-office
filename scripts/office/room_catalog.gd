@@ -56,7 +56,8 @@ static func needs_entrance(type_id: String) -> bool:
 	return bool(get_type(type_id).get("needs_entrance", false))
 
 
-## Muebles que necesita: lista de {"name": String, "items": Array} (vale cualquiera de items).
+## Muebles que necesita: lista de {"name": String, "items": Array, "count"?: int} (vale
+## cualquiera de items; count, cuántos hacen falta, por defecto uno).
 static func get_requirements(type_id: String) -> Array[Dictionary]:
 	var requirements: Array[Dictionary] = []
 	requirements.assign(get_type(type_id).get("required", []))

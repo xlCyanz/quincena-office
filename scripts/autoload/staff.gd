@@ -382,6 +382,20 @@ func _process(_delta: float) -> void:
 		check_interview()
 
 
+## Silla de visita de la oficina de alguien ("ceo" o clave): una silla sin dueño en la
+## habitación de su puesto, donde se sienta el candidato. Vacío si no hay.
+func get_guest_chair(by: String) -> Dictionary:
+	var room: Dictionary = get_workplace_room(by)
+	if room.is_empty():
+		return {}
+	var cells: Array = room["cells"]
+	for item: Dictionary in OfficeState.furniture:
+		if String(item["assigned_to"]).is_empty() and cells.has(item["cell"]) \
+				and bool(FurnitureCatalog.get_item(String(item["id"])).get("is_seat", false)):
+			return item
+	return {}
+
+
 ## Ejecutivo que puede hacer entrevistas (el de departments.interviews_department), o vacío.
 func get_interviewer() -> Dictionary:
 	return get_executive_of(String(StaffCatalog.get_departments("interviews_department")))
@@ -407,6 +421,8 @@ func interview_problem(candidate_id: int, by_executive: bool = false) -> String:
 			return "Hace falta un ejecutivo de %s para delegar las entrevistas." % StaffCatalog.get_department_name(
 				String(StaffCatalog.get_departments("interviews_department")))
 		by = employee_key(interviewer["id"])
+	if RoomRules.counts_enabled and get_guest_chair(by).is_empty():
+		return "%s necesita una silla de visita en su oficina para entrevistar." % _interviewer_name(by)
 	var minutes: int = int(StaffCatalog.get_hiring("interview_minutes"))
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()

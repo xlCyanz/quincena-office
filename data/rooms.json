@@ -1,5 +1,5 @@
 {
-	"_comentario": "Tipos de habitación (docs/diseno.md 2.1). Una habitación es un espacio cerrado (paredes o puertas en todo su contorno) con al menos una puerta. min_area (m²) y required son lo que necesita para funcionar: se puede marcar antes y amueblar después. Cada requisito pide un mueble de la lista items (ids de data/furniture.json; los que aún no están en el catálogo llegan en fases siguientes). unique = solo puede haber una; mandatory_count = cuántas tiene que tener la oficina; locked = no se puede quitar ni deshacer con paredes; needs_exterior_wall = tiene que tocar el borde del local; needs_entrance = tiene que contener la entrada. color = tinte en el modo construcción. unlocked_by_offer = solo se puede marcar desde que llegó la primera oferta que la exige (Projects.meeting_room_unlocked; hito 47).",
+	"_comentario": "Tipos de habitación (docs/diseno.md 2.1). Una habitación es un espacio cerrado (paredes o puertas en todo su contorno) con al menos una puerta. min_area (m²) y required son lo que necesita para funcionar: se puede marcar antes y amueblar después. Cada requisito pide un mueble de la lista items (count de ellos si lo trae; las oficinas piden dos sillas: la de quien trabaja ahí y una de visita para las entrevistas) (ids de data/furniture.json; los que aún no están en el catálogo llegan en fases siguientes). unique = solo puede haber una; mandatory_count = cuántas tiene que tener la oficina; locked = no se puede quitar ni deshacer con paredes; needs_exterior_wall = tiene que tocar el borde del local; needs_entrance = tiene que contener la entrada. color = tinte en el modo construcción. unlocked_by_offer = solo se puede marcar desde que llegó la primera oferta que la exige (Projects.meeting_room_unlocked; hito 47).",
 	"types": {
 		"executive_office": {
 			"name": "Oficina Ejecutiva",
@@ -9,7 +9,7 @@
 			"locked": true,
 			"required": [
 				{ "name": "Escritorio ejecutivo", "items": ["executive_desk"] },
-				{ "name": "Silla", "items": ["basic_chair", "ergonomic_chair"] }
+				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair"], "count": 2 }
 			],
 			"color": "d9a441"
 		},
@@ -18,7 +18,7 @@
 			"min_area": 4,
 			"required": [
 				{ "name": "Escritorio", "items": ["simple_desk", "wide_desk", "executive_desk"] },
-				{ "name": "Silla", "items": ["basic_chair", "ergonomic_chair"] }
+				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair"], "count": 2 }
 			],
 			"color": "c97b5a"
 		},

@@ -1,5 +1,5 @@
 {
-	"_comentario": "Empresa con la que empieza toda partida nueva (pedido del jugador: arrancar avanzado, con 40 empleados). Se arma encima de la partida vacía (data/starting_office.json): el local pasa a lot (x, y, ancho, fondo; contiene la entrada del local inicial), cada habitación de rooms ocupa su rectángulo con pared en el borde que da al resto del local y una puerta (door, borde [x, y, eje] como en starting_office.json); la Área de trabajo es el resto del local (work_area_cell). furniture = muebles sueltos (computer = computadora instalada encima; ceo = silla del CEO). desk_rows = filas de puestos del Área de trabajo: escritorio en (x + i, y) mirando al sur y la silla debajo, cada row_step filas. Personal: teams equipos con members (cargo y nivel) y un líder cada uno; template = plantilla de turno (índice); managers gerentes que dirigen leaders_per_manager líderes cada uno; executives = departamento de cada ejecutivo; others = el resto del personal. contracts = contratos en curso al empezar (uno por equipo y el del CEO). Sin cargo con niveles el nivel no importa. stage = etapa (índice de data/stages.json); money = saldo al empezar.",
+	"_comentario": "Empresa con la que empieza toda partida nueva (pedido del jugador: arrancar avanzado, con 40 empleados). Se arma encima de la partida vacía (data/starting_office.json): el local pasa a lot (x, y, ancho, fondo; contiene la entrada del local inicial), cada habitación de rooms ocupa su rectángulo con pared en el borde que da al resto del local y una puerta (door, borde [x, y, eje] como en starting_office.json); la Área de trabajo es el resto del local (work_area_cell). furniture = muebles sueltos (cada oficina con su silla de visita; computer = computadora instalada encima; ceo = silla del CEO). desk_rows = filas de puestos del Área de trabajo: escritorio en (x + i, y) mirando al sur y la silla debajo, cada row_step filas. Personal: teams equipos con members (cargo y nivel) y un líder cada uno; template = plantilla de turno (índice); managers gerentes que dirigen leaders_per_manager líderes cada uno; executives = departamento de cada ejecutivo; others = el resto del personal. contracts = contratos en curso al empezar (uno por equipo y el del CEO). Sin cargo con niveles el nivel no importa. stage = etapa (índice de data/stages.json); money = saldo al empezar.",
 	"stage": 3,
 	"money": 250000,
 	"reputation": 3.5,
@@ -19,6 +19,11 @@
 		{ "id": "executive_desk", "cell": [-7, -10], "rotation": 2, "computer": "basic_computer" },
 		{ "id": "basic_chair", "cell": [-7, -9], "rotation": 0, "ceo": true },
 		{ "id": "small_plant", "cell": [-8, -7], "rotation": 0 },
+		{ "id": "basic_chair", "cell": [-5, -10], "rotation": 3 },
+		{ "id": "basic_chair", "cell": [-2, -10], "rotation": 3 },
+		{ "id": "basic_chair", "cell": [1, -10], "rotation": 3 },
+		{ "id": "basic_chair", "cell": [4, -10], "rotation": 3 },
+		{ "id": "basic_chair", "cell": [5, -10], "rotation": 1 },
 		{ "id": "simple_desk", "cell": [-3, -10], "rotation": 2, "computer": "basic_computer" },
 		{ "id": "basic_chair", "cell": [-3, -9], "rotation": 0 },
 		{ "id": "simple_desk", "cell": [0, -10], "rotation": 2, "computer": "basic_computer" },

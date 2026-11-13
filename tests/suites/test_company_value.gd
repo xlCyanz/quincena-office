@@ -55,7 +55,7 @@ func _to_next_month() -> void:
 func _check_start() -> void:
 	_new_game()
 	var assets: int = Bank.get_assets_value()
-	_expect(assets == 450 + 250 + 30, "muebles iniciales: escritorio ejecutivo, computadora y silla: %d" % assets)
+	_expect(assets == 450 + 250 + 30 + 30, "muebles iniciales: escritorio ejecutivo, computadora y dos sillas: %d" % assets)
 	_expect(Company.get_value() == Economy.balance + assets, "valor inicial = dinero + muebles: %d" % Company.get_value())
 	var labels: Array[String] = []
 	for part: Dictionary in Company.get_value_parts():
@@ -158,7 +158,7 @@ func _check_ui() -> void:
 	await get_tree().process_frame
 	var text: String = bank.get_value_text()
 	_expect(text.begins_with("Valor de la empresa: %s" % MoneyFormat.format(Company.get_value())) and text.contains("Dinero | +")
-		and text.contains("Muebles y computadoras (reventa) | +$750") and text.contains("Terreno comprado | $0")
+		and text.contains("Muebles y computadoras (reventa) | +$780") and text.contains("Terreno comprado | $0")
 		and text.contains("Deuda con el banco | −$2,000"), "detalle en el Banco: %s" % text)
 	Economy.charge(Economy.balance + 50000, "Prueba")
 	await get_tree().process_frame

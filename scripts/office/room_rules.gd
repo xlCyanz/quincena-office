@@ -146,6 +146,11 @@ static func _count_required_furniture(type_id: String, cells: Array[Vector2i], f
 	return count
 
 
+## Solo para pruebas: false pide uno de cada mueble aunque el requisito diga count (las
+## oficinas con una sola silla, como antes de la silla de visita). No se guarda.
+static var counts_enabled: bool = true
+
+
 ## Lo que le falta a una habitación para funcionar (tamaño y muebles), en frases para
 ## el jugador. Vacío si funciona.
 static func function_problems(room: Dictionary, furniture: Array[Dictionary]) -> Array[String]:
@@ -155,13 +160,17 @@ static func function_problems(room: Dictionary, furniture: Array[Dictionary]) ->
 	if cells.size() < min_area:
 		problems.append("es muy pequeña (%d de %d m²)" % [cells.size(), min_area])
 	for requirement: Dictionary in RoomCatalog.get_requirements(room["type"]):
-		var found: bool = false
+		# count: cuántos de esos muebles hacen falta (por defecto uno).
+		var needed: int = int(requirement.get("count", 1)) if counts_enabled else 1
+		var found: int = 0
 		for item: Dictionary in furniture:
 			if requirement["items"].has(item["id"]) and cells.has(item["cell"]):
-				found = true
-				break
-		if not found:
-			problems.append("falta %s" % String(requirement["name"]).to_lower())
+				found += 1
+				if found >= needed:
+					break
+		if found < needed:
+			var label: String = String(requirement["name"]).to_lower()
+			problems.append("falta %s" % label if needed == 1 else "faltan %s (%d de %d)" % [label, found, needed])
 	return problems
 
 

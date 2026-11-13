@@ -308,6 +308,7 @@ func _sync_interview() -> void:
 		return
 	interviewee = VISITOR_SCENE.instantiate()
 	interviewee.configure_candidate(candidate)
+	interviewee.standing = Staff.get_guest_chair(String(Staff.interview.get("by", "ceo"))).is_empty()
 	_office_grid.add_object(interviewee)
 	interviewee.left_office.connect(_remove_left_visitors)
 	interviewee.setup(_office_grid, pathfinder, _interview_spot(String(Staff.interview.get("by", "ceo"))),
@@ -318,6 +319,10 @@ func _sync_interview() -> void:
 ## Casilla donde se para el candidato: del otro lado del escritorio de quien entrevista
 ## ("ceo" o la clave del ejecutivo), dentro de su habitación; si no hay, junto a su silla.
 func _interview_spot(by: String) -> Vector2i:
+	# En la silla de visita de su oficina, si tiene.
+	var guest: Dictionary = Staff.get_guest_chair(by)
+	if not guest.is_empty():
+		return guest["cell"]
 	var chair: Vector2i = _seat_of(by)
 	var desk_cells: Array[Vector2i] = []
 	for item: Dictionary in OfficeState.furniture:
@@ -684,6 +689,7 @@ func _on_office_changed() -> void:
 	_sync_visitors()
 	if interviewee != null:
 		interviewee.set_seat(_interview_spot(String(Staff.interview.get("by", "ceo"))))
+		interviewee.standing = Staff.get_guest_chair(String(Staff.interview.get("by", "ceo"))).is_empty()
 	for visitor: Visitor in _leaving_visitors:
 		visitor.replan()
 

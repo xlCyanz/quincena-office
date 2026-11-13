@@ -132,7 +132,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   con `check_interview`); el CEO rinde esa hora × `get_ceo_interview_factor` (0.5); las partidas viejas (ends_at en horas) terminan a esa hora.
   Se ve: `main.interviewee` (un `Visitor` con `configure_candidate`, de pie) entra y espera del otro lado del escritorio de quien entrevista
   (`_interview_spot`, en su habitación) y se va al terminar o cortarse (`_sync_interview` con `staff_changed`); la ficha del ejecutivo dice
-  «entrevistando a X». Prueba `test_interview_view`. `progress` guarda puntos con decimales.
+  «entrevistando a X». Prueba `test_interview_view`.
+- Silla de visita: la Oficina Ejecutiva y la Oficina única piden dos sillas (`count` en un requisito de `data/rooms.json`,
+  `RoomRules.function_problems`): la de quien trabaja ahí y una de visita (`Staff.get_guest_chair`, silla sin dueño de su habitación), donde se
+  sienta el candidato; sin ella la oficina no funciona (sin puesto) y no se entrevista. La oficina inicial y la empresa de prueba la traen.
+  `RoomRules.counts_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga antes de `office_chairs`. `progress` guarda puntos con decimales.
 - Errores (`data/contracts.json`, bugs): programar genera `bugs_hidden` (1 cada 20/30/45/70 puntos por nivel, el doble cansado o con estrés ≥70, sin acumularse);
   cada punto de pruebas encuentra cada oculto con probabilidad cobertura × puntos / pruebas del contrato (QA 3, otros 0.2) y
   pasan a `bugs_found`; programadores o CEO los corrigen a 3 puntos (`bugs_fixed`) antes de programar. Con pruebas al 100 % QA
