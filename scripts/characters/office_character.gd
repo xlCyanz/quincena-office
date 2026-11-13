@@ -14,10 +14,14 @@ signal left_office
 ## STEPPING_OUT: sale del edificio a buscar un baño (faltan inodoros, hito 52) y vuelve.
 enum Activity { AWAY, WALKING_TO_DESK, SEATED, WALKING_OUT, STEPPING_OUT }
 
-# Arte provisional: colores y medidas del muñeco (unos 32×64 px de pie).
+# Arte provisional: colores y medidas del muñeco (dibujado a unos 32×64 px de pie y
+# achicado por BODY_SCALE para que quede a la escala de los muebles).
 const PANTS_COLOR := Color("2f3b52")
 const SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.25)
 const SEAT_HEIGHT_PX: float = 14.0
+## Escala del muñeco: con 0.8 mide unos 50 px de pie, 1.7 m al lado de un escritorio de
+## 22 px (75 cm). El asiento queda a la altura de la silla y el icono de estado no se achica.
+const BODY_SCALE: float = 0.8
 ## Iconos de estado (hito 57, Staff.get_status_icon): color del globo y signo.
 const STATUS_ICONS: Dictionary[String, Array] = {
 	"no_station": [Color("8a8f99"), "?"],
@@ -28,8 +32,8 @@ const STATUS_ICONS: Dictionary[String, Array] = {
 }
 const ICON_RADIUS: float = 7.0
 const ICON_FONT_SIZE: int = 11
-## Zona en la que un clic toca al personaje, relativa a su punto de apoyo.
-const CLICK_AREA := Rect2(-12.0, -62.0, 24.0, 66.0)
+## Zona en la que un clic toca al personaje, relativa a su punto de apoyo (ya con BODY_SCALE).
+const CLICK_AREA := Rect2(-10.0, -52.0, 20.0, 56.0)
 
 ## Quién es: "ceo" o Staff.employee_key(id) (lo mismo que assigned_to en su silla).
 var person_key: String = ""
@@ -251,6 +255,10 @@ func refresh_position() -> void:
 # Sentado, la cadera queda sobre el asiento y las piernas cuelgan por delante.
 func _draw() -> void:
 	var seated: bool = activity == Activity.SEATED
+	# Sentado, la cadera tiene que quedar sobre el asiento aunque el cuerpo se achique.
+	var lift: float = -SEAT_HEIGHT_PX * (1.0 - BODY_SCALE) if seated else 0.0
+	var body := Transform2D(0.0, Vector2.ONE * BODY_SCALE, 0.0, Vector2(0.0, lift))
+	draw_set_transform_matrix(body)
 	var hip_y: float = -24.0
 	if seated:
 		hip_y = -SEAT_HEIGHT_PX
@@ -259,9 +267,9 @@ func _draw() -> void:
 		draw_rect(Rect2(2.0, hip_y + 2.0, 4.0, 10.0), PANTS_COLOR)
 		hip_y -= 4.0
 	else:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.5))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(BODY_SCALE, 0.5 * BODY_SCALE))
 		draw_circle(Vector2.ZERO, 10.0, SHADOW_COLOR)
-		draw_set_transform(Vector2.ZERO)
+		draw_set_transform_matrix(body)
 		draw_rect(Rect2(-7.0, hip_y, 6.0, 24.0), PANTS_COLOR)
 		draw_rect(Rect2(1.0, hip_y, 6.0, 24.0), PANTS_COLOR)
 	var torso := Rect2(-9.0, hip_y - 22.0, 18.0, 22.0)
@@ -271,8 +279,9 @@ func _draw() -> void:
 	var head_center := Vector2(0.0, torso.position.y - 8.0)
 	draw_circle(head_center, 8.0, skin_color)
 	draw_rect(Rect2(head_center.x - 8.0, head_center.y - 9.0, 16.0, 6.0), hair_color)
+	draw_set_transform(Vector2.ZERO)
 	if not status_icon.is_empty():
-		_draw_status_icon(head_center + Vector2(10.0, -14.0))
+		_draw_status_icon(body * head_center + Vector2(9.0, -12.0))
 
 
 # Globo con el signo del icono de estado, arriba a la derecha de la cabeza.

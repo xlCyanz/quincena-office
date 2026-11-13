@@ -92,7 +92,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   personajes (`OfficeCharacter`, base de `Ceo` y `Employee`). Cada empleado tiene el turno de su equipo o, sin equipo, el horario
   de su cargo (`data/staff.json`); `WorkSchedule` admite turnos que cruzan la medianoche y cada uno almuerza a la 4.ª hora de su jornada. El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el
   jugador lo manda a casa (`Staff.ceo_at_work`, botón «CEO: irse a casa»). Con la oficina vacía el tiempo salta a la próxima llegada.
-  Un clic en un empleado abre su ficha (`EmployeeCard`).
+  Un clic en un empleado abre su ficha (`EmployeeCard`). El muñeco se dibuja a `OfficeCharacter.BODY_SCALE` (0.8, unos 50 px de pie, a la escala
+  de los muebles); sentado la cadera queda a `SEAT_HEIGHT_PX` y el icono de estado no se achica; `CLICK_AREA` ya va escalado.
 - Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
   Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
   lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.
