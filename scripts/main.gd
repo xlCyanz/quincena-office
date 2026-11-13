@@ -254,11 +254,13 @@ func _sync_employees() -> void:
 func _sync_visitors() -> void:
 	var spots: Array[Vector2i] = Projects.get_waiting_spots()
 	var waiting: Array[int] = []
+	var used: Dictionary[Vector2i, bool] = {}
 	for index: int in range(Projects.visits.size()):
 		var visit: Dictionary = Projects.visits[index]
 		var visit_id: int = visit["id"]
 		waiting.append(visit_id)
-		var spot: Vector2i = spots[index % spots.size()] if not spots.is_empty() else OfficeState.entrance
+		var spot: Vector2i = _free_spot_near(spots[index % spots.size()], used) if not spots.is_empty() \
+			else OfficeState.entrance
 		if visitors.has(visit_id):
 			visitors[visit_id].set_seat(spot)
 			continue
@@ -303,8 +305,40 @@ func _on_dirt_changed() -> void:
 func _spot_of(employee: Dictionary) -> Vector2i:
 	var room_index: int = Staff.get_cleaning_room(employee)
 	if room_index >= 0:
-		return OfficeState.get_room_spot(room_index)
+		# Si limpian varios la misma habitación, cada uno en su casilla.
+		var before: int = 0
+		for other: Dictionary in Staff.employees:
+			if int(other["id"]) < int(employee["id"]) and Staff.get_cleaning_room(other) == room_index:
+				before += 1
+		var near: Array[Vector2i] = _cells_near(OfficeState.get_room_spot(room_index), before + 1)
+		return near[mini(before, near.size() - 1)]
 	return _seat_of(Staff.employee_key(employee["id"]))
+
+
+# Una persona por casilla: casillas libres para pisar alrededor de spot (spot primero),
+# las más cercanas caminando, hasta count; nunca la entrada.
+func _cells_near(spot: Vector2i, count: int) -> Array[Vector2i]:
+	var found: Array[Vector2i] = [spot]
+	var index: int = 0
+	while index < found.size() and found.size() < count:
+		var cell: Vector2i = found[index]
+		index += 1
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var next: Vector2i = cell + direction
+			if found.size() < count and not found.has(next) and next != OfficeState.entrance \
+					and pathfinder.is_walkable(next) and pathfinder.can_cross(cell, next):
+				found.append(next)
+	return found
+
+
+# La casilla libre más cercana a spot que nadie más tiene en used (y la anota).
+func _free_spot_near(spot: Vector2i, used: Dictionary[Vector2i, bool]) -> Vector2i:
+	var count: int = used.size() + 1
+	for cell: Vector2i in _cells_near(spot, count):
+		if not used.has(cell):
+			used[cell] = true
+			return cell
+	return spot
 
 
 # Adónde va alguien cuando trabaja: el CEO a su silla y cada empleado a su lugar.
@@ -342,6 +376,9 @@ func _update_routines() -> void:
 	if not resting.is_empty():
 		rest_spots = OfficeState.get_rest_spots()
 	var next_rest: int = 0
+	# Lugares para comer o descansar ya repartidos: si hay más gente que lugares, cada uno
+	# en una casilla distinta (una persona por casilla).
+	var used: Dictionary[Vector2i, bool] = {}
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
 		if leaving:
@@ -349,10 +386,10 @@ func _update_routines() -> void:
 			continue
 		var eating: bool = lunch.has(character.person_key) and not spots.is_empty()
 		if eating:
-			character.set_seat(spots[next_spot % spots.size()])
+			character.set_seat(_free_spot_near(spots[next_spot % spots.size()], used))
 			next_spot += 1
 		elif resting.has(character.person_key) and not rest_spots.is_empty():
-			character.set_seat(rest_spots[next_rest % rest_spots.size()])
+			character.set_seat(_free_spot_near(rest_spots[next_rest % rest_spots.size()], used))
 			next_rest += 1
 		else:
 			character.set_seat(_home_spot(character.person_key))

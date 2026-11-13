@@ -302,7 +302,9 @@ func _check_ui() -> void:
 	var visitors: Dictionary = game.get("visitors")
 	_expect(visitors.has(int(offer["id"])), "el cliente aparece en la oficina")
 	var visitor: Visitor = visitors.get(int(offer["id"]))
-	_expect(visitor != null and visitor.visible and visitor.get_seat_cell() == SOFA_CELL, "y va al sofá")
+	# Si la entrada está ocupada espera en la calle sin verse (una persona por casilla).
+	_expect(visitor != null and visitor.activity == OfficeCharacter.Activity.WALKING_TO_DESK
+		and visitor.get_seat_cell() == SOFA_CELL, "y va al sofá")
 	_expect(visitor != null and visitor.display_name == "Cliente de %s" % offer["client"], "con su nombre")
 	var panel: ProjectsPanel = game.get_node("ProjectsPanel")
 	panel.set_open(true)

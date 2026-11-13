@@ -34,6 +34,8 @@ const ICON_RADIUS: float = 7.0
 const ICON_FONT_SIZE: int = 11
 ## Zona en la que un clic toca al personaje, relativa a su punto de apoyo (ya con BODY_SCALE).
 const CLICK_AREA := Rect2(-10.0, -52.0, 20.0, 56.0)
+## Ninguna casilla (para _release_cells).
+const NO_CELL := Vector2i(-1000000, -1000000)
 
 ## Quién es: "ceo" o Staff.employee_key(id) (lo mismo que assigned_to en su silla).
 var person_key: String = ""
@@ -58,6 +60,14 @@ var _entrance := Vector2i.ZERO
 var _outside := Vector2i.ZERO
 # Casillas que faltan por recorrer; la primera es la siguiente.
 var _path: Array[Vector2i] = []
+# Una persona por casilla del local: casilla → personaje que la ocupa (la suya y, mientras
+# camina, la siguiente). Compartido entre todos los personajes.
+static var _occupants: Dictionary = {}
+# Casillas del local que ocupa este personaje.
+var _held: Array[Vector2i] = []
+# Segundos (a 1x) que lleva esperando a que se libere la siguiente casilla.
+var _blocked_time: float = 0.0
+var _next_repath: float = GameConstants.CHARACTER_REPATH_WAIT
 
 
 ## Prepara al personaje con lo que necesita de la oficina. Lo llama la escena de juego.
@@ -101,7 +111,9 @@ func contains_point(world_point: Vector2) -> bool:
 func update_routine(expected: bool) -> void:
 	if expected and (activity == Activity.AWAY or activity == Activity.WALKING_OUT):
 		if activity == Activity.AWAY:
-			grid_position = Vector2(_entrance)
+			# Aparece en la entrada; si hay alguien, espera en la calle a que se libere.
+			_release_cells()
+			grid_position = Vector2(_entrance) if _claim(_entrance, false) else Vector2(_outside)
 			visible = true
 		_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 	elif not expected and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK
@@ -130,32 +142,114 @@ func set_seat(seat_cell: Vector2i) -> void:
 
 ## Vuelve a calcular el camino hacia donde iba (por ejemplo, después de construir).
 func replan() -> void:
+	_replan_avoiding([])
+
+
+# Como replan, esquivando las casillas avoid si se puede.
+func _replan_avoiding(avoid: Array[Vector2i]) -> void:
 	match activity:
 		Activity.WALKING_TO_DESK:
-			_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
+			_walk_to(_seat_cell, Activity.WALKING_TO_DESK, [], avoid)
 		Activity.WALKING_OUT:
-			_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
+			_walk_to(_entrance, Activity.WALKING_OUT, [_outside], avoid)
 		Activity.STEPPING_OUT:
-			_walk_to(_entrance, Activity.STEPPING_OUT, [_outside])
+			_walk_to(_entrance, Activity.STEPPING_OUT, [_outside], avoid)
 
 
 func _process(delta: float) -> void:
+	if activity == Activity.AWAY:
+		_release_cells()
+		return
+	# Parado en una casilla que todavía no tiene (al cargar, al aparecer): la toma.
+	if _held.is_empty() and grid_position == Vector2(get_cell()):
+		_claim(get_cell(), true)
 	if _path.is_empty():
 		return
-	var step: float = GameConstants.CHARACTER_WALK_SPEED * GameClock.get_time_scale() * delta
+	var scaled_delta: float = GameClock.get_time_scale() * delta
+	var step: float = GameConstants.CHARACTER_WALK_SPEED * scaled_delta
 	while step > 0.0 and not _path.is_empty():
-		var target := Vector2(_path[0])
+		var next: Vector2i = _path[0]
+		# Dentro del local, tras esperar mucho, pasa igual; afuera espera siempre (nadie
+		# de afuera le cierra el paso a quien está en la entrada).
+		var force: bool = _blocked_time >= GameConstants.CHARACTER_PASS_WAIT and _grid.is_in_lot(get_cell())
+		if not _claim(next, force):
+			_on_blocked(scaled_delta)
+			break
+		visible = true
+		var target := Vector2(next)
 		var distance: float = grid_position.distance_to(target)
 		if distance <= step:
 			grid_position = target
 			step -= distance
 			_path.pop_front()
+			_release_cells(next)
+			_blocked_time = 0.0
+			_next_repath = GameConstants.CHARACTER_REPATH_WAIT
 		else:
 			grid_position = grid_position.move_toward(target, step)
 			step = 0.0
 	_update_position()
 	if _path.is_empty():
 		_on_destination_reached()
+
+
+func _exit_tree() -> void:
+	_release_cells()
+
+
+## Indica si otro personaje ocupa una casilla (la suya o la siguiente mientras camina).
+func is_cell_taken(cell: Vector2i) -> bool:
+	var other: Variant = _occupants.get(cell)
+	return other != null and is_instance_valid(other) and other != self and (other as OfficeCharacter)._held.has(cell)
+
+
+## Casillas del local que ocupa (la suya y, mientras camina, la siguiente).
+func get_held_cells() -> Array[Vector2i]:
+	return _held.duplicate()
+
+
+## Casillas que ocupan los demás personajes.
+func get_taken_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in _occupants:
+		if is_cell_taken(cell):
+			cells.append(cell)
+	return cells
+
+
+# Toma una casilla del local si está libre (o si force). Fuera del local no hay límite.
+func _claim(cell: Vector2i, force: bool) -> bool:
+	if _held.has(cell) or not _grid.is_in_lot(cell):
+		return true
+	if not force and is_cell_taken(cell):
+		return false
+	_occupants[cell] = self
+	_held.append(cell)
+	return true
+
+
+# Suelta las casillas que ocupa, salvo keep.
+func _release_cells(keep: Vector2i = NO_CELL) -> void:
+	var kept: Array[Vector2i] = []
+	for cell: Vector2i in _held:
+		if cell == keep:
+			kept.append(cell)
+		elif _occupants.get(cell) == self:
+			_occupants.erase(cell)
+	_held = kept
+
+
+# La siguiente casilla está ocupada: espera; cada tanto busca otro camino que esquive a
+# los demás. Afuera, esperando para entrar, no se ve (no se amontonan en la vereda).
+func _on_blocked(scaled_delta: float) -> void:
+	_blocked_time += scaled_delta
+	if not _grid.is_in_lot(get_cell()):
+		visible = false
+	if _blocked_time < _next_repath:
+		return
+	_next_repath = _blocked_time + GameConstants.CHARACTER_REPATH_WAIT
+	if _grid.is_in_lot(get_cell()):
+		_replan_avoiding(get_taken_cells())
 
 
 ## Devuelve el estado del personaje para guardarlo (hito 9).
@@ -183,13 +277,14 @@ func import_state(state: Dictionary) -> void:
 
 
 # Calcula el camino hasta destination y, al final, añade extra_steps (por ejemplo, el
-# paso que lo saca del local por la entrada).
-func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[Vector2i] = []) -> void:
+# paso que lo saca del local por la entrada). Si puede, esquiva las casillas avoid.
+func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[Vector2i] = [],
+		avoid: Array[Vector2i] = []) -> void:
 	# Fuera del local (recién salido por la entrada) primero vuelve a entrar.
 	if not _grid.is_in_lot(get_cell()):
 		_path = [_entrance] as Array[Vector2i]
 		if destination != _entrance:
-			var inside: Array[Vector2i] = _pathfinder.find_path(_entrance, destination)
+			var inside: Array[Vector2i] = _find_path(_entrance, destination, avoid)
 			if inside.is_empty():
 				push_warning("%s no encuentra camino de %s a %s" % [display_name, _entrance, destination])
 			else:
@@ -199,7 +294,7 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 		_set_activity(new_activity)
 		_update_position()
 		return
-	_path = _pathfinder.find_path(get_cell(), destination)
+	_path = _find_path(get_cell(), destination, avoid)
 	if _path.is_empty() and get_cell() != destination:
 		push_warning("%s no encuentra camino de %s a %s" % [display_name, get_cell(), destination])
 	elif not _path.is_empty():
@@ -214,6 +309,15 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 		_on_destination_reached()
 
 
+# Camino que esquiva avoid; si así no hay, el de siempre.
+func _find_path(from: Vector2i, to: Vector2i, avoid: Array[Vector2i]) -> Array[Vector2i]:
+	if not avoid.is_empty():
+		var around: Array[Vector2i] = _pathfinder.find_path(from, to, avoid)
+		if not around.is_empty():
+			return around
+	return _pathfinder.find_path(from, to)
+
+
 func _on_destination_reached() -> void:
 	match activity:
 		Activity.WALKING_TO_DESK:
@@ -222,6 +326,7 @@ func _on_destination_reached() -> void:
 		Activity.WALKING_OUT:
 			_set_activity(Activity.AWAY)
 			visible = false
+			_release_cells()
 			left_office.emit()
 		Activity.STEPPING_OUT:
 			# Ya afuera: vuelve a entrar y a su silla.

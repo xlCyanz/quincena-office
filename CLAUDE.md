@@ -96,6 +96,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   jugador lo manda a casa (`Staff.ceo_at_work`, botón «CEO: irse a casa»). Con la oficina vacía el tiempo salta a la próxima llegada.
   Un clic en un empleado abre su ficha (`EmployeeCard`). El muñeco se dibuja a `OfficeCharacter.BODY_SCALE` (0.8, unos 50 px de pie, a la escala
   de los muebles); sentado la cadera queda a `SEAT_HEIGHT_PX` y el icono de estado no se achica; `CLICK_AREA` ya va escalado.
+  Caminan a `CHARACTER_WALK_SPEED` (1 casilla/s a 1x) y hay una persona por casilla del local: cada uno ocupa la suya y, al
+  caminar, la siguiente (`OfficeCharacter._occupants`, estático; `is_cell_taken`, `get_held_cells`). Si la siguiente está ocupada
+  espera; cada `CHARACTER_REPATH_WAIT` busca un camino que esquive a los demás (`OfficePathfinder.find_path(…, avoid)`) y tras
+  `CHARACTER_PASS_WAIT` pasa igual (dos de frente en un pasillo de una casilla). Aparece en la entrada si está libre; si no,
+  espera en la calle sin verse. Fuera del local no hay límite. `main.gd` no manda a dos al mismo lugar: limpieza, almuerzo,
+  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Prueba `test_walking`.
 - Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
   Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
   lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.

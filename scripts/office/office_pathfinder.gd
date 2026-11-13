@@ -60,11 +60,18 @@ func can_cross(a: Vector2i, b: Vector2i) -> bool:
 
 ## Camino de casillas desde from hasta to, ambas incluidas. Devuelve una lista vacía si
 ## no hay camino. El destino puede estar bloqueado (por ejemplo, una silla): se permite
-## llegar a él, pero no atravesarlo.
-func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+## llegar a él, pero no atravesarlo. avoid son casillas que se tratan como bloqueadas
+## solo en esta búsqueda (por ejemplo, donde hay otra persona parada).
+func find_path(from: Vector2i, to: Vector2i, avoid: Array[Vector2i] = []) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	if not _lot.has_point(from) or not _lot.has_point(to):
 		return result
+	var avoided: Array[Vector2i] = []
+	for cell: Vector2i in avoid:
+		var point: Vector2i = _cell_point(cell)
+		if cell != from and cell != to and _lot.has_point(cell) and not _astar.is_point_solid(point):
+			_astar.set_point_solid(point, true)
+			avoided.append(point)
 	var from_point: Vector2i = _cell_point(from)
 	var to_point: Vector2i = _cell_point(to)
 	var to_was_solid: bool = _astar.is_point_solid(to_point)
@@ -74,6 +81,8 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	var points: Array[Vector2i] = _astar.get_id_path(from_point, to_point)
 	_astar.set_point_solid(to_point, to_was_solid)
 	_astar.set_point_solid(from_point, from_was_solid)
+	for point: Vector2i in avoided:
+		_astar.set_point_solid(point, false)
 	# Se quedan solo los puntos de casilla (los dos valores impares).
 	for point: Vector2i in points:
 		if point.x % 2 == 1 and point.y % 2 == 1:
