@@ -29,6 +29,8 @@ var pathfinder := OfficePathfinder.new()
 # Llegadas escalonadas: clave → minuto absoluto (hora absoluta × 60 + minuto) en que entra
 # quien todavía no llegó. Se recalcula en cada _update_routines.
 var _arrivals: Dictionary[String, int] = {}
+# Salidas escalonadas: clave → minuto absoluto en que se va quien terminó su jornada.
+var _departures: Dictionary[String, int] = {}
 # Quienes llegaron antes de su hora: esperan en la Sala de descanso o dan vueltas.
 var _early: Dictionary[String, bool] = {}
 # Último minuto (o tramo de vueltas) en que se revisaron las llegadas.
@@ -379,6 +381,11 @@ func get_pending_arrivals() -> Dictionary[String, int]:
 	return _arrivals.duplicate()
 
 
+## Minuto absoluto en que se va cada empleado que terminó su jornada y sigue (copia).
+func get_pending_departures() -> Dictionary[String, int]:
+	return _departures.duplicate()
+
+
 ## Indica si alguien llegó antes de su hora y está esperando.
 func is_waiting_shift(key: String) -> bool:
 	return _early.has(key)
@@ -401,6 +408,12 @@ func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_
 			return false
 		_arrivals[key] = late_at
 		character.set_seat(_home_spot(key))
+		return true
+	# Terminó su jornada: se queda unos minutos antes de irse (sigue como estaba).
+	var leave_at: int = hour_start + Staff.get_leave_minutes(key)
+	if leave_at > now and character.activity != OfficeCharacter.Activity.AWAY \
+			and character.activity != OfficeCharacter.Activity.WALKING_OUT:
+		_departures[key] = leave_at
 		return true
 	var early: int = Staff.get_early_minutes(key)
 	if early <= 0:
@@ -458,7 +471,7 @@ func _waiting_spot(key: String, now: int, used: Dictionary[Vector2i, bool]) -> V
 # Revisa una vez por minuto de juego si le toca entrar a alguien y, cada wander_minutes,
 # mueve a los que dan vueltas esperando su hora.
 func _process(_delta: float) -> void:
-	if _arrivals.is_empty() and _early.is_empty():
+	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty():
 		return
 	var now: int = get_arrival_minute()
 	if now == _last_arrival_check:
@@ -467,6 +480,9 @@ func _process(_delta: float) -> void:
 	var due: bool = false
 	for key: String in _arrivals:
 		if _arrivals[key] <= now:
+			due = true
+	for key: String in _departures:
+		if _departures[key] <= now:
 			due = true
 	var wander: bool = not _early.is_empty() and now % int(StaffCatalog.get_arrivals("wander_minutes")) == 0 \
 		and OfficeState.get_working_room(OfficeState.BREAK_ROOM).is_empty()
@@ -494,6 +510,7 @@ func _update_routines() -> void:
 	var now: int = get_arrival_minute()
 	var hour_start: int = Staff.get_absolute_hour() * 60
 	_arrivals.clear()
+	_departures.clear()
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
 		if leaving:
@@ -555,6 +572,8 @@ func describe_employee_activity(employee_id: int) -> String:
 		OfficeCharacter.Activity.SEATED:
 			if _early.has(character.person_key):
 				return "llegó temprano y espera su hora"
+			if _departures.has(character.person_key):
+				return "terminando antes de irse"
 			if lunch:
 				return "almorzando en la Sala de descanso"
 			return "descansando en la Sala de descanso" if Staff.is_on_break(character.person_key) else "trabajando"

@@ -107,7 +107,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (turno que empieza la hora siguiente, sin tardanza sorteada: `_lateness_roll` predice `_check_arrivals`) y `get_late_minutes` (llegada de ahora).
   `main._arrive_staggered` guarda `_arrivals` (clave → minuto absoluto, `get_arrival_minute`) y `_process` lo revisa cada minuto; quien llega
   antes (`_early`, `is_waiting_shift`) espera de pie (`OfficeCharacter.standing`) en la Sala de descanso o da vueltas (`_waiting_spot`, cambia cada
-  `wander_minutes`). Solo visual: producción y presencia siguen por hora. La oficina vacía salta a la hora anterior y con `GameClock.skip_to_minute`
+  `wander_minutes`). Al terminar la jornada (no al almorzar) se queda 0–20 min (`Staff.get_leave_minutes`; `main._departures`, `get_pending_departures`, ficha
+  «terminando antes de irse»). Solo visual: producción y presencia siguen por hora. La oficina vacía salta a la hora anterior y con `GameClock.skip_to_minute`
   al primero que entra. `Staff.arrival_spread_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga antes de `arrivals`.
   El CEO abre la oficina: llega siempre `ceo.open_minutes` (30) antes de su hora (`Staff.get_ceo_early_minutes`, `main._ceo_opens`) y va a su
   silla; `ceo_at_work` y su producción siguen empezando a las 8. Va primero en `get_characters`, así nadie entra antes que él.

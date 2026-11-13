@@ -203,13 +203,15 @@
 		"repair_cost": 400
 	},
 	"arrivals": {
-		"_comentario": "Llegadas escalonadas (pedido después del hito 69): al empezar su jornada cada empleado entra entre earliest y latest minutos de la hora en punto (negativo = antes), fijo por persona y día. Con late_chance llega después de la hora (1 a latest minutos); impuntual usa unpunctual_late_chance y no llega antes de unpunctual_earliest. Quien llega antes espera en la Sala de descanso o da vueltas por la oficina y a la hora va a su puesto; cada wander_minutes cambia de lugar. Solo cambia cuándo se le ve: la producción y las tardanzas de una hora (rasgo impuntual) siguen contando por hora.",
+		"_comentario": "Llegadas escalonadas (pedido después del hito 69): al empezar su jornada cada empleado entra entre earliest y latest minutos de la hora en punto (negativo = antes), fijo por persona y día. Con late_chance llega después de la hora (1 a latest minutos); impuntual usa unpunctual_late_chance y no llega antes de unpunctual_earliest. Quien llega antes espera en la Sala de descanso o da vueltas por la oficina y a la hora va a su puesto; cada wander_minutes cambia de lugar. Al terminar la jornada (no al salir a almorzar) cada uno se va entre leave_earliest y leave_latest minutos después de la hora. Solo cambia cuándo se le ve: la producción y las tardanzas de una hora (rasgo impuntual) siguen contando por hora.",
 		"earliest": -30,
 		"latest": 10,
 		"late_chance": 0.1,
 		"unpunctual_late_chance": 0.5,
 		"unpunctual_earliest": -10,
-		"wander_minutes": 5
+		"wander_minutes": 5,
+		"leave_earliest": 0,
+		"leave_latest": 20
 	},
 	"traits": {
 		"discover_days": 15,

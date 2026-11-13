@@ -188,6 +188,40 @@ func _check_in_game() -> void:
 	_expect(all_in, "a las 8:10 llegaron todos los que tenían que estar")
 
 	# Oficina vacía: el reloj salta a la hora anterior y hasta el primero que entra.
+	# Al terminar la jornada se van entre la hora en punto y 20 minutos después.
+	var departures: Dictionary[String, int] = {}
+	for hour: int in range(14):
+		GameClock.fast_forward_hours(1)
+		departures = game.get_pending_departures()
+		if day_shift.any(func(character: Employee) -> bool: return departures.has(character.person_key)):
+			break
+	var leave_start: int = Staff.get_absolute_hour() * 60
+	var leaving: Array[Employee] = []
+	var stays_ok: bool = true
+	for character: Employee in day_shift:
+		if departures.has(character.person_key):
+			leaving.append(character)
+			stays_ok = stays_ok and departures[character.person_key] > leave_start \
+				and departures[character.person_key] <= leave_start + 20 \
+				and character.activity != OfficeCharacter.Activity.WALKING_OUT
+	_expect(GameClock.get_hour() == 17 and leaving.size() >= day_shift.size() / 2,
+		"a las 17 la mayoría se queda unos minutos: %d de %d a las %d" % [leaving.size(), day_shift.size(), GameClock.get_hour()])
+	_expect(stays_ok, "cada uno se va entre las 17:01 y las 17:20 y mientras no sale")
+	var describe_leaving: String = game.describe_employee_activity(int(Staff.get_employee_by_key(leaving[0].person_key)["id"])) \
+		if not leaving.is_empty() else ""
+	_expect(leaving.is_empty() or leaving[0].activity != OfficeCharacter.Activity.SEATED
+		or describe_leaving == "terminando antes de irse", "la ficha lo dice: %s" % describe_leaving)
+	var left_on_time: bool = true
+	var left_minutes: Dictionary[int, bool] = {}
+	for minute: int in range(21):
+		_advance_minute(game)
+		for character: Employee in leaving:
+			var key: String = character.person_key
+			if character.activity == OfficeCharacter.Activity.WALKING_OUT and not left_minutes.has(character.get_instance_id()):
+				left_minutes[character.get_instance_id()] = true
+				left_on_time = left_on_time and game.get_arrival_minute() == departures[key]
+	_expect(left_minutes.size() == leaving.size() and left_on_time, "cada uno sale en su minuto: %d de %d" % [left_minutes.size(), leaving.size()])
+
 	# Una hora en que nadie trabaja y la próxima llegada es en más de una hora.
 	Staff.set_ceo_at_work(false)
 	for hour: int in range(7 * 24):

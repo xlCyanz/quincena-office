@@ -1313,6 +1313,24 @@ func get_early_minutes(key: String) -> int:
 	return maxi(-get_arrival_offset(employee, next), 0)
 
 
+## Minutos de la hora actual que alguien se queda después de terminar su jornada ahora
+## (no al salir a almorzar), entre leave_earliest y leave_latest (data/staff.json,
+## arrivals); fijo por persona y hora. 0 si no termina su jornada ahora.
+func get_leave_minutes(key: String) -> int:
+	var employee: Dictionary = get_employee_by_key(key)
+	if employee.is_empty() or not arrival_spread_enabled or is_expected_now(key):
+		return 0
+	var weekday: int = GameClock.get_weekday()
+	var hour: int = GameClock.get_hour()
+	var previous_weekday: int = weekday if hour > 0 else posmod(weekday - 1, GameConstants.DAYS_PER_WEEK)
+	var previous_hour: int = posmod(hour - 1, GameConstants.HOURS_PER_DAY)
+	if not is_expected(key, previous_weekday, previous_hour) or get_schedule(employee).is_lunch(weekday, hour):
+		return 0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([_rng.seed, int(employee["id"]), _absolute_hour(), "leave"])
+	return rng.randi_range(int(StaffCatalog.get_arrivals("leave_earliest")), int(StaffCatalog.get_arrivals("leave_latest")))
+
+
 ## Minutos antes de la hora siguiente en que llega el CEO a abrir la oficina: siempre
 ## open_minutes antes de su hora de llegada (data/staff.json, ceo), si no está ya en el
 ## trabajo; 0 si la hora siguiente no es su llegada. Hasta su hora no rinde.
