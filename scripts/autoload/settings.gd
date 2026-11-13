@@ -2,6 +2,8 @@
 # aplican al iniciar y al cambiarlas. Los valores por defecto están en data/settings.json;
 # un valor que falta o no sirve vuelve al suyo. Los sistemas leen get_value cuando lo
 # necesitan (SaveManager el autoguardado, GameClock la velocidad inicial, main.gd las pausas).
+# Desde el hito 65 también la escala de la interfaz (content_scale_factor de la ventana) y
+# el alto mínimo de todo botón que entra al árbol (min_button_height, para el clic cómodo).
 extends Node
 
 const DATA_PATH: String = "res://data/settings.json"
@@ -12,20 +14,50 @@ var path: String = "user://settings.cfg"
 
 var _defaults: Dictionary = {}
 var _values: Dictionary = {}
+var _data: Dictionary = {}
 
 
 func _ready() -> void:
 	load_settings()
+	get_tree().node_added.connect(_on_node_added)
+
+
+## Escalas de la interfaz que se pueden elegir, en % (data/settings.json, ui_scales).
+func get_ui_scales() -> Array[int]:
+	var scales: Array[int] = []
+	for value: Variant in _settings_data().get("ui_scales", [100]):
+		scales.append(int(value))
+	return scales
+
+
+## Alto mínimo de un botón en píxeles de la interfaz (data/settings.json).
+func get_min_button_height() -> float:
+	return float(_settings_data().get("min_button_height", 44))
+
+
+# Todo botón que entra al árbol mide al menos min_button_height de alto (hito 65). La consola
+# de desarrollo (Panku) queda como es.
+func _on_node_added(node: Node) -> void:
+	var button := node as BaseButton
+	if button == null or String(button.get_path()).contains("/Panku"):
+		return
+	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, get_min_button_height())
 
 
 ## Valores por defecto (de data/settings.json).
 func get_defaults() -> Dictionary:
 	if _defaults.is_empty():
+		_defaults = _settings_data().get("defaults", {})
+	return _defaults
+
+
+func _settings_data() -> Dictionary:
+	if _data.is_empty():
 		var file := FileAccess.open(DATA_PATH, FileAccess.READ)
 		var data: Variant = JSON.parse_string(file.get_as_text()) if file != null else null
 		if data is Dictionary:
-			_defaults = (data as Dictionary).get("defaults", {})
-	return _defaults
+			_data = data
+	return _data
 
 
 ## Valor actual de una opción (null si no existe).
@@ -36,7 +68,7 @@ func get_value(key: String) -> Variant:
 
 
 ## Indica si un valor sirve para esa opción: del mismo tipo que el de defecto y, la
-## velocidad, dentro de las que hay.
+## velocidad y la escala, dentro de las que hay.
 func is_valid(key: String, value: Variant) -> bool:
 	var defaults: Dictionary = get_defaults()
 	if not defaults.has(key):
@@ -49,6 +81,8 @@ func is_valid(key: String, value: Variant) -> bool:
 			return false
 		if key == "start_speed":
 			return int(value) >= 0 and int(value) < GameConstants.CLOCK_SPEEDS.size()
+		if key == "ui_scale":
+			return get_ui_scales().has(int(value))
 		return true
 	return typeof(value) == typeof(default)
 
@@ -101,6 +135,11 @@ func reset_to_defaults() -> void:
 
 
 func _apply(key: String) -> void:
+	if key == "ui_scale":
+		# Antes de entrar al árbol se aplica en _ready (load_settings).
+		if is_inside_tree():
+			get_tree().root.content_scale_factor = float(_values[key]) / 100.0
+		return
 	if key == "fullscreen":
 		# Sin ventana (pruebas) no hay modo que cambiar: queda solo el valor.
 		if DisplayServer.get_name() == "headless":

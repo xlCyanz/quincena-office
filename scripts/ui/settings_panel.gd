@@ -36,6 +36,9 @@ var _status_label: Label
 var _quit_button: Button
 var _close_button: Button
 var _main_rows: VBoxContainer
+# Las pestañas se desplazan si no entran en pantalla (hito 65).
+var _sections_scroll: ScrollContainer
+var _sections_box: VBoxContainer
 var _confirm_box: VBoxContainer
 var _confirm_label: Label
 var _confirm_button: Button
@@ -71,6 +74,12 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 6)
 	_main_rows.add_child(tabs)
+	_sections_scroll = ScrollContainer.new()
+	_sections_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_main_rows.add_child(_sections_scroll)
+	_sections_box = VBoxContainer.new()
+	_sections_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_sections_scroll.add_child(_sections_box)
 	for tab: String in TAB_NAMES:
 		var tab_button := Button.new()
 		tab_button.text = TAB_NAMES[tab]
@@ -81,7 +90,7 @@ func _ready() -> void:
 		_tab_buttons[tab] = tab_button
 		var section := VBoxContainer.new()
 		section.add_theme_constant_override("separation", 6)
-		_main_rows.add_child(section)
+		_sections_box.add_child(section)
 		_sections[tab] = section
 
 	for slot: String in SaveManager.get_manual_slots():
@@ -140,12 +149,18 @@ func _ready() -> void:
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_panel.visible = false
+	EventBus.ui_layout_changed.connect(_queue_fit)
 	set_tab(TAB_SAVE)
 
 
 # Al cambiar de pestaña o de pregunta cambia el alto: se vuelve a centrar con su tamaño
 # mínimo (después de que los contenedores lo recalculen).
 func _fit() -> void:
+	# La pestaña entra entera si cabe; si no, se desplaza dentro del panel (hito 65).
+	var view_height: float = _panel.get_viewport_rect().size.y
+	var other: float = _panel.get_combined_minimum_size().y - _sections_scroll.get_combined_minimum_size().y
+	_sections_scroll.custom_minimum_size.y = minf(_sections_box.get_combined_minimum_size().y,
+		maxf(view_height - UiLayout.MARGIN * 2.0 - other, 80.0))
 	_panel.reset_size()
 	_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
 

@@ -93,6 +93,9 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
+	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
+	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 8)
 	_panel.add_child(rows)
@@ -159,12 +162,12 @@ func _ready() -> void:
 	content.add_child(_investor_label)
 	var amount_row := HBoxContainer.new()
 	content.add_child(amount_row)
-	_amount_minus = _step_button(amount_row, "−", func() -> void: _change_amount(-1))
+	_amount_minus = _step_button(amount_row, "−", func() -> void: _change_amount(-1), "Pedir menos")
 	_amount_label = _value_label(amount_row)
-	_amount_plus = _step_button(amount_row, "+", func() -> void: _change_amount(1))
-	_months_minus = _step_button(amount_row, "−", func() -> void: _change_months(-1))
+	_amount_plus = _step_button(amount_row, "+", func() -> void: _change_amount(1), "Pedir más")
+	_months_minus = _step_button(amount_row, "−", func() -> void: _change_months(-1), "Menos meses")
 	_months_label = _value_label(amount_row)
-	_months_plus = _step_button(amount_row, "+", func() -> void: _change_months(1))
+	_months_plus = _step_button(amount_row, "+", func() -> void: _change_months(1), "Más meses")
 	_quote_label = Label.new()
 	_quote_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_quote_label)
@@ -182,6 +185,7 @@ func _ready() -> void:
 	content.add_child(month_header)
 	_previous_button = Button.new()
 	_previous_button.text = "<"
+	_previous_button.tooltip_text = "Mes anterior"
 	_previous_button.pressed.connect(func() -> void: _show_month(_shown_month - 1))
 	month_header.add_child(_previous_button)
 	_month_label = Label.new()
@@ -191,6 +195,7 @@ func _ready() -> void:
 	month_header.add_child(_month_label)
 	_next_button = Button.new()
 	_next_button.text = ">"
+	_next_button.tooltip_text = "Mes siguiente"
 	_next_button.pressed.connect(func() -> void: _show_month(_shown_month + 1))
 	month_header.add_child(_next_button)
 	_month_rows = VBoxContainer.new()
@@ -515,11 +520,11 @@ func _add_confirm(box: VBoxContainer, loan: Dictionary) -> void:
 		_confirm_button.disabled = not Economy.can_afford(cost)
 		_confirm_button.pressed.connect(func() -> void: _show_result(Bank.prepay(loan["id"])))
 	else:
-		_extra_minus = _step_button(row, "−", func() -> void: _change_extra(-1))
+		_extra_minus = _step_button(row, "−", func() -> void: _change_extra(-1), "Un mes extra menos")
 		var terms: Dictionary = Bank.preview_refinance(loan, _refinance_extra)
 		text.text = "+%d meses: %d cuotas de %s al %s" % [_refinance_extra, terms.get("months", 0),
 			MoneyFormat.format(int(terms.get("installment", 0))), _percent(float(terms.get("rate", 0.0)))]
-		_extra_plus = _step_button(row, "+", func() -> void: _change_extra(1))
+		_extra_plus = _step_button(row, "+", func() -> void: _change_extra(1), "Un mes extra más")
 		_extra_minus.disabled = _refinance_extra <= int(Bank.get_config("refinance_min_extra"))
 		_extra_plus.disabled = _refinance_extra >= Bank.get_max_refinance_extra(loan)
 		_confirm_button.text = "Refinanciar"
@@ -568,9 +573,10 @@ func _show_result(result: Dictionary) -> void:
 	_refresh()
 
 
-static func _step_button(parent: Container, text: String, action: Callable) -> Button:
+static func _step_button(parent: Container, text: String, action: Callable, tooltip: String) -> Button:
 	var button := Button.new()
 	button.text = text
+	button.tooltip_text = tooltip
 	button.custom_minimum_size = Vector2(32, 0)
 	button.pressed.connect(action)
 	parent.add_child(button)

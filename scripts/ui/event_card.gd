@@ -16,6 +16,8 @@ var _panel: PanelContainer
 var _header: Label
 var _fold_button: Button
 var _body: VBoxContainer
+# El cuerpo se desplaza si no entra sobre la barra de menús (hito 65).
+var _scroll: ScrollContainer
 var _title: Label
 var _text: Label
 var _options: VBoxContainer
@@ -48,9 +50,13 @@ func _ready() -> void:
 	_fold_button.focus_mode = Control.FOCUS_NONE
 	_fold_button.pressed.connect(func() -> void: set_folded(not _folded))
 	top.add_child(_fold_button)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rows.add_child(_scroll)
 	_body = VBoxContainer.new()
 	_body.add_theme_constant_override("separation", 6)
-	rows.add_child(_body)
+	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(_body)
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -62,6 +68,7 @@ func _ready() -> void:
 	_options = VBoxContainer.new()
 	_body.add_child(_options)
 	EventBus.event_changed.connect(_refresh)
+	EventBus.ui_layout_changed.connect(_fit)
 	_refresh()
 
 
@@ -110,8 +117,9 @@ func _refresh() -> void:
 	if key != _shown_event:
 		_shown_event = key
 		_folded = false
-	_body.visible = not _folded
+	_scroll.visible = not _folded
 	_fold_button.text = "+" if _folded else "−"
+	_fold_button.tooltip_text = "Desplegar la tarjeta" if _folded else "Plegar la tarjeta"
 	_title.text = card["title"]
 	_text.text = card["text"]
 	for child: Node in _options.get_children():
@@ -129,6 +137,19 @@ func _refresh() -> void:
 		_options.add_child(button)
 		_option_buttons.append(button)
 	_update_header()
+	_fit()
+	_fit.call_deferred()
+
+
+# Alto: lo que pide el cuerpo, sin tapar la barra de menús; si no entra, se desplaza.
+func _fit() -> void:
+	if not _panel.visible:
+		return
+	var available: float = UiLayout.available_height(_panel.get_viewport_rect().size, MARGIN_TOP) \
+		- (_panel.get_combined_minimum_size().y - _scroll.get_combined_minimum_size().y)
+	_scroll.custom_minimum_size.y = minf(_body.get_combined_minimum_size().y, maxf(available, 60.0))
+	# El ancho lo dan los márgenes; el alto vuelve al mínimo.
+	_panel.offset_bottom = _panel.offset_top
 
 
 func _update_header() -> void:

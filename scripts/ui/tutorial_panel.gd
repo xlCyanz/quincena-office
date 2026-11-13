@@ -8,10 +8,10 @@ extends CanvasLayer
 
 const LAYER: int = 5
 const PANEL_WIDTH: float = 420.0
-## Dónde empieza la tarjeta respecto del centro de la pantalla (deja libre el panel izquierdo).
-const OFFSET_FROM_CENTER: float = -47.0
+## Ancho mínimo para ir arriba entre el dinero y el reloj; si no entra, va bajo el reloj.
+const MIN_TOP_WIDTH: float = 280.0
 const MARGIN_TOP: float = 8.0
-const TEXT_WIDTH: float = PANEL_WIDTH - 32.0
+const GAP: float = 8.0
 const HIGHLIGHT_COLOR := Color(1.0, 0.82, 0.25)
 const FRAME_GROW: float = 6.0
 const FRAME_WIDTH: int = 3
@@ -21,6 +21,9 @@ const ARROW_BOB: float = 6.0
 
 ## Rectángulo en pantalla de lo que se resalta (clave de data/tutorial.json), o Rect2() si no se ve.
 var target_provider: Callable = func(_key: String) -> Rect2: return Rect2()
+## Rectángulos del dinero y del reloj en pantalla (Hud.get_corner_rects); la tarjeta va entre
+## los dos, pegada al reloj (hito 65: con la interfaz grande puede ir bajo el reloj).
+var corners_provider: Callable = func() -> Array[Rect2]: return [] as Array[Rect2]
 
 var _panel: PanelContainer
 var _header: Label
@@ -56,11 +59,7 @@ func _ready() -> void:
 	add_child(_arrow)
 
 	_panel = Hud.make_panel()
-	_panel.anchor_left = 0.5
-	_panel.anchor_right = 0.5
-	_panel.offset_left = OFFSET_FROM_CENTER
-	_panel.offset_right = OFFSET_FROM_CENTER + PANEL_WIDTH
-	_panel.offset_top = MARGIN_TOP
+	_panel.position = Vector2(UiLayout.MARGIN, MARGIN_TOP)
 	root.add_child(_panel)
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 6)
@@ -80,7 +79,7 @@ func _ready() -> void:
 	header_row.add_child(_skip_button)
 	_text = Label.new()
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text.custom_minimum_size = Vector2(TEXT_WIDTH, 0)
+	_text.custom_minimum_size = Vector2(PANEL_WIDTH - 32.0, 0)
 	rows.add_child(_text)
 	EventBus.tutorial_changed.connect(refresh)
 	refresh()
@@ -97,12 +96,38 @@ func refresh() -> void:
 	_header.text = "Tutorial · paso %d de %d" % [Tutorial.step_index + 1, Tutorial.get_steps().size()]
 	_text.text = String(step.get("text", ""))
 	_panel.reset_size()
+	_place()
 	_update_highlight()
 
 
 func _process(delta: float) -> void:
 	_time += delta
+	_place()
 	_update_highlight()
+
+
+# Arriba entre el dinero y el reloj, pegada al reloj; si no hay lugar, bajo el reloj.
+func _place() -> void:
+	if not _panel.visible:
+		return
+	var corners: Array[Rect2] = corners_provider.call()
+	var view: Vector2 = _panel.get_viewport_rect().size
+	var left: float = UiLayout.MARGIN
+	var right: float = view.x - UiLayout.MARGIN
+	var top: float = MARGIN_TOP
+	var width: float = minf(PANEL_WIDTH, right - left)
+	if corners.size() == 2:
+		var gap_width: float = corners[1].position.x - corners[0].end.x - GAP * 2.0
+		if gap_width >= MIN_TOP_WIDTH:
+			width = minf(PANEL_WIDTH, gap_width)
+			right = corners[1].position.x - GAP
+		else:
+			top = corners[1].end.y + GAP
+	var text_width: float = width - 32.0
+	if not is_equal_approx(_text.custom_minimum_size.x, text_width):
+		_text.custom_minimum_size.x = text_width
+		_panel.reset_size()
+	_panel.position = Vector2(right - _panel.size.x, top)
 
 
 # Busca lo primero que se vea de la lista del paso y pone el marco y la flecha.

@@ -167,7 +167,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   falta = 0): cada hora trabajada en un puesto suma 1 a la habitación del puesto (la mitad con `trash_can`, zafacón $30); desde 50 la meta de ánimo
   de quienes trabajan ahí baja 10 (`Staff.works_in_dirty_room`). `cleaner` ($500, desde el inicio) tiene su puesto en un armario (`is_closet`) dentro
   de un Cuarto de limpieza (`Workstations.CLEANING_ROOM`, uno por armario); en su turno quita 25/h × factor a la habitación más sucia y `main.gd` lo
-  manda ahí (`Staff.get_cleaning_room`). `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas de 6.
+  manda ahí (`Staff.get_cleaning_room`). `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas según el ancho (hito 65).
 - Competencia (`competition` en `data/staff.json`): cada medianoche (`Staff._update_morale`) otra empresa puede ofrecerle a un SemiSenior o
   Senior, o a un líder, gerente o ejecutivo (cuentan como Senior), su sueldo +15–30 % (`outside_offer`: `{salary, until_day}`, 5 días).
   `Staff.get_offer_chance`: Senior 1 %/día, SemiSenior 0.5 %, ×3 si gana menos que su nivel, ×0.3 desde el 110 %, leal ×0.25, ambicioso ×2.
@@ -412,6 +412,15 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   cabecera de Personal, Proyectos, Horarios, Banco y Empresa y en la fila de estructura de Construir (`get_help_button()`); emite
   `EventBus.help_requested` y `HelpDialog` (capa 12, en `main.gd`, `get_help_dialog`) muestra el título y el texto de `data/help.json`
   (`topics`) sin pausar; «Entendido» o Esc (lo primero que cierra `handle_escape`) la cierran.
+- Interfaz escalable (hito 65): opción `ui_scale` (`ui_scales` 100/125/150 en `data/settings.json`) que pone `content_scale_factor` de la
+  ventana (a 150 % en 1280×720 quedan 853×480). `Settings` sube a `min_button_height` (44) el alto mínimo de todo botón que entra al árbol
+  (`node_added`, salvo Panku). `UiLayout`: `bottom_space` (lo mide `BuildPanel` desde la barra de menús, ahora `HFlowContainer` que se
+  parte en filas) y `top_space` (lo mide `Hud` desde el dinero y el reloj); `EventBus.ui_layout_changed` hace que los paneles izquierdos
+  (`fit_left_panel`: ancho hasta la pantalla y alto sobre la barra), la ficha, la tarjeta de eventos (cuerpo desplazable) y Ajustes (pestañas
+  desplazables) se acomoden. Personal desplaza todo bajo la cabecera; Construir parte sus herramientas en filas (`HFlowContainer`) según el
+  ancho y las desplaza si no entran entre `top_space` y abajo. La tarjeta del tutorial va entre el dinero y el reloj o, si no entra, bajo el
+  reloj (`corners_provider` = `Hud.get_corner_rects`). Los botones sin palabras (−, +, <, >, ?, escala) tienen `tooltip_text`. Las pruebas
+  sin ventana simulan 1280×720 con `content_scale_aspect = KEEP` (`test_ui_scale`).
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -490,3 +499,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 62 | Menú de pausa | ✅ Completado (Esc cierra la pregunta, Ajustes, la pausa, construcción, la ficha o los paneles izquierdos, en ese orden; sin nada abierto abre la pausa con Seguir, Guardar, Cargar, Ajustes y Salir al menú y detiene el reloj; Seguir lo deja como estaba; Guardar, Cargar y Ajustes abren Ajustes en su pestaña y vuelven a la pausa; salir pregunta; las pantallas de fin, bolsa y préstamo de emergencia no se cierran con Esc) |
 | 63 | Tutorial: primeros pasos | ✅ Completado (6 pasos: cámara, Construir, Área de trabajo, puesto, vacante de programador y primera contratación; marco y flecha sobre el botón o el local sin bloquear la interfaz; los pasos ya cumplidos se saltan solos; se ve en partidas nuevas hasta terminarlo o saltarlo una vez; «Retomar el tutorial» en Ajustes; se guarda en la partida y las viejas cargan sin él) |
 | 64 | Tutorial: el negocio y ayuda | ✅ Completado (4 pasos más: aceptar un contrato, la nómina y la velocidad, el Banco y la primera entrega, que termina el tutorial; botón «?» en Personal, Proyectos, Horarios, Banco, Empresa y Construir con su texto de `data/help.json`, sin pausar y se cierra con Entendido o Esc; las partidas viejas cargan sin tutorial; las descripciones emergentes de los botones sin texto quedan para el hito 65) |
+| 65 | Interfaz escalable | ✅ Completado (Tamaño de la interfaz 100/125/150 % en Opciones; a 150 % en 1280×720 la barra se parte en dos filas y los paneles, la ficha, Construir, Ajustes, eventos, tutorial, ayuda, pausa y pantallas de cierre entran en pantalla sin tapar la barra, con desplazamiento donde no entran; todo botón mide al menos 44 px; −, +, <, > y la escala con descripción emergente) |

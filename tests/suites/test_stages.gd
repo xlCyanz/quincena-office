@@ -193,7 +193,7 @@ func _check_ui() -> void:
 	var build: BuildPanel = game.get_node("BuildPanel")
 	var panel: CompanyPanel = game.get_node("CompanyPanel")
 	var bank: BankPanel = game.get_node("BankPanel")
-	var bar: HBoxContainer = build.get_menu_bar()
+	var bar: HFlowContainer = build.get_menu_bar()
 	var names: Array[String] = []
 	for child: Node in bar.get_children():
 		names.append((child as Button).text)

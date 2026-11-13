@@ -183,3 +183,8 @@ signal tutorial_changed
 ## Se pidió la ayuda de un menú (hito 64, botón «?»): clave de data/help.json.
 @warning_ignore("unused_signal")
 signal help_requested(topic: String)
+
+## Cambió el espacio de la interfaz (hito 65): el tamaño de la pantalla, la escala o el alto
+## de la barra de menús (UiLayout.bottom_space). Los paneles se vuelven a acomodar.
+@warning_ignore("unused_signal")
+signal ui_layout_changed

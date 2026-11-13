@@ -136,6 +136,7 @@ func _ready() -> void:
 	_tutorial_panel = TutorialPanel.new()
 	_tutorial_panel.name = "TutorialPanel"
 	_tutorial_panel.target_provider = tutorial_target_rect
+	_tutorial_panel.corners_provider = _hud.get_corner_rects
 	add_child(_tutorial_panel)
 	_help_dialog = HelpDialog.new()
 	_help_dialog.name = "HelpDialog"

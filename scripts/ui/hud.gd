@@ -107,6 +107,9 @@ func _ready() -> void:
 	clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	clock_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_clock_panel = clock_panel
+	# Lo que ocupan arriba el dinero y el reloj, para los paneles que no deben taparlos (hito 65).
+	for corner: Control in [_money_panel, _clock_panel]:
+		corner.resized.connect(_update_top_space)
 
 	# Avisos, arriba al centro.
 	_notice_panel = make_panel()
@@ -327,3 +330,7 @@ func _on_balance_changed(_balance: int = 0) -> void:
 		_balance_label.add_theme_color_override("font_color", NEGATIVE_COLOR)
 	else:
 		_balance_label.remove_theme_color_override("font_color")
+
+
+func _update_top_space() -> void:
+	UiLayout.top_space = maxf(_money_panel.get_global_rect().end.y, _clock_panel.get_global_rect().end.y) + UiLayout.BAR_GAP

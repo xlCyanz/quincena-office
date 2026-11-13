@@ -19,7 +19,6 @@ const PANEL_WIDTH: float = 360.0
 const MARGIN: float = 16.0
 const MARGIN_TOP: float = 140.0
 ## Espacio que se deja abajo para la barra de botones.
-const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 22
 const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
 const ALERT_COLOR := Color("f2c14e")
@@ -83,6 +82,9 @@ func _ready() -> void:
 	_panel.offset_left = -MARGIN - PANEL_WIDTH
 	_panel.offset_right = -MARGIN
 	_panel.offset_top = MARGIN_TOP
+	# Con la interfaz grande el contenido puede pedir más ancho: crece hacia la izquierda.
+	_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	EventBus.ui_layout_changed.connect(_fit)
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 6)
 	_panel.add_child(outer)
@@ -171,6 +173,7 @@ func _ready() -> void:
 	rows.add_child(raise_row)
 	_raise_minus = Button.new()
 	_raise_minus.text = "−"
+	_raise_minus.tooltip_text = "Bajar el aumento"
 	_raise_minus.pressed.connect(func() -> void: _change_raise(-1))
 	raise_row.add_child(_raise_minus)
 	_raise_label = Label.new()
@@ -179,6 +182,7 @@ func _ready() -> void:
 	raise_row.add_child(_raise_label)
 	_raise_plus = Button.new()
 	_raise_plus.text = "+"
+	_raise_plus.tooltip_text = "Subir el aumento"
 	_raise_plus.pressed.connect(func() -> void: _change_raise(1))
 	raise_row.add_child(_raise_plus)
 	_raise_button = Button.new()
@@ -195,6 +199,7 @@ func _ready() -> void:
 	rows.add_child(_promote_row)
 	_promote_minus = Button.new()
 	_promote_minus.text = "−"
+	_promote_minus.tooltip_text = "Bajar el sueldo del ascenso"
 	_promote_minus.pressed.connect(func() -> void: _change_promote_salary(-1))
 	_promote_row.add_child(_promote_minus)
 	_promote_salary_label = Label.new()
@@ -203,6 +208,7 @@ func _ready() -> void:
 	_promote_row.add_child(_promote_salary_label)
 	_promote_plus = Button.new()
 	_promote_plus.text = "+"
+	_promote_plus.tooltip_text = "Subir el sueldo del ascenso"
 	_promote_plus.pressed.connect(func() -> void: _change_promote_salary(1))
 	_promote_row.add_child(_promote_plus)
 	_promote_button = Button.new()
@@ -491,7 +497,7 @@ func get_shift_editor() -> ShiftEditor:
 func _fit() -> void:
 	if not is_open():
 		return
-	var available: float = _panel.get_viewport_rect().size.y - MARGIN_TOP - MARGIN_BOTTOM \
+	var available: float = UiLayout.available_height(_panel.get_viewport_rect().size, MARGIN_TOP) \
 		- (_panel.get_combined_minimum_size().y - _scroll.get_combined_minimum_size().y)
 	_scroll.custom_minimum_size.y = minf(_rows.get_combined_minimum_size().y, maxf(available, 100.0))
 	_panel.offset_bottom = _panel.offset_top

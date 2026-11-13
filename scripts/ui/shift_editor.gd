@@ -22,12 +22,12 @@ func _init(day_button_width: float = 44.0, split: bool = false) -> void:
 	var row := HBoxContainer.new()
 	add_child(row)
 	row.add_child(_muted("Entrada"))
-	_add_step(row, "earlier", "−", func() -> void: _emit(posmod(_schedule.start_hour - 1, GameConstants.HOURS_PER_DAY), _schedule.days, _schedule.overtime))
+	_add_step(row, "earlier", "−", "Entrar una hora antes", func() -> void: _emit(posmod(_schedule.start_hour - 1, GameConstants.HOURS_PER_DAY), _schedule.days, _schedule.overtime))
 	_start_label = Label.new()
 	_start_label.custom_minimum_size = Vector2(52, 0)
 	_start_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(_start_label)
-	_add_step(row, "later", "+", func() -> void: _emit((_schedule.start_hour + 1) % GameConstants.HOURS_PER_DAY, _schedule.days, _schedule.overtime))
+	_add_step(row, "later", "+", "Entrar una hora después", func() -> void: _emit((_schedule.start_hour + 1) % GameConstants.HOURS_PER_DAY, _schedule.days, _schedule.overtime))
 	if split:
 		row = HBoxContainer.new()
 		add_child(row)
@@ -36,12 +36,12 @@ func _init(day_button_width: float = 44.0, split: bool = false) -> void:
 		gap.custom_minimum_size = Vector2(12, 0)
 		row.add_child(gap)
 	row.add_child(_muted("Horas extra"))
-	_add_step(row, "less_overtime", "−", func() -> void: _emit(_schedule.start_hour, _schedule.days, _schedule.overtime - 1))
+	_add_step(row, "less_overtime", "−", "Una hora extra menos", func() -> void: _emit(_schedule.start_hour, _schedule.days, _schedule.overtime - 1))
 	_overtime_label = Label.new()
 	_overtime_label.custom_minimum_size = Vector2(28, 0)
 	_overtime_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(_overtime_label)
-	_add_step(row, "more_overtime", "+", func() -> void: _emit(_schedule.start_hour, _schedule.days, _schedule.overtime + 1))
+	_add_step(row, "more_overtime", "+", "Una hora extra más", func() -> void: _emit(_schedule.start_hour, _schedule.days, _schedule.overtime + 1))
 	var days_row := HBoxContainer.new()
 	add_child(days_row)
 	for day: int in range(GameConstants.DAYS_PER_WEEK):
@@ -82,9 +82,10 @@ func get_controls() -> Dictionary[String, Control]:
 	return _controls
 
 
-func _add_step(row: HBoxContainer, key: String, text: String, action: Callable) -> void:
+func _add_step(row: HBoxContainer, key: String, text: String, tooltip: String, action: Callable) -> void:
 	var button := Button.new()
 	button.text = text
+	button.tooltip_text = tooltip
 	button.custom_minimum_size = Vector2(STEP_BUTTON_WIDTH, 0)
 	button.pressed.connect(action)
 	row.add_child(button)

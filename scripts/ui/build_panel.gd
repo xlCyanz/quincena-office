@@ -22,12 +22,17 @@ const DEFAULT_LAND_WIDTH: int = 4
 const DEFAULT_LAND_DEPTH: int = 3
 
 const MARGIN_BOTTOM: float = 16.0
-## Botones por fila de muebles y de habitaciones.
-const MAX_ROW_BUTTONS: int = 6
+## Para las descripciones emergentes de −/+ del terreno (hito 65).
+const LAND_NAMES: Dictionary[String, String] = {"width": "ancho", "depth": "fondo", "offset": "posición"}
+## Ancho del panel de construcción si la pantalla lo deja (hito 65).
+const BUILD_PANEL_WIDTH: float = 1000.0
 
 # Botón «?» de ayuda (hito 64).
 var _help_button: Button
-var _menu_bar: HBoxContainer
+var _menu_bar: HFlowContainer
+# Herramientas en filas que se acomodan al ancho (hito 65), dentro de un desplazamiento.
+var _tools_scroll: ScrollContainer
+var _tool_groups: Array[HFlowContainer] = []
 var _open_button: Button
 var _panel: PanelContainer
 var _status_label: Label
@@ -50,15 +55,29 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	_menu_bar = HBoxContainer.new()
-	_menu_bar.add_theme_constant_override("separation", 8)
+	# La barra se parte en filas si no entra a lo ancho (hito 65: escala de la interfaz).
+	_menu_bar = HFlowContainer.new()
+	_menu_bar.alignment = FlowContainer.ALIGNMENT_CENTER
+	_menu_bar.add_theme_constant_override("h_separation", 8)
+	_menu_bar.add_theme_constant_override("v_separation", 8)
 	root.add_child(_menu_bar)
 	_open_button = Button.new()
 	_open_button.text = "Construir"
 	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
 	_open_button.pressed.connect(func() -> void: set_build_mode(true))
 	_menu_bar.add_child(_open_button)
-	_anchor_bottom_center(_menu_bar)
+	_menu_bar.anchor_left = 0.0
+	_menu_bar.anchor_right = 1.0
+	_menu_bar.anchor_top = 1.0
+	_menu_bar.anchor_bottom = 1.0
+	_menu_bar.offset_left = UiLayout.MARGIN
+	_menu_bar.offset_right = -UiLayout.MARGIN
+	_menu_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_menu_bar.offset_top = -MARGIN_BOTTOM
+	_menu_bar.offset_bottom = -MARGIN_BOTTOM
+	_menu_bar.resized.connect(_update_layout)
+	_menu_bar.visibility_changed.connect(_update_layout)
+	get_viewport().size_changed.connect(_update_layout)
 
 	_panel = PanelContainer.new()
 	root.add_child(_panel)
@@ -86,9 +105,15 @@ func _ready() -> void:
 	for type_id: String in RoomCatalog.get_type_ids():
 		room_tools.append([type_id, RoomCatalog.get_display_name(type_id)])
 	room_tools.append([BuildController.TOOL_UNMARK_ROOM, "Quitar habitación"])
-	var structure_row: HBoxContainer = _add_tool_row(rows, structure, group)
-	_add_tool_rows(rows, furniture, group)
-	_add_tool_rows(rows, room_tools, group)
+	_tools_scroll = ScrollContainer.new()
+	_tools_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rows.add_child(_tools_scroll)
+	var tool_rows := VBoxContainer.new()
+	tool_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tools_scroll.add_child(tool_rows)
+	var structure_row: HFlowContainer = _add_tool_row(tool_rows, structure, group)
+	_add_tool_row(tool_rows, furniture, group)
+	_add_tool_row(tool_rows, room_tools, group)
 	_build_land_row(rows)
 	_exit_button = Button.new()
 	_exit_button.text = "Salir"
@@ -112,6 +137,8 @@ func _ready() -> void:
 func set_build_mode(active: bool) -> void:
 	_menu_bar.visible = not active
 	_panel.visible = active
+	if active:
+		_fit_panel()
 	_status_label.text = "El tiempo está en pausa." if active else ""
 	build_mode_changed.emit(active)
 
@@ -159,7 +186,7 @@ func show_status(text: String) -> void:
 
 
 ## Barra de menús de abajo al centro (se oculta en modo construcción).
-func get_menu_bar() -> HBoxContainer:
+func get_menu_bar() -> HFlowContainer:
 	return _menu_bar
 
 
@@ -175,16 +202,15 @@ func get_tool_button(tool: String) -> Button:
 	return _tool_buttons.get(tool, null)
 
 
-# Pone los botones en filas de hasta MAX_ROW_BUTTONS para que el panel quepa en pantalla.
-func _add_tool_rows(parent: Container, entries: Array[Array], group: ButtonGroup) -> void:
-	for start: int in range(0, entries.size(), MAX_ROW_BUTTONS):
-		_add_tool_row(parent, entries.slice(start, start + MAX_ROW_BUTTONS), group)
-
-
-func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
+# Un grupo de herramientas (estructura, muebles o habitaciones): sus botones se parten en
+# filas según el ancho del panel (hito 65).
+func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup) -> HFlowContainer:
+	var row := HFlowContainer.new()
+	row.alignment = FlowContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("h_separation", 4)
+	row.add_theme_constant_override("v_separation", 4)
 	parent.add_child(row)
+	_tool_groups.append(row)
 	for entry: Array in entries:
 		var button := Button.new()
 		button.text = entry[1]
@@ -237,6 +263,7 @@ func _build_land_row(parent: Container) -> void:
 		_land_row.add_child(title)
 		var minus := Button.new()
 		minus.text = "−"
+		minus.tooltip_text = "Restar %s" % LAND_NAMES[key]
 		minus.pressed.connect(_step_land.bind(key, -1))
 		_land_row.add_child(minus)
 		_land_buttons[key + "-"] = minus
@@ -247,6 +274,7 @@ func _build_land_row(parent: Container) -> void:
 		_land_labels[key] = value
 		var plus := Button.new()
 		plus.text = "+"
+		plus.tooltip_text = "Sumar %s" % LAND_NAMES[key]
 		plus.pressed.connect(_step_land.bind(key, 1))
 		_land_row.add_child(plus)
 		_land_buttons[key + "+"] = plus
@@ -291,6 +319,58 @@ func _refresh_land() -> void:
 	_land_buttons["offset-"].disabled = _land_offset <= 1 - _land_width
 	_land_buttons["offset+"].disabled = _land_offset >= side_length - 1
 	land_changed.emit(_land_side, _land_width, _land_depth, _land_offset)
+
+
+# La barra de menús cambió de alto (o la pantalla de tamaño): se guarda cuánto reserva abajo
+# y se avisa a los paneles (hito 65). Si está oculta (Ajustes, pausa, construcción) no cambia.
+func _update_layout() -> void:
+	if _menu_bar.is_visible_in_tree():
+		var view: Vector2 = _menu_bar.get_viewport_rect().size
+		var space: float = view.y - _menu_bar.get_global_rect().position.y + UiLayout.BAR_GAP
+		if not is_equal_approx(space, UiLayout.bottom_space):
+			UiLayout.bottom_space = space
+	EventBus.ui_layout_changed.emit()
+	if _panel.visible:
+		_fit_panel()
+
+
+# El panel de construcción mide lo que entra en pantalla: el ancho de la pantalla (las
+# herramientas se parten en filas) y, de alto, deja libre arriba el dinero y el reloj
+# (UiLayout.top_space); si las
+# herramientas no entran, se desplazan.
+func _fit_panel() -> void:
+	var view: Vector2 = _panel.get_viewport_rect().size
+	var width: float = minf(BUILD_PANEL_WIDTH, view.x - UiLayout.MARGIN * 2.0)
+	_panel.custom_minimum_size.x = width
+	_tools_scroll.custom_minimum_size.y = 0.0
+	var tools_height: float = 0.0
+	for row: HFlowContainer in _tool_groups:
+		# Alto de cada grupo con el ancho que tendrá.
+		tools_height += _flow_height(row, width - 16.0) + 4.0
+	var other: float = _panel.get_combined_minimum_size().y - _tools_scroll.get_combined_minimum_size().y
+	var available: float = view.y - UiLayout.top_space - MARGIN_BOTTOM - other
+	_tools_scroll.custom_minimum_size.y = clampf(tools_height, 60.0, maxf(available, 60.0))
+	_anchor_bottom_center(_panel)
+
+
+# Alto que ocupan los botones de un grupo puestos en filas de ese ancho.
+func _flow_height(row: HFlowContainer, width: float) -> float:
+	var line_width: float = 0.0
+	var line_height: float = 0.0
+	var total: float = 0.0
+	var gap: float = 4.0
+	for child: Node in row.get_children():
+		var control := child as Control
+		if control == null or not control.visible:
+			continue
+		var size: Vector2 = control.get_combined_minimum_size()
+		if line_width > 0.0 and line_width + gap + size.x > width:
+			total += line_height + gap
+			line_width = 0.0
+			line_height = 0.0
+		line_width += (gap if line_width > 0.0 else 0.0) + size.x
+		line_height = maxf(line_height, size.y)
+	return total + line_height
 
 
 func _anchor_bottom_center(control: Control) -> void:

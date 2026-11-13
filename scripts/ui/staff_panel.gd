@@ -78,6 +78,9 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
+	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
+	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 8)
 	_panel.add_child(rows)
@@ -95,6 +98,15 @@ func _ready() -> void:
 	_help_button = HelpButton.create("staff")
 	header.add_child(_help_button)
 	header.add_child(close_button)
+	# Bajo la cabecera todo se desplaza junto, para que quepa con la interfaz grande (hito 65).
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rows.add_child(scroll)
+	rows = VBoxContainer.new()
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rows.add_theme_constant_override("separation", 8)
+	scroll.add_child(rows)
 
 	_add_section(rows, "Nueva vacante")
 	var choice_row := HBoxContainer.new()
@@ -121,6 +133,7 @@ func _ready() -> void:
 	salary_row.add_child(salary_title)
 	_salary_down = Button.new()
 	_salary_down.text = "−"
+	_salary_down.tooltip_text = "Bajar el sueldo ofrecido"
 	_salary_down.custom_minimum_size = Vector2(36, 0)
 	_salary_down.pressed.connect(func() -> void: _change_salary(-1))
 	salary_row.add_child(_salary_down)
@@ -130,6 +143,7 @@ func _ready() -> void:
 	salary_row.add_child(_salary_label)
 	_salary_up = Button.new()
 	_salary_up.text = "+"
+	_salary_up.tooltip_text = "Subir el sueldo ofrecido"
 	_salary_up.custom_minimum_size = Vector2(36, 0)
 	_salary_up.pressed.connect(func() -> void: _change_salary(1))
 	salary_row.add_child(_salary_up)
@@ -155,14 +169,10 @@ func _ready() -> void:
 	rows.add_child(_status_label)
 
 	rows.add_child(HSeparator.new())
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	rows.add_child(scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
-	scroll.add_child(_list)
+	rows.add_child(_list)
 
 	_reset_salary()
 	_panel.visible = false
@@ -592,6 +602,7 @@ func _add_candidate(candidate: Dictionary) -> void:
 	var step: int = int(StaffCatalog.get_hiring("salary_step"))
 	var down := Button.new()
 	down.text = "−"
+	down.tooltip_text = "Bajar la oferta"
 	down.custom_minimum_size = Vector2(36, 0)
 	down.disabled = _offers[candidate_id] <= step
 	down.pressed.connect(func() -> void: _change_offer(candidate_id, -1))
@@ -603,6 +614,7 @@ func _add_candidate(candidate: Dictionary) -> void:
 	actions.add_child(offer_label)
 	var up := Button.new()
 	up.text = "+"
+	up.tooltip_text = "Subir la oferta"
 	up.custom_minimum_size = Vector2(36, 0)
 	up.pressed.connect(func() -> void: _change_offer(candidate_id, 1))
 	actions.add_child(up)

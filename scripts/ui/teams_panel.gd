@@ -79,6 +79,9 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
+	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
+	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 8)
 	_panel.add_child(rows)
