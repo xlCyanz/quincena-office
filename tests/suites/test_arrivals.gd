@@ -91,6 +91,7 @@ func _check_in_game() -> void:
 	GameClock.fast_forward_hours(23)
 	_expect(GameClock.get_weekday() == 1 and GameClock.get_hour() == 7, "martes 7:00")
 	# El salto no mueve a los personajes: los que salían el lunes quedan ya fuera.
+	Staff.set_ceo_at_work(false)
 	_send_all_home(game)
 	game.call("_update_routines")
 	var day_shift: Array[Employee] = []
@@ -101,6 +102,11 @@ func _check_in_game() -> void:
 	_expect(day_shift.size() >= 10, "hay al menos 10 que entran a las 8: %d" % day_shift.size())
 	var pending: Dictionary[String, int] = game.get_pending_arrivals()
 	var hour_start: int = Staff.get_absolute_hour() * 60
+	# El CEO abre la oficina: llega siempre a las 7:30 en punto, antes que todos.
+	_expect(StaffCatalog.get_ceo_open_minutes() == 30 and pending.get("ceo", -1) == hour_start + 30,
+		"el CEO llega a las 7:30: %s" % pending.get("ceo", -1))
+	var ceo_at: int = pending["ceo"] if pending.has("ceo") else -1
+	pending.erase("ceo")
 	var early_count: int = 0
 	var early_ok: bool = true
 	for character: Employee in day_shift:
@@ -122,8 +128,13 @@ func _check_in_game() -> void:
 	var wander_seats: Dictionary[String, Dictionary] = {}
 	var entered: Dictionary[String, int] = {}
 	var waiting_ok: bool = true
+	var ceo_entered: int = -1
+	var after_ceo: bool = true
 	for minute: int in range(1, 60):
 		_advance_minute(game)
+		if ceo_entered < 0 and game.ceo.activity != OfficeCharacter.Activity.AWAY:
+			ceo_entered = game.get_arrival_minute()
+			after_ceo = after_ceo and game.ceo.get_seat_cell() == game.call("_home_spot", "ceo") and not game.ceo.standing
 		for character: Employee in day_shift:
 			var key: String = character.person_key
 			if character.activity != OfficeCharacter.Activity.AWAY and not entered.has(key):
@@ -137,6 +148,10 @@ func _check_in_game() -> void:
 	var on_time: bool = true
 	for key: String in pending:
 		on_time = on_time and entered.get(key, -1) == pending[key]
+		after_ceo = after_ceo and entered.get(key, -1) >= ceo_entered
+	_expect(ceo_entered == ceo_at and ceo_at >= 0, "el CEO entra a las 7:30 y va a su silla")
+	_expect(after_ceo, "nadie entra antes que el CEO")
+	_expect(not Staff.ceo_at_work and Staff.get_ceo_early_minutes() == 30, "pero rinde desde las 8")
 	_expect(entered.size() == pending.size() and on_time, "cada uno entra en su minuto: %d de %d" % [entered.size(), pending.size()])
 	_expect(waiting_ok, "los que llegan antes esperan de pie (Sala de descanso o dando vueltas)")
 	if break_room.is_empty():

@@ -418,6 +418,22 @@ func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_
 	return true
 
 
+# El CEO llega siempre puntual open_minutes antes de su hora y abre la oficina: va a su
+# silla (rinde desde su hora). Devuelve true si ya se ocupó de él.
+func _ceo_opens(now: int, hour_start: int) -> bool:
+	var early: int = Staff.get_ceo_early_minutes()
+	if early <= 0:
+		return false
+	var open_at: int = hour_start + 60 - early
+	if open_at > now:
+		if ceo.activity == OfficeCharacter.Activity.AWAY:
+			_arrivals["ceo"] = open_at
+		return ceo.activity == OfficeCharacter.Activity.AWAY
+	ceo.set_seat(_home_spot("ceo"))
+	ceo.update_routine(true)
+	return true
+
+
 # Dónde espera quien llegó antes: una casilla libre de la Sala de descanso que funciona o,
 # sin ella, una casilla cualquiera de la oficina que cambia cada wander_minutes (da vueltas).
 func _waiting_spot(key: String, now: int, used: Dictionary[Vector2i, bool]) -> Vector2i:
@@ -486,6 +502,8 @@ func _update_routines() -> void:
 			continue
 		var eating: bool = lunch.has(character.person_key) and not spots.is_empty()
 		if character is Employee and _arrive_staggered(character, eating, now, hour_start, used):
+			continue
+		if character == ceo and _ceo_opens(now, hour_start):
 			continue
 		if eating:
 			character.set_seat(_free_spot_near(spots[next_spot % spots.size()], used))

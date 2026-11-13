@@ -232,6 +232,7 @@
 	"ceo": {
 		"sleep_hour": 22,
 		"arrival_hour": 8,
-		"arrival_days": [0, 1, 2, 3, 4]
+		"arrival_days": [0, 1, 2, 3, 4],
+		"open_minutes": 30
 	}
 }

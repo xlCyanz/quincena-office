@@ -238,6 +238,11 @@ static func get_ceo_arrival_hour() -> int:
 
 
 ## Días de la semana (0 = lunes) en que el CEO llega solo.
+## Minutos antes de arrival_hour en que el CEO llega a abrir la oficina (siempre puntual).
+static func get_ceo_open_minutes() -> int:
+	return int(_staff_data()["ceo"]["open_minutes"])
+
+
 static func get_ceo_arrival_days() -> Array[int]:
 	var days: Array[int] = []
 	for day: Variant in _staff_data()["ceo"]["arrival_days"]:

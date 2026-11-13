@@ -1313,6 +1313,21 @@ func get_early_minutes(key: String) -> int:
 	return maxi(-get_arrival_offset(employee, next), 0)
 
 
+## Minutos antes de la hora siguiente en que llega el CEO a abrir la oficina: siempre
+## open_minutes antes de su hora de llegada (data/staff.json, ceo), si no está ya en el
+## trabajo; 0 si la hora siguiente no es su llegada. Hasta su hora no rinde.
+func get_ceo_early_minutes() -> int:
+	if ceo_at_work:
+		return 0
+	var next: int = _absolute_hour() + 1
+	var hours_per_day: int = GameConstants.HOURS_PER_DAY
+	@warning_ignore("integer_division")
+	var weekday: int = (next / hours_per_day) % GameConstants.DAYS_PER_WEEK
+	if next % hours_per_day != StaffCatalog.get_ceo_arrival_hour() or not StaffCatalog.get_ceo_arrival_days().has(weekday):
+		return 0
+	return StaffCatalog.get_ceo_open_minutes() if arrival_spread_enabled else 0
+
+
 ## Anota los errores ocultos que generó cada empleado en la hora (lo que devuelve
 ## Production.apply después de Production.handle_bugs).
 func note_bugs_caused(done: Array[Dictionary]) -> void:

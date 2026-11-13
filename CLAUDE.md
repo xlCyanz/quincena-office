@@ -92,7 +92,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   esperan con topes en segundos (`test_ceo`, `test_workday`) los escalan por `SECONDS_PER_GAME_HOUR / 10`.
 - Jornada: `Staff.is_expected(key, día, hora)` dice quién debe estar en la oficina; `main.gd` se lo pasa cada hora a los
   personajes (`OfficeCharacter`, base de `Ceo` y `Employee`). Cada empleado tiene el turno de su equipo o, sin equipo, el horario
-  de su cargo (`data/staff.json`); `WorkSchedule` admite turnos que cruzan la medianoche y cada uno almuerza a la 4.ª hora de su jornada. El CEO no tiene horario: llega solo a las 8 en días hábiles y se queda hasta que el
+  de su cargo (`data/staff.json`); `WorkSchedule` admite turnos que cruzan la medianoche y cada uno almuerza a la 4.ª hora de su jornada. El CEO no tiene horario: llega solo a las 8 en días hábiles (se le ve entrar a las 7:30 a abrir) y se queda hasta que el
   jugador lo manda a casa (`Staff.ceo_at_work`, botón «CEO: irse a casa»). Con la oficina vacía el tiempo salta a la próxima llegada.
   Un clic en un empleado abre su ficha (`EmployeeCard`). El muñeco se dibuja a `OfficeCharacter.BODY_SCALE` (0.8, unos 50 px de pie, a la escala
   de los muebles); sentado la cadera queda a `SEAT_HEIGHT_PX` y el icono de estado no se achica; `CLICK_AREA` ya va escalado.
@@ -109,6 +109,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   antes (`_early`, `is_waiting_shift`) espera de pie (`OfficeCharacter.standing`) en la Sala de descanso o da vueltas (`_waiting_spot`, cambia cada
   `wander_minutes`). Solo visual: producción y presencia siguen por hora. La oficina vacía salta a la hora anterior y con `GameClock.skip_to_minute`
   al primero que entra. `Staff.arrival_spread_enabled` (no se guarda) es solo para pruebas: `test_all` lo apaga antes de `arrivals`.
+  El CEO abre la oficina: llega siempre `ceo.open_minutes` (30) antes de su hora (`Staff.get_ceo_early_minutes`, `main._ceo_opens`) y va a su
+  silla; `ceo_at_work` y su producción siguen empezando a las 8. Va primero en `get_characters`, así nadie entra antes que él.
 - Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
   Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
   lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.
