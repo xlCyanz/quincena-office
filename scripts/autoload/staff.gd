@@ -2555,11 +2555,12 @@ func _ambiance_detail(room: Dictionary) -> Dictionary:
 	var furniture_hash: int = int(_seat_lookup_cache["furniture_hash"]) if not _seat_lookup_cache.is_empty() \
 		else OfficeState.furniture.hash()
 	var windows: int = OfficeState.count_room_windows(room)
-	var key: int = [room.hash(), furniture_hash, windows].hash()
+	var door_points: int = OfficeState.get_room_door_ambiance(room)
+	var key: int = [room.hash(), furniture_hash, windows, door_points].hash()
 	if not _ambiance_cache.has(key):
 		if _ambiance_cache.size() >= AMBIANCE_CACHE_SIZE:
 			_ambiance_cache.clear()
-		_ambiance_cache[key] = Ambiance.get_detail(room, OfficeState.furniture, windows)
+		_ambiance_cache[key] = Ambiance.get_detail(room, OfficeState.furniture, windows, door_points)
 	return _ambiance_cache[key]
 
 

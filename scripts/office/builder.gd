@@ -54,7 +54,10 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 		var exterior: bool = change.has("edge") and GridEdge.is_exterior(change["edge"], OfficeState.lot)
 		if change.has("edge") and change["kind"] == ConstructionCatalog.WINDOW and not exterior:
 			return {"ok": false, "cost": cost, "message": "Las ventanas solo van en las paredes exteriores del local."}
-		if exterior and not _is_window_swap(change):
+		if change.has("edge") and change["kind"] == ConstructionCatalog.GLASS_DOOR and not _is_entrance_swap(change):
+			return {"ok": false, "cost": cost,
+				"message": "La puerta de vidrio solo va en lugar de la puerta de entrada de la oficina."}
+		if exterior and not _is_window_swap(change) and not _is_entrance_swap(change):
 			return {"ok": false, "cost": cost, "message": "Las paredes exteriores no se pueden comprar ni vender."}
 		if change.has("cell") and not OfficeState.lot.has_point(change["cell"]):
 			return {"ok": false, "cost": cost, "message": "Esa casilla está fuera del local."}
@@ -124,6 +127,11 @@ func _effective_changes(changes: Array[Dictionary]) -> Array[Dictionary]:
 				and OfficeState.get_edge(change["edge"]) == ConstructionCatalog.WINDOW \
 				and GridEdge.is_exterior(change["edge"], OfficeState.lot):
 			change = {"edge": change["edge"], "kind": ConstructionCatalog.WALL}
+		# Vender la puerta de vidrio (o pasarle otra pieza) deja la puerta de entrada normal.
+		if change.has("edge") and change["edge"] == OfficeState.get_entrance_edge() \
+				and OfficeState.get_edge(change["edge"]) == ConstructionCatalog.GLASS_DOOR \
+				and change["kind"] != ConstructionCatalog.GLASS_DOOR:
+			change = {"edge": change["edge"], "kind": ConstructionCatalog.DOOR}
 		var key: Variant = change.get("edge", change.get("cell"))
 		if seen.has(key) or _current_kind(change) == change["kind"]:
 			continue
@@ -143,9 +151,10 @@ func _is_owned(kind: String) -> bool:
 	return not kind.is_empty() and kind != ConstructionCatalog.BARE_FLOOR
 
 
-# La pieza que cuenta para el precio: la pared del contorno no se compró ("").
+# La pieza que cuenta para el precio: la pared y la puerta del contorno no se compraron ("").
 func _paid_kind(change: Dictionary, kind: String) -> String:
-	if change.has("edge") and kind == ConstructionCatalog.WALL and GridEdge.is_exterior(change["edge"], OfficeState.lot):
+	if change.has("edge") and (kind == ConstructionCatalog.WALL or kind == ConstructionCatalog.DOOR) \
+			and GridEdge.is_exterior(change["edge"], OfficeState.lot):
 		return ""
 	return kind
 
@@ -154,6 +163,13 @@ func _paid_kind(change: Dictionary, kind: String) -> String:
 func _is_window_swap(change: Dictionary) -> bool:
 	var pieces: Array[String] = [ConstructionCatalog.WALL, ConstructionCatalog.WINDOW]
 	return pieces.has(_current_kind(change)) and pieces.has(String(change["kind"]))
+
+
+# En la entrada solo se cambia puerta por puerta de vidrio o al revés (hito 69).
+func _is_entrance_swap(change: Dictionary) -> bool:
+	if not change.has("edge") or change["edge"] != OfficeState.get_entrance_edge():
+		return false
+	return ConstructionCatalog.is_door(_current_kind(change)) and ConstructionCatalog.is_door(String(change["kind"]))
 
 
 func _changes_passage(changes: Array[Dictionary]) -> bool:
@@ -776,7 +792,8 @@ func _room_status(room: Dictionary, ok_if_working: bool) -> Dictionary:
 	if room["type"] == OfficeState.SERVER_ROOM:
 		var count: int = OfficeState.count_racks(room)
 		racks = " %d %s." % [count, "rack" if count == 1 else "racks"]
-	var ambiance: String = " %s." % Ambiance.describe(room, OfficeState.furniture, OfficeState.count_room_windows(room))
+	var ambiance: String = " %s." % Ambiance.describe(room, OfficeState.furniture, OfficeState.count_room_windows(room),
+		OfficeState.get_room_door_ambiance(room))
 	if problems.is_empty():
 		return {"ok": ok_if_working, "cost": 0, "message": "%s (%d m²): funciona.%s%s" % [type_name, cells.size(), racks, ambiance]}
 	return {"ok": false, "cost": 0,

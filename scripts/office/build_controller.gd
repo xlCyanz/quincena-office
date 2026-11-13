@@ -23,6 +23,8 @@ signal status_changed(text: String)
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
 const TOOL_WINDOW: String = "window"
+## Puerta doble de vidrio de la entrada (hito 69).
+const TOOL_GLASS_DOOR: String = "glass_door"
 const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
@@ -326,6 +328,8 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.DOOR})
 		TOOL_WINDOW:
 			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.WINDOW})
+		TOOL_GLASS_DOOR:
+			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.GLASS_DOOR})
 		TOOL_SELL:
 			var edge: Vector3i = GridEdge.nearest(end)
 			if not OfficeState.get_edge(edge).is_empty() and GridEdge.distance_to(edge, end) <= SELL_EDGE_DISTANCE:
@@ -400,9 +404,10 @@ func _draw_room_labels() -> void:
 			["Funciona" if working else "No funciona", LABEL_OK_COLOR if working else LABEL_BAD_COLOR],
 		]
 		var windows: int = OfficeState.count_room_windows(room)
-		var ambiance: int = Ambiance.get_value(room, OfficeState.furniture, windows)
+		var door_points: int = OfficeState.get_room_door_ambiance(room)
+		var ambiance: int = Ambiance.get_value(room, OfficeState.furniture, windows, door_points)
 		if ambiance != 0:
-			lines.append([Ambiance.describe(room, OfficeState.furniture, windows).split(" (")[0],
+			lines.append([Ambiance.describe(room, OfficeState.furniture, windows, door_points).split(" (")[0],
 				LABEL_OK_COLOR if ambiance > 0 else LABEL_BAD_COLOR])
 		# Escala inversa al zoom de la cámara, para que el texto no crezca ni se pixele.
 		draw_set_transform(center, 0.0, Vector2.ONE / _label_zoom)

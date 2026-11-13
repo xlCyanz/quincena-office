@@ -144,7 +144,7 @@ El jugador decora la oficina y organiza las habitaciones sobre la cuadrícula is
 | Sala de descanso y cafetería | Una sola | Recupera energía y ánimo |
 | Área de trabajo | Varias | Escritorios; donde se produce |
 | Sala de servidores | Una sola | Requisito para productos propios |
-| Recepción | Una sola, obligatoria | Contiene la puerta de entrada de la oficina; solo se puede colocar junto a una pared exterior. Puesto del recepcionista |
+| Recepción | Una sola, obligatoria | Contiene la puerta de entrada de la oficina; solo se puede colocar junto a una pared exterior. Puesto del recepcionista. Su puerta de entrada se puede cambiar por la puerta doble de vidrio (21.6) |
 
 ### 2.2 Alcance de la primera versión
 
@@ -453,7 +453,7 @@ El catálogo tiene unos 40 objetos, que son también la lista de arte por genera
 - **Calidades:** los objetos clave vienen en básico, medio y pro. Mejor calidad cuesta más y da más efecto.
 - **Silla y escritorio:** son objetos separados; el jugador coloca cada uno.
 - **Computadora:** no es un objeto suelto. Se instala sobre un escritorio y se mejora desde ahí.
-- **Estructura:** paredes, puertas, ventanas (suben el ambiente) y tres pisos: alfombra, madera y cerámica.
+- **Estructura:** paredes, puertas, ventanas (suben el ambiente), la puerta doble de vidrio de la entrada (21.6) y tres pisos: alfombra, madera y cerámica.
 
 ### 11.2 Lista de objetos
 
@@ -1127,3 +1127,15 @@ La fase 7 pule el juego para que alguien que nunca lo vio pueda jugarlo de princ
 - **Tutorial frágil:** si los pasos dependen de nombres de nodos, cambiar la interfaz lo rompe; cada panel expone sus botones con funciones (`get_…_button`) como hoy.
 - **Exportación:** necesita las plantillas de exportación de Godot; si no están, el hito deja el preset y la prueba lo reporta en vez de fallar en silencio.
 - **Partidas viejas:** el estado del tutorial se importa tolerando su falta.
+
+### 21.6 Agregados antes de la fase 8
+
+Pedidos aparte de la lista de la fase 7, hechos antes de empezar la fase 8 (arte y sonido). Se numeran después del 67.
+
+- **Mapa y cámara (hito 68):** zoom suave en más niveles, inercia, teclado y borde de la pantalla, girar la vista de a 90° y un mapa con calle, árboles y el límite del solar marcado.
+- **Puerta doble de vidrio (hito 69):** la puerta de la Recepción. Es una pieza de borde que solo reemplaza la puerta de entrada de la oficina (el borde entre la casilla de entrada y la calle): ahí se cambia puerta normal por puerta de vidrio y al venderla vuelve a ser una puerta normal (la del contorno no se cobra ni se devuelve, como la pared con la ventana). Deja pasar como cualquier puerta y cuenta como puerta para las habitaciones. Cuesta $900, se vende a la mitad y suma 6 puntos de ambiente a la habitación a la que da, normalmente la Recepción (como un adorno o una ventana). Se dibuja con marco oscuro y dos hojas de vidrio. No cuenta como bien para el banco. Herramienta «Puerta de vidrio» en la fila de estructura de Construir. La empresa de prueba (`starting_company`) la trae puesta como ejemplo.
+
+| Hito | Qué se construye | Cómo se comprueba |
+| --- | --- | --- |
+| 68. Mapa y cámara | Zoom de 0.25 a 4 con animación, inercia, WASD y borde, girar la vista, terreno con calle y árboles | La casilla bajo el ratón no se mueve al hacer zoom; girar cuatro veces vuelve al principio y cada casilla sigue en su lugar; el mapa se rehace al comprar terreno |
+| 69. Puerta doble de vidrio | Pieza de borde que reemplaza la puerta de entrada, con su herramienta y su dibujo | Solo se pone en la entrada; cobra $900 y al venderla devuelve $450 y queda la puerta normal; deja pasar al CEO; suma 6 puntos al ambiente de la Recepción; se guarda y se carga |

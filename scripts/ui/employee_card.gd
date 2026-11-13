@@ -435,7 +435,8 @@ func _refresh() -> void:
 	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
 	if not room.is_empty():
 		details.append("Trabaja en: %s · %s" % [RoomCatalog.get_display_name(room["type"]),
-			Ambiance.describe(room, OfficeState.furniture, OfficeState.count_room_windows(room))])
+			Ambiance.describe(room, OfficeState.furniture, OfficeState.count_room_windows(room),
+				OfficeState.get_room_door_ambiance(room))])
 	_details.text = "\n".join(details)
 	_refresh_raise(employee)
 	_refresh_promotion(employee)

@@ -13,11 +13,12 @@ extends RefCounted
 ## suman por el área), "desks", "allowed_desks", "crowding" (lo que resta amontonar, ≤ 0),
 ## "value" (int, el ambiente) y "stress_relief" (lo que baja la meta de estrés, la pecera
 ## más fuerte que haya)}. windows son las ventanas que dan a la habitación (hito 55): cada
-## una suma sus puntos de ambiente como un adorno.
-static func get_detail(room: Dictionary, furniture: Array[Dictionary], windows: int = 0) -> Dictionary:
+## una suma sus puntos de ambiente como un adorno. extra_points son otros puntos de la
+## estructura, como la puerta de vidrio de la entrada (hito 69).
+static func get_detail(room: Dictionary, furniture: Array[Dictionary], windows: int = 0, extra_points: int = 0) -> Dictionary:
 	var cells: Array[Vector2i] = room["cells"]
 	var area: int = maxi(1, cells.size())
-	var points: float = windows * ConstructionCatalog.get_window_ambiance()
+	var points: float = windows * ConstructionCatalog.get_window_ambiance() + extra_points
 	var desks: int = 0
 	var relief: int = 0
 	var cell_set: Dictionary[Vector2i, bool] = {}
@@ -42,13 +43,13 @@ static func get_detail(room: Dictionary, furniture: Array[Dictionary], windows: 
 
 
 ## Ambiente de una habitación (lo que suma a la meta de ánimo).
-static func get_value(room: Dictionary, furniture: Array[Dictionary], windows: int = 0) -> int:
-	return int(get_detail(room, furniture, windows)["value"])
+static func get_value(room: Dictionary, furniture: Array[Dictionary], windows: int = 0, extra_points: int = 0) -> int:
+	return int(get_detail(room, furniture, windows, extra_points)["value"])
 
 
 ## "Ambiente +6" (o "−5 por amontonar"): para el modo construcción y la ficha.
-static func describe(room: Dictionary, furniture: Array[Dictionary], windows: int = 0) -> String:
-	var detail: Dictionary = get_detail(room, furniture, windows)
+static func describe(room: Dictionary, furniture: Array[Dictionary], windows: int = 0, extra_points: int = 0) -> String:
+	var detail: Dictionary = get_detail(room, furniture, windows, extra_points)
 	var value: int = detail["value"]
 	var text: String = "Ambiente %s%d" % ["+" if value > 0 else ("−" if value < 0 else ""), absi(value)]
 	if int(detail["desks"]) > int(detail["allowed_desks"]):

@@ -49,7 +49,7 @@ static func find_spaces(lot: Lot, edges: Dictionary[Vector3i, String]) -> Array[
 							seen[next] = true
 							queue.append(next)
 						continue
-					if kind == ConstructionCatalog.DOOR:
+					if ConstructionCatalog.is_door(kind):
 						doors += 1
 					if outside:
 						exterior = true

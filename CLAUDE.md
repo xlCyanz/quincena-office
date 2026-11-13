@@ -453,6 +453,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   piso, 10 casillas) acera y calle del lado de la salida y pasto oscuro, árboles (`TreeView`) a 2 casillas o más del local, y la línea
   discontinua del límite (`SiteBorder`); se rehace solo si cambia el local, la entrada o el giro. «Ver oficina» es más angosto para que la
   barra entre en una fila a 1280.
+- Puerta doble de vidrio (hito 69, diseño 21.6; `glass_door` en `data/construction.json`, $900, `ambiance` 6): la puerta de la Recepción. Solo
+  reemplaza la puerta de entrada (`OfficeState.get_entrance_edge()`, `Builder._is_entrance_swap`); la puerta del contorno no se cobra
+  (`_paid_kind`) y vender la de vidrio o pasarle otra pieza deja la puerta normal. `ConstructionCatalog.is_door` (pasa, abre espacios, la
+  entrada) reemplaza las comparaciones con `DOOR`. Suma sus puntos al ambiente de la habitación con la casilla de entrada
+  (`OfficeState.get_room_door_ambiance`, cuarto parámetro `extra_points` de `Ambiance`). `EdgePieceView` la dibuja con dos postes, dintel y
+  dos hojas. Herramienta `TOOL_GLASS_DOOR` («Puerta de vidrio»); la empresa de prueba la trae puesta. No cuenta como bien.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -460,7 +466,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/` y la suma a `test_all`.
-- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39), en la 19.3 (fase 5, hitos 40–49) en la 20.3 (fase 6, hitos 50–59) y en la 21.3 (fase 7 de pulido, hitos 60–67; solo escritorio, sin Android ni iOS; el arte y el sonido pasan a la fase 8).
+- La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39), en la 19.3 (fase 5, hitos 40–49) en la 20.3 (fase 6, hitos 50–59) y en la 21.3 (fase 7 de pulido, hitos 60–67; solo escritorio, sin Android ni iOS; el arte y el sonido pasan a la fase 8); los agregados antes de la fase 8 (hitos 68–69) en la 21.6.
 
 ## Estado actual
 
@@ -535,3 +541,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 66 | Exportación de escritorio | ✅ Completado (presets de macOS, Windows y Linux en `build/` sin Panku, DevTools ni pruebas, también en debug; icono propio, nombre y versión 0.7.0; la exportación de prueba arranca la app de macOS y cada paquete llega al menú principal; sin firma de Windows ni notarización de macOS) |
 | 67 | Comprobación de la fase | ✅ Completado (del menú a la primera entrega solo con el ratón siguiendo el tutorial, en tres semillas, hacia el día 6–9; el marco del tutorial encierra cada botón que se pulsa; test_all falla si una parte pasa de 60 s: la más larga es la fase 6, ~54 s; sin cambios de datos) |
 | 68 | Mapa y cámara | ✅ Completado (pedido aparte de la lista del diseño: zoom de 0.25 a 4 en 11 niveles con animación que deja fijo el punto bajo el ratón; inercia al soltar un arrastre; WASD, flechas y el borde de la ventana mueven la cámara; girar la vista de a 90° con ↻, Q y E, guardado en la partida; pasto variado, camino a la calle, acera, calle, árboles y el límite del solar marcado; opciones Cámara suave y borde de la pantalla) |
+| 69 | Puerta doble de vidrio | ✅ Completado (puerta de la Recepción: solo en lugar de la puerta de entrada, $900, al venderla devuelve $450 y queda la normal; pasa y cuenta como puerta; +6 puntos de ambiente a la habitación de la entrada; marco oscuro y dos hojas de vidrio; herramienta en Construir; la empresa de prueba la trae) |

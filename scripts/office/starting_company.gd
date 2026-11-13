@@ -56,7 +56,8 @@ static func _build_office(data: Dictionary, problems: Array[String]) -> void:
 		OfficeState.floors[cell] = String(data.get("floor", ConstructionCatalog.BARE_FLOOR))
 	for edge: Vector3i in GridEdge.get_lot_outline(OfficeState.lot):
 		OfficeState.edges[edge] = ConstructionCatalog.WALL
-	OfficeState.edges[entrance_door] = ConstructionCatalog.DOOR
+	# La entrada de la Recepción con la puerta doble de vidrio, como ejemplo (hito 69).
+	OfficeState.edges[entrance_door] = ConstructionCatalog.GLASS_DOOR
 	# Paredes de cada habitación hacia el resto del local, y su puerta.
 	for room: Dictionary in data.get("rooms", []):
 		var rect: Rect2i = _rect(room["rect"])

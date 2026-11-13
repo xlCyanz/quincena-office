@@ -214,6 +214,20 @@ func blocks_passage(edge: Vector3i) -> bool:
 	return kind == ConstructionCatalog.WALL or kind == ConstructionCatalog.WINDOW
 
 
+## Puntos de ambiente de la puerta de vidrio para una habitación (hito 69): solo va en la
+## entrada, así que cuenta para la habitación que tiene la casilla de entrada.
+func get_room_door_ambiance(room: Dictionary) -> int:
+	if get_edge(get_entrance_edge()) != ConstructionCatalog.GLASS_DOOR:
+		return 0
+	var cells: Array = room["cells"]
+	return ConstructionCatalog.get_glass_door_ambiance() if cells.has(entrance) else 0
+
+
+## Borde de la puerta de entrada (entre la casilla de entrada y la de afuera).
+func get_entrance_edge() -> Vector3i:
+	return GridEdge.between(entrance, get_outside_of_entrance())
+
+
 ## Ventanas que dan a una habitación: bordes con ventana que tocan alguna de sus casillas.
 func count_room_windows(room: Dictionary) -> int:
 	var count: int = 0
@@ -236,7 +250,7 @@ func get_outside_of_entrance() -> Vector2i:
 		var outside: Vector2i = entrance + direction
 		if lot.has_point(outside):
 			continue
-		if get_edge(GridEdge.between(entrance, outside)) == ConstructionCatalog.DOOR:
+		if ConstructionCatalog.is_door(get_edge(GridEdge.between(entrance, outside))):
 			return outside
 		if fallback == Vector2i(-1, -1):
 			fallback = outside
