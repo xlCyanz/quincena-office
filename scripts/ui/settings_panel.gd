@@ -22,13 +22,6 @@ const TAB_SAVE: String = "save"
 const TAB_LOAD: String = "load"
 const TAB_OPTIONS: String = "options"
 const TAB_NAMES: Dictionary[String, String] = {TAB_SAVE: "Guardar", TAB_LOAD: "Cargar", TAB_OPTIONS: "Opciones"}
-## Opciones de sí o no, en orden, con su texto.
-const TOGGLES: Dictionary[String, String] = {
-	"fullscreen": "Pantalla completa",
-	"autosave": "Guardar solo al empezar cada día",
-	"pause_on_build": "Pausar al construir",
-	"pause_on_focus_loss": "Pausar cuando la ventana pierde el foco",
-}
 
 var _open_button: Button
 var _panel: PanelContainer
@@ -37,8 +30,7 @@ var _sections: Dictionary[String, VBoxContainer] = {}
 var _tab: String = TAB_SAVE
 var _slot_buttons: Dictionary[String, Button] = {}
 var _load_buttons: Dictionary[String, Button] = {}
-var _toggles: Dictionary[String, CheckBox] = {}
-var _speed_button: OptionButton
+var _options: OptionsList
 var _status_label: Label
 var _quit_button: Button
 var _close_button: Button
@@ -103,7 +95,8 @@ func _ready() -> void:
 		button.pressed.connect(_ask_load.bind(slot))
 		_sections[TAB_LOAD].add_child(button)
 		_load_buttons[slot] = button
-	_build_options(_sections[TAB_OPTIONS])
+	_options = OptionsList.new()
+	_sections[TAB_OPTIONS].add_child(_options)
 
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -139,7 +132,6 @@ func _ready() -> void:
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_panel.visible = false
-	EventBus.settings_changed.connect(func(_key: String) -> void: refresh_options())
 	set_tab(TAB_SAVE)
 
 
@@ -160,31 +152,6 @@ func _slot_button() -> Button:
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.custom_minimum_size = Vector2(0, 40)
 	return button
-
-
-func _build_options(section: VBoxContainer) -> void:
-	for key: String in TOGGLES:
-		var check := CheckBox.new()
-		check.text = TOGGLES[key]
-		check.custom_minimum_size = Vector2(0, 36)
-		check.toggled.connect(func(on: bool) -> void: Settings.set_value(key, on))
-		section.add_child(check)
-		_toggles[key] = check
-	var speed_row := HBoxContainer.new()
-	section.add_child(speed_row)
-	var speed_label := Label.new()
-	speed_label.text = "Velocidad al empezar una partida"
-	speed_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	speed_row.add_child(speed_label)
-	_speed_button = OptionButton.new()
-	for speed: float in GameConstants.CLOCK_SPEEDS:
-		_speed_button.add_item("%dx" % roundi(speed))
-	_speed_button.item_selected.connect(func(index: int) -> void: Settings.set_value("start_speed", index))
-	speed_row.add_child(_speed_button)
-	var reset := Button.new()
-	reset.text = "Valores por defecto"
-	reset.pressed.connect(Settings.reset_to_defaults)
-	section.add_child(reset)
 
 
 ## Pone el botón "Ajustes" en la barra de menús.
@@ -231,11 +198,7 @@ func refresh_slots() -> void:
 
 ## Pone los controles de Opciones como están las opciones (sin volver a guardarlas).
 func refresh_options() -> void:
-	if _speed_button == null:
-		return
-	for key: String in _toggles:
-		_toggles[key].set_pressed_no_signal(bool(Settings.get_value(key)))
-	_speed_button.select(int(Settings.get_value("start_speed")))
+	_options.refresh()
 
 
 func show_status(text: String) -> void:
@@ -305,11 +268,11 @@ func get_load_button(slot: String) -> Button:
 
 
 func get_option_toggle(key: String) -> CheckBox:
-	return _toggles[key]
+	return _options.get_toggle(key)
 
 
 func get_speed_button() -> OptionButton:
-	return _speed_button
+	return _options.get_speed_button()
 
 
 func get_quit_button() -> Button:

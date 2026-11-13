@@ -151,6 +151,21 @@ func load_game(slot: String) -> bool:
 	return true
 
 
+## La ranura guardada más reciente (autoguardado o manual), o "" si no hay ninguna. Con la
+## misma hora gana el autoguardado (hito 61: «Continuar»).
+func get_latest_slot() -> String:
+	var latest: String = ""
+	var latest_at: int = -1
+	var slots: Array[String] = [AUTOSAVE]
+	slots.append_array(get_manual_slots())
+	for slot: String in slots:
+		var summary: Dictionary = get_summary(slot)
+		if not summary.is_empty() and int(summary["saved_at"]) > latest_at:
+			latest = slot
+			latest_at = int(summary["saved_at"])
+	return latest
+
+
 ## Resumen de una ranura ({"day", "month", "hour", "balance", "saved_at"}), o vacío si
 ## no hay partida ahí.
 func get_summary(slot: String) -> Dictionary:

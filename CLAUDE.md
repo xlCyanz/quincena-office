@@ -387,7 +387,10 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `start_speed` (`GameClock.new_game`), `pause_on_build` y `pause_on_focus_loss` (`main.gd`, `on_focus_lost`). `test_all` usa
   `Settings.path = "user://test_settings.cfg"` con los valores por defecto. Ajustes (`SettingsPanel`) tiene las pestañas Guardar, Cargar y
   Opciones (`set_tab`); cargar y salir piden confirmación (`is_confirming`) y emiten `load_requested`/`quit_requested`; `main.gd` carga la
-  ranura y vuelve a abrir la escena de juego.
+  ranura y vuelve a abrir la escena de juego. Los controles de opciones son `OptionsList` (también en el menú principal).
+- Menú principal (`main_menu.gd`, hito 61): Continuar (la partida más reciente, `SaveManager.get_latest_slot` por `saved_at`; con empate el
+  autoguardado; no aparece sin partidas), Nueva partida (con autoguardado pregunta antes: vista `confirm`), Cargar, Ajustes (`OptionsList`) y
+  Salir. Vistas `buttons`/`load`/`options`/`confirm` (`get_view`). Las pruebas cambian `change_scene` y `quit_action` para no salir del menú.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -462,3 +465,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 58 | Inversionista | ✅ Completado (evento desde Pequeña empresa con valor positivo e ingresos del mes pasado desde $5,000; ofrece 10–25 % del valor por una parte de los ingresos de contratos y productos durante 12–24 meses, calculada para devolverle 1.6 veces, entre 5 y 40 %; aceptar da el efectivo como «Inversión», aparte de los ingresos; cada día 1 «Pago al inversionista» aunque deje saldo negativo; el valor descuenta lo que falta estimado con el mes pasado; uno a la vez; rechazar no cambia nada) |
 | 59 | Comprobación de la fase | ✅ Completado (la empresa de la fase 5 con rasgos, baños, almuerzo, pausas, candidatos e inversionista llega a la bolsa sin quebrar en ~16 meses desde Mediana empresa; baños y Sala de descanso (~$17,000) suman ~40 % de puntos y se pagan en días; los rasgos suman ~6 %; sin cambios de datos; consultas de muebles y presencia guardadas por hora para que la prueba dure menos de un minuto) |
 | 60 | Opciones y Ajustes | ✅ Completado (autoload `Settings` con `user://settings.cfg`: pantalla completa, autoguardado, velocidad inicial, pausa al construir y al perder el foco; un valor roto vuelve al de `data/settings.json`; Ajustes con pestañas Guardar, Cargar y Opciones; cargar y salir piden confirmación; la escala de la interfaz queda para el hito 65) |
+| 61 | Menú principal | ✅ Completado (Continuar carga la partida guardada más reciente y no aparece sin partidas; Nueva partida pregunta si hay autoguardado, que se reemplaza, y deja las ranuras manuales; Ajustes con las mismas opciones que en la partida; Salir cierra el juego) |

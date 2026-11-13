@@ -30,13 +30,21 @@ grow_vertical = 2
 
 [node name="Items" type="VBoxContainer" parent="Center"]
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="Center/Items"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 56
 text = "Quincena Office"
 horizontal_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="Center/Items"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "Continuar"
 
 [node name="NewGameButton" type="Button" parent="Center/Items"]
 unique_name_in_owner = true
@@ -53,6 +61,22 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 24
 text = "Cargar partida"
+
+[node name="SettingsButton" type="Button" parent="Center/Items"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "Ajustes"
+
+[node name="QuitButton" type="Button" parent="Center/Items"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "Salir"
 
 [node name="LoadList" type="VBoxContainer" parent="Center/Items"]
 unique_name_in_owner = true

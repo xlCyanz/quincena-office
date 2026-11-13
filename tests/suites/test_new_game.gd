@@ -51,6 +51,8 @@ func _expect(condition: bool, message: String) -> void:
 # Abre el menú como escena actual (esta prueba queda aparte, sin que la borre el
 # cambio de escena) y pulsa "Nueva partida" con un clic de ratón simulado.
 func _open_menu_and_click_new_game() -> void:
+	# Sin autoguardado: con uno, «Nueva partida» pregunta antes (hito 61, test_main_menu).
+	DirAccess.remove_absolute(SaveManager.save_dir.path_join(SaveManager.AUTOSAVE + ".json"))
 	var previous: Node = get_tree().current_scene
 	# Sin cerrar test_all, que corre esta parte.
 	if previous != null and previous != self and not previous.is_ancestor_of(self):
