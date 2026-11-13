@@ -27,6 +27,8 @@ const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
 const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
 
+# Botón «?» de ayuda (hito 64).
+var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
 var _role_option: OptionButton
@@ -90,6 +92,8 @@ func _ready() -> void:
 	var close_button := Button.new()
 	close_button.text = "Cerrar"
 	close_button.pressed.connect(func() -> void: set_open(false))
+	_help_button = HelpButton.create("staff")
+	header.add_child(_help_button)
 	header.add_child(close_button)
 
 	_add_section(rows, "Nueva vacante")
@@ -644,3 +648,8 @@ func _muted_label(text: String) -> Label:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_color_override("font_color", MUTED_COLOR)
 	return label
+
+
+## Botón «?» que abre la ayuda del panel.
+func get_help_button() -> Button:
+	return _help_button

@@ -10,7 +10,8 @@ signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const TEST_SAVE_DIR: String = "user://test_saves"
-const STEP_IDS: Array[String] = ["camera", "build", "work_area", "workstation", "vacancy", "hire"]
+const STEP_IDS: Array[String] = ["camera", "build", "work_area", "workstation", "vacancy", "hire",
+	"contract", "payroll", "bank", "delivery"]
 const AREA_CELL := Vector2i(4, 4)
 const DESK_CELL := Vector2i(4, 0)
 const CHAIR_CELL := Vector2i(4, 1)
@@ -130,7 +131,7 @@ func _check_walkthrough() -> void:
 	var staff_panel: StaffPanel = game.get_node("StaffPanel")
 	await get_tree().process_frame
 	_expect(panel.is_showing() and panel.get_text() == String(Tutorial.get_current_step()["text"]), "la tarjeta muestra el paso: %s" % panel.get_text())
-	_expect(panel.get_header() == "Tutorial · paso 1 de 6", "cabecera: %s" % panel.get_header())
+	_expect(panel.get_header() == "Tutorial · paso 1 de 10", "cabecera: %s" % panel.get_header())
 	_expect(panel.get_target_key() == "office" and panel.get_frame_rect().has_area(), "resalta el local")
 	# La tarjeta no tapa el panel izquierdo, el reloj ni la barra.
 	var screen := Rect2(Vector2.ZERO, get_viewport().get_visible_rect().size)
@@ -143,7 +144,7 @@ func _check_walkthrough() -> void:
 	# 1. Cámara.
 	var start: Vector2 = screen.size * Vector2(0.5, 0.6)
 	await _drag(start, start + Vector2(120, 40))
-	_expect(_step_id() == "build" and panel.get_header() == "Tutorial · paso 2 de 6", "arrastrar la cámara pasa al paso Construir")
+	_expect(_step_id() == "build" and panel.get_header() == "Tutorial · paso 2 de 10", "arrastrar la cámara pasa al paso Construir")
 	await get_tree().process_frame
 	_expect(panel.get_target_key() == "build" and panel.get_frame_rect().encloses(build.get_open_button().get_global_rect()),
 		"el marco rodea el botón Construir")
@@ -175,18 +176,10 @@ func _check_walkthrough() -> void:
 	staff_panel.select_role_and_level("programmer", "junior")
 	await _click(staff_panel.get_publish_button())
 	_expect(Staff.vacancies.size() == 1 and _step_id() == "hire", "publicar la vacante pasa a contratar")
-	# 6. Contratar: termina el tutorial.
-	_notices.clear()
+	# 6. Contratar: siguen los pasos del negocio (hito 64, test_help los recorre hasta el final).
 	_expect(not Staff.hire_directly("programmer", "junior").is_empty(), "contratar un programador")
-	_expect(not Tutorial.active and Tutorial.finished and not panel.is_showing() and not panel.get_frame_rect().has_area(),
-		"con el primer empleado termina el tutorial y se oculta")
-	_expect(_notices.filter(func(text: String) -> bool: return text.begins_with("Terminaste el tutorial")).size() == 1,
-		"avisa una vez al terminar: %s" % [_notices])
-	_expect(bool(Settings.get_value("tutorial_seen")), "terminarlo se recuerda en las opciones")
+	_expect(Tutorial.active and _step_id() == "contract" and panel.is_showing(), "con el primer empleado pasa al contrato")
 	await _close_game(game)
-	# La partida siguiente empieza sin tutorial.
-	SaveManager.new_game()
-	_expect(not Tutorial.active and not Tutorial.is_showing(), "después de terminarlo, una partida nueva no lo muestra")
 	Settings.reset_to_defaults()
 
 

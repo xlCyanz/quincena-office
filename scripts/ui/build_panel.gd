@@ -25,6 +25,8 @@ const MARGIN_BOTTOM: float = 16.0
 ## Botones por fila de muebles y de habitaciones.
 const MAX_ROW_BUTTONS: int = 6
 
+# Botón «?» de ayuda (hito 64).
+var _help_button: Button
 var _menu_bar: HBoxContainer
 var _open_button: Button
 var _panel: PanelContainer
@@ -91,6 +93,8 @@ func _ready() -> void:
 	_exit_button = Button.new()
 	_exit_button.text = "Salir"
 	_exit_button.pressed.connect(func() -> void: set_build_mode(false))
+	_help_button = HelpButton.create("build")
+	structure_row.add_child(_help_button)
 	structure_row.add_child(_exit_button)
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -295,3 +299,8 @@ func _anchor_bottom_center(control: Control) -> void:
 	control.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	control.offset_top -= MARGIN_BOTTOM
 	control.offset_bottom -= MARGIN_BOTTOM
+
+
+## Botón «?» que abre la ayuda del modo construcción.
+func get_help_button() -> Button:
+	return _help_button

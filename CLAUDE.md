@@ -406,6 +406,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   Opciones: «Retomar el tutorial» (desde el paso donde quedó) o «Volver a empezar» (`resume`). Se guarda (`tutorial`: active, step por id,
   finished, actions); sin estado carga como terminado y la empresa de prueba empieza sin él. `SaveManager` lo envuelve en
   `begin_load`/`finish_load`. `TutorialPanel` (capa 5): tarjeta arriba entre los paneles izquierdos y el reloj, marco y flecha que no atrapan clics.
+- Tutorial del negocio y ayuda (hito 64): 10 pasos; tras contratar siguen aceptar un contrato (`projects_accept` = Aceptar de la primera oferta),
+  la nómina con la velocidad (`speed_changed`: botón o tecla 1–3; resalta 2x), abrir el Banco (`bank_opened`) y entregar (`projects_deliver` =
+  Entregar del primer contrato); termina con la primera entrega. Ayuda: `HelpButton.create(tema)` es el «?» (44 px, tooltip «Ayuda») en la
+  cabecera de Personal, Proyectos, Horarios, Banco y Empresa y en la fila de estructura de Construir (`get_help_button()`); emite
+  `EventBus.help_requested` y `HelpDialog` (capa 12, en `main.gd`, `get_help_dialog`) muestra el título y el texto de `data/help.json`
+  (`topics`) sin pausar; «Entendido» o Esc (lo primero que cierra `handle_escape`) la cierran.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo
@@ -483,3 +489,4 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 | 61 | Menú principal | ✅ Completado (Continuar carga la partida guardada más reciente y no aparece sin partidas; Nueva partida pregunta si hay autoguardado, que se reemplaza, y deja las ranuras manuales; Ajustes con las mismas opciones que en la partida; Salir cierra el juego) |
 | 62 | Menú de pausa | ✅ Completado (Esc cierra la pregunta, Ajustes, la pausa, construcción, la ficha o los paneles izquierdos, en ese orden; sin nada abierto abre la pausa con Seguir, Guardar, Cargar, Ajustes y Salir al menú y detiene el reloj; Seguir lo deja como estaba; Guardar, Cargar y Ajustes abren Ajustes en su pestaña y vuelven a la pausa; salir pregunta; las pantallas de fin, bolsa y préstamo de emergencia no se cierran con Esc) |
 | 63 | Tutorial: primeros pasos | ✅ Completado (6 pasos: cámara, Construir, Área de trabajo, puesto, vacante de programador y primera contratación; marco y flecha sobre el botón o el local sin bloquear la interfaz; los pasos ya cumplidos se saltan solos; se ve en partidas nuevas hasta terminarlo o saltarlo una vez; «Retomar el tutorial» en Ajustes; se guarda en la partida y las viejas cargan sin él) |
+| 64 | Tutorial: el negocio y ayuda | ✅ Completado (4 pasos más: aceptar un contrato, la nómina y la velocidad, el Banco y la primera entrega, que termina el tutorial; botón «?» en Personal, Proyectos, Horarios, Banco, Empresa y Construir con su texto de `data/help.json`, sin pausar y se cierra con Entendido o Esc; las partidas viejas cargan sin tutorial; las descripciones emergentes de los botones sin texto quedan para el hito 65) |

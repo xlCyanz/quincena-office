@@ -29,6 +29,8 @@ const INCOME_COLOR := Color(0.55, 0.85, 0.5)
 const DATE_WIDTH: float = 120.0
 const AMOUNT_WIDTH: float = 110.0
 
+# Botón «?» de ayuda (hito 64).
+var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
 var _balance_label: Label
@@ -105,6 +107,8 @@ func _ready() -> void:
 	var close_button := Button.new()
 	close_button.text = "Cerrar"
 	close_button.pressed.connect(func() -> void: set_open(false))
+	_help_button = HelpButton.create("bank")
+	header.add_child(_help_button)
 	header.add_child(close_button)
 	_balance_label = Label.new()
 	_balance_label.add_theme_font_size_override("font_size", BALANCE_FONT_SIZE)
@@ -681,3 +685,8 @@ static func _clear(container: Container) -> void:
 	for child: Node in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
+
+
+## Botón «?» que abre la ayuda del panel.
+func get_help_button() -> Button:
+	return _help_button

@@ -1,0 +1,29 @@
+{
+	"_comentario": "Ayuda de cada menú (diseño 21.2; hito 64): el botón «?» de cada panel izquierdo y del modo construcción abre el texto de su clave en HelpDialog. title es el título; text, un texto corto (líneas separadas por \\n).",
+	"topics": {
+		"build": {
+			"title": "Construir",
+			"text": "Mientras construyes el tiempo se detiene.\n• Pared, Puerta y Ventana van en los bordes de las casillas; los pisos se cambian, no se quitan.\n• Los muebles se ponen en una casilla libre; Girar cambia hacia dónde miran y Vender devuelve parte del precio.\n• Una habitación se marca con un clic dentro de un espacio cerrado por paredes con una puerta; el cartel dice qué le falta para funcionar.\n• Un puesto es un escritorio con computadora y una silla delante, dentro de un Área de trabajo.\n• Terreno compra más local alrededor del que tienes."
+		},
+		"staff": {
+			"title": "Personal",
+			"text": "• Publica una vacante con el cargo, el nivel y el sueldo; un sueldo más alto y una oficina agradable traen mejores candidatos.\n• Los candidatos llegan a las 9:00 y esperan 3 días. Entrevistar ocupa 2 horas del CEO.\n• Ofrece al menos lo que piden: desde el 85 % hacen una contraoferta; menos, se van.\n• Cada contratado necesita un puesto libre. Un clic en un empleado abre su ficha: ánimo, energía, aumentos, ascensos y despido."
+		},
+		"projects": {
+			"title": "Proyectos",
+			"text": "• Cada mañana llegan ofertas de contratos; aceptar una puede cobrar un anticipo.\n• Puedes llevar un contrato por equipo, más uno del CEO.\n• El trabajo avanza por fases (diseño, programación y pruebas) según quién trabaja y cómo está.\n• Entrega cuando quieras: se cobra lo hecho, menos el atraso y los errores. Entregar a tiempo y sin errores sube la reputación.\n• En Productos (desde Pequeña empresa) desarrollas y lanzas productos propios."
+		},
+		"teams": {
+			"title": "Horarios",
+			"text": "• Un equipo junta empleados con un mismo turno y lleva un contrato a la vez.\n• El turno es la hora de entrada y los días de trabajo (al menos uno de descanso); dura 9 horas con el almuerzo.\n• Las horas extra y las de noche se pagan aparte y cansan más.\n• Las plantillas cambian el turno de todos sus equipos a la vez; la Agenda muestra quién trabaja cada hora de un día."
+		},
+		"bank": {
+			"title": "Banco",
+			"text": "• Aquí ves el saldo, el resumen del mes y cada movimiento.\n• La nómina se paga los días 15 y 30; si no alcanza queda debida y baja el ánimo.\n• El día 1 se cobra el mantenimiento del local.\n• Puedes pedir préstamos hasta tu límite; la tasa depende de tu calificación (A–E). Tres meses seguidos sin pagar las cuotas terminan en embargo."
+		},
+		"company": {
+			"title": "Empresa",
+			"text": "• La etapa crece con empleados, contratos entregados y equipos completos; cada etapa habilita habitaciones, cargos y contratos más grandes.\n• El valor es el dinero más lo que valen muebles y terreno, menos lo que debes.\n• Aquí ves los ingresos y gastos del mes y, más adelante, los servidores, los baños y la bolsa."
+		}
+	}
+}

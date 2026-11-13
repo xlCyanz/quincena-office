@@ -41,6 +41,8 @@ var _settings_from_pause: bool = false
 var _pause_menu: PauseMenu
 # Tarjeta del tutorial (hito 63); se arma en código.
 var _tutorial_panel: TutorialPanel
+# Ayuda de los menús (hito 64, botones «?»); se arma en código.
+var _help_dialog: HelpDialog
 # Pantalla de cierre al salir a bolsa (hito 48); se arma en código.
 var _ipo_screen: IpoScreen
 # Dónde se apretó el botón izquierdo (para distinguir un clic de un arrastre).
@@ -135,6 +137,12 @@ func _ready() -> void:
 	_tutorial_panel.name = "TutorialPanel"
 	_tutorial_panel.target_provider = tutorial_target_rect
 	add_child(_tutorial_panel)
+	_help_dialog = HelpDialog.new()
+	_help_dialog.name = "HelpDialog"
+	add_child(_help_dialog)
+	_bank_panel.bank_mode_changed.connect(func(active: bool) -> void:
+		if active:
+			EventBus.ui_action.emit("bank_opened"))
 	EventBus.office_changed.connect(_on_office_changed)
 	EventBus.staff_changed.connect(_sync_employees)
 	EventBus.staff_changed.connect(update_status_icons)
@@ -480,6 +488,18 @@ func tutorial_target_rect(key: String) -> Rect2:
 			control = _staff_panel.get_open_button()
 		"staff_publish":
 			control = _staff_panel.get_publish_button()
+		"projects":
+			control = _projects_panel.get_open_button()
+		"projects_accept":
+			if not Projects.offers.is_empty():
+				control = _projects_panel.get_accept_button(int(Projects.offers[0]["id"]))
+		"projects_deliver":
+			if not Projects.contracts.is_empty():
+				control = _projects_panel.get_deliver_button(int(Projects.contracts[0]["id"]))
+		"speed":
+			control = _hud.get_speed_button(1)
+		"bank":
+			control = _bank_panel.get_open_button()
 		_:
 			if key.begins_with("tool:"):
 				control = _build_panel.get_tool_button(key.trim_prefix("tool:"))
@@ -490,6 +510,10 @@ func tutorial_target_rect(key: String) -> Rect2:
 
 func get_tutorial_panel() -> TutorialPanel:
 	return _tutorial_panel
+
+
+func get_help_dialog() -> HelpDialog:
+	return _help_dialog
 
 
 func _on_settings_mode_changed(active: bool) -> void:
@@ -539,12 +563,15 @@ func _open_settings_from_pause(tab: String) -> void:
 
 
 ## Esc (hito 62): cierra primero lo que esté abierto, de lo más reciente a lo más general
-## (una pregunta, Ajustes, la pausa, el modo construcción, la ficha, un panel izquierdo);
+## (la ayuda, una pregunta, Ajustes, la pausa, el modo construcción, la ficha, un panel izquierdo);
 ## si no hay nada, abre la pausa. Las pantallas que piden una respuesta no se cierran.
 ## Devuelve qué hizo, para las pruebas.
 func handle_escape() -> String:
 	if _game_over_screen.is_open() or _emergency_dialog.is_open() or _ipo_screen.is_open():
 		return "none"
+	if _help_dialog.is_open():
+		_help_dialog.close()
+		return "help"
 	if _settings_panel.is_open():
 		if _settings_panel.is_confirming():
 			_settings_panel.cancel_confirm()
@@ -763,6 +790,7 @@ func frame_office() -> void:
 func _on_speed_pressed(index: int) -> void:
 	if not _is_menu_open():
 		GameClock.set_speed_index(index)
+		EventBus.ui_action.emit("speed_changed")
 
 
 # Atajos de teclado (un extra: los botones del reloj hacen lo mismo).
@@ -789,6 +817,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			GameClock.toggle_pause()
 		KEY_1, KEY_2, KEY_3:
 			GameClock.set_speed_index(key.keycode - KEY_1)
+			EventBus.ui_action.emit("speed_changed")
 		_:
 			return
 	get_viewport().set_input_as_handled()

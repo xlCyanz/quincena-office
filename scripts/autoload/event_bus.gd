@@ -171,10 +171,15 @@ signal went_public(stats: Dictionary)
 signal settings_changed(key: String)
 
 ## El jugador hizo algo en la interfaz que el tutorial puede pedir (hito 63):
-## "camera_moved" (arrastró o acercó la cámara) o "build_opened" (abrió Construir).
+## "camera_moved" (arrastró o acercó la cámara), "build_opened" (abrió Construir), "speed_changed"
+## (cambió la velocidad del reloj, hito 64) o "bank_opened" (abrió el Banco, hito 64).
 @warning_ignore("unused_signal")
 signal ui_action(action: String)
 
 ## Cambió el estado del tutorial: activo, paso o terminado (hito 63, Tutorial).
 @warning_ignore("unused_signal")
 signal tutorial_changed
+
+## Se pidió la ayuda de un menú (hito 64, botón «?»): clave de data/help.json.
+@warning_ignore("unused_signal")
+signal help_requested(topic: String)

@@ -24,6 +24,8 @@ const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
 const MET_COLOR := Color(0.55, 0.85, 0.5)
 const AMOUNT_WIDTH: float = 140.0
 
+# Botón «?» de ayuda (hito 64).
+var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
 var _content: VBoxContainer
@@ -65,6 +67,8 @@ func _ready() -> void:
 	var close_button := Button.new()
 	close_button.text = "Cerrar"
 	close_button.pressed.connect(func() -> void: set_open(false))
+	_help_button = HelpButton.create("company")
+	header.add_child(_help_button)
 	header.add_child(close_button)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -324,3 +328,8 @@ func _row(concept: String, amount: String, color: Color) -> void:
 	amount_label.add_theme_color_override("font_color", color)
 	row.add_child(amount_label)
 	_content.add_child(row)
+
+
+## Botón «?» que abre la ayuda del panel.
+func get_help_button() -> Button:
+	return _help_button
