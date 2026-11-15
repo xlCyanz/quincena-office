@@ -25,7 +25,16 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
    sprite (archivo `*_shadow` aparte, como dice la guía).
 6. **Paredes**: cara interior lisa de color pastel frío; tapa de la pared y canto de la losa del piso en ciruela
    oscuro (borde de la «maqueta»). El zócalo bajo repite la tapa ciruela.
-7. **Pisos**: dibujo grande y claro (cuadros, tablones), juntas oscuras de 1 px, poco ruido.
+7. **Pisos** (como los de la referencia):
+   - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
+     la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del
+     tono vecino y alguna veta corta `904f25`.
+   - *Losas* (cerámica): junta gris (no negra), bisel claro en los cantos de arriba y oscuro en los de abajo,
+     esquinas redondeadas (el pixel de la esquina es junta), losas en damero de dos tonos casi iguales y un
+     reflejo en diagonal en algunas.
+   - *Alfombra*: de pared a pared, ruido de dominós en 4 lilas cercanos (`777a9a` `7d80a0` `8688a4` `8e8fa8`)
+     agrupado en manchas suaves; sin juntas ni brillo. El pasto usa el mismo método con verdes de hojas y unas
+     pocas matas.
 
 ## Paleta (hex sacados de las capturas)
 
