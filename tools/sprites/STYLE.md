@@ -33,8 +33,10 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      esquinas redondeadas (el pixel de la esquina es junta), losas en damero de dos tonos casi iguales y un
      reflejo en diagonal en algunas.
    - *Alfombra*: de pared a pared, ruido de dominós en 4 lilas cercanos (`777a9a` `7d80a0` `8688a4` `8e8fa8`)
-     agrupado en manchas suaves; sin juntas ni brillo. El pasto usa el mismo método con verdes de hojas y unas
-     pocas matas.
+     agrupado en manchas suaves; sin juntas ni brillo. Pasto, concreto, grava, acera y calle usan el mismo
+     método (receta `Noise` en `pieces/floors.py`) con sus tonos, más formas chicas encima: matas, poros y
+     grieta, piedritas con cara clara y sombra; la acera lleva junta y bisel fijos y la calle con línea una
+     franja amarilla de 4 celdas con pixeles gastados.
 
 ## Paleta (hex sacados de las capturas)
 

@@ -4,7 +4,13 @@
 #                        bisel claro arriba y gris abajo, esquinas redondeadas y reflejo en diagonal
 #   floor_wood_0..3      8 tablas angostas de madera naranja con cortes escalonados, moteado y vetas
 #   floor_carpet_0..3    alfombra lila de pared a pared: ruido de dominós en 4 tonos, algo agrupado
-#   ground_grass_0..3    pasto saturado (rampa de hojas): manchas grandes que cruzan los bordes y matas
+#   floor_bare_0..3      concreto (sin piso): grises cálidos de poco contraste, poros y una grieta fina
+#   ground_grass_0..3    pasto del solar: ruido de verdes de hojas en manchas suaves y pocas matas
+#   ground_outside_0..3  pasto fuera del solar, 15 % más oscuro
+#   ground_path_0..3     camino de grava con piedritas (cara clara arriba, sombra abajo)
+#   ground_sidewalk_0..3 acera: una losa por casilla con junta en el borde y bisel
+#   ground_road_0..3     calle: asfalto de granos sueltos
+#   ground_road_line_x_0..3 / _y_0..3  calle con la línea amarilla por el medio a lo largo de x o de y
 #
 # Las 4 variantes de cada material comparten el borde y tienen la MISMA cantidad de pixeles de
 # cada color (se comprueba al generar): mismo color medio exacto, sin tablero de ajedrez.
@@ -21,6 +27,7 @@ import pattern
 import sheet
 
 CONSTRUCTION = iso.load_json("data/construction.json")
+MAP = iso.load_json("data/map.json")
 VARIANTS = 4
 CELL = 64  # px de eje por casilla
 ANCHOR = [64, 96]  # punto de apoyo de una casilla de piso (centro del rombo)
@@ -198,18 +205,47 @@ def wood_tile(variant):
     return grid, index
 
 
-# ---------------------------------------------------------------------- alfombra
+# ---------------------------------------------------------------------- ruido de dominós
 
-# Alfombra de pared a pared como el piso lila de la referencia: un ruido de dominós en cuatro
-# tonos fríos cercanos, algo agrupado (un ruido suave suma al azar de cada dominó) para que se
-# vean mechones y no un gris parejo. Sin juntas ni brillo.
-(K_DARK, K_MID, K_BASE, K_LIGHT) = range(4)
-CARPET = pal.palette(["777a9a", "7d80a0", "8688a4", "8e8fa8"], name="carpet")
-CARPET_SHARES = (0.24, 0.26, 0.38)  # oscuro, medio, base; el resto claro
-CARPET_CLUMP = 0.55  # peso del ruido suave frente al azar de cada dominó
-
+# Alfombra, pasto, concreto, grava, acera y calle se arman igual, como los pisos de ruido de la
+# referencia (alfombra lila, cuadros azules): cada dominó (los 2 px de una celda de la rejilla)
+# toma uno de unos pocos tonos cercanos según un azar propio más manchas suaves periódicas, con
+# una cantidad EXACTA de cada tono. El anillo del borde sale de un azar común a las 4 variantes
+# (si no, se cortaría) y hacia adentro pasa de a poco al de la variante. Encima van formas chicas
+# (matas, piedritas, poros) que son las mismas en las 4 variantes y cambian de lugar.
 
 BLEND = 10  # celdas de eje desde el borde en que el dibujo propio de la variante entra de a poco
+SHAPE_MARGIN = 4  # celdas de eje que las formas dejan libres junto al borde
+
+
+class Noise(object):
+    """Receta de un piso de ruido.
+
+    shares   parte de cada tono de ruido (índices 0 … n−1 de la paleta), menos el último, que es el resto
+    clump    peso de las manchas suaves frente al azar de cada dominó (0 = granos sueltos)
+    periods  nudos por casilla de cada capa de manchas y su peso: ((periodo, peso), …)
+    seed     semilla base (la variante suma la suya)
+    shapes   formas chicas por casilla (de shape_pixels), en el orden en que se colocan
+    spacing  separación mínima entre formas (px de alto; a lo ancho cuenta la mitad)
+    cover    tono de ruido al que se le descuentan los pixeles que tapan las formas
+    fixed    función grid -> arreglo de índices de paleta (−1 = libre): lo que es igual en las 4
+             variantes y no es ruido (juntas, la línea de la calle)
+    """
+
+    def __init__(self, shares, clump, periods, seed, shapes=(), spacing=8.0, cover=None, fixed=None):
+        self.shares = shares
+        self.clump = clump
+        self.periods = periods
+        self.seed = seed
+        self.shapes = shapes
+        self.spacing = spacing
+        self.cover = len(shares) - 1 if cover is None else cover
+        self.fixed = fixed
+
+    def value(self, grid, seed):
+        soft = sum(pattern.value_noise(grid.u, grid.v, period=period, seed=seed + period) * weight
+                   for period, weight in self.periods)
+        return pattern.hash2(grid.iu, grid.iv, seed) * (1.0 - self.clump) + soft * self.clump
 
 
 def blended(grid, shared, own):
@@ -221,59 +257,10 @@ def blended(grid, shared, own):
     return shared * (1.0 - weight) + own * weight
 
 
-def domino_counts(grid, shares):
-    """Cuántos dominós (2 px) de cada tono: shares para los primeros, el resto para el último."""
-    total = int(grid.mask.sum()) // 2
-    counts = [int(round(total * share)) for share in shares]
-    return counts + [total - sum(counts)]
-
-
-def carpet_value(grid, seed):
-    """Azar de cada dominó más un ruido suave periódico (mechones)."""
-    return pattern.hash2(grid.iu, grid.iv, seed) * (1.0 - CARPET_CLUMP) + \
-        pattern.value_noise(grid.u, grid.v, period=8, seed=seed) * CARPET_CLUMP
-
-
-def carpet_tile(variant):
-    """Índices de paleta de una casilla de alfombra. El anillo del borde sale de un azar común a
-    las 4 variantes (si no, se cortaría); adentro, del de la variante, con lo que falta de cada tono."""
-    grid = iso.tile_grid()
-    counts = domino_counts(grid, CARPET_SHARES)
-    shared = pattern.exact_levels(carpet_value(grid, 5100), grid.mask, counts[:-1], group=grid.domino)
-    ring = grid.mask & ((grid.iu == 0) | (grid.iv == 0) | (grid.iu == CELL - 1) | (grid.iv == CELL - 1))
-    inside = grid.mask & ~ring
-    index = np.where(ring, shared, 0).astype(np.int16)
-    left = [count - int((shared[ring] == level).sum()) // 2 for level, count in enumerate(counts)]
-    value = blended(grid, carpet_value(grid, 5100), carpet_value(grid, 5200 + 37 * variant))
-    split = pattern.exact_levels(value, inside, left[:-1], group=grid.domino)
-    index[inside] = split[inside]
-    return grid, index
-
-
-# ---------------------------------------------------------------------- pasto
-
-GRASS_BASE, GRASS_SECOND = CONSTRUCTION["terrain"]["colors"]  # 5f8a4c, 567e44 (dibujo provisional)
-# Pasto con el mismo método que la alfombra (ruido de dominós en tonos cercanos, agrupado en
-# manchas suaves) con los verdes de la rampa de hojas de STYLE.md, y unas pocas matas encima.
-L = pal.LEAVES
-(G_DARK, G_MID, G_BASE, G_LIGHT, G_DEEP, G_BLADE, G_TIP) = range(7)
-GRASS = pal.palette([
-    pal.mix(L[pal.LEFT], L[pal.SOFT], 0.35),   # mancha oscura
-    pal.mix(L[pal.LEFT], L[pal.SOFT], 0.7),    # pasto oscuro
-    L[pal.SOFT],                               # pasto (81a73a)
-    pal.mix(L[pal.SOFT], L[pal.BASE], 0.3),    # pasto claro
-    L[pal.RIGHT],                              # pie de las matas (4c6029)
-    L[pal.BASE],                               # brizna (9ecc42)
-    L[pal.LIGHT],                              # punta de la brizna (cbf166)
-], name="grass")
-GRASS_SHARES = (0.20, 0.30, 0.36)  # oscuro, pasto oscuro, pasto; el resto claro
-GRASS_CLUMP = 0.7   # peso de las manchas suaves frente al azar de cada dominó
-GRASS_PERIODS = (3, 6)  # nudos por casilla de las dos capas de manchas
-
-
 def shape_pixels(rows, colors):
     """Convierte un dibujo en filas de letras en una lista (dx, dy, color). El pie es la fila de
-    abajo (dy = 0); dy negativo = hacia arriba. '.' = vacío."""
+    abajo (dy = 0); dy negativo = hacia arriba. '.' = vacío. Cada fila va de a pares desde la
+    columna 0 (dominós enteros, sin medios pixeles sueltos)."""
     pixels = []
     for row, line in enumerate(rows):
         for column, letter in enumerate(line):
@@ -282,8 +269,108 @@ def shape_pixels(rows, colors):
     return tuple(pixels)
 
 
+def place_shapes(grid, free, shapes, spacing, seed, name):
+    """Pone cada forma en un lugar al azar fijo (semilla) dentro de `free`, a no menos de spacing
+    de las otras y con cada par de pixeles sobre un dominó. Devuelve [(x, y, color)]."""
+    order = pattern.hash2(grid.x, grid.y, seed)
+    pair = np.zeros(grid.mask.shape, dtype=bool)  # el pixel y el de su derecha son un dominó
+    pair[:, :-1] = grid.domino[:, :-1] == grid.domino[:, 1:]
+
+    def fits(x, y, shape):
+        for dx, dy, _color in shape:
+            qx, qy = x + dx, y + dy
+            if not (0 <= qy < grid.height and 0 <= qx < grid.width - 1 and free[qy, qx]):
+                return False
+            if dx % 2 == 0 and not pair[qy, qx]:
+                return False
+        return True
+
+    placed, chosen, left = [], [], list(shapes)
+    ys, xs = np.nonzero(free)
+    for position in np.argsort(order[ys, xs], kind="stable"):
+        if not left:
+            break
+        x, y = int(xs[position]), int(ys[position])
+        if any(((x - cx) / 2.0) ** 2 + (y - cy) ** 2 < spacing ** 2 for cx, cy in chosen):
+            continue
+        if fits(x, y, left[0]):
+            chosen.append((x, y))
+            placed += [(x + dx, y + dy, color) for dx, dy, color in left.pop(0)]
+    if left:
+        raise ValueError("%s: no hubo lugar para %d formas" % (name, len(left)))
+    return placed
+
+
+def noise_tile(recipe, variant, name):
+    """Índices de paleta de una casilla de ruido según la receta."""
+    grid = iso.tile_grid()
+    fixed = recipe.fixed(grid) if recipe.fixed else np.full(grid.mask.shape, -1, dtype=np.int16)
+    free = grid.mask & (fixed < 0)
+    ring = free & ((grid.iu == 0) | (grid.iv == 0) | (grid.iu == CELL - 1) | (grid.iv == CELL - 1))
+    seed = recipe.seed + 53 * (variant + 1)
+    margin = free & (grid.iu >= SHAPE_MARGIN) & (grid.iv >= SHAPE_MARGIN) & \
+        (grid.iu < CELL - SHAPE_MARGIN) & (grid.iv < CELL - SHAPE_MARGIN)
+    shapes = place_shapes(grid, margin, recipe.shapes, recipe.spacing, seed, name) if recipe.shapes else []
+    blocked = np.zeros(grid.mask.shape, dtype=bool)
+    for x, y, _color in shapes:
+        blocked[y, x] = True
+    # Cantidades en dominós.
+    total = int(free.sum()) // 2
+    counts = [int(round(total * share)) for share in recipe.shares]
+    counts.append(total - sum(counts))
+    shared = pattern.exact_levels(recipe.value(grid, recipe.seed), free, counts[:-1], group=grid.domino)
+    index = np.where(fixed >= 0, fixed, np.where(ring, shared, 0)).astype(np.int16)
+    left = [count - int((shared[ring] == level).sum()) // 2 for level, count in enumerate(counts)]
+    left[recipe.cover] -= len(shapes) // 2
+    inside = free & ~ring & ~blocked
+    value = blended(grid, recipe.value(grid, recipe.seed), recipe.value(grid, seed))
+    split = pattern.exact_levels(value, inside, left[:-1], group=grid.domino)
+    index[inside] = split[inside]
+    for x, y, color in shapes:
+        index[y, x] = color
+    return grid, index
+
+
+def noise_material(recipe, prefix):
+    """Función variante -> (grid, índices) para MATERIALS."""
+    return lambda variant: noise_tile(recipe, variant, "%s_%d" % (prefix, variant))
+
+
+# ---------------------------------------------------------------------- alfombra
+
+# Alfombra de pared a pared como el piso lila de la referencia: 4 lilas cercanos algo agrupados,
+# sin juntas ni brillo.
+CARPET = pal.palette(["777a9a", "7d80a0", "8688a4", "8e8fa8"], name="carpet")
+CARPET_RECIPE = Noise((0.24, 0.26, 0.38), 0.55, ((8, 1.0),), 5100)
+
+
+# ---------------------------------------------------------------------- pasto
+
+GRASS_BASE, GRASS_SECOND = CONSTRUCTION["terrain"]["colors"]  # 5f8a4c, 567e44 (dibujo provisional)
+L = pal.LEAVES
+
+
+def grass_palette(factor, name):
+    """Verdes de la rampa de hojas de STYLE.md (×factor de brillo: 1 el solar, 0.85 afuera)."""
+    colors = [
+        pal.mix(L[pal.LEFT], L[pal.SOFT], 0.35),   # mancha oscura
+        pal.mix(L[pal.LEFT], L[pal.SOFT], 0.7),    # pasto oscuro
+        L[pal.SOFT],                               # pasto (81a73a)
+        pal.mix(L[pal.SOFT], L[pal.BASE], 0.3),    # pasto claro
+        L[pal.RIGHT],                              # pie de las matas (4c6029)
+        L[pal.BASE],                               # brizna (9ecc42)
+        L[pal.LIGHT],                              # punta de la brizna (cbf166)
+    ]
+    if factor != 1.0:
+        colors = [pal.mix("000000", color, factor) for color in colors]
+    return pal.palette(colors, name=name)
+
+
+(G_DARK, G_MID, G_BASE, G_LIGHT, G_DEEP, G_BLADE, G_TIP) = range(7)
+GRASS = grass_palette(1.0, "grass")
+OUTSIDE = grass_palette(0.85, "outside")  # pasto fuera del solar: 15 % más oscuro
 BLADE_COLORS = {"t": G_TIP, "b": G_BLADE, "d": G_DEEP}
-# Matas: briznas juntas, más claras arriba, con el pie oscuro (pares de 2 px, sin sueltos).
+# Matas: briznas juntas, más claras arriba, con el pie oscuro.
 TUFT_BIG = shape_pixels(("tt..",
                          "bbtt",
                          "bbbb",
@@ -291,80 +378,109 @@ TUFT_BIG = shape_pixels(("tt..",
 TUFT_SMALL = shape_pixels(("tt",
                            "bb",
                            "dd"), BLADE_COLORS)
-GRASS_TUFTS = (TUFT_BIG, TUFT_SMALL, TUFT_SMALL)  # matas por casilla (las mismas en las 4 variantes)
-TUFT_SPACING = 14.0   # separación mínima entre matas (px de alto; a lo ancho, el doble)
-TUFT_MARGIN = 4       # celdas de eje que las matas dejan libres junto al borde
+GRASS_SHARES = (0.20, 0.30, 0.36)  # oscuro, pasto oscuro, pasto; el resto claro
+GRASS_PERIODS = ((3, 0.65), (6, 0.35))
+GRASS_RECIPE = Noise(GRASS_SHARES, 0.7, GRASS_PERIODS, 6000, (TUFT_BIG, TUFT_SMALL, TUFT_SMALL), 14.0, G_BASE)
+OUTSIDE_RECIPE = Noise(GRASS_SHARES, 0.7, GRASS_PERIODS, 6500, (TUFT_SMALL, TUFT_SMALL), 16.0, G_BASE)
 
 
-def grass_value(grid, seed):
-    """Azar de cada dominó más dos capas de manchas suaves periódicas."""
-    soft = sum(pattern.value_noise(grid.u, grid.v, period=period, seed=seed + period) * weight
-               for period, weight in zip(GRASS_PERIODS, (0.65, 0.35)))
-    return pattern.hash2(grid.iu, grid.iv, seed) * (1.0 - GRASS_CLUMP) + soft * GRASS_CLUMP
+# ---------------------------------------------------------------------- concreto (sin piso)
+
+# Concreto liso de muy poco contraste: 4 grises cálidos, algún poro (un dominó oscuro) y una
+# grieta fina en 2:1.
+(B_D, B_M, B_B, B_L, B_PORE) = range(5)
+BARE = pal.palette(["807e7a", "868480", "8c8a86", "92908c", "6f6d69"], name="bare")
+PORE = shape_pixels(("pp",), {"p": B_PORE})
+CRACK = shape_pixels(("pp....",
+                      "..pp..",
+                      "....pp"), {"p": B_PORE})
+BARE_RECIPE = Noise((0.2, 0.3, 0.32), 0.6, ((4, 0.7), (8, 0.3)), 7000, (CRACK, PORE, PORE, PORE, PORE), 7.0, B_B)
 
 
-def grass_tile(variant):
-    """Índices de paleta de una casilla de pasto. El anillo del borde es igual en las 4 variantes;
-    adentro van las manchas y las matas de la variante."""
-    grid = iso.tile_grid()
-    name = "ground_grass_%d" % variant
-    seed = 6100 + 53 * variant
-    ring = grid.mask & ((grid.iu == 0) | (grid.iv == 0) | (grid.iu == CELL - 1) | (grid.iv == CELL - 1))
-    # Matas: el pie en un pixel par (empieza un dominó) bien adentro de la casilla.
-    margin = grid.mask & (grid.iu >= TUFT_MARGIN) & (grid.iv >= TUFT_MARGIN) & \
-        (grid.iu < CELL - TUFT_MARGIN) & (grid.iv < CELL - TUFT_MARGIN)
-    order = pattern.hash2(grid.x, grid.y, seed)
-    pair = np.zeros(grid.mask.shape, dtype=bool)  # el pixel y el de su derecha son un dominó
-    pair[:, :-1] = grid.domino[:, :-1] == grid.domino[:, 1:]
+# ---------------------------------------------------------------------- grava (camino)
 
-    def fits(x, y, shape):
-        # Cada fila de la mata cae en dominós enteros (si no, quedarían medios dominós sueltos).
-        pixels = [(x + dx, y + dy) for dx, dy, _color in shape]
-        return all(0 <= qy < grid.height and 0 <= qx + 1 < grid.width and margin[qy, qx]
-                   and (dx % 2 == 1 or pair[qy, qx]) for (qx, qy), (dx, _dy, _c) in zip(pixels, shape))
+# Grava de grises cálidos con piedritas de 2 a 4 px: cara clara arriba y sombra de 1 px abajo.
+(P_D, P_M, P_B, P_L, P_SHADOW, P_STONE, P_TOP) = range(7)
+PATH = pal.palette(["9e937d", "a79c86", "afa38c", "b9ae98", "857a66", "c4baa4", "d6cdb8"], name="path")
+STONE_COLORS = {"t": P_TOP, "s": P_STONE, "d": P_SHADOW}
+STONE_BIG = shape_pixels(("ttss",
+                          "ssss",
+                          "dddd"), STONE_COLORS)
+STONE_MID = shape_pixels(("ttss",
+                          "..dd"), STONE_COLORS)
+STONE_SMALL = shape_pixels(("ts",
+                            "dd"), STONE_COLORS)
+PATH_RECIPE = Noise((0.22, 0.28, 0.30), 0.35, ((6, 1.0),), 7500,
+                    (STONE_BIG, STONE_BIG, STONE_MID, STONE_MID, STONE_MID, STONE_SMALL, STONE_SMALL, STONE_SMALL,
+                     STONE_SMALL, STONE_SMALL), 6.0, P_B)
 
-    blades = []
-    blocked = np.zeros(grid.mask.shape, dtype=bool)
-    chosen = []
-    ys, xs = np.nonzero(margin)
-    tufts = list(GRASS_TUFTS)
-    for position in np.argsort(order[ys, xs], kind="stable"):
-        if not tufts:
-            break
-        x, y = int(xs[position]), int(ys[position])
-        if any(((x - cx) / 2.0) ** 2 + (y - cy) ** 2 < TUFT_SPACING ** 2 for cx, cy in chosen):
-            continue
-        if not fits(x, y, tufts[0]):
-            continue
-        chosen.append((x, y))
-        blades += [(x + dx, y + dy, color) for dx, dy, color in tufts.pop(0)]
-    if tufts:
-        raise ValueError("%s: no hubo lugar para todas las matas" % name)
-    for x, y, _color in blades:
-        blocked[y, x] = True
-    counts = domino_counts(grid, GRASS_SHARES)
-    shared = pattern.exact_levels(grass_value(grid, 6000), grid.mask, counts[:-1], group=grid.domino)
-    index = np.where(ring, shared, 0).astype(np.int16)
-    # Las matas tapan siempre la misma cantidad de pasto: se le resta al tono base.
-    left = [count - int((shared[ring] == level).sum()) // 2 for level, count in enumerate(counts)]
-    left[G_BASE] -= len(blades) // 2
-    inside = grid.mask & ~ring & ~blocked
-    value = blended(grid, grass_value(grid, 6000), grass_value(grid, seed))
-    split = pattern.exact_levels(value, inside, left[:-1], group=grid.domino)
-    index[inside] = split[inside]
-    for x, y, color in blades:
-        index[y, x] = color
-    return grid, index
+
+# ---------------------------------------------------------------------- acera
+
+# Una losa grande por casilla: junta oscura de 1 celda en cada lado (2 px entre dos casillas),
+# bisel claro en los cantos de arriba y oscuro en los de abajo, y adentro un gris claro apenas
+# moteado.
+(S_D, S_M, S_B, S_L, S_JOINT, S_SHADE, S_LIGHT) = range(7)
+SIDEWALK = pal.palette(["9e9d97", "a3a29c", "a8a7a1", "adaca6", "7d7c77", "93928c", "bfbeb8"], name="sidewalk")
+
+
+def sidewalk_fixed(grid):
+    fixed = np.full(grid.mask.shape, -1, dtype=np.int16)
+    fixed[(grid.iv == 1) | (grid.iu == 1)] = S_LIGHT
+    fixed[(grid.iv == CELL - 2) | (grid.iu == CELL - 2)] = S_SHADE
+    fixed[(grid.iu == 0) | (grid.iv == 0) | (grid.iu == CELL - 1) | (grid.iv == CELL - 1)] = S_JOINT
+    return np.where(grid.mask, fixed, -1)
+
+
+SIDEWALK_RECIPE = Noise((0.2, 0.3, 0.32), 0.5, ((4, 1.0),), 8000, (), fixed=sidewalk_fixed)
+
+
+# ---------------------------------------------------------------------- calle
+
+# Asfalto gris oscuro: granos sueltos (de a dominó) en 3 tonos y alguno claro; la calle con línea
+# lleva una franja amarilla de 4 celdas por el medio a lo largo de un eje (x = u, y = v), con
+# algún pixel gastado.
+(R_D, R_M, R_B, R_L, R_LINE, R_WORN) = range(6)
+ROAD = pal.palette(["3f4248", "44474d", "494c52", "55585e", MAP["road_line_color"], "c4b56a"], name="road")
+ROAD_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000)
+LINE_WIDTH = 4
+
+
+def road_line_fixed(axis):
+    def fixed(grid):
+        across = grid.iv if axis == "x" else grid.iu
+        along = grid.iu if axis == "x" else grid.iv
+        band = (across >= CELL // 2 - LINE_WIDTH // 2) & (across < CELL // 2 + LINE_WIDTH // 2)
+        worn = pattern.hash2(along, across, 9500) < 0.12
+        out = np.where(band, np.where(worn, R_WORN, R_LINE), -1).astype(np.int16)
+        return np.where(grid.mask, out, -1)
+    return fixed
+
+
+ROAD_LINE_X_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000, fixed=road_line_fixed("x"))
+ROAD_LINE_Y_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000, fixed=road_line_fixed("y"))
 
 
 # ---------------------------------------------------------------------- generar
 
 MATERIALS = (
-    # (nombre, función, paleta, material, colores base de data/construction.json)
+    # (nombre, función, paleta, material, colores base de data/construction.json o data/map.json)
     ("floor_ceramic", ceramic_tile, CERAMIC, "ceramic", CONSTRUCTION["floors"]["ceramic"]["colors"]),
     ("floor_wood", wood_tile, WOOD, "wood", CONSTRUCTION["floors"]["wood"]["colors"]),
-    ("floor_carpet", carpet_tile, CARPET, "carpet", CONSTRUCTION["floors"]["carpet"]["colors"]),
-    ("ground_grass", grass_tile, GRASS, "grass", [GRASS_BASE, GRASS_SECOND]),
+    ("floor_carpet", noise_material(CARPET_RECIPE, "floor_carpet"), CARPET, "carpet",
+     CONSTRUCTION["floors"]["carpet"]["colors"]),
+    ("floor_bare", noise_material(BARE_RECIPE, "floor_bare"), BARE, "bare", CONSTRUCTION["bare_floor"]["colors"]),
+    ("ground_grass", noise_material(GRASS_RECIPE, "ground_grass"), GRASS, "grass", [GRASS_BASE, GRASS_SECOND]),
+    ("ground_outside", noise_material(OUTSIDE_RECIPE, "ground_outside"), OUTSIDE, "outside",
+     MAP["styles"]["outside"]),
+    ("ground_path", noise_material(PATH_RECIPE, "ground_path"), PATH, "path", MAP["styles"]["path"]),
+    ("ground_sidewalk", noise_material(SIDEWALK_RECIPE, "ground_sidewalk"), SIDEWALK, "sidewalk",
+     MAP["styles"]["sidewalk"]),
+    ("ground_road", noise_material(ROAD_RECIPE, "ground_road"), ROAD, "road", MAP["styles"]["road"]),
+    ("ground_road_line_x", noise_material(ROAD_LINE_X_RECIPE, "ground_road_line_x"), ROAD, "road_line",
+     MAP["styles"]["road"]),
+    ("ground_road_line_y", noise_material(ROAD_LINE_Y_RECIPE, "ground_road_line_y"), ROAD, "road_line",
+     MAP["styles"]["road"]),
 )
 
 
@@ -384,26 +500,33 @@ def build_material(out_dir, name, tile, colors, material, base_colors):
 
 def review_sheets(out_dir, images):
     """Vistas para mirar (no son arte del juego), todas en _sheets/: mosaicos de variantes al
-    azar a ×3 y a ×1 de cada material, y la hoja del grupo (todas las casillas, un mosaico de
-    cada material y un local con los tres pisos rodeado de pasto, todo a ×3)."""
+    azar a ×3 y a ×1 de cada material, y la hoja del grupo (todas las casillas a ×2 y un solar de prueba con todos
+    los suelos a ×2)."""
     folder = os.path.join(out_dir, "_sheets")
     if not os.path.isdir(folder):
         os.makedirs(folder)
-    mosaics = []
     for name, tiles in images.items():
         short = name.split("_", 1)[1]
         sheet.tile_mosaic(tiles, 5, 5, seed=3, scale=3).save(os.path.join(folder, "floors_%s_x3.png" % short))
         sheet.tile_mosaic(tiles, 12, 12, seed=5, scale=1).save(os.path.join(folder, "floors_%s_x1.png" % short))
-        mosaics.append(sheet.tile_mosaic(tiles, 4, 4, seed=8, scale=3))
-    lot = sheet.Scene(9, 9, top=16, margin=8)
-    lot.fill_floor(images["ground_grass"], seed=11)
-    lot.fill_floor(images["floor_ceramic"], seed=12, area=(2, 2, 7, 4))
-    lot.fill_floor(images["floor_wood"], seed=13, area=(2, 4, 5, 7))
-    lot.fill_floor(images["floor_carpet"], seed=14, area=(5, 4, 7, 7))
+    # Solar de prueba: pasto de afuera alrededor, pasto del solar, el local con los tres pisos y
+    # un rincón sin piso, el camino de grava a la calle, la acera y la calle con su línea (x).
+    lot = sheet.Scene(14, 14, top=16, margin=8)
+    lot.fill_floor(images["ground_outside"], seed=10)
+    lot.fill_floor(images["ground_grass"], seed=11, area=(1, 1, 13, 9))
+    lot.fill_floor(images["floor_ceramic"], seed=12, area=(3, 2, 9, 4))
+    lot.fill_floor(images["floor_wood"], seed=13, area=(3, 4, 6, 7))
+    lot.fill_floor(images["floor_carpet"], seed=14, area=(6, 4, 9, 7))
+    lot.fill_floor(images["floor_bare"], seed=15, area=(9, 2, 11, 7))
+    lot.fill_floor(images["ground_path"], seed=16, area=(6, 7, 8, 9))
+    lot.fill_floor(images["ground_sidewalk"], seed=17, area=(0, 9, 14, 10))
+    lot.fill_floor(images["ground_road"], seed=18, area=(0, 10, 14, 14))
+    for x in range(0, 14, 3):
+        lot.fill_floor(images["ground_road_line_x"], seed=19 + x, area=(x, 12, min(x + 2, 14), 13))
     items = []
     for name, tiles in images.items():
         items += [("%s_%d" % (name, i), image.crop((0, 64, 128, 128))) for i, image in enumerate(tiles)]
-    parts = [sheet.contact_sheet(items, columns=4, scale=3)] + mosaics + [lot.render(2)]
+    parts = [sheet.contact_sheet(items, columns=4, scale=2), lot.render(2)]
     page = Image.new("RGBA", (max(part.size[0] for part in parts), sum(part.size[1] for part in parts)),
                      tuple(sheet.BACKGROUND) + (255,))
     top = 0
