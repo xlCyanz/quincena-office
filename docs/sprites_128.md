@@ -112,7 +112,7 @@ Cuadro, reloj, pizarra, pantalla de presentaciones y aire acondicionado se cuelg
 - Lienzo 64×128, base del objeto a 24 px del mundo (48 px de sprite) sobre el piso.
 - En las paredes bajas el juego los dibuja chicos y pegados abajo: no hace falta otra versión.
 - Nombres: `painting_x` (paisaje), `painting_abstract_x` y `painting_sea_x` (tres dibujos del cuadro),
-  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor sobre una repisa, 36 px de alto: más que su `height`) y
+  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor grande colgado, de marco negro delgado, que ocupa dos bordes seguidos de la misma pared, de media pared a casi el techo: lienzo de 128×192, x de 0 a 2, con el apoyo en (64, 160), el punto medio de los dos bordes en el piso; en el juego aún es de un borde, ocuparlo doble se decide al conectar los sprites; variantes encendidas con una presentación para la Sala de reuniones: `presentation_screen_chart_x`, `_pie_x` y `_title_x`) y
   `air_conditioner_x`, más sus `_y`. Apoyo (32, 112), el
   punto medio del borde en el piso como en los tramos; el objeto sale de la cara de la pared (4 px de la línea del
   borde) y mide de alto el `height` de `data/furniture.json` × 2. En las paredes `_x` los dibujos van espejados
@@ -144,6 +144,10 @@ interiores) van **bajitas** para ver adentro.
   persiana veneciana). Para la Recepción hay también una doble de vidrio **sin marco** que ocupa **dos bordes
   seguidos**: dos hojas de 48 px (hueco de 96 px, 16 px de pared a cada lado), en dos mitades
   `glass_door_double_a_*` (el borde de menor x o y) y `glass_door_double_b_*`, que solo empalman entre sí.
+- Presentaciones del televisor (Sala de reuniones): `presentation_screen_<chart|pie|title>_<eje>_play_1` a `_12`
+  (kind `wall_item_frame`): la diapositiva se arma de a poco (las barras suben, la torta se dibuja en un barrido,
+  la portada se escribe) con una curva suave; mismo lienzo, apoyo y silueta que la pieza y el `_12` es la pieza
+  quieta. El manifiesto da `base`, `frame` y `frames`.
 - Animaciones (solo las piezas altas; el cuadro 0 es la pieza cerrada): `<pieza>_tall_<eje>_open_1` a `_6` en las
   puertas (la hoja gira de 15° en 15° hasta 90° hacia adentro; la de vidrio tiene dos hojas que abren hacia afuera)
   y `window_tall_<eje>_blind_1` a `_6` (la persiana baja hasta cerrar). La hoja abierta sale del tramo, así que

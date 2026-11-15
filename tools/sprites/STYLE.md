@@ -45,8 +45,10 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
    - *Objetos de pared* (`pieces/wall_items.py`): cuadro con marco de madera naranja de 3 px y tres dibujos
      (paisaje, bloques de color, mar con velero); reloj redondo de aro negro, esfera crema, agujas a las 10:10 y
      segundero rojo; pizarra blanca de marco de aluminio con garabatos en azul, rojo y verde y bandeja con dos
-     marcadores; televisor (la pantalla de presentaciones) negro apagado con filo gris azulado y reflejos en
-     diagonal, sobre una repisa de madera naranja; aire acondicionado split largo y bajo, frente blanco verdoso,
+     marcadores; televisor grande (la pantalla de presentaciones, en dos bordes, de media pared a casi el techo) colgado
+     sin repisa: marco negro delgado con filo gris claro, pantalla apagada con reflejos finos en diagonal y dos
+     soportes cortos abajo; encendido (Sala de reuniones) muestra una diapositiva clara con barra de título azul:
+     barras, torta con leyenda o portada con logo, que se arma en 12 cuadros (`_play_1` a `_12`); aire acondicionado split largo y bajo, frente blanco verdoso,
      tapa gris con panel claro, rejilla negra abajo y luz roja.
    - *Decoración de piso* (`pieces/decor.py`): lámpara de pie de base negra, poste de metal y pantalla crema en
      cono; alfombra vino con borde crema de grecas, filete dorado y medallón en rombo azul; pecera sobre un mueble de

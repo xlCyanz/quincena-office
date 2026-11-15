@@ -675,13 +675,48 @@ def check_wall_frames(report, frames, directory, manifest):
         report.check(base, steps == list(range(1, expected + 1)), "cuadros 1 a %d completos (hay %s)" % (expected, steps))
 
 
+def check_item_frames(report, frames, directory):
+    """frames: nombre -> (arr, entry) de los cuadros de un objeto de pared (kind 'wall_item_frame'). Cada
+    cuadro tiene el lienzo, el apoyo y la silueta de su pieza (solo cambia lo de adentro)."""
+    sets = {}
+    for name, (arr, entry) in sorted(frames.items()):
+        base = (entry or {}).get("base")
+        if not base:
+            report.check(name, False, "cuadro de objeto de pared con base en el manifiesto")
+            continue
+        sets.setdefault(base, []).append((name, arr, entry))
+        path = os.path.join(directory, base)
+        if not os.path.isfile(path):
+            report.check(name, False, "existe la pieza %s" % base)
+            continue
+        base_arr = np.array(Image.open(path).convert("RGBA"))
+        report.check(name, base_arr.shape == arr.shape, "mismo lienzo que %s" % base)
+        if base_arr.shape != arr.shape:
+            continue
+        report.check(name, ((base_arr[..., 3] == 255) == (arr[..., 3] == 255)).all(),
+                     "misma silueta que %s (solo cambia lo de adentro)" % base)
+    for base, items in sorted(sets.items()):
+        steps = sorted(int(e.get("frame", 0)) for _n, _a, e in items)
+        expected = int(items[0][2].get("frames", len(items)))
+        report.check(base, steps == list(range(1, expected + 1)), "cuadros 1 a %d completos (hay %s)" % (expected, steps))
+        anchors = set(tuple(e.get("anchor") or ()) for _n, _a, e in items)
+        report.check(base, len(anchors) == 1, "sus %d cuadros tienen el mismo apoyo" % len(items))
+
+
 def check_other(report, name, arr, entry, kind):
     height, width = arr.shape[:2]
     opaque = arr[..., 3] == 255
     rows = np.nonzero(opaque.any(axis=1))[0]
     lowest = int(rows.max()) if len(rows) else -1
     if kind == "wall_item":
-        report.check(name, (width, height) == (64, 128), "lienzo de objeto de pared 64×128 (es %dx%d)" % (width, height))
+        # 64×128 (sección 7) o 128×192 para el que ocupa dos bordes y sube hasta cerca del techo (el televisor).
+        report.check(name, (width, height) in ((64, 128), (128, 192)),
+                     "lienzo de objeto de pared 64×128 o 128×192 (es %dx%d)" % (width, height))
+        if entry is not None and entry.get("anchor") is not None:
+            expected = [width / 2.0, float(height - width / 4)]
+            report.check(name, [float(v) for v in entry["anchor"]] == expected,
+                         "apoyo del objeto de pared en (%g, %g), el punto medio del borde en el piso"
+                         % tuple(expected))
     elif kind == "character":
         report.check(name, (width, height) == (128, 128), "lienzo de personaje 128×128 (es %dx%d)" % (width, height))
         if not (104 <= lowest <= 119):
@@ -731,6 +766,7 @@ def run(directory, verbose=False, groups=None):
     floors = {}
     walls = {}
     frames = {}
+    item_frames = {}
     for path in paths:
         name = os.path.basename(path)
         image = Image.open(path)
@@ -758,6 +794,8 @@ def run(directory, verbose=False, groups=None):
                 check_furniture(report, name, arr, entry, kind)
         elif kind == "wall_frame":
             frames[name] = (arr, entry)
+        elif kind == "wall_item_frame":
+            item_frames[name] = (arr, entry)
         elif kind in ("wall_item", "character", "tree", "overlay", "shadow"):
             check_other(report, name, arr, entry, kind)
         else:
@@ -767,6 +805,7 @@ def run(directory, verbose=False, groups=None):
         check_floor_group(report, material, floors[material].keys(), floors[material])
     check_wall_groups(report, walls)
     check_wall_frames(report, frames, directory, manifest)
+    check_item_frames(report, item_frames, directory)
     missing = sorted(set(manifest) - set(os.path.basename(p) for p in paths))
     for name in missing:
         report.warn(name, "está en el manifiesto pero no hay PNG")
