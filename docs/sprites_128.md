@@ -124,6 +124,9 @@ interiores) van **bajitas** para ver adentro.
 | Puerta doble de vidrio | 50 → 100 | 10 → 20 | vidrio `a9d4e6`, marco `4f5862` | 72×160 / 72×64 |
 
 - La pieza baja es el **zócalo** de la alta: mismo color y misma cara de arriba.
+- Colores de pared: cada pieza (tramo, puerta, ventana y poste de esquina) viene en varios colores de cara con la
+  misma tapa: sin color en el nombre la de siempre, y `wall_<color>_tall_x`, `door_<color>_low_y`… para las demás
+  (beige, white, sage, peach). Un tramo empalma con los de su mismo color.
 - Los tramos se ponen uno al lado del otro: el extremo de uno debe empalmar con el siguiente (y con una esquina en L).
 
 ## 9. Personajes

@@ -57,6 +57,9 @@ LOW = iso.WALL_LOW_HEIGHT  # 20 px de sprite
 WALL_TOP = iso.world_px(WALL_DATA["height"])  # 120
 DOOR_TOP = iso.world_px(DOOR_DATA["height"])  # 92
 CAP_H = 2  # alto de la tapa ciruela (su cara de arriba es el grosor de la pared)
+# Sin contorno donde la pared da contra el piso: como en la referencia, la cara llega limpia al
+# piso (el contorno grueso de los muebles ahí se ve como una raya negra a lo largo de la pared).
+FLOOR_LINE = 0
 
 # Orden de dibujo: por la Y del apoyo, como en el juego. Dos tramos que se tocan en una esquina
 # pueden tener la MISMA Y: ahí va primero el _y y después el _x (sort_bias en el manifiesto).
@@ -68,8 +71,42 @@ POST_SORT_BIAS = 17.0
 
 # Cara de la pared: WALL_COOL de STYLE.md (arriba 96acad, lados 899da0) con el contorno ciruela
 # de la tapa, así toda la pared lleva el mismo borde oscuro de la «maqueta».
-WALL = pal.style_ramp("96acad", side="899da0", shadow="899da0", outline="21161a", deep="3e2e33",
-                      light="a3b6b7", name="wall_cool")
+# Colores de la cara (todos con la tapa y el contorno ciruela). La fría es la de siempre y sus
+# piezas no llevan color en el nombre; las demás van como wall_<color>_tall_x, door_<color>_…,
+# window_<color>_… y wall_<color>_tall_corner_…. Cada una: (arriba, cara, brillo).
+WALL_COLORS = (
+    ("cool", "96acad", "899da0", "a3b6b7"),
+    ("beige", "c2b7a3", "b3a792", "cfc5b3"),
+    ("white", "d6d3cb", "c8c4bb", "e2e0d9"),
+    ("sage", "9fb397", "91a689", "afc1a7"),
+    ("peach", "d3ad97", "c69f88", "ddbca8"),
+)
+DEFAULT_COLOR = "cool"
+
+
+def wall_ramp(color):
+    for name, top, face, light in WALL_COLORS:
+        if name == color:
+            return pal.style_ramp(top, side=face, shadow=face, outline="21161a", deep="3e2e33",
+                                  light=light, name="wall_" + name)
+    raise KeyError(color)
+
+
+def colored(name, color):
+    """Nombre de una pieza en un color: wall_tall_x -> wall_beige_tall_x (la fría no cambia)."""
+    if color == DEFAULT_COLOR:
+        return name
+    head, rest = name.split("_", 1)
+    return "%s_%s_%s" % (head, color, rest)
+
+
+WALL = wall_ramp(DEFAULT_COLOR)
+
+
+def use_color(color):
+    """Cambia la rampa de la cara con la que se dibujan las piezas que siguen."""
+    global WALL
+    WALL = wall_ramp(color)
 CAP = pal.WALL_CAP  # tapa y canto: 584549 arriba, 493539 / 3e2e33 a los lados, contorno 21161a
 
 # Puerta (fila «Puerta» de STYLE.md): la hoja se ve en una cara lateral, así que su beige afa08d
@@ -178,9 +215,9 @@ def wall_block(f, x0, x1, z0, z1, top=True):
         f.box(x0, x1, -HALF, HALF, z0, z1, WALL, name="wall", part="wall")
 
 
-def wall_model(f, height):
+def wall_model(f, height, x0=0.0, x1=1.0):
     """Tramo de pared: x de 0 a 1 a lo largo, ±4 px de grosor, cara lisa y tapa ciruela."""
-    wall_block(f, 0, 1, 0, height)
+    wall_block(f, x0, x1, 0, height)
 
 
 def paint_canto(c):
@@ -377,13 +414,22 @@ def post_piece(neighbors):
     big_w, big_h = 192, height + 112
     origin = (96.0, big_h - 56.0)
     c = iso.Canvas(big_w, big_h, origin, size=(1, 1), rotation=0, swap=False, kind="post", anchor=origin)
-    post = c.box(-HALF, HALF, -HALF, HALF, 0, height - CAP_H, WALL, name="post")
+    # Donde una pared alta termina sobre una baja (esquinas izquierda y derecha) el poste es el
+    # corte de la pared y va entero en ciruela, como el canto de la «maqueta» de la referencia.
+    ramp = CAP if neighbors in (CORNERS["wall_tall_corner_left"], CORNERS["wall_tall_corner_right"]) else WALL
+    post = c.box(-HALF, HALF, -HALF, HALF, 0, height - CAP_H, ramp, name="post")
     c.box(-HALF, HALF, -HALF, HALF, height - CAP_H, height, CAP, part=post)
     for code, along, ox, oy in ((neighbors[0], "x", -1.0, 0.0), (neighbors[1], "y", 0.0, -1.0),
                                 (neighbors[2], "x", 0.0, 0.0), (neighbors[3], "y", 0.0, 0.0)):
         if code != "n":
-            wall_model(Frame(c, along, ox, oy, part=post), POST_HEIGHTS[code])
-    image = np.array(c.image)
+            # Un tramo más bajo que el poste arranca en el borde del poste, no en el vértice: si no,
+            # su cara (del mismo plano que la del poste) tapa medio poste y en las esquinas ciruela
+            # queda una franja fría hasta el piso. Los del alto del poste siguen desde el vértice.
+            start, end = 0.0, 1.0
+            if POST_HEIGHTS[code] < height:
+                start, end = (0.0, 1.0 - HALF) if ox < 0 or oy < 0 else (HALF, 1.0)
+            wall_model(Frame(c, along, ox, oy, part=post), POST_HEIGHTS[code], start, end)
+    image = np.array(c.finish(ground_outline=FLOOR_LINE))
     alone = iso.Canvas(big_w, big_h, origin, size=(1, 1), rotation=0, swap=False, kind="post", anchor=origin)
     alone.box(-HALF, HALF, -HALF, HALF, 0, height, WALL)
     inside = np.array(alone.image)[..., 3] == 255
@@ -434,9 +480,9 @@ class WallLayout(object):
                  get((vx, vy - 1, "y"), "n"), get((vx - 1, vy, "x"), "n"))
         return tuple(CODE_FAMILY.get(code, "n") for code in codes)
 
-    def apply(self, scene, out_dir, posts=True, shadows=None):
+    def apply(self, scene, out_dir, posts=True, shadows=None, color=DEFAULT_COLOR):
         for (x, y, axis), code in sorted(self.edges.items()):
-            image = _load(out_dir, "%s_%s" % (CODE_PIECES[code], axis))
+            image = _load(out_dir, colored("%s_%s" % (CODE_PIECES[code], axis), color))
             scene.add_wall(image, x, y, axis, bias=SORT_BIAS_X if axis == "x" else 0.0)
             if shadows is not None and CODE_FAMILY[code] == "t":
                 if axis == "x":
@@ -462,7 +508,7 @@ class WallLayout(object):
             if name is None:
                 missing.append(neighbors)
                 continue
-            image = _load(out_dir, name)
+            image = _load(out_dir, colored(name, color))
             px, py = scene.cell_point(vx, vy)
             ax, ay = image.size[0] / 2.0, image.size[1] - 4.0
             scene._items.append((py + POST_SORT_BIAS, len(scene._items), image,
@@ -504,11 +550,11 @@ def _add_character(out_dir, scene, x, y):
         scene.add(sheet.load(path), x, y, anchor=(64, 112))
 
 
-def build_scene(out_dir, layout, cols, rows, top, seed, posts=True, people=()):
+def build_scene(out_dir, layout, cols, rows, top, seed, posts=True, people=(), color=DEFAULT_COLOR):
     scene = sheet.Scene(cols, rows, top=top)
     scene.fill_floor(_floor_tiles(out_dir), seed=seed)
     shadows = dict((axis, _load(out_dir, "wall_tall_%s_shadow" % axis)) for axis in ("x", "y"))
-    missing = layout.apply(scene, out_dir, posts, shadows)
+    missing = layout.apply(scene, out_dir, posts, shadows, color)
     for x, y in people:
         _add_character(out_dir, scene, x, y)
     return scene, missing
@@ -542,6 +588,12 @@ def review_sheets(out_dir, names):
     sheet.contact_sheet(views, columns=1, scale=1, labels=False).save(os.path.join(out_dir, "sheet_walls_corners.png"))
     interior, _missing = build_scene(out_dir, interior_layout(), 5, 5, 40, 7, people=((1, 1),))
     interior.render(scale=3).save(os.path.join(out_dir, "sheet_walls_interior.png"))
+    colors = []
+    for color, _top, _face, _light in WALL_COLORS:
+        scene, _missing = build_scene(out_dir, room_layout(cols, rows, "y"), cols, rows, 150, 4,
+                                      people=((1, 1),), color=color)
+        colors.append((color, scene.render(scale=1)))
+    sheet.contact_sheet(colors, columns=len(colors), scale=2).save(os.path.join(out_dir, "sheet_walls_colors.png"))
     folder = os.path.join(out_dir, "_sheets")
     if not os.path.isdir(folder):
         os.makedirs(folder)
@@ -566,6 +618,21 @@ def anchor_meta(c, axis):
 def build(out_dir):
     files = []
     names = []
+    for color, _top, _face, _light in WALL_COLORS:
+        use_color(color)
+        build_color(out_dir, color, files, names if color == DEFAULT_COLOR else [])
+    use_color(DEFAULT_COLOR)
+    for axis in ("x", "y"):
+        name = "wall_tall_%s_shadow" % axis
+        files.append(iso.save(wall_shadow(axis), out_dir, name, kind="shadow", footprint=[1, 1], anchor=[64, 96],
+                              placed_on="casilla de adentro, delante de la pared alta del borde"))
+        names.append(name)
+    review_sheets(out_dir, names)  # la hoja de piezas, solo en el color de siempre
+    return files
+
+
+def build_color(out_dir, color, files, names):
+    """Tramos, puertas, ventanas y postes con la cara del color de turno (use_color)."""
     makers = (("wall", wall_piece), ("door", door_piece), ("window", window_piece))
     for piece, maker in makers:
         for tall in (True, False):
@@ -583,21 +650,17 @@ def build(out_dir):
                     meta["height"] = WINDOW_DATA["height"]
                 else:
                     meta["height"] = WALL_DATA["height"]
-                files.append(iso.save(c, out_dir, name, **meta))
+                c.finish(ground_outline=FLOOR_LINE)
+                name = colored(name, color)
+                files.append(iso.save(c, out_dir, name, wall_color=color, **meta))
                 names.append(name)
-    for name, neighbors in sorted(CORNERS.items()):
+    for corner, neighbors in sorted(CORNERS.items()):
         image, anchor = post_piece(neighbors)
         height = max(POST_HEIGHTS[code] for code in neighbors)
-        files.append(iso.save(image, out_dir, name, kind="post", anchor=list(anchor),
+        name = colored(corner, color)
+        files.append(iso.save(image, out_dir, name, kind="post", anchor=list(anchor), wall_color=color,
                               anchor_at="vértice de la cuadrícula, en el piso",
                               neighbors=list(neighbors), neighbor_order="-x -y +x +y",
                               height=WALL_DATA["height"] if height > LOW else LOW_HEIGHT,
                               sort_after="tramos del vértice: Y del vértice + %g" % POST_SORT_BIAS))
         names.append(name)
-    for axis in ("x", "y"):
-        name = "wall_tall_%s_shadow" % axis
-        files.append(iso.save(wall_shadow(axis), out_dir, name, kind="shadow", footprint=[1, 1], anchor=[64, 96],
-                              placed_on="casilla de adentro, delante de la pared alta del borde"))
-        names.append(name)
-    review_sheets(out_dir, names)
-    return files

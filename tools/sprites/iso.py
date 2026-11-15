@@ -1412,7 +1412,12 @@ class Canvas(object):
         shade = np.where(line & ~e["silhouette"], line_index, shade)
         part_outline = np.array([p["outline"] for p in self.parts] + [True], dtype=bool)
         sil = e["silhouette"] & part_outline[part_or_none] & ~b["no_outline"]
-        if o["ground_outline"] and int(o["ground_outline"]) > 1:
+        if o["ground_outline"] is not None and int(o["ground_outline"]) == 0:
+            # Sin contorno donde la silueta da contra el piso (paredes: la cara llega limpia al
+            # piso, como en la referencia).
+            down_a = _shift(a, 1, 0, False)
+            sil = sil & ~(~down_a & (side != SIDE_TOP) & (b["z"] <= GROUND_Z))
+        elif o["ground_outline"] and int(o["ground_outline"]) > 1:
             # Contorno más grueso donde la silueta da contra el piso: el pixel de abajo de una cara
             # lateral (o curva) apoyada en z = 0 y los (n − 1) de encima, de la misma pieza.
             down_a = _shift(a, 1, 0, False)
@@ -1450,7 +1455,7 @@ class Canvas(object):
                        opción que se pasa explícita cambia la del preset
         outline        contorno de 1 px en la silueta con el tono outline_index (OUTLINE) de cada rampa
         ground_outline grosor del contorno donde la silueta da contra el piso (cara lateral apoyada
-                       en z = 0): 2 en 'salvaje', 1 = igual que el resto
+                       en z = 0): 2 en 'salvaje', 1 = igual que el resto, 0 = sin contorno ahí
         highlight      brillo de 1 px en la arista superior izquierda de las caras de arriba:
                        'inner' = por dentro del contorno (en la arista misma donde no hay
                        contorno); 'edge' = en el borde mismo (sin contorno ahí); 'upper' = como

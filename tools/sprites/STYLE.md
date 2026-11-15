@@ -24,7 +24,13 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
 5. **Sombras dentro de la planta**: bajo los muebles una mancha de un tono oscuro del piso, sin transparencia en el
    sprite (archivo `*_shadow` aparte, como dice la guía).
 6. **Paredes**: cara interior lisa de color pastel frío; tapa de la pared y canto de la losa del piso en ciruela
-   oscuro (borde de la «maqueta»). El zócalo bajo repite la tapa ciruela.
+   oscuro (borde de la «maqueta»). El zócalo bajo repite la tapa ciruela. Sin contorno donde la pared toca el
+   piso (la cara llega limpia, `finish(ground_outline=0)`), y donde una pared alta termina sobre una baja el
+   corte (el poste de esquina) va entero en ciruela, hasta el piso (el tramo bajo arranca en el borde del poste).
+   Cinco colores de cara con la misma tapa ciruela (`WALL_COLORS` en `pieces/walls.py`): fría `899da0` (la de
+   siempre, sin color en el nombre), beige `b3a792`, blanco `c8c4bb`, salvia `91a689` y durazno `c69f88`. Cada
+   color trae tramos, puertas, ventanas y postes: `wall_<color>_tall_x`, `door_<color>_low_y`,
+   `wall_<color>_tall_corner_left`… La sombra de la pared alta es una sola para todos.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
      la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del

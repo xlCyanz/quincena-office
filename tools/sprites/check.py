@@ -580,6 +580,8 @@ def check_wall_groups(report, walls):
         axis, tall, piece = wall_info(name, entry)
         if axis in ("x", "y") and tall is not None:
             by_key[(piece, axis, bool(tall))] = (name, arr, entry)
+    # Un tramo solo empalma con tramos de su mismo color de pared (wall_color en el manifiesto).
+    color_of = dict((key, (value[2] or {}).get("wall_color")) for key, value in by_key.items())
     for (piece, axis, tall), (name, arr, entry) in sorted(by_key.items()):
         joins = (entry or {}).get("joins")
         if joins is None:
@@ -591,7 +593,8 @@ def check_wall_groups(report, walls):
         if joins:
             partners = [(name, arr)]
             for other_piece in sorted(set(k[0] for k in by_key)):
-                if other_piece != piece and other_piece.startswith("wall") and (other_piece, axis, tall) in by_key:
+                if other_piece != piece and other_piece.startswith("wall") and (other_piece, axis, tall) in by_key \
+                        and color_of[(other_piece, axis, tall)] == color_of[(piece, axis, tall)]:
                     partners.append(by_key[(other_piece, axis, tall)][:2])
             for other_name, other_arr in partners:
                 for first, second, label in ((arr, other_arr, "%s seguido de %s" % (name, other_name)),
