@@ -56,7 +56,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   los caminos usan `AStarGrid2D` a doble resolución para que las paredes de borde bloqueen el paso.
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
-- El piso de cada casilla se dibuja como 2×2 losas (`OfficeGrid.FLOOR_TILES_PER_SIDE`, `_draw_floor_tiles`); es solo el dibujo.
+- Suelo con detalle (`GroundPainter`, funciones puras): pisos y terreno se pintan con `DETAIL` (4) veces más píxeles por casilla (256×128) y
+  las capas `Floor` y `Surroundings` se dibujan a 1/4 con `TEXTURE_FILTER_LINEAR_WITH_MIPMAPS`; la casilla sigue midiendo 64×32 en el mundo
+  (`cell_to_world` pasa por la capa). Cada estilo tiene un material (`MATERIALS`): cerámica en 2×2 losas con junta y bisel, madera en 4 tablones
+  con veta, alfombra en cuadros, concreto, pasto con manchas y briznas, grava, acera y asfalto; los dibujos se repiten cada casilla sin costuras
+  (`noise` periódico). El TileSet se pinta una vez por ejecución (~1 s, `OfficeGrid._shared_tile_set`). Es solo el dibujo. Prueba `test_ground`.
 - Cuartos de casilla (como Timberborn, que coloca en bloques enteros y comparte casillas): los muebles con `small` en `data/furniture.json`
   (planta pequeña, zafacón, dispensador de agua y lámpara de pie) ocupan un cuarto de su casilla (`quarter` 0–3 en el mueble, guardado;
   `FurnitureCatalog.get_quarter`, `get_quarter_offset`, `quarter_at`, `overlaps`). Caben hasta 4 chicos por casilla y nunca con uno grande;

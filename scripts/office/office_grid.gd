@@ -13,10 +13,6 @@ const NO_CELL := Vector2i(-1, -1)
 
 ## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos con zoom.
 const TILE_OVERLAP_PX: float = 1.0
-## Losas por lado en cada casilla de piso (2 = cuatro losas de 50 cm por m²).
-const FLOOR_TILES_PER_SIDE: int = 2
-## Ancho de la junta entre losas, en fracción de losa.
-const FLOOR_JOINT: float = 0.05
 
 var hovered_cell: Vector2i = NO_CELL
 
@@ -24,6 +20,12 @@ var hovered_cell: Vector2i = NO_CELL
 var view_rotation: int = 0
 
 var _floor_source_id: int = -1
+# El TileSet del suelo se pinta una sola vez por ejecución (tarda ~1 s) y lo comparten
+# todas las partidas: depende solo de los colores de data/.
+static var _shared_tile_set: TileSet = null
+static var _shared_rows: Dictionary[String, int] = {}
+static var _shared_columns: Dictionary[String, int] = {}
+static var _shared_source_id: int = -1
 var _lot := Lot.new()
 var _site_rect := Rect2i()
 # Casilla de fuera del local junto a la entrada (de ahí sale el camino a la calle).
@@ -49,9 +51,14 @@ var _dirt_overlay := DirtOverlay.new()
 
 
 func _ready() -> void:
-	_floor.tile_set = _build_tile_set()
+	_floor.tile_set = _get_tile_set()
 	_surroundings.name = "Surroundings"
 	_surroundings.tile_set = _floor.tile_set
+	# El suelo se pinta con GroundPainter.DETAIL veces más píxeles: la capa se achica a la
+	# casilla de siempre y se suaviza, así de cerca no se ve pixelado.
+	for layer: TileMapLayer in [_floor, _surroundings]:
+		layer.scale = Vector2.ONE / GroundPainter.DETAIL
+		layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	add_child(_surroundings)
 	move_child(_surroundings, _floor.get_index())
 	_site_border.name = "SiteBorder"
@@ -327,50 +334,68 @@ func update_hover(world_position: Vector2) -> void:
 	hovered_cell = cell
 	_highlight.visible = cell != NO_CELL
 	if _highlight.visible:
-		_highlight.position = _floor.position + _floor.map_to_local(_to_view(cell))
+		_highlight.position = to_local(cell_to_world(cell))
 
 
-# Crea el TileSet en código con rombos de colores generados (arte provisional).
+## Pinta el TileSet del suelo si todavía no está (tarda ~1 s): el menú principal y las
+## pruebas lo llaman antes, así la partida no se traba en su primer cuadro.
+static func prepare_tile_set() -> void:
+	if _shared_tile_set == null:
+		_shared_tile_set = _build_tile_set()
+
+
+# El TileSet del suelo, pintado la primera vez y compartido después.
+func _get_tile_set() -> TileSet:
+	prepare_tile_set()
+	_atlas_rows = _shared_rows
+	_atlas_columns = _shared_columns
+	_floor_source_id = _shared_source_id
+	return _shared_tile_set
+
+
+# Crea el TileSet en código con texturas generadas (GroundPainter, arte provisional).
 # Cada fila del atlas es un estilo de piso o del mapa; cada columna, una variante (los
 # pisos usan dos, en tablero). La calle con línea tiene una columna por dirección.
-func _build_tile_set() -> TileSet:
+static func _build_tile_set() -> TileSet:
 	var floor_types: Array[String] = [ConstructionCatalog.BARE_FLOOR, ConstructionCatalog.TERRAIN]
 	floor_types.append_array(ConstructionCatalog.get_floor_types())
 	var styles: Array[Array] = []
-	_atlas_rows = {}
-	_atlas_columns = {}
+	_shared_rows = {}
+	_shared_columns = {}
 	for floor_type: String in floor_types:
-		_atlas_rows[floor_type] = styles.size()
+		_shared_rows[floor_type] = styles.size()
 		styles.append(ConstructionCatalog.get_floor_colors(floor_type))
 	var map_styles: Dictionary[String, Array] = MapDecor.get_styles()
 	for style: String in map_styles:
-		_atlas_rows[style] = styles.size()
+		_shared_rows[style] = styles.size()
 		styles.append(map_styles[style])
 	var road: Array = map_styles.get(MapDecor.ROAD, [Color.DIM_GRAY])
-	_atlas_rows[MapDecor.ROAD_LINE] = styles.size()
+	_shared_rows[MapDecor.ROAD_LINE] = styles.size()
 	styles.append([road[0], road[0]])
 	var columns: int = 2
 	for row_colors: Array in styles:
 		columns = maxi(columns, row_colors.size())
-	for style: String in _atlas_rows:
-		_atlas_columns[style] = styles[_atlas_rows[style]].size()
+	for style: String in _shared_rows:
+		_shared_columns[style] = styles[_shared_rows[style]].size()
 
-	var tile_size: Vector2i = GameConstants.TILE_SIZE
+	var tile_size: Vector2i = GameConstants.TILE_SIZE * GroundPainter.DETAIL
+	var overlap: float = TILE_OVERLAP_PX * GroundPainter.DETAIL
 	var image := Image.create_empty(tile_size.x * columns, tile_size.y * styles.size(), false, Image.FORMAT_RGBA8)
-	# Los pisos de verdad (no el terreno ni el mapa) van en losas: 2 × 2 por casilla.
-	var tiled_rows: Array[int] = [_atlas_rows[ConstructionCatalog.BARE_FLOOR]]
-	for floor_type: String in ConstructionCatalog.get_floor_types():
-		tiled_rows.append(_atlas_rows[floor_type])
-	for row: int in range(styles.size()):
-		for column: int in range(styles[row].size()):
-			if tiled_rows.has(row):
-				_draw_floor_tiles(image, Vector2i(column, row) * tile_size, styles[row])
-			else:
-				_draw_diamond(image, Vector2i(column, row) * tile_size, styles[row][column])
+	var row_styles: Dictionary[int, String] = {}
+	for style: String in _shared_rows:
+		row_styles[_shared_rows[style]] = style
 	var line_color := Color(String(MapDecor.get_data().get("road_line_color", "e0cf78")))
-	var line_row: int = _atlas_rows[MapDecor.ROAD_LINE]
-	_draw_road_line(image, Vector2i(0, line_row) * tile_size, Vector2(2.0, 1.0), line_color)
-	_draw_road_line(image, Vector2i(1, line_row) * tile_size, Vector2(-2.0, 1.0), line_color)
+	for row: int in range(styles.size()):
+		var style: String = row_styles[row]
+		for column: int in range(styles[row].size()):
+			var offset: Vector2i = Vector2i(column, row) * tile_size
+			if style == MapDecor.ROAD_LINE:
+				# Una columna por dirección de la calle: (2, 1) es el eje x de la pantalla isométrica, (-2, 1) el eje y.
+				GroundPainter.paint(image, offset, tile_size, style, road, 0, overlap, line_color,
+					Vector2(2.0, 1.0) if column == 0 else Vector2(-2.0, 1.0))
+			else:
+				GroundPainter.paint(image, offset, tile_size, style, styles[row], column, overlap)
+	image.generate_mipmaps()
 
 	var source := TileSetAtlasSource.new()
 	source.texture = ImageTexture.create_from_image(image)
@@ -383,58 +408,5 @@ func _build_tile_set() -> TileSet:
 	tile_set.tile_shape = TileSet.TILE_SHAPE_ISOMETRIC
 	tile_set.tile_layout = TileSet.TILE_LAYOUT_DIAMOND_DOWN
 	tile_set.tile_size = tile_size
-	_floor_source_id = tile_set.add_source(source)
+	_shared_source_id = tile_set.add_source(source)
 	return tile_set
-
-
-# Pinta una casilla de piso partida en FLOOR_TILES_PER_SIDE × FLOOR_TILES_PER_SIDE losas
-# en tablero (los dos colores del piso) con una junta un poco más oscura. Como cada lado
-# tiene un número par de losas, el tablero sigue igual en la casilla de al lado.
-func _draw_floor_tiles(image: Image, offset: Vector2i, colors: Array) -> void:
-	var half: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
-	var limit: float = 1.0 + TILE_OVERLAP_PX / half.y
-	var tiles: float = float(FLOOR_TILES_PER_SIDE)
-	var first: Color = colors[0]
-	var second: Color = colors[1] if colors.size() > 1 else colors[0]
-	for y: int in range(GameConstants.TILE_SIZE.y):
-		for x: int in range(GameConstants.TILE_SIZE.x):
-			var px: float = (x + 0.5 - half.x) / half.x
-			var py: float = (y + 0.5 - half.y) / half.y
-			if absf(px) + absf(py) > limit:
-				continue
-			# Coordenadas dentro de la casilla (0–1 en cada eje de la cuadrícula).
-			var u: float = clampf((py + px) / 2.0 + 0.5, 0.0, 0.9999) * tiles
-			var v: float = clampf((py - px) / 2.0 + 0.5, 0.0, 0.9999) * tiles
-			var color: Color = first if (floori(u) + floori(v)) % 2 == 0 else second
-			var edge_u: float = minf(u - floorf(u), 1.0 - (u - floorf(u)))
-			var edge_v: float = minf(v - floorf(v), 1.0 - (v - floorf(v)))
-			if minf(edge_u, edge_v) < FLOOR_JOINT:
-				color = color.darkened(0.12)
-			image.set_pixel(offset.x + x, offset.y + y, color)
-
-
-# Pinta la línea de la calle por el centro de una casilla, en la dirección direction
-# (en píxeles: (2, 1) es el eje x de la pantalla isométrica, (-2, 1) el eje y).
-func _draw_road_line(image: Image, offset: Vector2i, direction: Vector2, color: Color) -> void:
-	var half: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
-	var unit: Vector2 = direction.normalized()
-	var normal := Vector2(-unit.y, unit.x)
-	for y: int in range(GameConstants.TILE_SIZE.y):
-		for x: int in range(GameConstants.TILE_SIZE.x):
-			var point := Vector2(x + 0.5, y + 0.5) - half
-			if absf(point.dot(normal)) <= 1.2 and absf(point.dot(unit)) <= half.x * 0.6:
-				image.set_pixel(offset.x + x, offset.y + y, color)
-
-
-# Pinta un rombo que llena una casilla. Usa el centro de cada píxel y se pasa
-# TILE_OVERLAP_PX del borde: con zoom no entero (0.5 o 1.5) los rombos que encajan
-# justo dejan rayas de huecos entre casillas; con el solape, el vecino las tapa.
-func _draw_diamond(image: Image, offset: Vector2i, color: Color) -> void:
-	var half: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
-	var limit: float = 1.0 + TILE_OVERLAP_PX / half.y
-	for y: int in range(GameConstants.TILE_SIZE.y):
-		for x: int in range(GameConstants.TILE_SIZE.x):
-			var dx: float = absf(x + 0.5 - half.x) / half.x
-			var dy: float = absf(y + 0.5 - half.y) / half.y
-			if dx + dy <= limit:
-				image.set_pixel(offset.x + x, offset.y + y, color)
