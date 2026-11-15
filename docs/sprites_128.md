@@ -128,6 +128,16 @@ interiores) van **bajitas** para ver adentro.
   misma tapa: sin color en el nombre la de siempre, y `wall_<color>_tall_x`, `door_<color>_low_y`… para las demás
   (beige, white, sage, peach). Un tramo empalma con los de su mismo color.
 - Los tramos se ponen uno al lado del otro: el extremo de uno debe empalmar con el siguiente (y con una esquina en L).
+- Variantes de puerta, con las mismas medidas: `door_*` (beige), `door_wood_*` (madera) y `door_office_*` (lisa
+  con mirilla y marco de aluminio). La puerta doble de vidrio es `glass_door_*`; la ventana, de oficina (aluminio y
+  persiana veneciana). Para la Recepción hay también una doble de vidrio **sin marco** que ocupa **dos bordes
+  seguidos**: dos hojas de 48 px (hueco de 96 px, 16 px de pared a cada lado), en dos mitades
+  `glass_door_double_a_*` (el borde de menor x o y) y `glass_door_double_b_*`, que solo empalman entre sí.
+- Animaciones (solo las piezas altas; el cuadro 0 es la pieza cerrada): `<pieza>_tall_<eje>_open_1` a `_3` en las
+  puertas (la hoja gira 30°, 60° y 90° hacia adentro; la de vidrio tiene dos hojas que abren hacia afuera)
+  y `window_tall_<eje>_blind_1` a `_3` (la persiana baja hasta cerrar). La hoja abierta sale del tramo, así que
+  los cuadros de una animación van en un lienzo propio, igual para los tres; el manifiesto da `anchor` (el mismo
+  punto del piso que la pieza), `base` y `base_offset` (dónde cae el lienzo de la pieza en el cuadro).
 
 ## 9. Personajes
 

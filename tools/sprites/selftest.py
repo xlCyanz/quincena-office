@@ -203,7 +203,17 @@ def build_walls(out_dir):
     for axis in ("x", "y"):
         for tall in (True, False):
             name = "wall_test_%s_%s" % ("tall" if tall else "low", axis)
-            files.append(iso.save(wall_piece(axis, tall), out_dir, name, height=60 if tall else 10))
+            c = wall_piece(axis, tall)
+            files.append(iso.save(c, out_dir, name, height=60 if tall else 10))
+            if tall and axis == "y":
+                # Dos cuadros de animación: la misma pared en un lienzo 8 px más ancho a la izquierda.
+                for step in (1, 2):
+                    arr = np.array(c.image)
+                    frame = np.zeros((arr.shape[0], arr.shape[1] + 8, 4), dtype=np.uint8)
+                    frame[:, 8:] = arr
+                    files.append(iso.save(Image.fromarray(frame, "RGBA"), out_dir, name + "_open_%d" % step,
+                                          kind="wall_frame", base=name + ".png", base_offset=[8, 0],
+                                          anchor=[c.anchor[0] + 8, c.anchor[1]], frame=step, frames=2))
     return files
 
 
@@ -692,6 +702,10 @@ def negative_tests(out_dir):
         ("caras declaradas con la luz al revés", manifest("style_test_r1.png", flat_faces=[
             {"base": "df823d", "declared": True, "faces": {"top": "df823d", "left": "743b0e", "right": "c26b24"},
              "top": 1, "left": 1, "right": 1}]), "FALLA", "luz arriba"),
+        ("cuadro con la pared de otro color", edit("wall_test_tall_y_open_1.png", lambda a: a[..., :3].__setitem__(
+            a[..., 3] > 0, (200, 60, 60))), "FALLA", "alrededor"),
+        ("cuadro con otro apoyo", manifest("wall_test_tall_y_open_2.png", anchor=[10, 10]), "FALLA", "apoyo"),
+        ("falta un cuadro", lambda d: os.remove(os.path.join(d, "wall_test_tall_y_open_2.png")), "FALLA", "cuadros"),
         ("pared en otro lienzo", edit("wall_test_low_y.png", lambda a: np.pad(a, ((0, 0), (0, 8), (0, 0)))),
          "FALLA", "lienzo"),
     ]

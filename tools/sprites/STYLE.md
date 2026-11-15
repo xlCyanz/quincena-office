@@ -31,6 +31,17 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
    siempre, sin color en el nombre), beige `b3a792`, blanco `c8c4bb`, salvia `91a689` y durazno `c69f88`. Cada
    color trae tramos, puertas, ventanas y postes: `wall_<color>_tall_x`, `door_<color>_low_y`,
    `wall_<color>_tall_corner_left`… La sombra de la pared alta es una sola para todos.
+   - *Puertas*: marco y hoja hundida 2 px con manija de metal claro. `door` beige de dos tableros con marco
+     crema, `door_wood` madera naranja de seis tableros con marco de madera, `door_office` lisa gris clara con
+     mirilla de vidrio y marco de aluminio. Las de marco oscuro llevan 8 px de pared a cada lado: el marco
+     no toca la unión con el tramo vecino. Al abrir la hoja gira hacia adentro y toma solo tonos de cara.
+   - *Puerta de vidrio* (Recepción): marco de aluminio oscuro `4f5862`, dos hojas de vidrio `a9d4e6` con
+     perfil de aluminio y tirador vertical, cada una con bisagra en su jamba, que abren hacia afuera (la calle).
+   - *Doble de vidrio sin marco* (Recepción, `glass_door_double_a/_b`): ocupa dos bordes; dos hojas de vidrio
+     templado de 48 px sin perfil, canto celeste más oscuro, herrajes de metal en las esquinas de la bisagra,
+     tirador largo junto al medio y 1 px de luz entre las hojas. Abren hacia afuera.
+   - *Ventana administrativa*: aluminio oscuro, parante en el medio, travesaño que deja una banda fija arriba,
+     vidrio celeste con reflejos en diagonal y persiana veneciana blanca de tablillas de 3 px.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
      la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del

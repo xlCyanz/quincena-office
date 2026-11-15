@@ -628,6 +628,53 @@ def check_wall_groups(report, walls):
                     report.warn(name, "no tiene la " + message)
 
 
+# Cuadros de animación de una pieza de pared (puerta que se abre, persiana): parte de la pared que
+# tiene que quedar igual que en la pieza cerrada.
+FRAME_SAME_MIN = 0.35
+
+
+def check_wall_frames(report, frames, directory, manifest):
+    """frames: nombre -> (arr, entry) de los cuadros (kind 'wall_frame'). Cada cuadro lleva base (la
+    pieza cerrada), base_offset (dónde cae el lienzo de la pieza dentro del cuadro) y anchor."""
+    sets = {}
+    for name, (arr, entry) in sorted(frames.items()):
+        base = (entry or {}).get("base")
+        offset = (entry or {}).get("base_offset")
+        if not base or offset is None:
+            report.check(name, False, "cuadro de animación con base y base_offset en el manifiesto")
+            continue
+        sets.setdefault(base, []).append((name, arr, entry))
+        path = os.path.join(directory, base)
+        if not os.path.isfile(path):
+            report.check(name, False, "existe la pieza cerrada %s" % base)
+            continue
+        base_arr = np.array(Image.open(path).convert("RGBA"))
+        bh, bw = base_arr.shape[:2]
+        ox, oy = int(offset[0]), int(offset[1])
+        inside = 0 <= ox and 0 <= oy and ox + bw <= arr.shape[1] and oy + bh <= arr.shape[0]
+        report.check(name, inside, "el lienzo de %s cabe en el cuadro (corrido %d, %d)" % (base, ox, oy))
+        if not inside:
+            continue
+        region = arr[oy:oy + bh, ox:ox + bw]
+        opaque = base_arr[..., 3] == 255
+        same = (region[opaque] == base_arr[opaque]).all(axis=1).mean() if opaque.any() else 0.0
+        report.check(name, same >= FRAME_SAME_MIN, "la pared alrededor queda como en %s (%.0f %% igual)"
+                     % (base, same * 100))
+        base_anchor = (manifest.get(base) or {}).get("anchor")
+        anchor = entry.get("anchor")
+        if base_anchor and anchor:
+            report.check(name, abs(anchor[0] - base_anchor[0] - ox) < 0.01 and abs(anchor[1] - base_anchor[1] - oy) < 0.01,
+                         "apoyo = el de %s + base_offset" % base)
+    for base, items in sorted(sets.items()):
+        shapes = set(arr.shape for _n, arr, _e in items)
+        anchors = set(tuple(e.get("anchor") or ()) for _n, _a, e in items)
+        report.check(base, len(shapes) == 1 and len(anchors) == 1,
+                     "sus %d cuadros tienen el mismo lienzo y el mismo apoyo" % len(items))
+        steps = sorted(int(e.get("frame", 0)) for _n, _a, e in items)
+        expected = int(items[0][2].get("frames", len(items)))
+        report.check(base, steps == list(range(1, expected + 1)), "cuadros 1 a %d completos (hay %s)" % (expected, steps))
+
+
 def check_other(report, name, arr, entry, kind):
     height, width = arr.shape[:2]
     opaque = arr[..., 3] == 255
@@ -683,6 +730,7 @@ def run(directory, verbose=False, groups=None):
         return 0
     floors = {}
     walls = {}
+    frames = {}
     for path in paths:
         name = os.path.basename(path)
         image = Image.open(path)
@@ -708,6 +756,8 @@ def run(directory, verbose=False, groups=None):
                 report.warn(name, "mueble sin manifiesto: no se comprueba lienzo, apoyo ni caras")
             else:
                 check_furniture(report, name, arr, entry, kind)
+        elif kind == "wall_frame":
+            frames[name] = (arr, entry)
         elif kind in ("wall_item", "character", "tree", "overlay", "shadow"):
             check_other(report, name, arr, entry, kind)
         else:
@@ -716,6 +766,7 @@ def run(directory, verbose=False, groups=None):
     for material in sorted(floors):
         check_floor_group(report, material, floors[material].keys(), floors[material])
     check_wall_groups(report, walls)
+    check_wall_frames(report, frames, directory, manifest)
     missing = sorted(set(manifest) - set(os.path.basename(p) for p in paths))
     for name in missing:
         report.warn(name, "está en el manifiesto pero no hay PNG")
