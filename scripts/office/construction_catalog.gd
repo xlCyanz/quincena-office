@@ -81,6 +81,11 @@ static func get_glass_door_ambiance() -> int:
 
 
 ## Colores (tablero de ajedrez) de un tipo de piso.
+## Alto en píxeles de las paredes, puertas y ventanas bajas (todas menos las de atrás).
+static func get_low_wall_height() -> float:
+	return float(_catalog().get("low_wall_height", 10))
+
+
 static func get_floor_colors(floor_type: String) -> Array[Color]:
 	var colors: Array[Color] = []
 	for hex: Variant in get_floor(floor_type).get("colors", ["888888", "777777"]):

@@ -9,8 +9,8 @@ const RIGHT_FACE_DARKEN: float = 0.4
 
 
 ## base son las cuatro esquinas de la base, en orden alrededor del rectángulo, en las
-## coordenadas locales del nodo; height, la altura en píxeles. Con la vista girada
-## (OfficeGrid.view_rotation) la primera esquina ya no es la de arriba: se busca.
+## coordenadas locales del nodo; height, la altura en píxeles. La esquina de arriba se
+## busca (no hace falta que sea la primera).
 static func draw(canvas: CanvasItem, base: PackedVector2Array, height: float, color: Color) -> void:
 	if base.size() != 4:
 		return

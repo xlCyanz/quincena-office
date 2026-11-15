@@ -2,9 +2,7 @@
 # (MapDecor) y resalta la casilla que está bajo el cursor. Es el único lugar que convierte
 # entre píxeles y casillas; el resto del juego trabaja siempre con casillas (Vector2i).
 #
-# La vista se puede girar de a un cuarto de vuelta (view_rotation): las casillas de la
-# lógica no cambian, solo dónde se dibujan. Todo lo que pasa por cell_to_world,
-# grid_to_world y world_to_cell gira solo.
+# La vista es siempre desde la misma esquina (el giro de la vista se quitó después del hito 69).
 class_name OfficeGrid
 extends Node2D
 
@@ -15,9 +13,6 @@ const NO_CELL := Vector2i(-1, -1)
 const TILE_OVERLAP_PX: float = 1.0
 
 var hovered_cell: Vector2i = NO_CELL
-
-## Cuartos de vuelta de la vista, de 0 a 3, en el sentido de las agujas del reloj.
-var view_rotation: int = 0
 
 var _floor_source_id: int = -1
 # El TileSet del suelo se pinta una sola vez por ejecución (tarda ~1 s) y lo comparten
@@ -89,11 +84,11 @@ func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vec
 		for y: int in range(_site_rect.position.y, _site_rect.end.y):
 			var cell := Vector2i(x, y)
 			if not lot.has_point(cell):
-				_floor.set_cell(_to_view(cell), _floor_source_id, _map_tile(cell, tiles.get(cell, MapDecor.GRASS)))
+				_floor.set_cell(cell, _floor_source_id, _map_tile(cell, tiles.get(cell, MapDecor.GRASS)))
 	for cell: Vector2i in lot.get_cells():
 		var floor_type: String = floors.get(cell, ConstructionCatalog.BARE_FLOOR)
 		var row: int = _atlas_rows.get(floor_type, _atlas_rows[ConstructionCatalog.BARE_FLOOR])
-		_floor.set_cell(_to_view(cell), _floor_source_id, Vector2i(posmod(cell.x + cell.y, 2), row))
+		_floor.set_cell(cell, _floor_source_id, Vector2i(posmod(cell.x + cell.y, 2), row))
 	hovered_cell = NO_CELL
 	_highlight.visible = false
 	_place_edge_pieces(edges)
@@ -134,7 +129,15 @@ func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
 		var view := EdgePieceView.new()
 		view.name = "%s_%d_%d_%d" % [edges[edge], edge.x, edge.y, edge.z]
 		_objects.add_child(view)
-		view.setup(self, edge, edges[edge])
+		view.setup(self, edge, edges[edge], is_back_edge(edge))
+
+
+## Indica si un borde es del contorno de atrás: la casilla de fuera del local queda detrás
+## (más arriba en pantalla) de la de dentro. Ahí las paredes van altas; las demás, bajas.
+func is_back_edge(edge: Vector3i) -> bool:
+	var cells: Array[Vector2i] = GridEdge.get_cells(edge)
+	# La segunda casilla de un borde siempre queda más abajo en pantalla que la primera.
+	return not _lot.has_point(cells[0]) and _lot.has_point(cells[1])
 
 
 ## Añade un objeto (por ejemplo, un personaje) a la capa ordenada por Y.
@@ -176,11 +179,6 @@ func set_site(site_rect: Rect2i, entrance_outside: Vector2i = Vector2i(-1, -1)) 
 	_entrance_outside = entrance_outside
 
 
-## Gira la vista a quarter_turns cuartos de vuelta (se dibuja en el próximo build()).
-func set_view_rotation(quarter_turns: int) -> void:
-	view_rotation = posmod(quarter_turns, 4)
-
-
 ## Plano del mapa con que se dibujó (MapDecor.plan; para las pruebas).
 func get_map_plan() -> Dictionary:
 	return _map_plan
@@ -200,45 +198,11 @@ func get_site_border() -> SiteBorder:
 	return _site_border
 
 
-## Casilla donde se dibuja una casilla de la lógica con la vista girada.
-func _to_view(cell: Vector2i) -> Vector2i:
-	if view_rotation == 0:
-		return cell
-	var origin: Vector2i = _site_rect.position
-	var last: int = maxi(_site_rect.size.x, _site_rect.size.y) - 1
-	var local: Vector2i = cell - origin
-	match view_rotation:
-		1:
-			local = Vector2i(last - local.y, local.x)
-		2:
-			local = Vector2i(last - local.x, last - local.y)
-		_:
-			local = Vector2i(local.y, last - local.x)
-	return origin + local
-
-
-## La inversa de _to_view.
-func _from_view(cell: Vector2i) -> Vector2i:
-	if view_rotation == 0:
-		return cell
-	var origin: Vector2i = _site_rect.position
-	var last: int = maxi(_site_rect.size.x, _site_rect.size.y) - 1
-	var local: Vector2i = cell - origin
-	match view_rotation:
-		1:
-			local = Vector2i(local.y, last - local.x)
-		2:
-			local = Vector2i(last - local.x, last - local.y)
-		_:
-			local = Vector2i(last - local.y, local.x)
-	return origin + local
-
-
 # Rehace el plano del mapa, lo de fuera del solar, los árboles y el borde si cambió el
-# local, el solar, la entrada o la orientación (comprar terreno o girar la vista).
+# local, el solar o la entrada (al comprar terreno).
 func _update_map() -> void:
-	var signature: String = "%s|%s|%d|%s|%d" % [_site_rect, _entrance_outside, _lot.get_cells().size(),
-		_lot.get_bounds(), view_rotation]
+	var signature: String = "%s|%s|%d|%s" % [_site_rect, _entrance_outside, _lot.get_cells().size(),
+		_lot.get_bounds()]
 	if signature == _map_signature:
 		return
 	_map_signature = signature
@@ -247,7 +211,7 @@ func _update_map() -> void:
 	var tiles: Dictionary = _map_plan["tiles"]
 	for cell: Vector2i in tiles:
 		if not _site_rect.has_point(cell):
-			_surroundings.set_cell(_to_view(cell), _floor_source_id, _map_tile(cell, tiles[cell]))
+			_surroundings.set_cell(cell, _floor_source_id, _map_tile(cell, tiles[cell]))
 	for child: Node in _objects.get_children():
 		if child is TreeView:
 			_objects.remove_child(child)
@@ -266,7 +230,7 @@ func _map_tile(cell: Vector2i, style: String) -> Vector2i:
 	var row: int = _atlas_rows.get(style, _atlas_rows[MapDecor.GRASS])
 	if style == MapDecor.ROAD_LINE:
 		var axis: int = int(_map_plan.get("road_axis", GridEdge.AXIS_X))
-		return Vector2i(axis if view_rotation % 2 == 0 else 1 - axis, row)
+		return Vector2i(axis, row)
 	var count: int = _atlas_columns.get(style, 1)
 	return Vector2i(mini(floori(MapDecor.noise(cell, MapDecor.SALT_STYLE) * count), count - 1), row)
 
@@ -293,12 +257,12 @@ func is_in_lot(cell: Vector2i) -> bool:
 
 ## Casilla que contiene un punto del mundo (en píxeles).
 func world_to_cell(world_position: Vector2) -> Vector2i:
-	return _from_view(_floor.local_to_map(_floor.to_local(world_position)))
+	return _floor.local_to_map(_floor.to_local(world_position))
 
 
 ## Centro de una casilla en píxeles del mundo.
 func cell_to_world(cell: Vector2i) -> Vector2:
-	return _floor.to_global(_floor.map_to_local(_to_view(cell)))
+	return _floor.to_global(_floor.map_to_local(cell))
 
 
 ## Convierte un punto de la pantalla (por ejemplo, el ratón) a píxeles del mundo,

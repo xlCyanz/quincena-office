@@ -499,10 +499,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   se deslizan («Ver oficina», F y los avisos de habitación); al soltar un arrastre rápido sigue con inercia; WASD/flechas (por posición, no con
   un campo de texto activo) y el ratón en el borde de la ventana (no sobre la interfaz, solo con ventana y foco) la mueven; `pan_blocker` lo
   corta con un menú encima. Opciones `smooth_camera` y `edge_pan` (Ajustes). `OfficeCamera.smoothing_enabled` (no se guarda) es solo para
-  pruebas: `test_all` lo apaga antes de `camera_view`; `finish_motion()` termina la animación. Girar la vista: `OfficeGrid.view_rotation`
-  (0–3, `_to_view`/`_from_view` alrededor del solar) cambia solo dónde se dibuja cada casilla: todo lo que pasa por `cell_to_world`,
-  `grid_to_world` y `world_to_cell` gira solo, e `IsoBox.draw` busca la esquina de arriba. `main.rotate_view` (botón ↻ en la barra, Q/E)
-  deja en el centro lo mismo, redibuja y llama `OfficeCharacter.refresh_position`; la escena guarda `view_rotation`. Mapa (`MapDecor`,
+  pruebas: `test_all` lo apaga antes de `camera_view`; `finish_motion()` termina la animación. La vista ya no se gira (se quitó
+  después del hito 69): siempre desde la misma esquina; una partida guardada con `view_rotation` distinto de 0 encuadra la oficina al cargar.
+  Paredes: las de atrás (`OfficeGrid.is_back_edge`: contorno con la casilla de fuera detrás) se dibujan a su `height` de `data/construction.json`
+  (pared 60, puerta 46, ventana 60, puerta de vidrio 50) y todas las demás a `low_wall_height` (10), para ver adentro (`EdgePieceView.tall`);
+  un objeto de pared en una pared baja se dibuja pegado abajo y no más alto que ella. Mapa (`MapDecor`,
   funciones puras, `data/map.json`): pasto variado en el solar, camino de la puerta al borde, afuera (`Surroundings`, otra capa debajo del
   piso, 10 casillas) acera y calle del lado de la salida y pasto oscuro, árboles (`TreeView`) a 2 casillas o más del local, y la línea
   discontinua del límite (`SiteBorder`); se rehace solo si cambia el local, la entrada o el giro. «Ver oficina» es más angosto para que la

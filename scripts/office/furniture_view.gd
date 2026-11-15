@@ -28,7 +28,9 @@ const SEAT_INSET: float = 0.15
 ## altura de la pared empiezan, en píxeles.
 const WALL_ITEM_WIDTH: float = 0.5
 const WALL_ITEM_DEPTH: float = 0.06
-const WALL_ITEM_BASE_PX: float = 4.0
+const WALL_ITEM_BASE_PX: float = 24.0
+## En una pared baja el objeto se dibuja pegado abajo y no más alto que la pared.
+const LOW_WALL_ITEM_BASE_PX: float = 1.0
 ## Lámpara de pie: grosor del poste (en casillas) y radio de la pantalla (en píxeles).
 const LAMP_POLE: float = 0.08
 const LAMP_SHADE_RADIUS: float = 9.0
@@ -55,6 +57,8 @@ var _info: Dictionary = {}
 var _low := Vector2.ZERO  # esquinas de la base en la cuadrícula
 var _high := Vector2.ZERO
 var _scale: float = 1.0
+# Objeto de pared en una pared baja (no de atrás).
+var _on_low_wall: bool = false
 
 
 ## Coloca el mueble a partir de su entrada en OfficeState.furniture. piece elige qué
@@ -102,6 +106,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 # Un objeto de pared es una placa delgada pegada a la cara de la pared, del lado de su
 # casilla (la pared queda detrás de su frente).
 func _setup_wall_item(cell: Vector2i) -> void:
+	_on_low_wall = not _grid.is_back_edge(FurnitureCatalog.get_wall_edge(cell, rotation_index))
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
 	var center: Vector2 = Vector2(cell) - front * 0.5 + front * (EdgePieceView.THICKNESS / 2.0 + WALL_ITEM_DEPTH / 2.0)
 	var across := Vector2(absf(front.y), absf(front.x))
@@ -122,7 +127,11 @@ func _draw() -> void:
 	var color: Color = _info.get("color", Color.WHITE)
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
 	if FurnitureCatalog.is_wall_mounted(item_id):
-		_draw_box_raised(_low, _high, WALL_ITEM_BASE_PX, height, color)
+		if _on_low_wall:
+			var cap: float = ConstructionCatalog.get_low_wall_height() - LOW_WALL_ITEM_BASE_PX - 1.0
+			_draw_box_raised(_low, _high, LOW_WALL_ITEM_BASE_PX, minf(height, cap), color)
+		else:
+			_draw_box_raised(_low, _high, WALL_ITEM_BASE_PX, height, color)
 		return
 	match String(_info.get("shape", "desk")):
 		"chair":

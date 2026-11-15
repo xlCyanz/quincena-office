@@ -80,7 +80,7 @@ func _check_grid() -> void:
 	grid.update_hover(grid.cell_to_world(cell))
 	var highlight: Node2D = grid.get_node("CellHighlight")
 	_expect(highlight.visible and highlight.global_position.is_equal_approx(grid.cell_to_world(cell)), "el resaltado cae en su casilla")
-	var source: TileSetAtlasSource = floor_layer.tile_set.get_source(floor_layer.get_cell_source_id(grid.call("_to_view", cell)))
+	var source: TileSetAtlasSource = floor_layer.tile_set.get_source(floor_layer.get_cell_source_id(cell))
 	_expect(source != null and source.texture.get_image().has_mipmaps(), "la textura trae mipmaps")
 	# Otra partida usa el mismo TileSet (se pinta una sola vez).
 	var tile_set: TileSet = floor_layer.tile_set

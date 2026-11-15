@@ -111,7 +111,6 @@ func _ready() -> void:
 	_hud.speed_pressed.connect(_on_speed_pressed)
 	_hud.notice_clicked.connect(open_notice_target)
 	_add_frame_button(_build_panel.get_menu_bar())
-	_add_rotate_button(_build_panel.get_menu_bar())
 	_camera.pan_blocker = _is_camera_locked
 	_staff_panel.attach_button(_build_panel.get_menu_bar())
 	_staff_panel.employee_selected.connect(_employee_card.open_employee)
@@ -204,8 +203,7 @@ func _export_scene_state() -> Dictionary:
 	var saved_employees: Dictionary = {}
 	for employee_id: int in employees:
 		saved_employees[str(employee_id)] = employees[employee_id].export_state()
-	return {"camera": _camera.export_state(), "view_rotation": _office_grid.view_rotation,
-		"ceo": ceo.export_state(), "employees": saved_employees}
+	return {"camera": _camera.export_state(), "ceo": ceo.export_state(), "employees": saved_employees}
 
 
 # Al abrir una partida cargada: la cámara y los personajes como estaban. Si la oficina
@@ -213,10 +211,12 @@ func _export_scene_state() -> Dictionary:
 func _restore_scene_state(state: Dictionary) -> void:
 	if state.is_empty():
 		return
-	# Primero la orientación: la cámara guarda su centro en píxeles de la vista girada.
-	if int(state.get("view_rotation", 0)) != _office_grid.view_rotation:
-		_apply_view_rotation(int(state.get("view_rotation", 0)))
-	_camera.import_state(state.get("camera", {}))
+	# La vista ya no se gira: una partida guardada con la vista girada vuelve a la esquina de
+	# siempre y la cámara encuadra la oficina.
+	if int(state.get("view_rotation", 0)) != 0:
+		frame_office()
+	else:
+		_camera.import_state(state.get("camera", {}))
 	ceo.import_state(state.get("ceo", {}))
 	var saved_employees: Dictionary = state.get("employees", {})
 	for employee_id: int in employees:
@@ -1137,50 +1137,9 @@ func frame_office() -> void:
 	_camera.fit_rect(_office_grid.get_lot_world_rect(), true)
 
 
-# Botón de girar la vista (↻) de la barra de menús: un cuarto de vuelta en el sentido del reloj
-# (Q y E giran hacia cada lado).
-func _add_rotate_button(menu_bar: Container) -> void:
-	var button := Button.new()
-	button.name = "RotateViewButton"
-	button.text = "↻"
-	button.tooltip_text = "Girar la vista un cuarto de vuelta (teclas Q y E)"
-	button.custom_minimum_size = Vector2(Hud.MENU_BUTTON_SIZE.y, Hud.MENU_BUTTON_SIZE.y)
-	button.add_theme_font_size_override("font_size", 22)
-	button.focus_mode = Control.FOCUS_NONE
-	button.pressed.connect(rotate_view.bind(1))
-	menu_bar.add_child(button)
-
-
-## Botón de girar la vista (↻).
-func get_rotate_button() -> Button:
-	return menu_bar_button("RotateViewButton")
-
-
 ## Un botón de la barra de menús por su nombre.
 func menu_bar_button(button_name: String) -> Button:
 	return _build_panel.get_menu_bar().get_node_or_null(button_name) as Button
-
-
-## Gira la vista quarter_turns cuartos de vuelta (positivo: como las agujas del reloj)
-## dejando en el centro de la pantalla lo mismo que había.
-func rotate_view(quarter_turns: int) -> void:
-	_apply_view_rotation(_office_grid.view_rotation + quarter_turns)
-	EventBus.ui_action.emit("view_rotated")
-
-
-func _apply_view_rotation(quarter_turns: int) -> void:
-	_camera.finish_motion()
-	var center: Vector2 = _office_grid.world_to_grid(_camera.position)
-	_office_grid.set_view_rotation(quarter_turns)
-	_rebuild_office()
-	_camera.set_map_area(_office_grid.get_site_world_area())
-	_camera.center_on(_office_grid.grid_to_world(center))
-	for character: OfficeCharacter in get_characters():
-		character.refresh_position()
-	for visitor: Visitor in visitors.values() + _leaving_visitors:
-		if is_instance_valid(visitor):
-			visitor.refresh_position()
-	_build_controller.queue_redraw()
 
 
 # El teclado y el borde de la pantalla no mueven la cámara con un menú encima (el modo
@@ -1200,7 +1159,7 @@ func _on_speed_pressed(index: int) -> void:
 # Esc: cierra lo abierto o abre el menú de pausa (handle_escape, hito 62).
 # Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
 # nada, porque el tiempo tiene que quedarse en pausa. F: ver la oficina completa
-# (funciona siempre). Q y E: girar la vista. WASD y flechas mueven la cámara (OfficeCamera).
+# (funciona siempre). WASD y flechas mueven la cámara (OfficeCamera).
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -1211,11 +1170,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if key.keycode == KEY_F:
 		frame_office()
-		get_viewport().set_input_as_handled()
-		return
-	if (key.physical_keycode == KEY_Q or key.physical_keycode == KEY_E) and not _is_camera_locked() \
-			and not key.ctrl_pressed and not key.meta_pressed:
-		rotate_view(1 if key.physical_keycode == KEY_E else -1)
 		get_viewport().set_input_as_handled()
 		return
 	if _is_menu_open():

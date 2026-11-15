@@ -1,4 +1,5 @@
-# Dibujo provisional de una pared o una puerta: una caja baja y delgada sobre su borde.
+# Dibujo provisional de una pared o una puerta: una caja delgada sobre su borde. Las de atrás
+# (contorno con el exterior detrás) van a su alto; las demás, bajas, para ver adentro.
 # Va dentro de la capa ordenada por Y; su punto de orden es el centro del borde, así que
 # un personaje queda detrás si está en la casilla de atrás y delante si está en la de
 # adelante.
@@ -12,6 +13,8 @@ const DOOR_INSET: float = 0.15
 
 var edge := Vector3i.ZERO
 var kind: String = ""
+## Alta (pared de atrás) o baja.
+var tall: bool = true
 
 var _base := PackedVector2Array()
 var _height: float = 0.0
@@ -23,11 +26,12 @@ var _frame_color := Color.DIM_GRAY
 var _along := Vector2.RIGHT  # dirección del borde en pantalla
 
 
-func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String) -> void:
+func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: bool = true) -> void:
 	edge = piece_edge
 	kind = piece_kind
+	tall = is_tall
 	var piece: Dictionary = ConstructionCatalog.get_edge_piece(kind)
-	_height = float(piece.get("height", 20.0))
+	_height = float(piece.get("height", 20.0)) if tall else ConstructionCatalog.get_low_wall_height()
 	_color = Color(String(piece.get("color", "cccccc")))
 	var ends: Array[Vector2] = GridEdge.get_endpoints(edge)
 	var inset: float = DOOR_INSET if kind == ConstructionCatalog.DOOR else 0.0

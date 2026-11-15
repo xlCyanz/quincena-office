@@ -31,7 +31,7 @@ func _ready() -> void:
 	await _check_zoom()
 	await _check_inertia()
 	await _check_keyboard_and_edges()
-	await _check_rotation()
+	await _check_fixed_view()
 	await _check_map()
 	await _check_save()
 	await _check_menu_bar()
@@ -304,96 +304,51 @@ func _check_keyboard_and_edges() -> void:
 	await _close_game(game)
 
 
-func _check_rotation() -> void:
+# La vista ya no se gira (se quitó después del hito 69): siempre desde la misma esquina. Las
+# paredes de atrás (contorno con el exterior detrás) van altas y las demás, bajas.
+func _check_fixed_view() -> void:
 	var game: Node = await _open_game()
 	var camera: OfficeCamera = game.get_node("OfficeCamera")
 	var grid: OfficeGrid = game.get_node("OfficeGrid")
 	var builder: Builder = game.get_node("BuildController").builder
-	Economy.earn(5000, "Prueba")
-	_expect(builder.mark_room(Workstations.WORK_AREA, Vector2i(4, 4))["ok"], "Área de trabajo")
-	_expect(builder.place("simple_desk", Vector2i(4, 0), 2)["ok"] and builder.place("basic_chair", Vector2i(4, 1), 0)["ok"],
-		"un puesto")
-	await _wait()
-	var lot: Rect2i = grid.get_lot_rect()
-	var corner_world: Vector2 = grid.cell_to_world(lot.position)
-	var probe := Vector2(lot.get_center()) + Vector2(0.25, -0.1)
+	_expect(not "view_rotation" in grid and not game.has_method("rotate_view"), "no hay giro de la vista")
 	camera.finish_motion()
-	var center_grid: Vector2 = grid.world_to_grid(camera.position)
-	var floor_layer: TileMapLayer = grid.get_node("Floor")
-	for turn: int in range(1, 5):
-		_actions.clear()
-		game.rotate_view(1)
-		await _wait()
-		var rotation: int = turn % 4
-		_expect(grid.view_rotation == rotation, "vista girada %d" % rotation)
-		_expect(_actions.has("view_rotated"), "girar avisa al tutorial")
-		_expect(grid.world_to_grid(camera.position).distance_to(center_grid) < 0.01,
-			"girar deja en el centro lo mismo (%d)" % rotation)
-		_expect(floor_layer.get_used_cells().size() == OfficeState.site_rect.get_area(), "el piso sigue cubriendo el solar")
-		var round_trip: bool = true
-		for x: int in range(lot.position.x, lot.end.x):
-			for y: int in range(lot.position.y, lot.end.y):
-				var cell := Vector2i(x, y)
-				if grid.world_to_cell(grid.cell_to_world(cell)) != cell:
-					round_trip = false
-		_expect(round_trip, "casilla → píxel → casilla con la vista girada %d" % rotation)
-		_expect(grid.world_to_grid(grid.grid_to_world(probe)).distance_to(probe) < 0.0001, "decimales ida y vuelta (%d)" % rotation)
-		# Cada casilla del local se dibuja con su piso.
-		var floors_ok: bool = true
-		for cell: Vector2i in OfficeState.lot.get_cells():
-			var shown: Vector2i = floor_layer.local_to_map(floor_layer.to_local(grid.cell_to_world(cell)))
-			if floor_layer.get_cell_atlas_coords(shown).y != int(grid.get("_atlas_rows")[OfficeState.get_floor(cell)]):
-				floors_ok = false
-		_expect(floors_ok, "cada casilla muestra su piso con la vista girada %d" % rotation)
-		_expect((grid.cell_to_world(lot.position) == corner_world) == (rotation == 0),
-			"la esquina del local se dibuja en otro lugar salvo sin girar (%d)" % rotation)
-		# Personajes y muebles siguen en su casilla.
-		_expect(game.ceo.position.distance_to(grid.grid_to_world(game.ceo.grid_position)) < 0.01,
-			"el CEO sigue en su casilla (%d)" % rotation)
-		var desks_ok: bool = false
-		for child: Node in grid.get_node("Objects").get_children():
-			if child is FurnitureView and child.item_id == "simple_desk":
-				desks_ok = child.position.distance_to(grid.grid_to_world(Vector2(4, 0)) - Vector2(0, FurnitureView.SORT_BIAS_PX)) < 0.01
-		_expect(desks_ok, "el escritorio sigue en su casilla (%d)" % rotation)
-		# El ratón sobre una casilla la resalta.
-		var target := Vector2i(lot.position.x + 1, lot.position.y + 2)
-		grid.update_hover(grid.cell_to_world(target))
-		_expect(grid.hovered_cell == target
-			and grid.get_node("CellHighlight").global_position.distance_to(grid.cell_to_world(target)) < 0.01,
-			"resaltado con la vista girada %d" % rotation)
-		_expect(_in_map(grid, camera.position), "la cámara queda dentro del mapa (%d)" % rotation)
-	_expect(grid.cell_to_world(lot.position) == corner_world, "cuatro giros vuelven al principio")
-	# Q y E giran hacia cada lado; el botón de la barra, como E.
+	var before: Vector2 = camera.position
 	var key := InputEventKey.new()
-	key.physical_keycode = KEY_E
-	key.keycode = KEY_E
-	key.pressed = true
-	get_viewport().push_input(key)
-	_expect(grid.view_rotation == 1, "E gira en el sentido del reloj")
-	key.physical_keycode = KEY_Q
-	key.keycode = KEY_Q
-	get_viewport().push_input(key)
-	get_viewport().push_input(key)
-	_expect(grid.view_rotation == 3, "Q gira al revés")
-	game.get_rotate_button().pressed.emit()
-	_expect(grid.view_rotation == 0, "el botón gira un cuarto")
-	_expect(game.get_rotate_button().tooltip_text.contains("Q y E"), "el botón dice las teclas")
-	# Con la vista girada se construye en la casilla bajo el ratón (la lógica no gira).
-	game.rotate_view(1)
+	for code: Key in [KEY_Q, KEY_E]:
+		key.physical_keycode = code
+		key.keycode = code
+		key.pressed = true
+		get_viewport().push_input(key)
 	await _wait()
-	var plant_cell := Vector2i(-1, -1)
-	for cell: Vector2i in OfficeState.lot.get_cells():
-		if builder.quote_place("small_plant", cell, 0)["ok"]:
-			plant_cell = cell
-			break
-	var placed: Dictionary = builder.place("small_plant", plant_cell, 0)
-	_expect(placed["ok"], "una planta: %s" % placed.get("message", ""))
+	camera.finish_motion()
+	_expect(camera.position == before, "Q y E no hacen nada")
+	var lot: Rect2i = grid.get_lot_rect()
+	var round_trip: bool = true
+	for x: int in range(lot.position.x, lot.end.x):
+		for y: int in range(lot.position.y, lot.end.y):
+			if grid.world_to_cell(grid.cell_to_world(Vector2i(x, y))) != Vector2i(x, y):
+				round_trip = false
+	_expect(round_trip, "casilla → píxel → casilla")
+	# Paredes: las de atrás altas, las del frente y las interiores bajas.
+	Economy.earn(5000, "Prueba")
+	var inner := Vector3i(lot.position.x + 2, lot.position.y + 4, GridEdge.AXIS_X)
+	builder.apply([{"edge": inner, "kind": ConstructionCatalog.WALL}])
 	await _wait()
-	var plant_ok: bool = false
+	var back := Vector3i(lot.position.x + 2, lot.position.y - 1, GridEdge.AXIS_Y)  # norte: el exterior queda detrás
+	var front := Vector3i(lot.position.x + 2, lot.end.y - 1, GridEdge.AXIS_Y)  # sur: el exterior queda delante
+	_expect(grid.is_back_edge(back) and not grid.is_back_edge(front) and not grid.is_back_edge(inner),
+		"atrás el norte; el sur y lo interior no")
+	var views: Dictionary = {}
 	for child: Node in grid.get_node("Objects").get_children():
-		if child is FurnitureView and child.item_id == "small_plant":
-			plant_ok = grid.world_to_cell(child.position + Vector2(0, FurnitureView.SORT_BIAS_PX)) == plant_cell
-	_expect(plant_ok, "lo construido con la vista girada queda en su casilla")
+		if child is EdgePieceView:
+			views[child.edge] = child
+	var low: float = ConstructionCatalog.get_low_wall_height()
+	var tall: float = float(ConstructionCatalog.get_edge_piece(ConstructionCatalog.WALL)["height"])
+	_expect(views.has(back) and views[back].tall and is_equal_approx(views[back].get("_height"), tall), "la pared de atrás va alta")
+	_expect(views.has(front) and not views[front].tall and is_equal_approx(views[front].get("_height"), low), "la de adelante, baja")
+	_expect(views.has(inner) and not views[inner].tall, "la interior, baja")
+	_expect(tall > 40.0 and low < 16.0, "alta más que una persona y baja casi al piso: %d / %d" % [tall, low])
 	await _close_game(game)
 
 
@@ -480,27 +435,14 @@ func _check_map() -> void:
 		if OfficeState.lot.has_point(tree.cell):
 			cleared = false
 	_expect(cleared and grid.get_map_plan() != plan, "el mapa se rehace al comprar terreno")
-	# Con la vista girada la línea de la calle cambia de dirección.
-	var line_cell: Vector2i = Vector2i(-1, -1)
-	for cell: Vector2i in grid.get_map_plan()["tiles"]:
-		if grid.get_map_plan()["tiles"][cell] == MapDecor.ROAD_LINE:
-			line_cell = cell
-			break
-	var around_before: Vector2i = around.get_cell_atlas_coords(around.local_to_map(around.to_local(grid.cell_to_world(line_cell))))
-	game.rotate_view(1)
-	await _wait()
-	var around_after: Vector2i = around.get_cell_atlas_coords(around.local_to_map(around.to_local(grid.cell_to_world(line_cell))))
-	_expect(around_before.y == around_after.y and around_before.x != around_after.x,
-		"la línea de la calle sigue a la calle al girar: %s → %s" % [around_before, around_after])
 	await _close_game(game)
 
 
 func _check_save() -> void:
 	var game: Node = await _open_game()
 	var camera: OfficeCamera = game.get_node("OfficeCamera")
-	game.rotate_view(-1)
 	camera.set_zoom_index(4, SCREEN / 3.0)
-	_expect(SaveManager.save_game("slot_5"), "guardar con la vista girada")
+	_expect(SaveManager.save_game("slot_5"), "guardar")
 	var camera_state: Dictionary = camera.export_state()
 	await _close_game(game)
 	SaveManager.new_game()
@@ -509,11 +451,14 @@ func _check_save() -> void:
 	add_child(loaded)
 	await _wait()
 	GameClock.stop()
-	_expect(loaded.get_node("OfficeGrid").view_rotation == 3, "la vista sigue girada al cargar")
 	var restored: Dictionary = loaded.get_node("OfficeCamera").export_state()
 	_expect(is_equal_approx(float(restored["zoom"]), float(camera_state["zoom"]))
 		and Vector2(restored["x"], restored["y"]).distance_to(Vector2(camera_state["x"], camera_state["y"])) < 0.01,
 		"la cámara vuelve igual: %s vs %s" % [restored, camera_state])
+	# Una partida guardada con la vista girada vuelve a la esquina de siempre y encuadra la oficina.
+	loaded.call("_restore_scene_state", {"view_rotation": 3, "camera": {"zoom": 0.25, "x": -9999.0, "y": -9999.0}})
+	loaded.get_node("OfficeCamera").finish_motion()
+	_expect(loaded.get_node("OfficeCamera").export_state()["x"] != -9999.0, "partida vieja girada: encuadra la oficina")
 	await _close_game(loaded)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveManager.save_dir.path_join("slot_5.json")))
 
@@ -522,9 +467,7 @@ func _check_menu_bar() -> void:
 	var game: Node = await _open_game()
 	await _wait()
 	var bar: Container = game.get_node("BuildPanel").get_menu_bar()
-	var button: Button = game.get_rotate_button()
-	_expect(button != null and button.get_parent() == bar and button.text == "↻", "botón de girar en la barra")
-	_expect(button.size.x >= GameConstants.TILE_SIZE.y and button.size.y >= 44.0, "el botón mide al menos 44 de alto")
+	_expect(game.menu_bar_button("RotateViewButton") == null, "ya no hay botón de girar la vista")
 	var tops: Dictionary = {}
 	for child: Node in bar.get_children():
 		if child is Control and child.visible:
