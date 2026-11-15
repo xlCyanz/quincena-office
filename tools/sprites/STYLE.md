@@ -42,6 +42,12 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      tirador largo junto al medio y 1 px de luz entre las hojas. Abren hacia afuera.
    - *Ventana administrativa*: aluminio oscuro, parante en el medio, travesaño que deja una banda fija arriba,
      vidrio celeste con reflejos en diagonal y persiana veneciana blanca de tablillas de 3 px.
+   - *Objetos de pared* (`pieces/wall_items.py`): cuadro con marco de madera naranja de 3 px y tres dibujos
+     (paisaje, bloques de color, mar con velero); reloj redondo de aro negro, esfera crema, agujas a las 10:10 y
+     segundero rojo; pizarra blanca de marco de aluminio con garabatos en azul, rojo y verde y bandeja con dos
+     marcadores; televisor (la pantalla de presentaciones) negro apagado con filo gris azulado y reflejos en
+     diagonal, sobre una repisa de madera naranja; aire acondicionado split largo y bajo, frente blanco verdoso,
+     tapa gris con panel claro, rejilla negra abajo y luz roja.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
      la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del

@@ -106,6 +106,12 @@ Cuadro, reloj, pizarra, pantalla de presentaciones y aire acondicionado se cuelg
   inclinados 2:1 como ella.
 - Lienzo 64×128, base del objeto a 24 px del mundo (48 px de sprite) sobre el piso.
 - En las paredes bajas el juego los dibuja chicos y pegados abajo: no hace falta otra versión.
+- Nombres: `painting_x` (paisaje), `painting_abstract_x` y `painting_sea_x` (tres dibujos del cuadro),
+  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor sobre una repisa, 36 px de alto: más que su `height`) y
+  `air_conditioner_x`, más sus `_y`. Apoyo (32, 112), el
+  punto medio del borde en el piso como en los tramos; el objeto sale de la cara de la pared (4 px de la línea del
+  borde) y mide de alto el `height` de `data/furniture.json` × 2. En las paredes `_x` los dibujos van espejados
+  para leerse igual que en las `_y`.
 
 ## 8. Paredes, puertas y ventanas
 
