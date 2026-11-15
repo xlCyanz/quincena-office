@@ -53,6 +53,12 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
    - *Decoración de piso* (`pieces/decor.py`): lámpara de pie de base negra, poste de metal y pantalla crema en
      cono; alfombra vino con borde crema de grecas, filete dorado y medallón en rombo azul; pecera sobre un mueble de
      madera naranja con dos puertas, agua azul más oscura abajo, arena, plantas, piedras, peces y tapa negra.
+   - *Recepción* (`pieces/reception.py`): mostrador con mesa de trabajo de tablero naranja sobre dos cajoneras de
+     metal gris del lado de la recepcionista y, del lado del cliente, panel de madera lisa con postes de aluminio en
+     las esquinas y mesón crema con un timbre dorado; sofá de espera rojo alto y mullido con faldón, tres cojines de
+     asiento, respaldo de tres cojines con botón y brazos gruesos enrollados; dispensador de agua de gabinete blanco
+     con panel oscuro (llaves roja y azul) y rejillas, y bidón grande celeste casi transparente con tres aros y
+     brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
      la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del

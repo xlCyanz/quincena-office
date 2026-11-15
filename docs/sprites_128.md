@@ -102,6 +102,11 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
   imagen por ser simétrica; `rug` (2×2, una sola imagen); `aquarium_r0`–`_r3` (mueble con puertas al frente y tanque
   encima, 56 px de sprite de alto: más que su `height` de 20, para que se lea como pecera). Cada uno con su `_shadow`
   salvo la alfombra.
+- Recepción (`tools/sprites/pieces/reception.py`): `reception_counter_r0`–`_r3` (2×1: mesa de trabajo sobre dos
+  cajoneras de metal del lado de la recepcionista, que es el frente, y panel alto con mesón crema del lado del
+  cliente); `waiting_sofa_r0`–`_r3` (2×1, respaldo de 38 px: más que su `height` de 12); `water_dispenser_r0`–`_r3`
+  y `water_dispenser_q_r0`–`_r3` (chico: grifos solo al frente); `trash_can` y `trash_can_q` (chico y simétrico, 26 px de alto: más que su `height` de 10). Cada
+  uno con su `_shadow`.
 
 ## 7. Objetos de pared
 
