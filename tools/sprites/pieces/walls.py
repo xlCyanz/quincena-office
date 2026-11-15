@@ -8,10 +8,10 @@
 #   glass_door_tall_x … _low_y                                       72×160 / 72×64
 #   window_tall_x … _low_y                                           72×160 / 72×64
 #   glass_door_double_a/_b_tall_x … _low_y   doble de vidrio sin marco en dos bordes (a, b)  72×160 / 72×64
-#   door[_wood|_office]_tall_<eje>_open_1…3   la hoja abierta 30°, 60° y 90° hacia adentro
-#   glass_door_tall_<eje>_open_1…3            las dos hojas abren 30°, 60° y 90° hacia afuera
+#   door[_wood|_office]_tall_<eje>_open_1…6   la hoja abierta de 15° en 15° hasta 90° hacia adentro
+#   glass_door_tall_<eje>_open_1…6            las dos hojas abren de 15° en 15° hasta 90° hacia afuera
 #   window_tall_<eje>_blind_1…3               la persiana baja hasta cerrar
-#   glass_door_double_a/_b_tall_<eje>_open_1…3   cada hoja abre 30°, 60° y 90° hacia afuera
+#   glass_door_double_a/_b_tall_<eje>_open_1…6   cada hoja abre de 15° en 15° hasta 90° hacia afuera
 #   wall_tall_corner[_left|_right|_front]                     16×128, poste de esquina 8×8 px de planta
 #   wall_low_corner[_back|_left|_right]                       16×28
 #   wall_tall_x_shadow  wall_tall_y_shadow                    128×128, franja sobre la casilla de adentro
@@ -312,8 +312,8 @@ SILL = 2  # umbral
 LINTEL = 4  # alto del cabezal del marco
 OPENING = DOOR_TOP - LINTEL  # 88: arriba de la hoja
 HANDLE_Z = 44
-# Ángulos de la hoja en los cuadros de abrir (_open_1 a _open_3); el 0 es la pieza cerrada.
-SWING_ANGLES = (30, 60, 90)
+# Ángulos de la hoja en los cuadros de abrir (_open_1 a _open_6); el 0 es la pieza cerrada.
+SWING_ANGLES = (15, 30, 45, 60, 75, 90)
 # La hoja girada toma solo los tonos de cara según la luz (sin caer en el contorno ni en la sombra
 # profunda): de frente a la luz arriba, de lado la izquierda y de espaldas la derecha.
 LEAF_BANDS = ((0.66, pal.BASE), (0.10, pal.LEFT), (-9.0, pal.RIGHT))
@@ -469,14 +469,14 @@ def door_model(f, tall, kind="door", angle=0):
 # La de la Recepción (data/construction.json, glass_door): marco de aluminio hasta 100 px (50 del
 # mundo), pared encima hasta 120, 8 px de pared a cada lado (como la ventana: el aluminio no toca
 # la unión). Dos hojas de vidrio de 20 px con perfil de aluminio y tirador vertical, cada una con
-# la bisagra en su jamba; se juntan en el medio. Al abrir (_open_1 a _open_3) las dos giran 30°,
-# 60° y 90° hacia afuera (−y, el lado de la calle).
+# la bisagra en su jamba; se juntan en el medio. Al abrir (_open_1 a _open_6) las dos giran de 15°
+# en 15° hasta 90° hacia afuera (−y, el lado de la calle).
 GLASS_TOP = iso.world_px(GLASS_DOOR_DATA["height"])  # 100
 GLASS_HEAD = GLASS_TOP - 4  # 96: arriba del vidrio
 GLASS_WALL = 4 / 32.0
 GLASS_IN0, GLASS_IN1 = 6 / 32.0, 26 / 32.0  # hueco entre las jambas
 PANE = (GLASS_IN1 - GLASS_IN0) / 2.0  # 10/32: cada hoja
-GLASS_ANGLES = (30, 60, 90)
+GLASS_ANGLES = (15, 30, 45, 60, 75, 90)
 RAIL = 1 / 32.0  # perfil de aluminio (2 px)
 PULL = (30, 62)  # tirador vertical: de z 30 a 62
 # El perfil de aluminio de las hojas va en la textura del vidrio: tonos agregados a su rampa.
@@ -538,13 +538,13 @@ def glass_door_model(f, tall, angle=0):
 # largo junto al medio. Se dibuja como un modelo de x 0 a 2 y se guarda en dos mitades, cada una
 # un tramo normal de 72×160: glass_door_double_a (x 0–1, va en el borde de menor x o y) y _b
 # (x 1–2). Las bajas son solo los dos trozos de pared con el hueco entre ellos.
-# Al abrir (_open_1 a _open_3) cada hoja gira 30°, 60° y 90° hacia afuera (−y).
+# Al abrir (_open_1 a _open_6) cada hoja gira de 15° en 15° hasta 90° hacia afuera (−y).
 DOUBLE_WALL = 8 / 32.0  # 16 px de pared a cada lado
 DOUBLE_GAP = 1 / 64.0  # medio hueco entre las dos hojas (1 px cada una)
 DOUBLE_TOP = GLASS_TOP  # 100
 DOUBLE_BOTTOM = 1  # la hoja queda 1 px sobre el piso
 DOUBLE_PULL = (26, 74)
-DOUBLE_ANGLES = (30, 60, 90)
+DOUBLE_ANGLES = (15, 30, 45, 60, 75, 90)
 DOUBLE_EDGE = GLASS_DOOR.add("8fb8cc")  # canto del vidrio templado
 
 
@@ -607,8 +607,8 @@ WIN_KINDS = {
     True: {"sill": (28, 32), "head": (104, 108), "transom": (84, 86)},
     False: {"sill": (4, 6), "head": (16, 18), "transom": None},
 }
-# Persiana: abajo de la tela en la pieza cerrada (_blind_0 = la pieza) y en _blind_1 a _blind_3.
-BLIND_LEVELS = (70, 54, 40, 32)
+# Persiana: abajo de la tela en la pieza cerrada (_blind_0 = la pieza) y en _blind_1 a _blind_6.
+BLIND_LEVELS = (70, 64, 58, 51, 45, 38, 32)
 
 
 def glass_face(ctx):
@@ -938,8 +938,8 @@ def anchor_meta(c, axis):
 
 # Piezas por familia: (nombre, modelo(f, tall, paso), cuadros, metadatos). Los cuadros son los
 # pasos de la animación (paso 0 = la pieza cerrada) y salen solo en la alta: puertas que giran
-# (_open_1 a _open_3, la hoja abierta 30°, 60° y 90° hacia adentro), la de vidrio (_open_1 a
-# _open_3, las dos hojas abren hacia afuera) y la ventana (_blind_1 a _blind_3, la persiana baja hasta
+# (_open_1 a _open_6, la hoja abierta de 15° en 15° hasta 90° hacia adentro), la de vidrio (_open_1 a
+# _open_6, las dos hojas abren hacia afuera) y la ventana (_blind_1 a _blind_6, la persiana baja hasta
 # cerrar).
 def _door_family(kind):
     return (kind, lambda f, tall, step: door_model(f, tall, kind, SWING_ANGLES[step - 1] if step else 0),
