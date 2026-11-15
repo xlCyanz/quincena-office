@@ -64,8 +64,8 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 | `floor_wood_*` | Madera | `8f6b4a`, `7d5c3f` | 4 tablones paralelos a un eje isométrico, separados por una línea oscura de 1 px; veta de 2–3 tonos en trazos largos; cortes de tablón escalonados (no todos en la misma fila). |
 | `floor_carpet_*` | Alfombra | `5b6f8a`, `52657e` | 2×2 cuadros de alfombra con borde apenas marcado y trama fina ordenada (dither 2×2), sin brillo. |
 | `floor_bare_*` | Sin piso (concreto) | `8c8a86`, `807e7a` | Concreto liso con poros sueltos y alguna grieta fina; muy poco contraste. |
-| `ground_grass_*` | Pasto del solar | `5f8a4c`, `567e44` | Manchas grandes de 2–3 verdes que cruzan los bordes (periódicas) y briznas de 1×2 a 1×3 px, más claras arriba. Sin flores (se ven repetidas). |
-| `ground_outside_*` | Pasto fuera del solar | el pasto 15 % más oscuro | Igual que el pasto, más apagado. |
+| `ground_grass_<familia>_*` | Pasto del solar | `5f8a4c`, `567e44` | 4 familias (`plain` liso, `patchy` manchones, `lush` tupido, `sunny` claro), cada una con sus 4 variantes y **el mismo anillo del borde en las 16**, así cualquier casilla empalma con cualquier otra. Manchas más chicas que la casilla y matas de briznas más claras arriba. Sin flores (se ven repetidas). El juego elige la familia por zonas (ruido suave sobre el mapa: liso 40 %, tupido 23 %, manchones 22 %, claro 15 %) y la variante al azar: así no se ve un solo dibujo repetido. |
+| `ground_outside_<familia>_*` | Pasto fuera del solar | el pasto 15 % más oscuro | Igual que el pasto (mismas familias), más apagado. |
 | `ground_path_*` | Camino de grava | grises cálidos | Piedritas de 2×1 a 3×2 px con su sombra de 1 px abajo-derecha. |
 | `ground_sidewalk_*` | Acera | grises claros | Losas grandes (1 por casilla) con junta de 2 px en el borde. |
 | `ground_road_*` | Calle | asfalto gris oscuro | Granos sueltos de 1 px, 2–3 tonos. |

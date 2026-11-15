@@ -37,6 +37,9 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      método (receta `Noise` en `pieces/floors.py`) con sus tonos, más formas chicas encima: matas, poros y
      grieta, piedritas con cara clara y sombra; la acera lleva junta y bisel fijos y la calle con línea una
      franja amarilla de 4 celdas con pixeles gastados.
+   - *Pasto*: manchas de borde nítido (sin grano suelto) más chicas que la casilla, matas de briznas con
+     punta clara y pie oscuro, y mechones oscuros en ^. Para que no se vea un solo dibujo repetido hay 4
+     familias (liso, manchones, tupido, claro) con el mismo borde, que el juego mezcla por zonas.
 
 ## Paleta (hex sacados de las capturas)
 
