@@ -6,6 +6,8 @@
 class_name FurnitureCatalog
 extends RefCounted
 
+## Cuartos de una casilla para los muebles chicos (pedido después del hito 69).
+const QUARTERS: int = 4
 const CATALOG_PATH: String = "res://data/furniture.json"
 const FRONT_DIRECTIONS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
 
@@ -140,6 +142,7 @@ static func _load() -> void:
 			"monthly_cost": int(raw.get("monthly_cost", 0)),
 			"wall_mounted": bool(raw.get("wall_mounted", false)),
 			"walkable": bool(raw.get("walkable", false)),
+			"small": bool(raw.get("small", false)),
 			"ambiance": float(raw.get("ambiance", 0.0)),
 			"stress_relief": int(raw.get("stress_relief", 0)),
 			"production_bonus": float(raw.get("production_bonus", 0.0)),
@@ -162,6 +165,43 @@ static func _load() -> void:
 
 ## Indica si se cuelga en una pared (hito 45): no ocupa casilla. Su casilla es la que
 ## mira (la de la habitación donde cuenta) y la pared queda detrás de su frente.
+## Mueble chico: ocupa un cuarto de su casilla y caben hasta 4 chicos por casilla.
+static func is_small(id: String) -> bool:
+	return bool(get_item(id).get("small", false))
+
+
+## Cuarto de la casilla que ocupa un mueble (0–3), o -1 si ocupa la casilla entera.
+static func get_quarter(item: Dictionary) -> int:
+	return clampi(int(item.get("quarter", 0)), 0, QUARTERS - 1) if is_small(String(item["id"])) else -1
+
+
+## Centro de un cuarto respecto al centro de su casilla, en casillas: 0 arriba a la
+## izquierda (x e y menores), 1 a su derecha (x mayor), 2 y 3 debajo (y mayor).
+static func get_quarter_offset(quarter: int) -> Vector2:
+	return Vector2(float(quarter % 2) - 0.5, float(quarter / 2) - 0.5) * 0.5
+
+
+## Cuarto de su casilla en el que cae un punto de la cuadrícula (con decimales).
+static func quarter_at(point: Vector2) -> int:
+	var local: Vector2 = point - point.round()
+	return (1 if local.x >= 0.0 else 0) + (2 if local.y >= 0.0 else 0)
+
+
+## Indica si dos muebles chocan: comparten una casilla y no son dos chicos en cuartos distintos.
+static func overlaps(a: Dictionary, b: Dictionary) -> bool:
+	var cells_a: Array[Vector2i] = get_footprint(a["id"], a["cell"], a["rotation"])
+	var shared: bool = false
+	for cell: Vector2i in get_footprint(b["id"], b["cell"], b["rotation"]):
+		if cells_a.has(cell):
+			shared = true
+			break
+	if not shared:
+		return false
+	var quarter_a: int = get_quarter(a)
+	var quarter_b: int = get_quarter(b)
+	return quarter_a < 0 or quarter_b < 0 or quarter_a == quarter_b
+
+
 static func is_wall_mounted(id: String) -> bool:
 	return bool(get_item(id).get("wall_mounted", false))
 

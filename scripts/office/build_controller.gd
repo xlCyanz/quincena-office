@@ -60,6 +60,8 @@ var builder := Builder.new()
 
 var _grid: OfficeGrid
 var _active: bool = false
+## Cuarto de la casilla que marca la vista previa (mueble chico), o -1.
+var _preview_quarter: int = -1
 var _pointer := Vector2.ZERO  # posición del ratón en la cuadrícula, con decimales
 var _dragging: bool = false
 var _drag_start := Vector2.ZERO
@@ -230,6 +232,7 @@ func _is_furniture_tool() -> bool:
 
 
 func _clear_preview() -> void:
+	_preview_quarter = -1
 	_preview_cells.clear()
 	_preview_edges.clear()
 	_preview_front = Vector2i.ZERO
@@ -242,6 +245,7 @@ func _update_preview(announce: bool = true) -> void:
 	_clear_preview()
 	var start: Vector2 = _drag_start if _dragging else _pointer
 	var cell: Vector2i = Vector2i(_pointer.round())
+	var quarter: int = FurnitureCatalog.quarter_at(_pointer)
 	var quote: Dictionary = {}
 	var info: Dictionary = FurnitureCatalog.get_item(tool)
 	if tool == TOOL_LAND:
@@ -269,10 +273,12 @@ func _update_preview(announce: bool = true) -> void:
 		_apply_preview = func() -> Dictionary: return builder.sell_wall_item(hung_cell, hung_rotation)
 	elif _is_furniture_tool():
 		var placement_rotation: int = _placement_rotation
+		var placement_quarter: int = quarter if FurnitureCatalog.is_small(tool) else -1
 		_preview_cells = FurnitureCatalog.get_footprint(tool, cell, placement_rotation)
+		_preview_quarter = placement_quarter
 		_preview_front = FurnitureCatalog.get_front(placement_rotation)
-		quote = builder.quote_place(tool, cell, placement_rotation)
-		_apply_preview = func() -> Dictionary: return builder.place(tool, cell, placement_rotation)
+		quote = builder.quote_place(tool, cell, placement_rotation, placement_quarter)
+		_apply_preview = func() -> Dictionary: return builder.place(tool, cell, placement_rotation, placement_quarter)
 	elif not info.is_empty() and FurnitureCatalog.is_monitor(tool):  # segundo monitor
 		_preview_cells = _footprint_at(cell)
 		quote = builder.quote_install_monitor(tool, cell)
@@ -286,13 +292,14 @@ func _update_preview(announce: bool = true) -> void:
 		quote = builder.quote_upgrade(cell)
 		_apply_preview = func() -> Dictionary: return builder.upgrade(cell)
 	elif tool == TOOL_ROTATE:
-		quote = builder.quote_rotate(cell)
-		var index: int = OfficeState.find_furniture_at(cell)
+		quote = builder.quote_rotate(cell, quarter)
+		var index: int = OfficeState.find_furniture_at(cell, quarter)
 		if index >= 0:
 			var item: Dictionary = OfficeState.furniture[index]
 			_preview_cells = FurnitureCatalog.get_footprint(item["id"], item["cell"], int(item["rotation"]) + 1)
+			_preview_quarter = FurnitureCatalog.get_quarter(item)
 			_preview_front = FurnitureCatalog.get_front(int(item["rotation"]) + 1)
-		_apply_preview = func() -> Dictionary: return builder.rotate(cell)
+		_apply_preview = func() -> Dictionary: return builder.rotate(cell, quarter)
 	elif _is_room_tool() or tool == TOOL_UNMARK_ROOM:
 		if OfficeState.lot.has_point(cell):
 			_preview_cells = _space_at(cell)
@@ -304,9 +311,9 @@ func _update_preview(announce: bool = true) -> void:
 				quote = builder.quote_mark_room(room_type, cell)
 				_apply_preview = func() -> Dictionary: return builder.mark_room(room_type, cell)
 	elif tool == TOOL_SELL and _sell_targets_furniture(cell):
-		_preview_cells = _footprint_at(cell)
-		quote = builder.quote_sell_furniture_at(cell)
-		_apply_preview = func() -> Dictionary: return builder.sell_furniture_at(cell)
+		_preview_cells = _footprint_at(cell, quarter)
+		quote = builder.quote_sell_furniture_at(cell, quarter)
+		_apply_preview = func() -> Dictionary: return builder.sell_furniture_at(cell, quarter)
 	else:
 		var changes: Array[Dictionary] = _structure_changes(start, _pointer)
 		for change: Dictionary in changes:
@@ -362,11 +369,12 @@ func _space_at(cell: Vector2i) -> Array[Vector2i]:
 	return spaces[index]["cells"]
 
 
-func _footprint_at(cell: Vector2i) -> Array[Vector2i]:
-	var index: int = OfficeState.find_furniture_at(cell)
+func _footprint_at(cell: Vector2i, quarter: int = -1) -> Array[Vector2i]:
+	var index: int = OfficeState.find_furniture_at(cell, quarter)
 	if index < 0:
 		return [cell]
 	var item: Dictionary = OfficeState.furniture[index]
+	_preview_quarter = FurnitureCatalog.get_quarter(item)
 	return FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"])
 
 
@@ -426,8 +434,11 @@ func _draw() -> void:
 		draw_line(_grid.grid_to_world(ends[0]), _grid.grid_to_world(ends[1]), color, PREVIEW_LINE_WIDTH)
 	for cell: Vector2i in _preview_cells:
 		var center := Vector2(cell)
-		var corners: PackedVector2Array = IsoBox.grid_rect_corners(_grid, center - Vector2(0.5, 0.5),
-			center + Vector2(0.5, 0.5))
+		var half := Vector2(0.5, 0.5)
+		if _preview_quarter >= 0:  # mueble chico: solo su cuarto
+			center += FurnitureCatalog.get_quarter_offset(_preview_quarter)
+			half = Vector2(0.25, 0.25)
+		var corners: PackedVector2Array = IsoBox.grid_rect_corners(_grid, center - half, center + half)
 		corners.append(corners[0])
 		draw_polyline(corners, color, PREVIEW_LINE_WIDTH / 2.0)
 	# Flecha hacia el frente del mueble.

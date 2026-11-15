@@ -57,6 +57,12 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
 - El piso de cada casilla se dibuja como 2×2 losas (`OfficeGrid.FLOOR_TILES_PER_SIDE`, `_draw_floor_tiles`); es solo el dibujo.
+- Cuartos de casilla (como Timberborn, que coloca en bloques enteros y comparte casillas): los muebles con `small` en `data/furniture.json`
+  (planta pequeña, zafacón, dispensador de agua y lámpara de pie) ocupan un cuarto de su casilla (`quarter` 0–3 en el mueble, guardado;
+  `FurnitureCatalog.get_quarter`, `get_quarter_offset`, `quarter_at`, `overlaps`). Caben hasta 4 chicos por casilla y nunca con uno grande;
+  la casilla sigue siendo de 1 m² para paredes, habitaciones, caminos y precios y sigue tapando el paso. `Builder.quote_place(…, quarter)`
+  (sin cuarto, el primero libre), `rotate`/`sell_furniture_at(cell, quarter)` y `OfficeState.find_furniture_at(cell, quarter)` eligen el del
+  cuarto bajo el ratón; las partidas viejas los ponen en el cuarto 0. Prueba `test_quarters`.
 - El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
   fuera del local se dibuja terreno (`MapDecor`, hito 68). La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.

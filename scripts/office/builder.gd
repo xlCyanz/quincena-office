@@ -250,13 +250,16 @@ func _describe(changes: Array[Dictionary], cost: int) -> String:
 # --- Muebles ---------------------------------------------------------------------
 
 
-## Comprar un mueble y colocarlo con su casilla de anclaje y su rotación.
-func quote_place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
+## Comprar un mueble y colocarlo con su casilla de anclaje y su rotación. Un mueble chico
+## va en el cuarto quarter (0–3) de su casilla; sin cuarto, en el primero libre.
+func quote_place(id: String, anchor: Vector2i, rotation: int, quarter: int = -1) -> Dictionary:
 	var info: Dictionary = FurnitureCatalog.get_item(id)
 	if info.is_empty() or bool(info["on_desk"]):
 		return _fail(0, "Ese objeto no se coloca en el piso.")
+	if FurnitureCatalog.is_small(id) and quarter < 0:
+		quarter = _free_quarter(id, anchor)
 	var item: Dictionary = {"id": id, "cell": anchor, "rotation": posmod(rotation, 4),
-		"assigned_to": "", "computer": "", "monitor": ""}
+		"assigned_to": "", "computer": "", "monitor": "", "quarter": quarter if FurnitureCatalog.is_small(id) else -1}
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate.append(item)
 	var cost: int = FurnitureCatalog.get_price(id)
@@ -268,8 +271,17 @@ func quote_place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
 	return {"ok": true, "cost": cost, "message": "%s: −$%d" % [info["name"], cost], "furniture": candidate}
 
 
-func place(id: String, anchor: Vector2i, rotation: int) -> Dictionary:
-	return _commit(quote_place(id, anchor, rotation))
+func place(id: String, anchor: Vector2i, rotation: int, quarter: int = -1) -> Dictionary:
+	return _commit(quote_place(id, anchor, rotation, quarter))
+
+
+# Primer cuarto libre de una casilla para un mueble chico (0 si no hay ninguno libre).
+func _free_quarter(id: String, cell: Vector2i) -> int:
+	for quarter: int in range(FurnitureCatalog.QUARTERS):
+		var probe: Dictionary = {"id": id, "cell": cell, "rotation": 0, "quarter": quarter}
+		if not OfficeState.furniture.any(func(other: Dictionary) -> bool: return FurnitureCatalog.overlaps(probe, other)):
+			return quarter
+	return 0
 
 
 ## Vender el objeto colgado en una cara de pared (su casilla y la rotación que deja la
@@ -305,8 +317,8 @@ func _wall_problem(item: Dictionary) -> String:
 
 ## Girar un cuarto de vuelta el mueble que ocupa cell. Es gratis, pero el mueble girado
 ## tiene que caber (las casillas nuevas se cuentan desde la misma casilla de anclaje).
-func quote_rotate(cell: Vector2i) -> Dictionary:
-	var index: int = OfficeState.find_furniture_at(cell)
+func quote_rotate(cell: Vector2i, quarter: int = -1) -> Dictionary:
+	var index: int = OfficeState.find_furniture_at(cell, quarter)
 	if index < 0:
 		return _fail(0, "Ahí no hay ningún mueble.")
 	var station_problem: String = _station_problem(index)
@@ -323,15 +335,15 @@ func quote_rotate(cell: Vector2i) -> Dictionary:
 	return {"ok": true, "cost": 0, "message": "%s girado." % item_name, "furniture": candidate}
 
 
-func rotate(cell: Vector2i) -> Dictionary:
-	return _commit(quote_rotate(cell))
+func rotate(cell: Vector2i, quarter: int = -1) -> Dictionary:
+	return _commit(quote_rotate(cell, quarter))
 
 
 ## Vender lo que hay en cell: si es un escritorio con segundo monitor, primero el
 ## monitor; si tiene computadora, después la computadora; si no, el mueble (sin mueble, lo colgado en una pared de la casilla).
 ## La silla del CEO no se vende, ni nada del puesto de un empleado.
-func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
-	var index: int = OfficeState.find_furniture_at(cell)
+func quote_sell_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
+	var index: int = OfficeState.find_furniture_at(cell, quarter)
 	if index < 0:
 		# Sin mueble en el piso, lo que cuelga en una pared de esa casilla.
 		for rotation: int in range(4):
@@ -366,8 +378,8 @@ func quote_sell_furniture_at(cell: Vector2i) -> Dictionary:
 		"furniture": candidate}
 
 
-func sell_furniture_at(cell: Vector2i) -> Dictionary:
-	return _commit(quote_sell_furniture_at(cell))
+func sell_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
+	return _commit(quote_sell_furniture_at(cell, quarter))
 
 
 ## Instalar una computadora en el escritorio que ocupa cell (uno por escritorio).
@@ -492,11 +504,8 @@ func _placement_problem(candidate: Array[Dictionary], item: Dictionary) -> Strin
 			return "No se puede tapar la entrada."
 		if occupied_cells.has(cell):
 			return "Hay alguien en esa casilla."
-	var others: Array[Dictionary] = candidate.duplicate()
-	others.erase(item)
-	var taken: Array[Vector2i] = OfficeState.cells_of_furniture(others)
-	for cell: Vector2i in cells:
-		if taken.has(cell):
+	for other: Dictionary in candidate:
+		if not is_same(other, item) and FurnitureCatalog.overlaps(item, other):
 			return "Ahí ya hay otro objeto."
 	for a: Vector2i in cells:
 		for b: Vector2i in cells:

@@ -176,13 +176,18 @@ func wall_items_on(edge: Vector3i) -> Array[int]:
 	return found
 
 
-## Índice en furniture del mueble que ocupa una casilla, o -1 si está libre.
-func find_furniture_at(cell: Vector2i) -> int:
+## Índice en furniture del mueble que ocupa una casilla, o -1 si está libre. Con quarter
+## (0–3) prefiere el mueble chico de ese cuarto; si no hay, el primero de la casilla.
+func find_furniture_at(cell: Vector2i, quarter: int = -1) -> int:
+	var found: int = -1
 	for index: int in range(furniture.size()):
 		var item: Dictionary = furniture[index]
 		if FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]).has(cell):
-			return index
-	return -1
+			if quarter < 0 or FurnitureCatalog.get_quarter(item) == quarter:
+				return index
+			if found < 0:
+				found = index
+	return found
 
 
 ## Pieza en un borde: ConstructionCatalog.WALL, DOOR, WINDOW o "" si está libre.
@@ -553,7 +558,8 @@ func export_state() -> Dictionary:
 	for item: Dictionary in furniture:
 		var cell: Vector2i = item["cell"]
 		saved_furniture.append({"id": item["id"], "cell": [cell.x, cell.y], "rotation": item["rotation"],
-			"assigned_to": item["assigned_to"], "computer": item["computer"], "monitor": String(item.get("monitor", ""))})
+			"assigned_to": item["assigned_to"], "computer": item["computer"], "monitor": String(item.get("monitor", "")),
+			"quarter": FurnitureCatalog.get_quarter(item)})
 	var saved_floors: Array = []
 	for cell: Vector2i in floors:
 		saved_floors.append([cell.x, cell.y, floors[cell]])
@@ -660,6 +666,8 @@ func _furniture_from_data(item: Dictionary) -> Dictionary:
 		"assigned_to": String(item.get("assigned_to", "")),
 		"computer": String(item.get("computer", "")),
 		"monitor": String(item.get("monitor", "")),
+		# Los muebles chicos guardan su cuarto; las partidas viejas los ponen en el primero.
+		"quarter": int(item.get("quarter", 0 if FurnitureCatalog.is_small(String(item["id"])) else -1)),
 	}
 
 

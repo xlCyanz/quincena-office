@@ -34,6 +34,9 @@ const LAMP_POLE: float = 0.08
 const LAMP_SHADE_RADIUS: float = 9.0
 const LAMP_POLE_COLOR := Color("5a5148")
 
+## Muebles chicos: ocupan un cuarto de su casilla y sus hojas y pantallas se dibujan a esta escala.
+const SMALL_SCALE: float = 0.6
+
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
 
@@ -44,11 +47,14 @@ var computer_id: String = ""
 ## Segundo monitor del escritorio ("" si no tiene; hito 46).
 var monitor_id: String = ""
 var part: String = PART_MAIN
+## Cuarto de la casilla de un mueble chico (0–3), o -1.
+var quarter: int = -1
 
 var _grid: OfficeGrid
 var _info: Dictionary = {}
 var _low := Vector2.ZERO  # esquinas de la base en la cuadrícula
 var _high := Vector2.ZERO
+var _scale: float = 1.0
 
 
 ## Coloca el mueble a partir de su entrada en OfficeState.furniture. piece elige qué
@@ -72,6 +78,13 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 		_high = _high.max(Vector2(cell))
 	_low -= Vector2(0.5, 0.5)
 	_high += Vector2(0.5, 0.5)
+	quarter = FurnitureCatalog.get_quarter(item)
+	_scale = 1.0
+	if quarter >= 0:
+		var center: Vector2 = Vector2(footprint[0]) + FurnitureCatalog.get_quarter_offset(quarter)
+		_low = center - Vector2(0.25, 0.25)
+		_high = center + Vector2(0.25, 0.25)
+		_scale = SMALL_SCALE
 	if String(_info.get("shape", "")) == "chair":
 		_low += Vector2(SEAT_INSET, SEAT_INSET)
 		_high -= Vector2(SEAT_INSET, SEAT_INSET)
@@ -125,15 +138,16 @@ func _draw() -> void:
 			var middle: Vector2 = (_low + _high) / 2.0
 			var pole := Vector2(LAMP_POLE, LAMP_POLE) / 2.0
 			IsoBox.draw(self, _corners(middle - pole, middle + pole), height, LAMP_POLE_COLOR)
-			draw_circle(_local(middle) - Vector2(0.0, height), LAMP_SHADE_RADIUS, color)
+			draw_circle(_local(middle) - Vector2(0.0, height), LAMP_SHADE_RADIUS * _scale, color)
 		"plant":
 			var center: Vector2 = (_low + _high) / 2.0
-			var half := Vector2(POT_SIZE, POT_SIZE) / 2.0
+			var half := Vector2(POT_SIZE, POT_SIZE) / 2.0 * (0.5 if quarter >= 0 else 1.0)
 			IsoBox.draw(self, _corners(center - half, center + half), height, POT_COLOR)
-			var top: Vector2 = _local(center) - Vector2(0.0, height + 10.0)
-			draw_circle(top, 12.0, color)
-			draw_circle(top + Vector2(-7.0, 4.0), 8.0, color.darkened(0.15))
-			draw_circle(top + Vector2(7.0, 3.0), 8.0, color.lightened(0.1))
+			var s: float = _scale
+			var top: Vector2 = _local(center) - Vector2(0.0, height + 10.0 * s)
+			draw_circle(top, 12.0 * s, color)
+			draw_circle(top + Vector2(-7.0, 4.0) * s, 8.0 * s, color.darkened(0.15))
+			draw_circle(top + Vector2(7.0, 3.0) * s, 8.0 * s, color.lightened(0.1))
 		_:
 			IsoBox.draw(self, _corners(_low, _high), height, color)
 			# Una franja clara marca el frente (donde se sienta quien lo usa).
