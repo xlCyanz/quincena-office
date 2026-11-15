@@ -521,6 +521,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Un hito por sesión; no adelantar trabajo de hitos posteriores.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/` y la suma a `test_all`.
+- Reglas para el arte de sprites (128 px, fase 8): `docs/sprites_128.md`.
 - La lista de hitos está en la sección 15.4 de `docs/diseno.md` (fase 1, hitos 0–9), en la 16.3 (fase 2, hitos 10–19), en la 17.3 (fase 3, hitos 20–29), en la 18.3 (fase 4, hitos 30–39), en la 19.3 (fase 5, hitos 40–49) en la 20.3 (fase 6, hitos 50–59) y en la 21.3 (fase 7 de pulido, hitos 60–67; solo escritorio, sin Android ni iOS; el arte y el sonido pasan a la fase 8); los agregados antes de la fase 8 (hitos 68–69) en la 21.6.
 
 ## Estado actual
