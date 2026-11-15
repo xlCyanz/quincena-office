@@ -48,6 +48,9 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      marcadores; televisor (la pantalla de presentaciones) negro apagado con filo gris azulado y reflejos en
      diagonal, sobre una repisa de madera naranja; aire acondicionado split largo y bajo, frente blanco verdoso,
      tapa gris con panel claro, rejilla negra abajo y luz roja.
+   - *Decoración de piso* (`pieces/decor.py`): lámpara de pie de base negra, poste de metal y pantalla crema en
+     cono; alfombra vino con borde crema de grecas, filete dorado y medallón en rombo azul; pecera sobre un mueble de
+     madera naranja con dos puertas, agua azul más oscura abajo, arena, plantas, piedras, peces y tapa negra.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
      la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del

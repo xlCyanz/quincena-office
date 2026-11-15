@@ -98,6 +98,11 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 | Mesa de reuniones, ping pong | 2×2 | 12–20 | 256×192 |
 | Alfombra | 2×2 | 1 | 256×128 (solo el rombo, como un piso) |
 
+- Decoración (`tools/sprites/pieces/decor.py`): `floor_lamp` y `floor_lamp_q` (la lámpara chica ya al 60 %), una sola
+  imagen por ser simétrica; `rug` (2×2, una sola imagen); `aquarium_r0`–`_r3` (mueble con puertas al frente y tanque
+  encima, 56 px de sprite de alto: más que su `height` de 20, para que se lea como pecera). Cada uno con su `_shadow`
+  salvo la alfombra.
+
 ## 7. Objetos de pared
 
 Cuadro, reloj, pizarra, pantalla de presentaciones y aire acondicionado se cuelgan en una cara de pared.
