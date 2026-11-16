@@ -92,11 +92,54 @@ def general_light(c, sx, sy, rx, ry):
     """Luz general de una copa con centro (sx, sy) y radios (rx, ry) en px: clara arriba a la izquierda."""
     dx = (c.X + 0.5 - sx) / float(rx)
     dy = (c.Y + 0.5 - sy) / float(ry)
-    return -(0.62 * dx + 1.0 * dy) - 0.1 - 0.55 * np.clip((dy - 0.4) / 0.5, 0, 1)  # panza a la sombra
+    return -(0.9 * dx + 1.0 * dy) - 0.12 - 0.6 * np.clip((dy - 0.35) / 0.5, 0, 1) - 0.35 * np.clip((dx - 0.45) / 0.5, 0, 1)  # panza a la sombra
+
+
+def clean(index, passes=2):
+    """Quita pixeles sueltos: el que no tiene ningún vecino (de los 8) de su mismo tono toma el de su
+    vecino de la izquierda."""
+    index = np.asarray(index)
+    for _ in range(passes):
+        pad = np.pad(index, 1, mode="edge")
+        h, w = index.shape
+        same = np.zeros(index.shape, dtype=np.int16)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dx or dy:
+                    same += pad[1 + dy:1 + dy + h, 1 + dx:1 + dx + w] == index
+        index = np.where(same == 0, pad[1:1 + h, 0:w], index)
+    return index
+
+
+def despeckle(c, passes=3):
+    """Limpieza final del sprite ya terminado: cada pixel opaco sin ningún vecino (de los 8) de su mismo
+    color toma el color más repetido entre sus vecinos opacos. No cambia la silueta."""
+    arr = np.array(c.image.convert("RGBA"))
+    h, w = arr.shape[:2]
+    for _ in range(passes):
+        opaque = arr[..., 3] == 255
+        pad = np.pad(arr, ((1, 1), (1, 1), (0, 0)))
+        same = np.zeros((h, w), dtype=np.int16)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dx or dy:
+                    q = pad[1 + dy:1 + dy + h, 1 + dx:1 + dx + w]
+                    same += (q[..., 3] == 255) & (q[..., :3] == arr[..., :3]).all(-1)
+        ys, xs = np.nonzero(opaque & (same == 0))
+        if not len(ys):
+            break
+        for y, x in zip(ys, xs):
+            around = [tuple(pad[y + 1 + dy, x + 1 + dx]) for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+                      if (dx or dy) and pad[y + 1 + dy, x + 1 + dx, 3] == 255]
+            if around:
+                arr[y, x] = max(set(around), key=around.count)
+    c.result = Image.fromarray(arr, "RGBA")
+    return c.result
 
 
 def painted(index_map):
-    """Textura que devuelve un mapa de índices ya pintado en pantalla."""
+    """Textura que devuelve un mapa de índices ya pintado en pantalla (sin pixeles sueltos)."""
+    index_map = clean(index_map)
     return lambda ctx: index_map
 
 
@@ -153,23 +196,28 @@ def crown(c, ramp, z0, z1, profile, count, size, seed, center=(0.5, 0.5), name="
     for t in np.linspace(0.0 if z0 <= 0 else 0.04, 0.96, 18):  # relleno, sin pasar de la altura de la copa
         low = 9.0 if z0 <= 0 else span * t / iso.Z_METRIC + 0.02  # apoyada en el piso: se corta ahí
         r = min(profile(t) * 0.95, span * (1.0 - t) / iso.Z_METRIC + 0.02, low)
-        if r > 0.025:
+        if r > 0.012:
             add(cx, cy, z0 + t * span, r, False)
     placed = 0
     while placed < count:
-        t = rng.uniform(0.0, 0.98)
+        t = rng.uniform(0.0, 0.96)
         if rng.uniform(0, widest) > max(profile(t), widest * 0.15):
             continue
         theta = rng.uniform(0, 2 * np.pi)
-        r = min(rng.uniform(*size), profile(t) * 0.8 + 0.03)
+        r = min(rng.uniform(*size), profile(t) * 0.9 + 0.012)  # hacia la punta, bultos chicos
         radial = max(profile(t) - r * 0.45, 0.0)
         add(cx + radial * np.cos(theta), cy + radial * np.sin(theta), z0 + t * span, r)
         placed += 1
     return pid, tex, blobs
 
 
-def dots(c, ramp, blobs, center, count, seed, size=(0.016, 0.024), name="dots"):
-    """Flores o frutos: bolitas sobre los bultos que miran a la vista."""
+def dot_tex(ctx):
+    """Flor o fruto de dos tonos: luz arriba a la izquierda, su tono en lo demás."""
+    return np.where(np.asarray(ctx.light) > 0.25, pal.LIGHT, pal.BASE)
+
+
+def dots(c, ramp, blobs, center, count, seed, size=(0.03, 0.04), name="dots"):
+    """Flores o frutos: bolitas de 5 a 7 px, de dos tonos, sobre los bultos que miran a la vista."""
     rng = np.random.RandomState(seed)
     cx, cy, cz = center
     front = [b for b in blobs if (b[0] - cx) + (b[1] - cy) > 0.05] or blobs
@@ -179,11 +227,11 @@ def dots(c, ramp, blobs, center, count, seed, size=(0.016, 0.024), name="dots"):
         out = np.array([x - cx, y - cy, (z - cz) / iso.Z_METRIC]) + np.array([0.5, 0.5, 0.2]) * 0.4 + \
             rng.uniform(-0.2, 0.2, 3)
         out = out / max(np.linalg.norm(out), 1e-6)
-        fz = z + r * 0.9 * out[2] * iso.Z_METRIC
+        fz = z + r * 1.05 * out[2] * iso.Z_METRIC
         if fz < 3:
             continue
-        got = c.sphere(x + r * 0.9 * out[0], y + r * 0.9 * out[1], fz, rng.uniform(*size), ramp, outline=False,
-                       shadow=False, name=name if pid is None else None, part=pid)
+        got = c.sphere(x + r * 1.05 * out[0], y + r * 1.05 * out[1], fz, rng.uniform(*size), ramp, outline=False,
+                       shadow=False, tex=dot_tex, name=name if pid is None else None, part=pid)
         pid = got if pid is None else pid
 
 
@@ -195,6 +243,9 @@ def bark_side(ctx):
     b = np.floor(ctx.b)
     base = np.asarray(ctx.base).copy()
     lines = (np.mod(a * 3 + np.floor(b / 11.0) * 5, 11) == 0) & (np.mod(b, 11) > 3)
+    t = np.asarray(ctx.t)
+    base = np.where(t < -0.45, pal.lighter(base), base)  # luz a la izquierda
+    base = np.where(t > 0.5, pal.darker(base), base)  # sombra a la derecha
     return np.where(lines, BARK_LINE, base)
 
 
@@ -215,53 +266,56 @@ def branches(c, start, tips, radius=2.2):
 
 def tree_oak():
     c = canvas()
-    trunk(c, 50, 0.1)
-    branches(c, (0.5, 0.5, 44), [(0.82, 0.42, 84), (0.2, 0.62, 80), (0.5, 0.5, 86)], 4.5)
-    big = ball(0.5)
-    tex = crown_paint(c, GREEN, 66, 186, ball(0.6), 4)
-    pid, _, _ = crown(c, GREEN, 72, 162, big, 150, (0.06, 0.09), seed=4, tex=tex)
+    trunk(c, 58, 0.1)
+    branches(c, (0.5, 0.5, 50), [(0.82, 0.42, 96), (0.2, 0.62, 92), (0.5, 0.5, 98)], 4.5)
+    tex = crown_paint(c, GREEN, 76, 210, ball(0.6), 4)
+    pid, _, _ = crown(c, GREEN, 82, 182, ball(0.5), 160, (0.06, 0.09), seed=4, tex=tex)
     # Copas menores que le rompen la bola: una a cada lado y una arriba.
-    crown(c, GREEN, 70, 120, ball(0.27), 60, (0.06, 0.085), seed=41, center=(0.28, 0.76), part=pid, tex=tex)
-    crown(c, GREEN, 68, 118, ball(0.27), 60, (0.06, 0.085), seed=42, center=(0.77, 0.28), part=pid, tex=tex)
-    crown(c, GREEN, 128, 186, ball(0.32), 70, (0.06, 0.085), seed=43, center=(0.5, 0.5), part=pid, tex=tex)
+    crown(c, GREEN, 80, 134, ball(0.27), 60, (0.06, 0.085), seed=41, center=(0.28, 0.76), part=pid, tex=tex)
+    crown(c, GREEN, 78, 132, ball(0.27), 60, (0.06, 0.085), seed=42, center=(0.77, 0.28), part=pid, tex=tex)
+    crown(c, GREEN, 146, 210, ball(0.33), 80, (0.06, 0.085), seed=43, center=(0.5, 0.5), part=pid, tex=tex)
     return c
 
 
 def tree_ovate():
     c = canvas()
-    trunk(c, 40, 0.055)
-    crown(c, GREEN, 26, 176, drop(0.42, 0.34, 1.7), 190, (0.06, 0.088), seed=5)
+    trunk(c, 46, 0.055)
+    crown(c, GREEN, 32, 200, drop(0.44, 0.34, 1.7), 210, (0.06, 0.088), seed=5)
     return c
 
 
 def fir_tex(c, r0, z0, z1, k):
-    """Faldón del abeto: flecos que cuelgan (tiras verticales de tonos alternados con una rendija oscura
-    entre ellas), más claro a la izquierda y con la parte de arriba a la sombra del piso de encima."""
+    """Faldón del abeto: ramas en capas (filas de puntas redondeadas corridas a medias, separadas por una
+    línea oscura en arco, con la parte alta de cada punta un tono más clara), más claro a la izquierda y
+    con la parte de arriba a la sombra del piso de encima."""
     sx0, _ = screen(c, 0.5, 0.5, 0)
-    X = c.X
-    col = np.floor_divide(X + k * 2, 5)
-    hashed = np.mod(col * 7 + k * 3, 5)
-    stripe = np.select([hashed == 0, hashed == 3], [0.28, -0.22], 0.0)
-    gap = np.mod(X + k * 2, 5) == 0
+    X, Y = c.X, c.Y
+    w, h = 10, 8
+    row = np.floor_divide(Y, h)
+    lx = np.mod(X + np.mod(row, 2) * 5 + k * 3, w) - (w - 1) / 2.0
+    ly = np.mod(Y, h)
+    curve = (h - 1) - 3.5 * (lx / (w / 2.0)) ** 2
+    line = np.abs(ly - curve) < 0.75  # borde de abajo de cada punta
+    lit = (ly < curve - 3.0) & (lx < 1.0)
     side = -(X + 0.5 - sx0) / (r0 * SCREEN_W)
 
     def tex(ctx):
         f = (np.asarray(ctx.z) - z0) / float(z1 - z0)
-        v = 0.95 * side + 0.1 + stripe - 0.3 * gap - 1.1 * np.clip((f - 0.42) / 0.4, 0, 1) + 0.25 * (f < 0.12)
-        return quantize(v)
+        v = 1.0 * side + 0.1 + 0.2 * lit - 0.55 * line - 1.1 * np.clip((f - 0.45) / 0.4, 0, 1)
+        return clean(quantize(v), 4)
     return tex
 
 
 def tree_fir():
     c = canvas()
-    trunk(c, 26, 0.075)
-    count = 7
+    trunk(c, 38, 0.075)
+    count = 8
     rng = np.random.RandomState(23)
     for k in range(count):
         f = k / float(count - 1)
-        r0 = 0.5 - 0.37 * f
-        z0 = 16 + 136 * f ** 0.95
-        z1 = z0 + 40 - 12 * f
+        r0 = 0.52 - 0.39 * f
+        z0 = 28 + 146 * f ** 0.95
+        z1 = z0 + 42 - 13 * f
         tex = fir_tex(c, r0, z0 - 6, z1, k)
         tier = c.cylinder(0.5, 0.5, r0 * 0.96, z0 + 6, z1, FIR, radius_top=r0 * 0.3, tex=tex, name="tier_%d" % k)
         lobes = int(12 + r0 * 34)
@@ -270,47 +324,47 @@ def tree_fir():
             r = rng.uniform(0.034, 0.05)
             lump(c, FIR, 0.5 + r0 * 0.92 * np.cos(ang), 0.5 + r0 * 0.92 * np.sin(ang), z0 + 7 - rng.uniform(0, 5), r, tex,
                  part=tier, stretch=rng.uniform(1.6, 2.6))
-    tip = fir_tex(c, 0.08, 150, 196, 0)
-    c.cylinder(0.5, 0.5, 0.06, 168, 189, FIR, radius_top=0.008, tex=tip, name="tip")
+    tip = fir_tex(c, 0.08, 170, 220, 0)
+    c.cylinder(0.5, 0.5, 0.06, 190, 212, FIR, radius_top=0.008, tex=tip, name="tip")
     return c
 
 
 def tree_cherry():
     c = canvas()
-    trunk(c, 62, 0.07)
-    branches(c, (0.5, 0.5, 56), [(0.78, 0.5, 86), (0.26, 0.66, 84), (0.5, 0.5, 90)], 3.0)
-    _, _, blobs = crown(c, GREEN, 70, 164, ball(0.52), 200, (0.06, 0.088), seed=8)
-    dots(c, FLOWER, blobs, (0.5, 0.5, 117), 110, 21, name="flowers")
+    trunk(c, 78, 0.07)
+    branches(c, (0.5, 0.5, 70), [(0.78, 0.5, 102), (0.26, 0.66, 100), (0.5, 0.5, 106)], 3.0)
+    _, _, blobs = crown(c, GREEN, 88, 166, ball(0.58), 210, (0.06, 0.088), seed=8)
+    dots(c, FLOWER, [b for b in blobs if b[2] > 108], (0.5, 0.5, 127), 30, 21, name="flowers")
     return c
 
 
 def tree_ball():
     c = canvas()
-    trunk(c, 56, 0.045)
-    crown(c, GREEN, 46, 142, ball(0.53), 200, (0.06, 0.088), seed=14)
+    trunk(c, 72, 0.045)
+    crown(c, GREEN, 62, 160, ball(0.54), 210, (0.06, 0.088), seed=14)
     return c
 
 
 def tree_cypress():
     c = canvas()
-    trunk(c, 18, 0.06)
-    crown(c, GREEN, 10, 186, drop(0.27, 0.2, 2.1), 170, (0.05, 0.07), seed=15)
+    trunk(c, 32, 0.06)
+    crown(c, GREEN, 24, 212, drop(0.28, 0.2, 2.1), 190, (0.05, 0.07), seed=15)
     return c
 
 
 def tree_young():
     c = canvas()
-    trunk(c, 60, 0.035)
-    branches(c, (0.5, 0.5, 56), [(0.72, 0.5, 96), (0.3, 0.62, 94), (0.5, 0.5, 100)], 1.8)
-    crown(c, GREEN, 88, 164, ball(0.42), 150, (0.055, 0.08), seed=16)
+    trunk(c, 72, 0.035)
+    branches(c, (0.5, 0.5, 68), [(0.72, 0.5, 110), (0.3, 0.62, 108), (0.5, 0.5, 114)], 1.8)
+    crown(c, GREEN, 102, 180, ball(0.43), 160, (0.055, 0.08), seed=16)
     return c
 
 
 def tree_pyramid():
     c = canvas()
-    trunk(c, 46, 0.075)
-    branches(c, (0.5, 0.5, 40), [(0.76, 0.48, 72), (0.26, 0.64, 70)], 3.4)
-    crown(c, GREEN, 54, 186, drop(0.56, 0.28, 1.25), 240, (0.06, 0.09), seed=17)
+    trunk(c, 54, 0.075)
+    branches(c, (0.5, 0.5, 46), [(0.76, 0.48, 82), (0.26, 0.64, 80)], 3.4)
+    crown(c, GREEN, 58, 210, drop(0.6, 0.24, 1.0), 260, (0.06, 0.09), seed=17)
     return c
 
 
@@ -332,14 +386,14 @@ LEAF_GREEN = ("9dcb3c", "4a811f")
 LEAF_YELLOW = ("e0c040", "7a6418")
 FALLING = {
     # árbol: (colores (cara, borde), zona de salida (x0, x1, y0, y1) en el lienzo, cuántas)
-    "tree_0": ([LEAF_GREEN, LEAF_YELLOW, ("86b934", "366a19")], (18, 110, 90, 130), 6),
-    "tree_1": ([LEAF_GREEN, LEAF_YELLOW], (32, 96, 110, 160), 5),
-    "tree_2": ([("9a6a2e", "4a3010"), ("58c462", "1f7a38")], (24, 104, 150, 176), 3),
-    "tree_3": ([("f5b5cc", "b0587c"), ("fbd3e2", "c06a90"), ("ee8fb2", "8a2f55")], (22, 106, 100, 124), 7),
-    "tree_4": ([LEAF_GREEN, LEAF_YELLOW], (24, 104, 100, 140), 5),
-    "tree_5": ([LEAF_GREEN, LEAF_YELLOW], (44, 84, 130, 176), 3),
-    "tree_6": ([LEAF_GREEN, LEAF_YELLOW], (32, 96, 90, 110), 4),
-    "tree_7": ([LEAF_GREEN, LEAF_YELLOW, ("86b934", "366a19")], (20, 108, 110, 140), 6),
+    "tree_0": ([LEAF_GREEN, LEAF_YELLOW, ("86b934", "366a19")], (18, 110, 70, 110), 6),
+    "tree_1": ([LEAF_GREEN, LEAF_YELLOW], (32, 96, 90, 150), 5),
+    "tree_2": ([("9a6a2e", "4a3010"), ("58c462", "1f7a38")], (24, 104, 140, 170), 3),
+    "tree_3": ([("f5b5cc", "b0587c"), ("fbd3e2", "c06a90"), ("ee8fb2", "8a2f55")], (22, 106, 84, 110), 7),
+    "tree_4": ([LEAF_GREEN, LEAF_YELLOW], (24, 104, 86, 126), 5),
+    "tree_5": ([LEAF_GREEN, LEAF_YELLOW], (44, 84, 110, 170), 3),
+    "tree_6": ([LEAF_GREEN, LEAF_YELLOW], (32, 96, 70, 96), 4),
+    "tree_7": ([LEAF_GREEN, LEAF_YELLOW, ("86b934", "366a19")], (20, 108, 90, 130), 6),
 }
 
 
@@ -393,7 +447,7 @@ TREES = (
     ("tree_0", tree_oak, [("disc", 0.5, 0.5, 0.46, 70, 180)]),
     ("tree_1", tree_ovate, [("disc", 0.5, 0.5, 0.4, 30, 176)]),
     ("tree_2", tree_fir, [("disc", 0.5, 0.5, 0.46, 18, 170)]),
-    ("tree_3", tree_cherry, [("disc", 0.5, 0.5, 0.46, 70, 164)]),
+    ("tree_3", tree_cherry, [("disc", 0.5, 0.5, 0.46, 72, 146)]),
     ("tree_4", tree_ball, [("disc", 0.5, 0.5, 0.46, 46, 142)]),
     ("tree_5", tree_cypress, [("disc", 0.5, 0.5, 0.28, 12, 186)]),
     ("tree_6", tree_young, [("disc", 0.5, 0.5, 0.4, 88, 164)]),
@@ -407,6 +461,7 @@ def build(out_dir):
     for k, (name, fn, shapes) in enumerate(TREES):
         c = fn()
         c.finish()
+        despeckle(c)
         files.append(iso.save(c, out_dir, name))
         files.append(chair_plant.save_shadow(c, out_dir, name + "_shadow", shapes))
         items.append((name, sheet.on_background(c.image, scale=1)))

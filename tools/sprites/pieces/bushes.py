@@ -16,7 +16,9 @@ import numpy as np
 import iso
 import palette as pal
 from pieces._kit import Saver, g
-from pieces.trees import GREEN, blotch_field, crown, dome, dots, lump, painted, quantize
+import sheet
+from pieces import chair_plant
+from pieces.trees import GREEN, blotch_field, crown, despeckle, dome, dots, lump, painted, quantize
 
 BERRY_RED = pal.style_ramp("d6452e", outline="5a140a", name="bush_berries_red")
 BERRY_BLUE = pal.style_ramp("3fa6d8", outline="12405e", name="bush_berries_blue")
@@ -41,7 +43,7 @@ def bush(index, dotted=None):
     c = iso.Canvas.furniture((1, 1), top, 0, kind=KIND)
     _, _, blobs = crown(c, GREEN, 0, top, dome(radius), count, size, seed, name="bush")
     if dotted is not None:
-        dots(c, dotted, blobs, (0.5, 0.5, top * 0.3), 40, seed + 50, size=(0.018, 0.026))
+        dots(c, dotted, blobs, (0.5, 0.5, top * 0.3), 16, seed + 50, size=(0.028, 0.036))
     return c
 
 
@@ -114,8 +116,19 @@ def hedge_corner(rotation):
 
 # ---------------------------------------------------------------------------- principal
 
+class CleanSaver(Saver):
+    """Como Saver, pero con la limpieza final de pixeles sueltos de los árboles."""
+
+    def keep(self, c, name, shapes, **meta):
+        c.finish()
+        despeckle(c)
+        self.files.append(iso.save(c, self.out_dir, name, **meta))
+        self.files.append(chair_plant.save_shadow(c, self.out_dir, name + "_shadow", shapes))
+        self.items.append((name, sheet.on_background(c.image, scale=1)))
+
+
 def build(out_dir):
-    s = Saver(out_dir)
+    s = CleanSaver(out_dir)
     for k, (name, radius, top, _count, _size, _seed) in enumerate(BUSHES):
         s.keep(bush(k), name, [("disc", 0.5, 0.5, radius + 0.04, 0, top)])
     for k, (ramp, target) in enumerate(DOTS):
