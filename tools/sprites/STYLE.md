@@ -59,6 +59,29 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      asiento, respaldo de tres cojines con botón y brazos gruesos enrollados; dispensador de agua de gabinete blanco
      con panel oscuro (llaves roja y azul) y rejillas, y bidón grande celeste casi transparente con tres aros y
      brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
+   - *Trabajo* (`pieces/office_extra.py`): escritorio amplio de madera naranja como el sencillo pero de dos casillas;
+     ejecutivo de nogal con dos cajoneras de tiradores dorados, panel de tres tableros hundidos del lado de la visita y
+     tablero grueso con filo dorado; impresora gris clara (pantalla celeste, hoja saliendo) sobre un mueble gris oscuro;
+     archivero de metal de cuatro cajones con etiqueta crema; gabinete de baterías gris pizarra con pantalla verde,
+     luces y cuatro módulos; mesa de reuniones redonda de madera naranja con moldura sobre una columna negra.
+   - *Sala de descanso* (`pieces/break_room.py`): sofá lila de dos cojines, brazos rectos y patas de madera; nevera
+     blanca con congelador arriba y tiradores grises; microondas y cafetera negros (jarra de vidrio con café) sobre un
+     mueble bajo naranja de dos puertas con mesón gris claro; máquina expendedora roja con vitrina de golosinas de
+     colores, panel claro y bandeja; ping pong verde con líneas blancas, red y dos paletas rojas; mesa de comedor de
+     madera naranja con un banco a cada lado.
+   - *Servicios* (`pieces/services.py`): inodoro y lavamanos de pedestal en cerámica blanca con llaves cromadas;
+     armario de limpieza gris azulado con rejillas y cartel amarillo, balde amarillo y trapeador; rack negro con
+     servidores tras una malla y luces verdes, celestes y ámbar.
+   - *Árboles, arbustos y setos* (`pieces/trees.py`, `pieces/bushes.py`): la copa es una sola pieza de borde
+     ondulado (bultos chicos en la silueta, contorno verde oscuro, no casi negro) y se pinta en pantalla
+     (`crown_paint`): manchas redondas de 4–7 px encimadas, cada una con su luz arriba a la izquierda y su borde un
+     tono más oscuro (`blotch_field`), sobre una luz general clara arriba a la izquierda y oscura en la panza
+     (`general_light`). Verde claro amarillento (`86b934`); copas anchas, hasta casi el borde del lienzo; tronco
+     marrón liso y fino, con horqueta en algunos. Abeto verde azulado de faldones en tiras con flecos que cuelgan.
+     Setos: cajas con las mismas manchas sobre el tono de cada cara (tapa clara, cara derecha oscura). Frutos y
+     flores: bolitas sin contorno (`dots`). Los árboles llevan 16 cuadros de hojas que caen.
+   - *Manchas* (`pieces/dirt.py`): planas, dibujadas en coordenadas del piso: barro en tres marrones grises con
+     huellas, charco de café con canto oscuro y brillo, migas y papelitos con canto gris.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,
      la escalera 2:1 de trazos de 2 px), cortes escalonados, cada tabla de un tono con un moteado de dominós del

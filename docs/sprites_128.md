@@ -107,6 +107,15 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
   cliente); `waiting_sofa_r0`–`_r3` (2×1, respaldo de 38 px: más que su `height` de 12); `water_dispenser_r0`–`_r3`
   y `water_dispenser_q_r0`–`_r3` (chico: grifos solo al frente); `trash_can` y `trash_can_q` (chico y simétrico, 26 px de alto: más que su `height` de 10). Cada
   uno con su `_shadow`.
+- Trabajo (`tools/sprites/pieces/office_extra.py`): `wide_desk_r0`–`_r3` y `executive_desk_r0`–`_r3` (2×1, superficie
+  en z = 44 como el escritorio sencillo para que las computadoras se apoyen igual, aunque el ejecutivo tenga `height` 26);
+  `printer_r0`–`_r3` (impresora sobre un mueble bajo), `filing_cabinet_r0`–`_r3`, `backup_battery_r0`–`_r3` y
+  `meeting_table` (2×2, redonda: una sola imagen).
+- Sala de descanso (`tools/sprites/pieces/break_room.py`): `sofa_r0`–`_r3` (2×1), `fridge_r0`–`_r3`,
+  `microwave_r0`–`_r3` y `coffee_maker_r0`–`_r3` (cada uno sobre su mueble bajo de cocina, que ocupa la casilla),
+  `vending_machine_r0`–`_r3`, `ping_pong_r0`–`_r3` (2×2) y `dining_table_r0`–`_r3` (2×1, con un banco a cada lado).
+- Baño, limpieza y servidores (`tools/sprites/pieces/services.py`): `toilet_r0`–`_r3`, `sink_r0`–`_r3`,
+  `cleaning_closet_r0`–`_r3` (con balde y trapeador al lado) y `server_rack_r0`–`_r3`. Todos con su `_shadow`.
 
 ## 7. Objetos de pared
 
@@ -170,6 +179,15 @@ interiores) van **bajitas** para ver adentro.
 
 - Árbol: planta 1×1, lienzo 128×256, apoyo en (64, 224). 3–4 variantes de copa.
 - Manchas de suciedad: 128×128, solo dentro del rombo, 3 variantes.
+- Hechos (`tools/sprites/pieces/trees.py`, `bushes.py` y `dirt.py`): ocho árboles de copas de bultos redondos, verde
+  claro: `tree_0` (roble con horqueta), `tree_1` (copa en gota), `tree_2` (abeto de pisos), `tree_3` (cerezo con flores),
+  `tree_4` (copa de bola), `tree_5` (ciprés), `tree_6` (árbol joven) y `tree_7` (pirámide ancha), cada uno con su
+  `_shadow` y su animación `tree_<n>_fall_1` a `_16` (kind `tree_frame`: hojas o pétalos que caen meciéndose y quedan un
+  momento en el piso; ciclo que empalma, mismo lienzo y apoyo; el manifiesto da `base`, `frame` y `frames`). Arbustos y
+  setos (kind `bush`, lienzo de mueble según su planta): `bush_0` a `bush_2` (redondo, chico y bajo), `bush_3` a `bush_5`
+  (los mismos con frutos rojos, frutos azules y flores naranjas), `hedge_cube` (1×1), `hedge_long_r0`/`_r1` (2×1) y
+  `hedge_corner_r0` a `_r3` (L en 2×2), con su `_shadow`; `dirt_0` (barro y huellas),
+  `dirt_1` (café derramado) y `dirt_2` (migas y papelitos), kind `overlay`.
 
 ## 11. Lista de revisión
 

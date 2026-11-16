@@ -703,6 +703,36 @@ def check_item_frames(report, frames, directory):
         report.check(base, len(anchors) == 1, "sus %d cuadros tienen el mismo apoyo" % len(items))
 
 
+def check_tree_frames(report, frames, directory):
+    """frames: nombre -> (arr, entry) de los cuadros de un árbol (kind 'tree_frame', hojas que caen). Cada
+    cuadro tiene el lienzo y el apoyo de su árbol, lo tapa entero (solo se agregan hojas encima) y cumple
+    las reglas del árbol."""
+    sets = {}
+    for name, (arr, entry) in sorted(frames.items()):
+        check_other(report, name, arr, None, "tree")
+        base = (entry or {}).get("base")
+        if not base:
+            report.check(name, False, "cuadro de árbol con base en el manifiesto")
+            continue
+        sets.setdefault(base, []).append((name, arr, entry))
+        path = os.path.join(directory, base)
+        if not os.path.isfile(path):
+            report.check(name, False, "existe el árbol %s" % base)
+            continue
+        base_arr = np.array(Image.open(path).convert("RGBA"))
+        report.check(name, base_arr.shape == arr.shape, "mismo lienzo que %s" % base)
+        if base_arr.shape != arr.shape:
+            continue
+        lost = (base_arr[..., 3] == 255) & (arr[..., 3] != 255)
+        report.check(name, not lost.any(), "conserva todo el árbol %s (%d px perdidos)" % (base, int(lost.sum())))
+    for base, items in sorted(sets.items()):
+        steps = sorted(int(e.get("frame", 0)) for _n, _a, e in items)
+        expected = int(items[0][2].get("frames", len(items)))
+        report.check(base, steps == list(range(1, expected + 1)), "cuadros 1 a %d completos (hay %s)" % (expected, steps))
+        anchors = set(tuple(e.get("anchor") or ()) for _n, _a, e in items)
+        report.check(base, anchors == {(64, 224)}, "sus %d cuadros tienen el apoyo del árbol" % len(items))
+
+
 def check_other(report, name, arr, entry, kind):
     height, width = arr.shape[:2]
     opaque = arr[..., 3] == 255
@@ -727,6 +757,11 @@ def check_other(report, name, arr, entry, kind):
         gu, gv = _ground_coords(height, width, (64.0, 192.0))
         below = opaque & ((gu >= 1.0) | (gv >= 1.0))
         report.check(name, not below.any(), "nada por debajo de la planta (%d px)" % int(below.sum()))
+    elif kind == "bush":
+        # Arbustos y setos: lienzo de mueble según su planta (1×1, 2×1 o 2×2) y apoyados en el piso.
+        report.check(name, (width, height) in ((128, 128), (128, 160), (192, 128), (192, 160), (192, 192), (256, 192), (256, 224)),
+                     "lienzo de arbusto de planta 1×1, 2×1 o 2×2 (es %dx%d)" % (width, height))
+        report.check(name, lowest >= height - 48, "el arbusto llega al piso (fila más baja %d)" % lowest)
     elif kind == "overlay":
         report.check(name, (width, height) == (128, 128), "lienzo 128×128 (es %dx%d)" % (width, height))
         if (width, height) == (128, 128):
@@ -767,6 +802,7 @@ def run(directory, verbose=False, groups=None):
     walls = {}
     frames = {}
     item_frames = {}
+    tree_frames = {}
     for path in paths:
         name = os.path.basename(path)
         image = Image.open(path)
@@ -796,7 +832,9 @@ def run(directory, verbose=False, groups=None):
             frames[name] = (arr, entry)
         elif kind == "wall_item_frame":
             item_frames[name] = (arr, entry)
-        elif kind in ("wall_item", "character", "tree", "overlay", "shadow"):
+        elif kind == "tree_frame":
+            tree_frames[name] = (arr, entry)
+        elif kind in ("wall_item", "character", "tree", "bush", "overlay", "shadow"):
             check_other(report, name, arr, entry, kind)
         else:
             report.warn(name, "tipo %s: solo se revisó formato, alfa y recorte"
@@ -806,6 +844,7 @@ def run(directory, verbose=False, groups=None):
     check_wall_groups(report, walls)
     check_wall_frames(report, frames, directory, manifest)
     check_item_frames(report, item_frames, directory)
+    check_tree_frames(report, tree_frames, directory)
     missing = sorted(set(manifest) - set(os.path.basename(p) for p in paths))
     for name in missing:
         report.warn(name, "está en el manifiesto pero no hay PNG")

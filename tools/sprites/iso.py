@@ -1762,6 +1762,8 @@ def guess_kind(name):
         return "tree"
     if stem.startswith("dirt_"):
         return "overlay"
+    if stem.startswith("bush_") or stem.startswith("hedge_"):
+        return "bush"
     return None
 
 
