@@ -1,11 +1,9 @@
-# Prueba del hito 62: menú de pausa.
-# Criterio: con un panel abierto Esc lo cierra; sin panel abre la pausa y el reloj se detiene;
-# Seguir vuelve a como estaba. Guardar, Cargar y Ajustes abren Ajustes en su pestaña y al
-# cerrarlo se vuelve a la pausa; Salir al menú pregunta antes.
+# Menú de pausa: Esc cierra el panel abierto o, sin ninguno, abre la pausa y detiene el reloj;
+# Seguir lo deja como estaba; Guardar, Cargar y Ajustes abren Ajustes y vuelven a la pausa; salir pregunta.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=pause_menu
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -109,7 +107,6 @@ func _check_open_and_resume(game: Node) -> void:
 	_expect(not pause.is_open() and not GameClock.is_paused and GameClock.speed_index == 1,
 		"Seguir vuelve a como estaba (corriendo a 2x)")
 	_expect(menu_bar.visible and not hud.get_pause_button().disabled, "y vuelven la barra y el reloj")
-	# Con el reloj en pausa del jugador, Seguir lo deja en pausa.
 	GameClock.set_paused(true)
 	await _escape()
 	_expect(pause.is_open(), "Esc abre la pausa con el reloj ya en pausa")
@@ -121,7 +118,6 @@ func _check_open_and_resume(game: Node) -> void:
 	game.on_focus_lost()
 	await _click(pause.get_button("resume"))
 	_expect(GameClock.is_paused, "perder el foco en la pausa deja el reloj en pausa al seguir")
-	# Espacio y los números no cambian el reloj con la pausa abierta.
 	GameClock.set_paused(false)
 	await _escape()
 	var space := InputEventKey.new()
@@ -143,14 +139,12 @@ func _check_panels_first(game: Node) -> void:
 		await _escape()
 		_expect(not bool(panel.call("is_open")) and not pause.is_open() and not GameClock.is_paused,
 			"con %s abierto Esc lo cierra sin pausar" % name)
-	# El modo construcción se cierra y devuelve el tiempo.
 	var build: BuildPanel = game.get_node("BuildPanel")
 	build.set_build_mode(true)
 	_expect(GameClock.is_paused, "construir pausa")
 	await _escape()
 	_expect(not build.is_build_mode() and not pause.is_open() and not GameClock.is_paused,
 		"Esc sale del modo construcción y el tiempo vuelve")
-	# Ajustes: primero la pregunta, después el panel.
 	var settings: SettingsPanel = game.get_node("SettingsPanel")
 	settings.set_open(true)
 	await get_tree().process_frame
@@ -161,7 +155,6 @@ func _check_panels_first(game: Node) -> void:
 	await _escape()
 	_expect(not settings.is_open() and not pause.is_open() and not GameClock.is_paused,
 		"Esc cierra Ajustes (abierto con su botón) sin abrir la pausa")
-	# La pausa cierra los paneles que haya.
 	game.get_node("BankPanel").call("set_open", true)
 	game.set_pause_menu_open(true)
 	_expect(not bool(game.get_node("BankPanel").call("is_open")), "abrir la pausa cierra los paneles")
@@ -184,7 +177,7 @@ func _check_settings_from_pause(game: Node) -> void:
 		_expect(not settings.is_open() and pause.is_open() and GameClock.is_paused, "al cerrar Ajustes se vuelve a la pausa")
 		await _click(pause.get_button("resume"))
 		_expect(not GameClock.is_paused, "y Seguir vuelve al reloj corriendo")
-	# Guardar desde la pausa guarda el reloj como estaba antes de la pausa.
+	# Guardar desde la pausa guarda el reloj como estaba antes de ella.
 	await _escape()
 	await _click(pause.get_button("save"))
 	await _click(settings.get_slot_button("slot_1"))
@@ -193,7 +186,6 @@ func _check_settings_from_pause(game: Node) -> void:
 	var clock: Dictionary = data.get("clock", {}) if data is Dictionary else {}
 	_expect(SaveManager.has_save("slot_1") and clock.has("is_paused") and not bool(clock["is_paused"]),
 		"guardar desde la pausa guarda el reloj corriendo: %s" % clock)
-	# Cerrar Ajustes con su botón también vuelve a la pausa.
 	await _click(settings.get_close_button())
 	_expect(pause.is_open() and GameClock.is_paused, "Cerrar en Ajustes vuelve a la pausa")
 	await _escape()
@@ -222,7 +214,6 @@ func _check_quit(game: Node) -> void:
 
 
 func _check_blocking_screens(game: Node) -> void:
-	# La pantalla de fin pide una respuesta: Esc no la tapa con la pausa.
 	var game_over: GameOverScreen = game.get_node("GameOverScreen")
 	game_over.show_stats({})
 	_expect(game.handle_escape() == "none" and not game.is_pause_menu_open(), "con la pantalla de fin Esc no hace nada")

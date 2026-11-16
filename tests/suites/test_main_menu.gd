@@ -1,10 +1,9 @@
-# Prueba del hito 61: menú principal.
-# Criterio: Continuar abre la partida más reciente; sin partidas no aparece; nueva partida
-# avisa si hay autoguardado.
+# Menú principal: Continuar abre la partida más reciente y sin partidas no aparece;
+# Nueva partida avisa si hay autoguardado.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=main_menu
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const MENU_SCENE: PackedScene = preload("res://scenes/main_menu.tscn")
@@ -81,7 +80,7 @@ func _close_menu(menu: Control) -> void:
 	await get_tree().process_frame
 
 
-# Guarda una partida con un saldo reconocible y una hora de guardado dada.
+# Saldo reconocible y hora de guardado dada.
 func _save(slot: String, balance: int, saved_at: int) -> void:
 	SaveManager.new_game()
 	Economy.earn(balance - Economy.balance, "Prueba")
@@ -127,14 +126,12 @@ func _check_continue() -> void:
 	await _click(button)
 	_expect(_opened == [GAME_SCENE_PATH] and Economy.balance == 12000, "Continuar carga el autoguardado: %d" % Economy.balance)
 	await _close_menu(menu)
-	# Si la más reciente es una ranura manual, esa.
 	_save("slot_3", 33000, 9000)
 	menu = await _open_menu()
 	SaveManager.new_game()
 	await _click(menu.get_continue_button())
 	_expect(Economy.balance == 33000, "Continuar carga la ranura 3: %d" % Economy.balance)
 	await _close_menu(menu)
-	# Un archivo dañado no abre nada.
 	var file := FileAccess.open(TEST_SAVE_DIR.path_join("slot_3.json"), FileAccess.WRITE)
 	file.store_string("{roto")
 	file.close()

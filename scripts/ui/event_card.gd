@@ -1,6 +1,5 @@
-# Tarjeta de evento (diseño 10 y 12; hito 43): a la derecha, bajo el reloj, plegable. Muestra
-# el título, el texto, una opción por botón con lo que hace y la cuenta atrás. Elegir llama
-# a Events.choose; si se acaba el tiempo, Events elige al azar. Se construye en código.
+# Tarjeta de evento plegable a la derecha, bajo el reloj: texto, opciones y cuenta atrás.
+# Elegir llama a Events.choose; si se acaba el tiempo, Events elige al azar.
 class_name EventCard
 extends CanvasLayer
 
@@ -16,7 +15,7 @@ var _panel: PanelContainer
 var _header: Label
 var _fold_button: Button
 var _body: VBoxContainer
-# El cuerpo se desplaza si no entra sobre la barra de menús (hito 65).
+# El cuerpo se desplaza si no entra sobre la barra de menús.
 var _scroll: ScrollContainer
 var _title: Label
 var _text: Label
@@ -77,7 +76,7 @@ func _process(_delta: float) -> void:
 		_update_header()
 
 
-## Pliega (solo la cabecera con la cuenta atrás) o despliega la tarjeta.
+## Pliega (solo cabecera y cuenta atrás) o despliega la tarjeta.
 func set_folded(folded: bool) -> void:
 	_folded = folded
 	_refresh()
@@ -141,7 +140,7 @@ func _refresh() -> void:
 	_fit.call_deferred()
 
 
-# Alto: lo que pide el cuerpo, sin tapar la barra de menús; si no entra, se desplaza.
+# Alto: lo que pide el cuerpo sin tapar la barra de menús; si no entra, se desplaza.
 func _fit() -> void:
 	if not _panel.visible:
 		return

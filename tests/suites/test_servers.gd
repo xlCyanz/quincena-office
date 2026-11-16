@@ -1,15 +1,14 @@
-# Prueba del hito 40: Sala de servidores.
-# Criterio: sin aire acondicionado la sala no funciona; cada rack cobra su mantenimiento
-# el día 1; la capacidad cuenta los racks de la sala.
+# Sala de servidores: sin aire acondicionado no funciona; cada rack cobra mantenimiento el día 1;
+# la capacidad cuenta los racks de la sala.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=servers
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const SEED: int = 20261140
-## La sala ocupa x 3 a 5, y 0 a 1, junto a la Oficina Ejecutiva, con puerta al sur en x 4.
+## Sala en x 3 a 5, y 0 a 1, junto a la Oficina Ejecutiva, con puerta al sur en x 4.
 const ROOM_CELL := Vector2i(4, 0)
 const AIR_CELL := Vector2i(3, 0)
 const RACK_CELLS: Array[Vector2i] = [Vector2i(5, 0), Vector2i(5, 1)]
@@ -39,8 +38,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Pequeña empresa con dinero de sobra, objetivos cumplidos y las paredes
-# de la sala (sin marcarla).
+# Pequeña empresa, dinero de sobra, objetivos cumplidos y las paredes de la sala sin marcar.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -90,7 +88,7 @@ func _check_room() -> void:
 	_expect(OfficeState.get_server_room().is_empty() and OfficeState.get_server_capacity() == 0, "sin aire la sala deja de funcionar")
 
 
-# Racks y su mantenimiento el día 1 del mes siguiente, aparte del local.
+# Racks y su mantenimiento el día 1 siguiente, aparte del local.
 func _build_working_room() -> void:
 	_builder.mark_room(OfficeState.SERVER_ROOM, ROOM_CELL)
 	_builder.place("air_conditioner", AIR_CELL, 2)
@@ -112,7 +110,6 @@ func _check_maintenance() -> void:
 	var totals: Dictionary[String, int] = Economy.get_month_totals(GameClock.get_month())
 	_expect(totals.get(Economy.CONCEPT_SERVERS, 0) == -300, "el día 1 cobra los racks: %s" % [totals])
 	_expect(totals.get(Economy.CONCEPT_MAINTENANCE, 0) == -Economy.get_monthly_maintenance(), "el local se cobra aparte")
-	# Sin racks no se cobra nada ni aparece el concepto.
 	_new_game()
 	_next_first()
 	_expect(not Economy.get_month_totals(GameClock.get_month()).has(Economy.CONCEPT_SERVERS), "sin racks no hay cobro")

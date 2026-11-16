@@ -1,6 +1,5 @@
-# Prueba del hito 38: competencia por empleados.
-# Criterio: un Senior mal pagado recibe ofertas más seguido que uno bien pagado; con un
-# aumento que iguala se queda; si no, se va en el plazo.
+# Competencia por empleados: un Senior mal pagado recibe ofertas más seguido; un aumento que
+# iguala lo retiene; si no, se va en el plazo.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=competition
 extends Node
 
@@ -38,8 +37,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Startup con dinero de sobra, objetivos cumplidos y un Área de trabajo
-# con tres puestos.
+# Partida nueva en Startup con dinero, objetivos cumplidos y tres puestos.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -113,7 +111,6 @@ func _check_frequency() -> void:
 				counts[index] += 1
 				people[index]["outside_offer"] = {}
 	_expect(counts[0] > counts[1] * 4 and counts[0] > 60, "el mal pagado recibe más ofertas: %d contra %d en 3000 días" % [counts[0], counts[1]])
-	# Un mal pagado recibe más o menos una por mes.
 	_expect(counts[0] >= 60 and counts[0] <= 130, "unas 90 en 3000 días: %d" % counts[0])
 
 

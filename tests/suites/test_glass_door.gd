@@ -1,7 +1,5 @@
-# Prueba del hito 69: la puerta doble de vidrio de la Recepción. Solo reemplaza la puerta de
-# entrada; cuesta $900 y al venderla devuelve la mitad y queda la puerta normal; deja pasar
-# y cuenta como puerta para las habitaciones; suma 6 puntos al ambiente de la habitación de
-# la entrada; se dibuja con marco y dos hojas; se guarda y se carga.
+# Puerta doble de vidrio: solo en la entrada, $900 (vender devuelve la mitad y deja la normal),
+# pasa y cuenta como puerta, +6 al ambiente de la habitación de la entrada; se dibuja y se guarda.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=glass_door
 extends Node
 
@@ -70,7 +68,7 @@ func _check_pathfinding() -> void:
 
 func _check_in_game() -> void:
 	SaveManager.new_game()
-	# Sin recompensas de objetivos en medio: la prueba mide el saldo exacto.
+	# Sin recompensas de objetivos: la prueba mide el saldo exacto.
 	for objective: Dictionary in Company.get_objectives():
 		Company.objectives_done.append(String(objective["id"]))
 	var game: Node = GAME_SCENE.instantiate()
@@ -95,10 +93,8 @@ func _check_in_game() -> void:
 	if not OfficeState.lot.has_point(OfficeState.entrance + Vector2i(1, 0)):
 		inner = GridEdge.between(OfficeState.entrance, OfficeState.entrance - Vector2i(1, 0))
 	_expect(not builder.quote(_changes(inner, ConstructionCatalog.GLASS_DOOR))["ok"], "adentro no")
-	# La puerta normal de la entrada sigue sin venderse.
 	_expect(not builder.quote(_changes(entrance_edge, ""))["ok"], "la puerta de entrada normal no se vende")
 
-	# Ponerla: cobra $900.
 	var balance: int = Economy.balance
 	var marked: Dictionary = builder.mark_room("reception", OfficeState.entrance)
 	_expect(marked["ok"], "Recepción en la entrada: %s" % marked.get("message", ""))
@@ -126,7 +122,6 @@ func _check_in_game() -> void:
 			_expect(OfficeState.get_room_door_ambiance(room) == 0, "a %s no le suma" % room["type"])
 	_expect(builder.quote_mark_room("reception", OfficeState.entrance)["message"].contains("Ambiente"),
 		"el cartel de la Recepción dice el ambiente")
-	# Se dibuja con marco y dos hojas.
 	await get_tree().process_frame
 	var view: EdgePieceView = null
 	for child: Node in game.get_node("OfficeGrid/Objects").get_children():
@@ -136,17 +131,14 @@ func _check_in_game() -> void:
 	if view != null:
 		_expect((view.get("_leaf_bases") as Array).size() == 2 and (view.get("_frame_bases") as Array).size() == 2,
 			"dos hojas y dos postes")
-	# Herramienta de Construir.
 	var panel: BuildPanel = game.get_node("BuildPanel")
 	var tool_button: Button = panel.get_tool_button(BuildController.TOOL_GLASS_DOOR)
 	_expect(tool_button != null and tool_button.text == "Puerta de vidrio", "botón Puerta de vidrio en Construir")
 
-	# Se guarda y se carga.
 	var saved: Dictionary = OfficeState.export_state()
 	OfficeState.import_state(saved)
 	_expect(OfficeState.get_edge(entrance_edge) == ConstructionCatalog.GLASS_DOOR, "se guarda y se carga")
 
-	# Venderla devuelve $450 y deja la puerta normal; pasarle Puerta, igual.
 	balance = Economy.balance
 	var sold: Dictionary = builder.apply(_changes(entrance_edge, ""))
 	_expect(sold["ok"] and int(sold["cost"]) == -450 and Economy.balance == balance + 450,

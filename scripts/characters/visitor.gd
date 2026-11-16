@@ -1,6 +1,5 @@
-# Un cliente que visita la Recepción (hito 36): entra por la entrada, espera en su lugar
-# (un sofá de espera o una casilla libre de la Recepción) y se va cuando lo atienden o
-# se cansa de esperar. Lo maneja la escena de juego a partir de Projects.visits.
+# Cliente que visita la Recepción: entra, espera (sofá o casilla libre) y se va al ser
+# atendido o cansarse. Lo maneja la escena a partir de Projects.visits.
 class_name Visitor
 extends OfficeCharacter
 
@@ -8,7 +7,7 @@ const SUIT_COLOR := Color("5b6170")
 const TIE_COLOR := Color("2d6a9f")
 const CANDIDATE_SHIRT_COLOR := Color("8fb8a0")
 
-## Id de la visita (el de su oferta) en Projects.visits.
+## Id de la visita (el de su oferta).
 var visit_id: int = 0
 
 
@@ -24,7 +23,7 @@ func configure(visit: Dictionary) -> void:
 	queue_redraw()
 
 
-## Un candidato que viene a su entrevista (va frente al escritorio de quien lo entrevista).
+## Candidato que viene a su entrevista (va frente al escritorio de quien entrevista).
 func configure_candidate(candidate: Dictionary) -> void:
 	visit_id = -int(candidate["id"])
 	person_key = "candidate_%d" % int(candidate["id"])

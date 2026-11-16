@@ -1,10 +1,9 @@
-# Prueba del hito 60: opciones y Ajustes.
-# Criterio: una opción cambiada se aplica y sigue igual al reiniciar; un archivo roto vuelve a
-# los valores por defecto; cargar desde la partida pide confirmación y carga la ranura.
+# Opciones y Ajustes: una opción cambiada se aplica y sigue al reiniciar; un archivo roto vuelve
+# a los valores por defecto; cargar desde la partida pide confirmación y carga la ranura.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=settings
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -85,7 +84,7 @@ func _check_defaults() -> void:
 		and bool(Settings.get_value("pause_on_build")) and bool(Settings.get_value("pause_on_focus_loss")), "valores por defecto")
 
 
-# Cambiar una opción la guarda: al leer el archivo de nuevo (como al reiniciar) sigue igual.
+# Al leer el archivo de nuevo (como al reiniciar) sigue igual.
 func _check_persist() -> void:
 	Settings.reset_to_defaults()
 	var changes: Array[String] = []
@@ -116,7 +115,6 @@ func _check_invalid() -> void:
 	Settings.reset_to_defaults()
 
 
-# Un archivo roto o con valores que no sirven vuelve a los valores por defecto.
 func _check_broken_file() -> void:
 	Settings.set_value("autosave", false)
 	var file := FileAccess.open(Settings.path, FileAccess.WRITE)
@@ -138,17 +136,14 @@ func _check_broken_file() -> void:
 	Settings.reset_to_defaults()
 
 
-# Cada opción cambia lo que tiene que cambiar.
 func _check_effects() -> void:
 	_clear_saves()
-	# Velocidad al empezar.
 	Settings.set_value("start_speed", 2)
 	SaveManager.new_game()
 	_expect(GameClock.speed_index == 2 and not GameClock.is_paused, "una partida nueva empieza a 4x")
 	Settings.set_value("start_speed", 0)
 	SaveManager.new_game()
 	_expect(GameClock.speed_index == 0, "y a 1x con la opción por defecto")
-	# Autoguardado.
 	var game: Node = await _open_game()
 	Settings.set_value("autosave", false)
 	GameClock.fast_forward_hours(24)
@@ -156,7 +151,6 @@ func _check_effects() -> void:
 	Settings.set_value("autosave", true)
 	GameClock.fast_forward_hours(24)
 	_expect(SaveManager.has_save(SaveManager.AUTOSAVE), "con autoguardado sí")
-	# Pausa al construir.
 	var build: BuildPanel = game.get_node("BuildPanel")
 	GameClock.set_paused(false)
 	build.set_build_mode(true)
@@ -173,7 +167,6 @@ func _check_effects() -> void:
 	build.set_build_mode(false)
 	_expect(GameClock.is_paused, "sin la opción tampoco quita una pausa del jugador")
 	Settings.set_value("pause_on_build", true)
-	# Pausa al perder el foco.
 	GameClock.set_paused(false)
 	game.on_focus_lost()
 	_expect(GameClock.is_paused, "al perder el foco se pausa")
@@ -259,14 +252,12 @@ func _check_load_and_quit() -> void:
 	await _click(load_button)
 	await _click(settings.get_confirm_button())
 	_expect(loads == ["slot_1"] and not settings.is_confirming(), "confirmar pide cargar la ranura 1")
-	# Salir también pregunta.
 	await _click(settings.get_quit_button())
 	_expect(settings.is_confirming() and quits.is_empty(), "salir pide confirmación")
 	await _click(settings.get_confirm_button())
 	_expect(quits.size() == 1, "confirmar sale")
-	# Lo que hace la escena al cargar: lee la ranura (sin poder cambiar de escena aquí).
+	# Lo que hace la escena al cargar, sin cambiar de escena aquí.
 	_expect(SaveManager.load_game(loads[0]) and Economy.balance == saved_balance, "se carga lo guardado: %d" % Economy.balance)
-	# Una ranura vacía no se carga y la partida sigue.
 	game._on_load_requested("slot_3")
 	_expect(game.is_inside_tree() and Economy.balance == saved_balance, "una ranura vacía no cambia nada")
 	await _close_game(game)

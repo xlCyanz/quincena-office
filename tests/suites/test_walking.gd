@@ -1,12 +1,10 @@
-# Prueba de cómo caminan los personajes (pedido aparte, después del hito 69): van a una
-# casilla por segundo a 1x (el doble con prisa) y nunca hay dos en la misma casilla del local. Quien encuentra
-# ocupada la siguiente espera y busca otro camino; dos de frente en un pasillo de una
-# casilla se destraban tras GameConstants.CHARACTER_PASS_WAIT; si la entrada está ocupada,
-# el que llega espera en la calle sin verse.
+# Caminar: una casilla por segundo a 1x (el doble con prisa) y nunca dos en la misma casilla del local;
+# quien encuentra ocupada la siguiente espera y busca otro camino; dos de frente en un pasillo se
+# destraban tras CHARACTER_PASS_WAIT; con la entrada ocupada el que llega espera en la calle sin verse.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=walking
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -18,7 +16,7 @@ var _game: Node
 var _grid: OfficeGrid
 var _origin := Vector2i.ZERO
 var _made: Array[OfficeCharacter] = []
-# Veces que dos personajes quedaron en la misma casilla o tomaron la misma.
+# Veces que dos quedaron en la misma casilla o tomaron la misma.
 var _overlaps: int = 0
 
 
@@ -67,7 +65,7 @@ func _cell(x: int, y: int) -> Vector2i:
 	return _origin + Vector2i(x, y)
 
 
-# Un personaje parado en start (visible) con su silla en seat.
+# Personaje parado en start (visible) con su silla en seat.
 func _make(start: Vector2i, seat: Vector2i, finder: OfficePathfinder = null) -> OfficeCharacter:
 	var character := OfficeCharacter.new()
 	character.display_name = "Prueba %d" % _made.size()
@@ -131,7 +129,7 @@ func _check_speed() -> void:
 	_expect(absf(walker.grid_position.distance_to(Vector2(_cell(4, 3))) - 1.0) < 0.06,
 		"a %sx camina %s casillas por segundo" % [speed, speed])
 	GameClock.set_speed_index(0)
-	# Con prisa camina el doble y al llegar vuelve a su paso normal.
+	# Con prisa camina el doble y al llegar vuelve a su paso.
 	walker.grid_position = Vector2(_cell(4, 3))
 	walker.call("_release_cells")
 	walker.hurry = true
@@ -144,7 +142,7 @@ func _check_speed() -> void:
 	_clear()
 
 
-# Uno parado en medio del camino: el otro espera un momento y lo rodea, sin pisarlo.
+# Uno parado en medio: el otro espera un momento y lo rodea sin pisarlo.
 func _check_detour() -> void:
 	_overlaps = 0
 	var blocker: OfficeCharacter = _make(_cell(3, 4), _cell(3, 4))
@@ -169,7 +167,7 @@ func _check_detour() -> void:
 	_clear()
 
 
-# Dos de frente en un pasillo de una casilla de ancho: esperan y se destraban.
+# Dos de frente en un pasillo de una casilla: esperan y se destraban.
 func _check_corridor() -> void:
 	_overlaps = 0
 	var corridor := OfficePathfinder.new()
@@ -227,9 +225,8 @@ func _check_release() -> void:
 	_clear()
 
 
-# Sin camino hasta su silla no se sienta en la puerta: espera de pie lo más cerca que puede
-# y, cuando la oficina cambia y hay camino, va a sentarse. Sentado fuera de su silla (una
-# partida de antes, al cambiar la oficina), también va a su silla.
+# Sin camino a su silla no se sienta en la puerta: espera de pie lo más cerca posible y va al haber camino;
+# sentado fuera de su silla (partida vieja), también va a ella.
 func _check_unreachable() -> void:
 	var seat: Vector2i = _cell(5, 3)
 	var walls: Array[Vector2i] = [seat + Vector2i.LEFT, seat + Vector2i.RIGHT, seat + Vector2i.UP, seat + Vector2i.DOWN]
@@ -259,8 +256,7 @@ func _check_unreachable() -> void:
 	_clear()
 
 
-# La escena de juego no manda a dos personas a la misma casilla (limpieza, almuerzo,
-# pausas y visitas reparten casillas libres cercanas).
+# La escena no manda a dos a la misma casilla (limpieza, almuerzo, pausas y visitas reparten las libres cercanas).
 func _check_spots() -> void:
 	var near: Array[Vector2i] = _game.call("_cells_near", _cell(4, 4), 5)
 	var distinct: Dictionary[Vector2i, bool] = {}

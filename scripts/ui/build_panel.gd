@@ -1,10 +1,5 @@
-# Panel del modo construcción, parte de la interfaz superpuesta (el dinero y el reloj
-# están en Hud). Abajo al centro: la barra de menús con "Construir" (otros paneles,
-# como Ajustes, añaden ahí su botón) o, en modo construcción, las herramientas, el
-# estado de la última acción y "Salir". Las herramientas van en secciones (Estructura,
-# Muebles, Habitaciones y Terreno): arriba se elige la sección y solo se ven las suyas, así
-# el panel tapa poco del mapa. Terreno (hito 25) se compra con un clic en un lote
-# marcado en el mapa: la sección muestra cómo hacerlo.
+# Panel del modo construcción: abajo al centro la barra de menús (otros paneles añaden su botón) o,
+# en construcción, las herramientas por secciones, el estado de la última acción y «Salir».
 class_name BuildPanel
 extends CanvasLayer
 
@@ -26,13 +21,13 @@ const SECTION_NAMES: Dictionary[String, String] = {
 }
 
 const MARGIN_BOTTOM: float = 16.0
-## Ancho del panel de construcción si la pantalla lo deja (hito 65).
+## Ancho del panel de construcción si la pantalla lo deja.
 const BUILD_PANEL_WIDTH: float = 1000.0
 
-# Botón «?» de ayuda (hito 64).
+# Botón «?» de ayuda.
 var _help_button: Button
 var _menu_bar: HFlowContainer
-# Herramientas en filas que se acomodan al ancho (hito 65), dentro de un desplazamiento.
+# Herramientas en filas que se acomodan al ancho, dentro de un desplazamiento.
 var _tools_scroll: ScrollContainer
 var _tool_groups: Array[HFlowContainer] = []
 # Sección → su grupo de herramientas (Terreno no tiene: solo su fila).
@@ -63,7 +58,7 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	# La barra se parte en filas si no entra a lo ancho (hito 65: escala de la interfaz).
+	# La barra se parte en filas si no entra a lo ancho.
 	_menu_bar = HFlowContainer.new()
 	_menu_bar.alignment = FlowContainer.ALIGNMENT_CENTER
 	_menu_bar.add_theme_constant_override("h_separation", 8)
@@ -92,8 +87,7 @@ func _ready() -> void:
 	var rows := VBoxContainer.new()
 	_panel.add_child(rows)
 	var group := ButtonGroup.new()
-	# Primera fila: estructura. Segunda fila: muebles (con su precio) y Girar.
-	# Tercera fila: tipos de habitación y Quitar habitación.
+	# Grupos de herramientas: estructura, muebles y habitaciones.
 	var structure: Array[Array] = [
 		[BuildController.TOOL_WALL, ConstructionCatalog.get_display_name(ConstructionCatalog.WALL)],
 		[BuildController.TOOL_DOOR, ConstructionCatalog.get_display_name(ConstructionCatalog.DOOR)],
@@ -103,7 +97,7 @@ func _ready() -> void:
 	for floor_type: String in ConstructionCatalog.get_floor_types():
 		structure.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])
 	structure.append([BuildController.TOOL_SELL, "Vender"])
-	# Muebles: una fila con sus categorías, Girar y Mejorar; debajo, los de la categoría abierta.
+	# Muebles: fila de categorías con Girar y Mejorar; debajo, los de la categoría abierta.
 	var furniture: Array[Array] = [[BuildController.TOOL_ROTATE, "Girar"], [BuildController.TOOL_UPGRADE, "Mejorar"]]
 	var by_category: Dictionary[String, Array] = {}
 	for category: String in FurnitureCatalog.get_categories():
@@ -173,7 +167,7 @@ func _ready() -> void:
 	furniture_row.add_child(VSeparator.new())
 	furniture_row.move_child(furniture_row.get_child(-1), index)
 	_section_groups[SECTION_ROOMS] = _add_tool_row(tool_rows, room_tools, group, SECTION_ROOMS)
-	# Terreno: un botón oculto mantiene la herramienta en el grupo; se ve su fila.
+	# Terreno: un botón oculto mantiene la herramienta en el grupo; se ve solo su fila.
 	var land_tool := Button.new()
 	land_tool.toggle_mode = true
 	land_tool.button_group = group
@@ -232,8 +226,7 @@ func select_tool(tool: String) -> void:
 	_on_tool_pressed(tool)
 
 
-## Abre una sección: se ven solo sus herramientas. Si la herramienta elegida es de otra
-## sección, elige la primera de esta (en Terreno, la herramienta Terreno).
+## Abre una sección; si la herramienta elegida es de otra, elige la primera de esta.
 func set_section(section: String) -> void:
 	_show_section(section)
 	var current: String = get_selected_tool()
@@ -251,8 +244,7 @@ func set_section(section: String) -> void:
 			select_tool(first)
 
 
-## Abre una categoría de la sección Muebles; si la herramienta elegida es un mueble de
-## otra, elige el primero de esta.
+## Abre una categoría de Muebles; si el mueble elegido es de otra, elige el primero de esta.
 func set_category(category: String) -> void:
 	_category = category
 	_show_section(SECTION_FURNITURE)
@@ -268,8 +260,7 @@ func set_category(category: String) -> void:
 			return
 
 
-## Botón que hay que pulsar para llegar a una herramienta: el suyo si se ve; si no, el de su
-## sección o, con la sección abierta, el de su categoría de muebles.
+## Botón a pulsar para llegar a una herramienta: el suyo si se ve; si no, el de su sección o categoría.
 func get_button_toward(tool: String) -> Button:
 	var button: Button = get_tool_button(tool)
 	if button == null or button.is_visible_in_tree() or not _panel.visible:
@@ -339,7 +330,7 @@ func show_status(text: String) -> void:
 	_status_label.text = text
 
 
-## Muestra los botones Sí / No de una pregunta (text vacío los oculta); la pregunta va en el estado.
+## Muestra los botones Sí / No (text vacío los oculta); la pregunta va en el estado.
 func show_confirm(text: String) -> void:
 	_confirm_row.visible = not text.is_empty()
 	if not text.is_empty():
@@ -372,8 +363,7 @@ func get_tool_button(tool: String) -> Button:
 	return _tool_buttons.get(tool, null)
 
 
-# Un grupo de herramientas (estructura, muebles o habitaciones): sus botones se parten en
-# filas según el ancho del panel (hito 65).
+# Un grupo de herramientas cuyos botones se parten en filas según el ancho del panel.
 func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup, section: String) -> HFlowContainer:
 	var row := HFlowContainer.new()
 	row.alignment = FlowContainer.ALIGNMENT_CENTER
@@ -394,7 +384,7 @@ func _add_tool_row(parent: Container, entries: Array[Array], group: ButtonGroup,
 	return row
 
 
-# Los tipos de habitación de una etapa que aún no se alcanzó quedan deshabilitados (hito 27).
+# Los tipos de habitación de una etapa no alcanzada quedan deshabilitados.
 func _refresh_room_locks() -> void:
 	for type_id: String in RoomCatalog.get_type_ids():
 		var button: Button = _tool_buttons[type_id]
@@ -423,8 +413,8 @@ func _build_land_row(parent: Container) -> void:
 	_land_row.visible = false
 
 
-# La barra de menús cambió de alto (o la pantalla de tamaño): se guarda cuánto reserva abajo
-# y se avisa a los paneles (hito 65). Si está oculta (Ajustes, pausa, construcción) no cambia.
+# La barra cambió de alto: guarda cuánto reserva abajo y avisa a los paneles.
+# Oculta (Ajustes, pausa, construcción) no cambia.
 func _update_layout() -> void:
 	if _menu_bar.is_visible_in_tree():
 		var view: Vector2 = _menu_bar.get_viewport_rect().size
@@ -436,10 +426,8 @@ func _update_layout() -> void:
 		_fit_panel()
 
 
-# El panel de construcción mide lo que entra en pantalla: el ancho de la pantalla (las
-# herramientas se parten en filas) y, de alto, deja libre arriba el dinero y el reloj
-# (UiLayout.top_space); si las
-# herramientas no entran, se desplazan.
+# Mide lo que entra en pantalla: todo el ancho y, de alto, deja libre arriba el dinero y el reloj
+# (UiLayout.top_space); si las herramientas no entran, se desplazan.
 func _fit_panel() -> void:
 	var view: Vector2 = _panel.get_viewport_rect().size
 	var width: float = minf(BUILD_PANEL_WIDTH, view.x - UiLayout.MARGIN * 2.0)

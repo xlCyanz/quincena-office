@@ -1,8 +1,5 @@
-# Prueba de las llegadas escalonadas (pedido después del hito 69): al empezar la jornada
-# cada empleado entra entre 30 minutos antes y 10 después de la hora en punto, fijo por
-# persona y día; los impuntuales llegan tarde más seguido y nunca muy temprano. Quien llega
-# antes espera de pie en la Sala de descanso y a la hora va a su puesto. Con la oficina
-# vacía el reloj salta hasta el primero que entra.
+# Llegadas escalonadas: cada empleado entra de −30 a +10 min de su hora, fijo por persona y
+# día (impuntuales más tarde); quien llega antes espera de pie y la oficina vacía salta al primero.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=arrivals
 extends Node
 
@@ -90,7 +87,7 @@ func _check_in_game() -> void:
 	# Del lunes 8:00 al martes 7:00.
 	GameClock.fast_forward_hours(23)
 	_expect(GameClock.get_weekday() == 1 and GameClock.get_hour() == 7, "martes 7:00")
-	# El salto no mueve a los personajes: los que salían el lunes quedan ya fuera.
+	# El salto no mueve a los personajes: los que salían el lunes ya están fuera.
 	Staff.set_ceo_at_work(false)
 	_send_all_home(game)
 	game.call("_update_routines")
@@ -102,7 +99,7 @@ func _check_in_game() -> void:
 	_expect(day_shift.size() >= 10, "hay al menos 10 que entran a las 8: %d" % day_shift.size())
 	var pending: Dictionary[String, int] = game.get_pending_arrivals()
 	var hour_start: int = Staff.get_absolute_hour() * 60
-	# El CEO abre la oficina: llega siempre a las 7:30 en punto, antes que todos.
+	# El CEO abre: llega siempre a las 7:30, antes que todos.
 	_expect(StaffCatalog.get_ceo_open_minutes() == 30 and pending.get("ceo", -1) == hour_start + 30,
 		"el CEO llega a las 7:30: %s" % pending.get("ceo", -1))
 	var ceo_at: int = pending["ceo"] if pending.has("ceo") else -1
@@ -120,8 +117,8 @@ func _check_in_game() -> void:
 	for key: String in pending:
 		_expect(pending[key] >= hour_start + 30 and pending[key] < hour_start + 60, "%s entra entre 7:30 y 7:59" % key)
 
-	# Minuto a minuto: cada uno entra en su minuto y espera de pie en la Sala de descanso.
-	# Sin Sala de descanso que funcione dan vueltas por la oficina.
+	# Minuto a minuto: cada uno entra en su minuto y espera de pie en la Sala de descanso
+	# (sin ella, dando vueltas).
 	var break_room: Dictionary = OfficeState.get_working_room(OfficeState.BREAK_ROOM)
 	var waiting_cells: Array = break_room["cells"] if not break_room.is_empty() \
 		else (game.get("pathfinder") as OfficePathfinder).get_reachable(OfficeState.entrance).keys()
@@ -186,7 +183,6 @@ func _check_in_game() -> void:
 		if Staff.is_expected_now(character.person_key):
 			all_in = all_in and character.activity != OfficeCharacter.Activity.AWAY
 	_expect(all_in, "a las 8:10 llegaron todos los que tenían que estar")
-	# Los que llegaron tarde entran apurados; los que esperaban van a paso normal.
 	var hurry_ok: bool = true
 	for character: Employee in day_shift:
 		var walking: bool = character.activity == OfficeCharacter.Activity.WALKING_TO_DESK
@@ -196,8 +192,8 @@ func _check_in_game() -> void:
 			hurry_ok = hurry_ok and not character.hurry
 	_expect(hurry_ok and not late.is_empty(), "solo los que llegan tarde caminan rápido")
 
-	# Oficina vacía: el reloj salta a la hora anterior y hasta el primero que entra.
-	# Al terminar la jornada se van entre la hora en punto y 20 minutos después.
+	# Oficina vacía: el reloj salta a la hora anterior y hasta el primero que entra; al irse
+	# se quedan de 0 a 20 minutos.
 	var departures: Dictionary[String, int] = {}
 	for hour: int in range(14):
 		GameClock.fast_forward_hours(1)

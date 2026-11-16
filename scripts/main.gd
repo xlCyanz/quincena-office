@@ -1,22 +1,16 @@
-# Escena de juego: reúne la oficina, la cámara, el CEO y los empleados, el modo
-# construcción y la interfaz superpuesta, y los prepara con el estado de la partida.
-# Cada hora (y cuando cambia quién tiene que estar) les dice a los personajes si les
-# toca estar en la oficina (Staff.is_expected); cuando todos se fueron, la oficina
-# queda vacía y el tiempo salta hasta que llegue el próximo.
-# Desde el hito 36 también dibuja a los clientes que esperan en la Recepción
-# (Projects.visits): no cuentan para saber si la oficina está vacía.
-# Sigue la regla de Godot "llamar hacia abajo, avisar hacia arriba": el nodo padre
-# configura a sus hijos directamente, y los hijos le avisan con señales.
+# Escena de juego: reúne oficina, cámara, personajes, modo construcción e interfaz.
+# Cada hora les dice a los personajes si les toca estar (Staff.is_expected); con la oficina
+# vacía el tiempo salta a la próxima llegada. Los clientes en espera no cuentan.
 extends Node2D
 
 const CEO_SCENE: PackedScene = preload("res://scenes/ceo.tscn")
 const EMPLOYEE_SCENE: PackedScene = preload("res://scenes/employee.tscn")
 const VISITOR_SCENE: PackedScene = preload("res://scenes/visitor.tscn")
-## Lo que puede moverse el ratón entre apretar y soltar para que cuente como clic.
+## Distancia máxima entre apretar y soltar para que cuente como clic.
 const CLICK_TOLERANCE_PX: float = 8.0
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 
-# El jugador pidió las paredes arriba (botón ↕ o tecla P).
+# Paredes arriba pedidas por el jugador (botón ↕ o tecla P).
 var _walls_wanted: bool = false
 var ceo: Ceo
 ## Personaje de cada empleado, por id.
@@ -27,42 +21,39 @@ var _departing: Array[Employee] = []
 var visitors: Dictionary[int, Visitor] = {}
 # Clientes que ya se van; desaparecen al salir.
 var _leaving_visitors: Array[Visitor] = []
-## El candidato que está en su entrevista (camina hasta el escritorio de quien lo
-## entrevista, el CEO o el ejecutivo, y se va al terminar); null si no hay entrevista.
+## Candidato en entrevista (va al escritorio de quien entrevista); null si no hay.
 var interviewee: Visitor = null
-## Candidatos citados que ya llegaron y esperan su entrevista: id del candidato → personaje.
-## Al empezar la entrevista el suyo pasa a ser interviewee.
+## Citados que ya llegaron: id del candidato → personaje. Al empezar pasa a interviewee.
 var appointment_visitors: Dictionary[int, Visitor] = {}
 var pathfinder := OfficePathfinder.new()
-# Llegadas escalonadas: clave → minuto absoluto (hora absoluta × 60 + minuto) en que entra
-# quien todavía no llegó. Se recalcula en cada _update_routines.
+# Llegadas escalonadas: clave → minuto absoluto en que entra. Se recalcula en _update_routines.
 var _arrivals: Dictionary[String, int] = {}
-# Salidas escalonadas: clave → minuto absoluto en que se va quien terminó su jornada.
+# Salidas escalonadas: clave → minuto absoluto en que se va.
 var _departures: Dictionary[String, int] = {}
-# Quienes llegaron antes de su hora: esperan en la Sala de descanso o dan vueltas.
+# Llegaron antes de su hora: esperan en la Sala de descanso o dan vueltas.
 var _early: Dictionary[String, bool] = {}
-# Último minuto (o tramo de vueltas) en que se revisaron las llegadas.
+# Último minuto (o tramo de vueltas) revisado de las llegadas.
 var _last_arrival_check: int = -1
 
-# Si el reloj estaba en pausa antes de abrir el modo construcción o Ajustes.
+# El reloj estaba en pausa antes de abrir construcción o Ajustes.
 var _was_paused_before_menu: bool = false
-# El modo construcción pausó el tiempo al entrar (opción pause_on_build, hito 60).
+# Construcción pausó el tiempo al entrar (opción pause_on_build).
 var _build_paused: bool = false
 var _was_paused_before_emergency: bool = false
 var _was_paused_before_ipo: bool = false
-# Si el reloj estaba en pausa antes de abrir el menú de pausa (hito 62).
+# El reloj estaba en pausa antes de abrir el menú de pausa.
 var _was_paused_before_pause: bool = false
-# Ajustes se abrió desde el menú de pausa: al cerrarlo se vuelve a la pausa.
+# Ajustes abierto desde la pausa: al cerrarlo se vuelve a ella.
 var _settings_from_pause: bool = false
-# Menú de pausa (hito 62); se arma en código.
+# Menú de pausa; se arma en código.
 var _pause_menu: PauseMenu
-# Tarjeta del tutorial (hito 63); se arma en código.
+# Tarjeta del tutorial; se arma en código.
 var _tutorial_panel: TutorialPanel
-# Ayuda de los menús (hito 64, botones «?»); se arma en código.
+# Ayuda de los menús (botones «?»); se arma en código.
 var _help_dialog: HelpDialog
-# Pantalla de cierre al salir a bolsa (hito 48); se arma en código.
+# Pantalla de salida a bolsa; se arma en código.
 var _ipo_screen: IpoScreen
-# Dónde se apretó el botón izquierdo (para distinguir un clic de un arrastre).
+# Dónde se apretó el botón izquierdo (clic o arrastre).
 var _press_position := Vector2.INF
 var _ceo_button: Button
 
@@ -87,8 +78,7 @@ func _ready() -> void:
 	var game_name: String = ProjectSettings.get_setting("application/config/name")
 	var godot_version: String = Engine.get_version_info().string
 	print("%s — Godot %s" % [game_name, godot_version])
-	# Si se abre esta escena sin pasar por el menú (por ejemplo, con Cmd+R en el
-	# editor), se empieza una partida nueva para poder probarla.
+	# Abierta sin pasar por el menú (Cmd+R en el editor): partida nueva.
 	if not OfficeState.has_game():
 		SaveManager.new_game()
 	_rebuild_office()
@@ -121,7 +111,7 @@ func _ready() -> void:
 	_teams_panel.attach_button(_build_panel.get_menu_bar())
 	_bank_panel.attach_button(_build_panel.get_menu_bar())
 	_company_panel.attach_button(_build_panel.get_menu_bar())
-	# Personal, Proyectos, Equipos, Banco y Empresa ocupan el mismo lado: abrir uno cierra los otros.
+	# Paneles del lado izquierdo: abrir uno cierra los otros.
 	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_staff_panel))
@@ -188,10 +178,10 @@ func _ready() -> void:
 	EventBus.went_public.connect(_on_went_public)
 	EventBus.emergency_loan_offered.connect(_on_emergency_loan_offered)
 	_emergency_dialog.closed.connect(_on_emergency_dialog_closed)
-	# Un evento corta el salto de horas de la oficina vacía para que el jugador lo vea.
+	# Un evento corta el salto de horas para que el jugador lo vea.
 	EventBus.event_started.connect(func(_card: Dictionary) -> void: GameClock.interrupt())
 	GameClock.start()
-	# Una partida guardada con el préstamo de emergencia sin responder vuelve a preguntar.
+	# Préstamo de emergencia guardado sin responder: vuelve a preguntar.
 	if not Bank.emergency_offer.is_empty():
 		_on_emergency_loan_offered(Bank.emergency_offer)
 
@@ -201,7 +191,7 @@ func _exit_tree() -> void:
 	SaveManager.scene_state_provider = Callable()
 
 
-# Lo que se guarda de la escena (el resto vive en los autoloads).
+# Estado de la escena (el resto vive en los autoloads).
 func _export_scene_state() -> Dictionary:
 	var saved_employees: Dictionary = {}
 	for employee_id: int in employees:
@@ -209,13 +199,11 @@ func _export_scene_state() -> Dictionary:
 	return {"camera": _camera.export_state(), "ceo": ceo.export_state(), "employees": saved_employees}
 
 
-# Al abrir una partida cargada: la cámara y los personajes como estaban. Si la oficina
-# estaba vacía, el tiempo salta hasta la próxima llegada, igual que al irse el último.
+# Restaura cámara y personajes; con la oficina vacía salta a la próxima llegada.
 func _restore_scene_state(state: Dictionary) -> void:
 	if state.is_empty():
 		return
-	# La vista ya no se gira: una partida guardada con la vista girada vuelve a la esquina de
-	# siempre y la cámara encuadra la oficina.
+	# La vista ya no se gira: una partida con vista girada encuadra la oficina.
 	if int(state.get("view_rotation", 0)) != 0:
 		frame_office()
 	else:
@@ -244,8 +232,7 @@ func _spawn_ceo() -> void:
 		OfficeState.get_outside_of_entrance())
 
 
-# Crea el personaje de cada empleado nuevo (entra por la entrada si le toca estar),
-# quita el de los que ya no están y le avisa a cada uno si cambió su silla.
+# Crea el personaje de los empleados nuevos, quita el de los que ya no están y avisa cambios de silla.
 func _sync_employees() -> void:
 	for employee: Dictionary in Staff.employees:
 		var employee_id: int = employee["id"]
@@ -270,8 +257,7 @@ func _sync_employees() -> void:
 	_remove_departed()
 
 
-# Crea el personaje de cada cliente que llegó (entra y va a su lugar de espera), manda
-# a casa a los que ya no esperan y reparte los lugares si cambió la Recepción.
+# Crea a los clientes que llegaron, manda a casa a los que ya no esperan y reparte lugares.
 func _sync_visitors() -> void:
 	var spots: Array[Vector2i] = Projects.get_waiting_spots()
 	var waiting: Array[int] = []
@@ -301,8 +287,7 @@ func _sync_visitors() -> void:
 	_remove_left_visitors()
 
 
-# El candidato de la entrevista entra y va frente al escritorio de quien lo entrevista;
-# al terminar (o cortarse) la entrevista se va.
+# El candidato entra y va frente al escritorio de quien entrevista; al terminar se va.
 func _sync_interview() -> void:
 	var candidate: Dictionary = Staff.get_interviewed_now()
 	var candidate_key: String = "" if candidate.is_empty() else "candidate_%d" % int(candidate["id"])
@@ -345,8 +330,7 @@ func _on_interviewee_seated(character: Visitor) -> void:
 		Staff.start_called_interview()
 
 
-# Los candidatos citados llegan antes de su hora (Staff.get_appointment_arrival) y esperan
-# de pie en la Recepción o junto a la entrada; si se cancela la cita se van.
+# Los citados llegan antes (Staff.get_appointment_arrival) y esperan de pie; si se cancela, se van.
 func _sync_appointments() -> void:
 	var now: int = get_arrival_minute()
 	var due: Array[int] = []
@@ -383,10 +367,10 @@ func _sync_appointments() -> void:
 	_remove_left_visitors()
 
 
-## Casilla donde se para el candidato: del otro lado del escritorio de quien entrevista
-## ("ceo" o la clave del ejecutivo), dentro de su habitación; si no hay, junto a su silla.
+## Casilla del candidato: del otro lado del escritorio de quien entrevista ("ceo" o clave del
+## ejecutivo), en su habitación; si no hay, junto a su silla.
 func _interview_spot(by: String) -> Vector2i:
-	# En la silla de visita de su oficina, si tiene.
+	# En la silla de visita de su oficina, si hay.
 	var guest: Dictionary = Staff.get_guest_chair(by)
 	if not guest.is_empty():
 		return guest["cell"]
@@ -410,7 +394,7 @@ func _interview_spot(by: String) -> Vector2i:
 				continue
 			if not room_cells.is_empty() and not room_cells.has(cell):
 				continue
-			# Frente a la silla, del otro lado del escritorio: lo más lejos posible de ella.
+			# Del otro lado del escritorio: lo más lejos posible de la silla.
 			var score: int = (cell - chair).abs().x + (cell - chair).abs().y
 			if score > best_score:
 				best_score = score
@@ -440,12 +424,11 @@ func _on_dirt_changed() -> void:
 	_sync_employees()
 
 
-# Adónde va un empleado: el personal de limpieza en su turno, a la habitación que limpia
-# (hito 37); los demás, a su silla.
+# Destino de un empleado: la limpieza en su turno va a la habitación que limpia; los demás, a su silla.
 func _spot_of(employee: Dictionary) -> Vector2i:
 	var room_index: int = Staff.get_cleaning_room(employee)
 	if room_index >= 0:
-		# Si limpian varios la misma habitación, cada uno en su casilla.
+		# Varios limpiando la misma habitación: cada uno en su casilla.
 		var before: int = 0
 		for other: Dictionary in Staff.employees:
 			if int(other["id"]) < int(employee["id"]) and Staff.get_cleaning_room(other) == room_index:
@@ -455,8 +438,7 @@ func _spot_of(employee: Dictionary) -> Vector2i:
 	return _seat_of(Staff.employee_key(employee["id"]))
 
 
-# Una persona por casilla: casillas libres para pisar alrededor de spot (spot primero),
-# las más cercanas caminando, hasta count; nunca la entrada.
+# Hasta count casillas libres alrededor de spot (spot primero), las más cercanas caminando; nunca la entrada.
 func _cells_near(spot: Vector2i, count: int) -> Array[Vector2i]:
 	var found: Array[Vector2i] = [spot]
 	var index: int = 0
@@ -471,7 +453,7 @@ func _cells_near(spot: Vector2i, count: int) -> Array[Vector2i]:
 	return found
 
 
-# La casilla libre más cercana a spot que nadie más tiene en used (y la anota).
+# La casilla libre más cercana a spot que no está en used (y la anota).
 func _free_spot_near(spot: Vector2i, used: Dictionary[Vector2i, bool]) -> Vector2i:
 	var count: int = used.size() + 1
 	for cell: Vector2i in _cells_near(spot, count):
@@ -481,7 +463,7 @@ func _free_spot_near(spot: Vector2i, used: Dictionary[Vector2i, bool]) -> Vector
 	return spot
 
 
-# Adónde va alguien cuando trabaja: el CEO a su silla y cada empleado a su lugar.
+# Lugar de trabajo: el CEO a su silla y cada empleado a su lugar.
 func _home_spot(key: String) -> Vector2i:
 	if key == "ceo":
 		return _seat_of(key)
@@ -502,30 +484,28 @@ func get_characters() -> Array[OfficeCharacter]:
 	return characters
 
 
-## Minuto absoluto del reloj (hora absoluta × 60 + minuto), el de _arrivals.
+## Minuto absoluto del reloj (hora absoluta × 60 + minuto).
 func get_arrival_minute() -> int:
 	return Staff.get_absolute_hour() * 60 + GameClock.get_minute()
 
 
-## Minuto absoluto en que entra cada empleado que todavía no llegó (copia).
+## Copia de _arrivals: minuto en que entra cada empleado que no llegó.
 func get_pending_arrivals() -> Dictionary[String, int]:
 	return _arrivals.duplicate()
 
 
-## Minuto absoluto en que se va cada empleado que terminó su jornada y sigue (copia).
+## Copia de _departures: minuto en que se va cada empleado que terminó.
 func get_pending_departures() -> Dictionary[String, int]:
 	return _departures.duplicate()
 
 
-## Indica si alguien llegó antes de su hora y está esperando.
+## Indica si llegó antes de su hora y está esperando.
 func is_waiting_shift(key: String) -> bool:
 	return _early.has(key)
 
 
-# Llegadas escalonadas (data/staff.json, arrivals): al empezar la jornada cada empleado
-# entra unos minutos antes o después de la hora en punto. Quien llega antes espera de pie
-# en la Sala de descanso (o da vueltas por la oficina si no hay) hasta su hora. Devuelve
-# true si ya se ocupó del personaje (no hay que hacer lo de siempre).
+# Llegadas escalonadas (staff.json, arrivals): quien llega antes espera de pie hasta su hora.
+# Devuelve true si ya se ocupó del personaje.
 func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_start: int,
 		used: Dictionary[Vector2i, bool]) -> bool:
 	var key: String = character.person_key
@@ -542,7 +522,7 @@ func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_
 		_arrivals[key] = late_at
 		character.set_seat(_home_spot(key))
 		return true
-	# Terminó su jornada: se queda unos minutos antes de irse (sigue como estaba).
+	# Terminó su jornada: se queda unos minutos antes de irse.
 	var leave_at: int = hour_start + Staff.get_leave_minutes(key)
 	if leave_at > now and character.activity != OfficeCharacter.Activity.AWAY \
 			and character.activity != OfficeCharacter.Activity.WALKING_OUT:
@@ -564,8 +544,7 @@ func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_
 	return true
 
 
-# El CEO llega siempre puntual open_minutes antes de su hora y abre la oficina: va a su
-# silla (rinde desde su hora). Devuelve true si ya se ocupó de él.
+# El CEO abre la oficina open_minutes antes de su hora y va a su silla. True si ya se ocupó de él.
 func _ceo_opens(now: int, hour_start: int) -> bool:
 	var early: int = Staff.get_ceo_early_minutes()
 	if early <= 0:
@@ -580,8 +559,8 @@ func _ceo_opens(now: int, hour_start: int) -> bool:
 	return true
 
 
-# Dónde espera quien llegó antes: una casilla libre de la Sala de descanso que funciona o,
-# sin ella, una casilla cualquiera de la oficina que cambia cada wander_minutes (da vueltas).
+# Dónde espera quien llegó antes: casilla libre de la Sala de descanso o, sin ella, una
+# casilla que cambia cada wander_minutes.
 func _waiting_spot(key: String, now: int, used: Dictionary[Vector2i, bool]) -> Vector2i:
 	var cells: Array[Vector2i] = []
 	var bucket: int = 0
@@ -601,8 +580,7 @@ func _waiting_spot(key: String, now: int, used: Dictionary[Vector2i, bool]) -> V
 	return _free_spot_near(free[posmod(hash([key, bucket]), free.size())], used)
 
 
-# Revisa una vez por minuto de juego si le toca entrar a alguien y, cada wander_minutes,
-# mueve a los que dan vueltas esperando su hora.
+# Cada minuto de juego revisa quién entra; cada wander_minutes mueve a los que dan vueltas.
 func _process(_delta: float) -> void:
 	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty() \
 			and Staff.appointments.is_empty() and appointment_visitors.is_empty():
@@ -626,22 +604,20 @@ func _process(_delta: float) -> void:
 		_update_routines()
 
 
-# Cada personaje entra o sale según si le toca estar en la oficina ahora. Quien almuerza
-# dentro (hito 53) camina a una mesa de la Sala de descanso y después vuelve a su silla.
+# Cada personaje entra o sale según le toque estar. Quien almuerza dentro va a una mesa y vuelve.
 func _update_routines() -> void:
 	var lunch: Dictionary[String, bool] = Staff.get_lunch_inside(Staff.get_absolute_hour())
 	var spots: Array[Vector2i] = []
 	if not lunch.is_empty():
 		spots = OfficeState.get_lunch_spots()
 	var next_spot: int = 0
-	# Pausas (hito 54): los cansados van junto a un sofá.
+	# Pausas: los cansados van junto a un sofá.
 	var resting: Array[String] = Staff.get_breaks(Staff.get_absolute_hour())
 	var rest_spots: Array[Vector2i] = []
 	if not resting.is_empty():
 		rest_spots = OfficeState.get_rest_spots()
 	var next_rest: int = 0
-	# Lugares para comer o descansar ya repartidos: si hay más gente que lugares, cada uno
-	# en una casilla distinta (una persona por casilla).
+	# Lugares de comer o descansar ya repartidos: con más gente que lugares, uno por casilla.
 	var used: Dictionary[Vector2i, bool] = {}
 	var now: int = get_arrival_minute()
 	var hour_start: int = Staff.get_absolute_hour() * 60
@@ -670,9 +646,7 @@ func _update_routines() -> void:
 	_update_ceo_button()
 
 
-## Faltan inodoros (hito 52): cada hora algunos de los que están sentados salen del
-## edificio a buscar un baño y vuelven (solo se ve; la producción ya lo cuenta).
-## Devuelve cuántos salieron.
+## Faltan inodoros: algunos sentados salen a buscar baño y vuelven (solo visual). Devuelve cuántos.
 func _send_bathroom_trips(hour: int = -1) -> int:
 	if hour < 0:
 		hour = Staff.get_absolute_hour()
@@ -681,8 +655,8 @@ func _send_bathroom_trips(hour: int = -1) -> int:
 		return 0
 	var seated: Array[OfficeCharacter] = get_characters().filter(func(character: OfficeCharacter) -> bool:
 		return character.activity == OfficeCharacter.Activity.SEATED and not (character is Employee and _departing.has(character)))
-	# Cada uno sale una vez cada trip_every_hours horas, en su turno (repartidos por su clave);
-	# por hora salen como mucho los que no caben divididos por esas horas.
+	# Cada uno sale una vez cada trip_every_hours, en su turno (por su clave); por hora, como mucho
+	# los que no caben ÷ esas horas.
 	var every: int = maxi(1, int(StaffCatalog.get_bathrooms("trip_every_hours")))
 	var unfit: int = mini(Staff.count_present(hour), shortage * int(StaffCatalog.get_bathrooms("people_per_toilet")))
 	var limit: int = ceili(float(unfit) / every)
@@ -722,16 +696,14 @@ func describe_employee_activity(employee_id: int) -> String:
 	return "almorzando fuera" if lunch else "fuera de su horario"
 
 
-## Pone a cada empleado su icono de estado (hito 57). Se llama al cambiar la hora, el
-## personal, la oficina o los proyectos; no cada cuadro.
+## Pone a cada empleado su icono de estado. Al cambiar hora, personal, oficina o proyectos; no por cuadro.
 func update_status_icons() -> void:
 	for employee_id: int in employees:
 		var employee: Dictionary = Staff.get_employee(employee_id)
 		employees[employee_id].set_status_icon("" if employee.is_empty() else Staff.get_status_icon(employee))
 
 
-## Abre lo que señala un aviso (EventBus.send_notice): la ficha del empleado, Proyectos en
-## su pestaña, el menú o la cámara sobre la habitación.
+## Abre el destino de un aviso: ficha, Proyectos en su pestaña, un menú o la cámara en la habitación.
 func open_notice_target(target: Dictionary) -> void:
 	match String(target.get("type", "")):
 		"employee":
@@ -756,7 +728,7 @@ func open_notice_target(target: Dictionary) -> void:
 
 func _on_office_changed() -> void:
 	_rebuild_office()
-	# La silla del CEO puede haber cambiado (Oficina Ejecutiva mudada).
+	# La silla del CEO puede haber cambiado (oficina mudada).
 	if ceo != null:
 		ceo.set_seat(_home_spot("ceo"))
 	for character: OfficeCharacter in get_characters():
@@ -770,13 +742,13 @@ func _on_office_changed() -> void:
 	_sync_appointments()
 
 
-# Pliega los objetivos si hay algún panel del lado izquierdo abierto.
+# Pliega los objetivos si hay un panel izquierdo abierto.
 func _update_objectives_fold() -> void:
 	_objectives_panel.set_suppressed(_staff_panel.is_open() or _projects_panel.is_open() or _teams_panel.is_open()
 		or _bank_panel.is_open() or _company_panel.is_open())
 
 
-# Cierra los paneles del lado izquierdo menos uno (null los cierra todos).
+# Cierra los paneles izquierdos menos uno (null: todos).
 func _close_side_panels(keep: CanvasLayer) -> void:
 	if keep != _staff_panel:
 		_staff_panel.set_open(false)
@@ -790,7 +762,7 @@ func _close_side_panels(keep: CanvasLayer) -> void:
 		_company_panel.set_open(false)
 
 
-# El modo construcción pausa el tiempo (si la opción lo pide) y, al salir, lo deja como estaba.
+# Construcción pausa el tiempo (si la opción lo pide) y al salir lo deja como estaba.
 func _on_build_mode_changed(active: bool) -> void:
 	if active:
 		_close_side_panels(null)
@@ -799,22 +771,20 @@ func _on_build_mode_changed(active: bool) -> void:
 	_hud.set_controls_enabled(not active)
 	_office_grid.set_rooms_visible(active)
 	_camera.left_drag_enabled = not active
-	# Con el tiempo en pausa los personajes no se mueven: sus casillas quedan reservadas.
+	# En pausa los personajes no se mueven: sus casillas quedan reservadas.
 	var occupied: Array[Vector2i] = []
 	for character: OfficeCharacter in get_characters():
 		if active and character.visible:
 			occupied.append(character.get_cell())
 	_build_controller.builder.occupied_cells = occupied
-	# Pausar al construir es una opción (hito 60); se recuerda si pausó al entrar para
-	# devolver el tiempo como estaba al salir.
+	# Se recuerda si pausó al entrar para devolver el tiempo como estaba.
 	if active:
 		_build_paused = bool(Settings.get_value("pause_on_build"))
 	if _build_paused:
 		_set_menu_pause(active)
 
 
-## Rectángulo en pantalla de lo que el tutorial resalta (claves de data/tutorial.json), o
-## Rect2() si no se ve.
+## Rectángulo en pantalla de lo que resalta el tutorial (claves de tutorial.json), o Rect2().
 func tutorial_target_rect(key: String) -> Rect2:
 	if key == "office":
 		return get_canvas_transform() * _office_grid.get_lot_world_rect()
@@ -842,7 +812,7 @@ func tutorial_target_rect(key: String) -> Rect2:
 			control = _bank_panel.get_open_button()
 		_:
 			if key.begins_with("tool:"):
-				# Si su sección o su categoría está cerrada, se resalta la que hay que abrir.
+				# Con su sección o categoría cerrada, se resalta la que hay que abrir.
 				control = _build_panel.get_button_toward(key.trim_prefix("tool:"))
 	if control == null or not control.is_visible_in_tree():
 		return Rect2()
@@ -869,8 +839,8 @@ func _on_settings_mode_changed(active: bool) -> void:
 		set_pause_menu_open(true)
 
 
-## Abre o cierra el menú de pausa (hito 62): al abrirlo se cierran los paneles, se oculta la
-## barra y se detiene el tiempo; al cerrarlo (Seguir) el tiempo vuelve a como estaba.
+## Abre o cierra el menú de pausa: cierra paneles, oculta la barra y detiene el tiempo; al cerrar
+## el tiempo vuelve a como estaba.
 func set_pause_menu_open(open: bool) -> void:
 	if open == _pause_menu.is_open():
 		return
@@ -894,8 +864,8 @@ func get_pause_menu() -> PauseMenu:
 	return _pause_menu
 
 
-# Guardar, Cargar o Ajustes desde la pausa: la pausa deja el tiempo como estaba antes y
-# Ajustes lo pausa por su cuenta (así guarda la partida con la pausa de antes del menú).
+# Guardar, Cargar o Ajustes desde la pausa: la pausa devuelve el tiempo y Ajustes lo pausa
+# por su cuenta (se guarda con la pausa de antes del menú).
 func _open_settings_from_pause(tab: String) -> void:
 	set_pause_menu_open(false)
 	_settings_from_pause = true
@@ -903,10 +873,8 @@ func _open_settings_from_pause(tab: String) -> void:
 	_settings_panel.set_tab(tab)
 
 
-## Esc (hito 62): cierra primero lo que esté abierto, de lo más reciente a lo más general
-## (la ayuda, una pregunta, Ajustes, la pausa, el modo construcción, la ficha, un panel izquierdo);
-## si no hay nada, abre la pausa. Las pantallas que piden una respuesta no se cierran.
-## Devuelve qué hizo, para las pruebas.
+## Esc: cierra lo abierto, de lo más reciente a lo más general (ayuda, pregunta, Ajustes, pausa,
+## construcción, ficha, panel izquierdo); sin nada abre la pausa. Devuelve qué hizo.
 func handle_escape() -> String:
 	if _game_over_screen.is_open() or _emergency_dialog.is_open() or _ipo_screen.is_open():
 		return "none"
@@ -939,8 +907,7 @@ func handle_escape() -> String:
 	return "pause"
 
 
-# Mientras un menú que pausa está abierto, el tiempo se detiene; al cerrarlo vuelve a
-# como estaba.
+# Un menú que pausa detiene el tiempo; al cerrarlo vuelve a como estaba.
 func _set_menu_pause(active: bool) -> void:
 	if active:
 		_was_paused_before_menu = GameClock.is_paused
@@ -955,7 +922,7 @@ func _is_menu_open() -> bool:
 
 
 func _on_save_requested(slot: String) -> void:
-	# Se guarda con la pausa que había antes de abrir Ajustes, no con la del menú.
+	# Se guarda con la pausa de antes de abrir Ajustes.
 	var paused_now: bool = GameClock.is_paused
 	GameClock.set_paused(_was_paused_before_menu)
 	var saved: bool = SaveManager.save_game(slot)
@@ -974,8 +941,7 @@ func _on_game_over(stats: Dictionary) -> void:
 	_game_over_screen.show_stats(stats)
 
 
-# Salida a bolsa: se corta el salto, se pausa, se cierran los menús y queda la pantalla de
-# cierre; «Seguir jugando» vuelve a la partida como estaba (modo libre).
+# Salida a bolsa: corta el salto, pausa, cierra menús y abre la pantalla; «Seguir jugando» vuelve.
 func _on_went_public(stats: Dictionary) -> void:
 	GameClock.interrupt()
 	if not _ipo_screen.is_open():
@@ -986,10 +952,9 @@ func _on_went_public(stats: Dictionary) -> void:
 	_ipo_screen.show_stats(stats)
 
 
-# El banco ofrece el préstamo de emergencia: se corta el salto de tiempo, se pausa y se
-# pregunta.
+# Préstamo de emergencia: corta el salto, pausa y pregunta.
 func _on_emergency_loan_offered(offer: Dictionary) -> void:
-	# Otro que escucha la señal pudo haberla respondido ya.
+	# Otro oyente pudo haberla respondido ya.
 	if Bank.emergency_offer.is_empty():
 		return
 	GameClock.interrupt()
@@ -1000,8 +965,7 @@ func _on_emergency_loan_offered(offer: Dictionary) -> void:
 	_emergency_dialog.show_offer(offer)
 
 
-# Respondida la oferta, el tiempo vuelve a como estaba y, si la oficina sigue vacía,
-# sigue el salto hasta la próxima llegada.
+# Respondida la oferta, el tiempo vuelve a como estaba y sigue el salto si la oficina está vacía.
 func _on_emergency_dialog_closed() -> void:
 	GameClock.set_paused(_was_paused_before_emergency)
 	_on_character_left_office()
@@ -1011,8 +975,7 @@ func _on_quit_requested() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE_PATH)
 
 
-# Cargar desde Ajustes (hito 60, ya confirmado): se lee la ranura y se vuelve a abrir la
-# escena de juego con ella; si no sirve, la partida sigue como estaba.
+# Cargar desde Ajustes (ya confirmado): reabre la escena con la ranura; si no sirve, sigue igual.
 func _on_load_requested(slot: String) -> void:
 	if SaveManager.load_game(slot):
 		get_tree().change_scene_to_file(scene_file_path)
@@ -1025,20 +988,19 @@ func _notification(what: int) -> void:
 		on_focus_lost()
 
 
-## La ventana perdió el foco: si la opción lo pide, se pausa (hito 60). Al volver sigue en
-## pausa hasta que el jugador la quite.
+## Al perder el foco pausa si la opción lo pide; sigue en pausa hasta que el jugador la quite.
 func on_focus_lost() -> void:
 	if not bool(Settings.get_value("pause_on_focus_loss")):
 		return
 	if _is_menu_open():
-		# Con un menú que pausa abierto, al cerrarlo no debe volver a correr solo.
+		# Con un menú que pausa abierto, no debe volver a correr solo al cerrarlo.
 		_was_paused_before_menu = true
 	if _pause_menu.is_open():
 		_was_paused_before_pause = true
 	GameClock.set_paused(true)
 
 
-## Indica si no queda nadie en la oficina (todos fuera, ninguno llegando ni saliendo).
+## Indica si no queda nadie en la oficina (ni llegando ni saliendo).
 func is_office_empty() -> bool:
 	for character: OfficeCharacter in get_characters():
 		if character.activity != OfficeCharacter.Activity.AWAY:
@@ -1046,7 +1008,7 @@ func is_office_empty() -> bool:
 	return true
 
 
-# Cuando se va el último, la oficina queda vacía: el tiempo salta hasta que llegue alguien.
+# Al irse el último, el tiempo salta hasta que llegue alguien.
 func _on_character_left_office() -> void:
 	_remove_departed()
 	if not is_office_empty() or Bank.game_over:
@@ -1055,8 +1017,7 @@ func _on_character_left_office() -> void:
 	print("La oficina está vacía.")
 	if hours <= 0:
 		return
-	# Salta hasta la hora anterior a la próxima llegada y, dentro de ella, hasta el primero
-	# que entra antes de la hora en punto; si nadie llega antes, hasta la hora en punto.
+	# Salta a la hora anterior a la próxima llegada y luego al primero que entra (o a la hora en punto).
 	var target: int = Staff.get_absolute_hour() + hours - 1
 	if hours > 1:
 		GameClock.fast_forward_hours(hours - 1)
@@ -1070,7 +1031,7 @@ func _on_character_left_office() -> void:
 	GameClock.skip_to_minute(first - target * 60)
 
 
-# Botón del CEO en la barra de menús: lo manda a casa o a la oficina.
+# Botón del CEO: lo manda a casa o a la oficina.
 func _add_ceo_button(menu_bar: Container) -> void:
 	_ceo_button = Button.new()
 	_ceo_button.name = "CeoButton"
@@ -1092,7 +1053,7 @@ func get_ceo_button() -> Button:
 	return _ceo_button
 
 
-# Un clic (sin arrastrar) sobre un empleado abre su ficha.
+# Un clic sin arrastrar sobre un empleado abre su ficha.
 func _unhandled_input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
 	if button == null or button.button_index != MOUSE_BUTTON_LEFT or _is_menu_open():
@@ -1109,7 +1070,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Empleado que se dibuja en ese punto del mundo (el de más adelante), o null.
+## Empleado dibujado en ese punto del mundo (el de más adelante), o null.
 func employee_at(world_point: Vector2) -> Employee:
 	var picked: Employee = null
 	for employee_id: int in employees:
@@ -1119,23 +1080,23 @@ func employee_at(world_point: Vector2) -> Employee:
 	return picked
 
 
-# Botones del reloj. En modo construcción están desactivados: el tiempo queda en pausa.
+# Botones del reloj; en construcción se desactivan (tiempo en pausa).
 func _on_pause_pressed() -> void:
 	if not _is_menu_open():
 		GameClock.toggle_pause()
 
 
-# Botón «Ver oficina» de la barra de menús: vuelve a encuadrar la oficina completa.
+# Botón «Ver oficina»: encuadra la oficina completa.
 func _add_frame_button(menu_bar: Container) -> void:
 	var button := Button.new()
 	button.name = "FrameOfficeButton"
 	button.text = "Ver oficina"
-	# Más angosto que los demás: junto al botón de girar entran en una fila a 1280 de ancho.
+	# Más angosto: así la barra entra en una fila a 1280.
 	button.custom_minimum_size = Vector2(Hud.MENU_BUTTON_SIZE.x - Hud.MENU_BUTTON_SIZE.y, Hud.MENU_BUTTON_SIZE.y)
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(frame_office)
 	menu_bar.add_child(button)
-	# Paredes arriba / abajo: cuadrado, con su descripción emergente.
+	# Paredes arriba / abajo: cuadrado, con descripción emergente.
 	var walls := Button.new()
 	walls.name = "WallsButton"
 	walls.text = "↕"
@@ -1147,19 +1108,18 @@ func _add_frame_button(menu_bar: Container) -> void:
 	menu_bar.add_child(walls)
 
 
-## Sube todas las paredes a su alto (para colgar cosas y ver lo colgado) o las vuelve a bajar
-## (se ve el interior). Es solo la vista; no se guarda.
+## Sube las paredes a su alto o las baja para ver el interior. Solo la vista; no se guarda.
 func set_walls_up(up: bool) -> void:
 	_walls_wanted = up
 	_apply_walls()
 
 
-## Indica si las paredes están arriba (por el botón o porque se está colgando algo).
+## Indica si las paredes están arriba (por el botón o por colgar algo).
 func are_walls_up() -> bool:
 	return _office_grid.walls_up
 
 
-# Las paredes van arriba si el jugador lo pidió o si en Construir está elegido un objeto de pared.
+# Arriba si el jugador lo pidió o si en Construir hay un objeto de pared elegido.
 func _apply_walls() -> void:
 	var hanging: bool = _build_panel.is_build_mode() and FurnitureCatalog.is_wall_mounted(_build_controller.tool)
 	var up: bool = _walls_wanted or hanging
@@ -1172,8 +1132,7 @@ func _apply_walls() -> void:
 	_rebuild_office()
 
 
-## Encuadra la oficina completa (botón «Ver oficina» o tecla F), con animación si la
-## cámara es suave.
+## Encuadra la oficina completa (botón o tecla F), animada si la cámara es suave.
 func frame_office() -> void:
 	_camera.fit_rect(_office_grid.get_lot_world_rect(), true)
 
@@ -1183,8 +1142,7 @@ func menu_bar_button(button_name: String) -> Button:
 	return _build_panel.get_menu_bar().get_node_or_null(button_name) as Button
 
 
-# El teclado y el borde de la pantalla no mueven la cámara con un menú encima (el modo
-# construcción sí la deja moverse).
+# Teclado y borde de pantalla no mueven la cámara con un menú encima (construcción sí).
 func _is_camera_locked() -> bool:
 	return (_settings_panel.is_open() or _game_over_screen.is_open() or _emergency_dialog.is_open()
 		or _ipo_screen.is_open() or _pause_menu.is_open())
@@ -1196,11 +1154,8 @@ func _on_speed_pressed(index: int) -> void:
 		EventBus.ui_action.emit("speed_changed")
 
 
-# Atajos de teclado (un extra: los botones del reloj hacen lo mismo).
-# Esc: cierra lo abierto o abre el menú de pausa (handle_escape, hito 62).
-# Espacio: pausa · 1 a 5: velocidad 1x, 2x, 4x, 8x, 16x. En modo construcción no cambian
-# nada, porque el tiempo tiene que quedarse en pausa. F: ver la oficina completa
-# (funciona siempre). P: paredes arriba / abajo. WASD y flechas mueven la cámara (OfficeCamera).
+# Atajos (extra): Esc cierra o abre la pausa; Espacio pausa; 1–5 velocidad (no en construcción);
+# F ver la oficina; P paredes; WASD y flechas mueven la cámara (OfficeCamera).
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:

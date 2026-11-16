@@ -1,17 +1,6 @@
-# Ficha de empleado (diseño, 12.4): nombre, cargo, nivel, equipo, horario, qué está
-# haciendo, barras de energía, ánimo y estrés, habilidades, rasgos conocidos y sueldo.
-# Tiene el botón Despedir (hito 13), que pide confirmar con el costo, y desde el hito 19
-# avisa si renuncia o pide aumento: un pedido se acepta o se niega, y la fila Aumento
-# sube el sueldo cuando el jugador quiera (de a salary_step). Desde el hito 30 muestra
-# cómo va hacia el nivel siguiente y, cuando cumple, la fila Ascender con el sueldo
-# nuevo (mayor que el actual; sugerido el de su nivel nuevo). Desde el hito 34 tiene
-# la fila Horario propio: un turno suyo (entrada, días y horas extra) que reemplaza el
-# de su equipo o su cargo, y muestra las horas extra y el recargo nocturno sin pagar.
-#
-# Se abre con un clic en el empleado o desde Personal, no pausa el tiempo y se
-# actualiza sola. Va a la derecha, debajo del reloj; si no entra en la pantalla, el
-# contenido (menos el título) se desplaza. Lo que el empleado está haciendo
-# lo sabe la escena de juego, que lo da con status_provider.
+# Ficha de empleado (derecha, bajo el reloj; no pausa y se actualiza sola): datos, qué hace (status_provider),
+# barras, habilidades, rasgos, avisos y las filas Aumento, Ascender, Horario propio y Despedir.
+# Si no entra en pantalla, el contenido (menos el título) se desplaza.
 class_name EmployeeCard
 extends CanvasLayer
 
@@ -156,7 +145,7 @@ func _ready() -> void:
 	_deny_button.text = "Negar"
 	_deny_button.pressed.connect(func() -> void: Staff.deny_raise(_employee_id))
 	_request_row.add_child(_deny_button)
-	# Oferta de otra empresa (hito 38): igualarla o dejarlo ir.
+	# Oferta de otra empresa: igualarla o dejarlo ir.
 	_offer_row = HBoxContainer.new()
 	rows.add_child(_offer_row)
 	_match_button = Button.new()
@@ -234,7 +223,7 @@ func _ready() -> void:
 		if not bool(result["ok"]):
 			EventBus.notice.emit(result["message"]))
 	rows.add_child(_shift_editor)
-	# Los avisos y el aumento van antes de las habilidades: es lo urgente.
+	# Avisos y aumento antes de las habilidades: es lo urgente.
 	rows.move_child(_details, rows.get_child_count() - 1)
 
 	_fire_button = Button.new()
@@ -357,7 +346,7 @@ func get_promote_salary() -> int:
 	return _promote_salary
 
 
-## Desplaza la ficha hasta que se vea un control (para las pruebas y los botones de abajo).
+## Desplaza la ficha hasta que se vea un control.
 func reveal(control: Control) -> void:
 	_scroll.ensure_control_visible(control)
 
@@ -385,7 +374,7 @@ func get_text() -> String:
 	return "\n".join(texts)
 
 
-## Vuelve a leer los datos (también lo hace sola al cambiar el personal o la hora).
+## Vuelve a leer los datos (lo hace sola al cambiar el personal o la hora).
 func refresh() -> void:
 	_refresh()
 
@@ -421,12 +410,12 @@ func _refresh() -> void:
 	var details: Array[String] = ["Habilidades: %s" % Staff.describe_skills(employee)]
 	var known: String = Staff.describe_known_traits(employee)
 	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
-	# Qué hace cada rasgo conocido (hito 50); los demás se descubren con el tiempo.
+	# Qué hace cada rasgo conocido.
 	for trait_id: String in employee.get("known_traits", []):
 		var effect: String = Staff.describe_trait(trait_id)
 		if not effect.is_empty():
 			details.append("· %s: %s" % [StaffCatalog.get_trait_name(trait_id), effect])
-	# Historial y puntualidad (hito 51).
+	# Historial y puntualidad.
 	details.append(Staff.describe_history(employee))
 	if Staff.is_waiting_promotion(employee):
 		details.append("Quiere un ascenso: ya puede ascender y no se lo dan.")
@@ -461,8 +450,7 @@ static func describe_performance(employee: Dictionary) -> String:
 	return "Rinde %d %% (%s)" % [roundi(energy * mood * 100.0), " y ".join(causes)]
 
 
-# Fila Horario propio: el botón para tenerlo o volver al del equipo (o del cargo) y,
-# si lo tiene, sus controles.
+# Fila Horario propio: el botón para tenerlo o volver al del equipo o cargo y, si lo tiene, sus controles.
 func _refresh_own_schedule(employee: Dictionary, team: Dictionary) -> void:
 	var own: bool = Staff.has_own_schedule(employee)
 	_own_label.text = "Horario propio" if own else ("Sigue el turno de su equipo" if not team.is_empty() else "Sigue el horario de su cargo")
@@ -548,7 +536,7 @@ func _refresh_promotion(employee: Dictionary) -> void:
 	_promote_row.visible = ready
 	var new_salary: int = 0
 	if not next_role.is_empty():
-		# Un Senior asciende de cargo (a líder de equipo) desde la etapa de ese cargo.
+		# Un Senior asciende a líder de equipo desde la etapa de ese cargo.
 		var role_name: String = StaffCatalog.get_role_name(next_role)
 		new_salary = StaffCatalog.get_salary(next_role, employee["level"])
 		if progress["blocker"] == "stage":

@@ -1,48 +1,43 @@
-# Comprobación de la fase 7 (hito 67): una partida nueva de principio a fin solo con el ratón.
-# Criterio: desde el menú principal se llega a la primera entrega siguiendo el tutorial sin
-# tocar el teclado. Cada paso se hace con clics, arrastres o la rueda sobre lo que el tutorial
-# resalta (botones, herramientas y casillas del local en pantalla); entre pasos solo pasa el
-# tiempo (el reloj avanza como si el jugador esperara). Los tiempos de las partes los revisa
-# test_all (ninguna pasa de un minuto).
+# Comprobación de la fase 7: del menú principal a la primera entrega siguiendo el tutorial solo con
+# el ratón (clics, arrastres y rueda sobre lo que resalta); entre pasos solo corre el reloj.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=phase7
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const MENU_SCENE: PackedScene = preload("res://scenes/main_menu.tscn")
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const TEST_SAVE_DIR: String = "user://test_saves"
-## Casillas del local inicial (6×8, la Oficina Ejecutiva en 0–2 × 0–2): el espacio libre del
-## resto se marca como Área de trabajo; el puesto va arriba a la derecha.
+## Local inicial 6×8 (Oficina Ejecutiva en 0–2 × 0–2): el resto es el Área de trabajo; el puesto va arriba a la derecha.
 const AREA_CELL := Vector2i(4, 4)
 const DESK_CELL := Vector2i(4, 0)
 const CHAIR_CELL := Vector2i(4, 1)
-## Hacia dónde miran (0 = −y, 2 = +y): el escritorio hacia la silla y la silla hacia el escritorio.
+## 0 = −y, 2 = +y: escritorio y silla se miran.
 const DESK_ROTATION: int = 2
 const CHAIR_ROTATION: int = 0
-## Tope de horas de juego para esperar algo (candidatos, entrevista, terminar el contrato).
+## Tope de horas de juego para esperar algo.
 const MAX_WAIT_HOURS: int = 24 * 40
-## Semillas de candidatos y contratos (el recorrido sube la oferta con «+» si hace falta).
+## Semillas de candidatos y contratos (si hace falta se sube la oferta con «+»).
 const SEEDS: Array[int] = [20261113, 7, 4242]
 
 var _failures: int = 0
 var _checks: int = 0
 var _notices: Array[String] = []
-# Lo que llegó como entrada mientras se jugaba.
+# Entradas de teclado recibidas.
 var _key_events: int = 0
 var _mouse_events: int = 0
 var _menu: Node
 var _game: Node
 var _rotation: int = 0
-# Veces que se movió la cámara para ver una casilla tapada por la interfaz.
+# Veces que se movió la cámara porque la interfaz tapaba una casilla.
 var _camera_drags: int = 0
-# El recorrido llegó al final (un error de script lo corta sin fallar las comprobaciones).
+# Llegó al final (un error de script lo corta sin fallar comprobaciones).
 var _completed: bool = false
 
 
 func _ready() -> void:
-	# Pantalla de 1280×720 como la ventana del juego (sin ventana mediría 1280×1280).
+	# Pantalla de 1280×720 (sin ventana mediría 1280×1280).
 	var aspect_before: Window.ContentScaleAspect = get_tree().root.content_scale_aspect
 	get_tree().root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
 	SaveManager.save_dir = TEST_SAVE_DIR
@@ -78,7 +73,6 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Cuenta lo que entra (el recorrido no debe mandar teclas).
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		_key_events += 1
@@ -119,14 +113,13 @@ func _move(at: Vector2) -> void:
 	await _push(motion)
 
 
-## Clic (izquierdo o derecho) en un punto de la pantalla.
 func _click_at(at: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 	await _move(at)
 	await _push(_mouse_button(at, button, true))
 	await _push(_mouse_button(at, button, false))
 
 
-## Clic en un botón: si está en una lista desplazable y no se ve, antes se gira la rueda.
+## Si el botón está en una lista desplazable y no se ve, antes gira la rueda.
 func _click(control: Control) -> void:
 	await _reveal(control)
 	await _click_at(control.get_global_rect().get_center())
@@ -173,7 +166,7 @@ func _drag(from: Vector2, to: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) 
 	await _push(_mouse_button(to, button, false))
 
 
-## Ningún control de la interfaz atrapa el ratón en ese punto de la pantalla.
+## Ningún control atrapa el ratón en ese punto.
 func _is_free(at: Vector2) -> bool:
 	var screen := Rect2(Vector2.ZERO, get_viewport().get_visible_rect().size)
 	if not screen.grow(-4.0).has_point(at):
@@ -185,7 +178,7 @@ func _is_free(at: Vector2) -> bool:
 	return get_viewport().gui_get_hovered_control() == null
 
 
-## Puntos libres de la pantalla (donde se ve el mapa), del centro hacia afuera.
+## Puntos de pantalla donde se ve el mapa, del centro hacia afuera.
 func _free_points() -> Array[Vector2]:
 	var size: Vector2 = get_viewport().get_visible_rect().size
 	var points: Array[Vector2] = []
@@ -199,7 +192,7 @@ func _free_points() -> Array[Vector2]:
 	return points
 
 
-## Si la casilla queda bajo la interfaz, arrastra la cámara con el clic derecho para verla.
+## Si la casilla queda bajo la interfaz, arrastra la cámara con el clic derecho.
 func _bring_into_view(cell: Vector2i) -> void:
 	for attempt: int in range(4):
 		var at: Vector2 = _cell_on_screen(cell)
@@ -208,8 +201,7 @@ func _bring_into_view(cell: Vector2i) -> void:
 		var points: Array[Vector2] = _free_points()
 		if points.is_empty():
 			return
-		# Se agarra el mapa en un punto libre y se suelta en otro libre (si no, la interfaz se
-		# queda con el clic): si no hay un par así, se mueve la mitad.
+		# Agarrar y soltar en puntos libres (si no, la interfaz se queda con el clic); si no hay par, mueve la mitad.
 		var delta: Vector2 = points[0] - at
 		var start := Vector2(-1, -1)
 		for halving: int in range(4):
@@ -226,7 +218,6 @@ func _bring_into_view(cell: Vector2i) -> void:
 		_camera_drags += 1
 
 
-## Centro en pantalla de una casilla del local, según la cámara de ahora.
 func _cell_on_screen(cell: Vector2i) -> Vector2:
 	var grid: OfficeGrid = _game.find_children("*", "OfficeGrid", true, false)[0]
 	return grid.get_canvas_transform() * grid.cell_to_world(cell)
@@ -242,8 +233,7 @@ func _follows(control: Control, what: String) -> void:
 		"paso %s: el tutorial resalta %s (%s)" % [_step_id(), what, panel.get_target_key()])
 
 
-## Deja pasar el tiempo de juego hora por hora (como si el jugador esperara con el reloj
-## andando) hasta que se cumpla `done` o el tope. Devuelve las horas que pasaron.
+## Pasa el tiempo hora por hora hasta `done` o el tope; devuelve las horas que pasaron.
 func _wait_until(done: Callable, max_hours: int = MAX_WAIT_HOURS) -> int:
 	var hours: int = 0
 	while not bool(done.call()) and hours < max_hours:
@@ -256,8 +246,7 @@ func _wait_until(done: Callable, max_hours: int = MAX_WAIT_HOURS) -> int:
 	return hours
 
 
-## Elige una herramienta de Construir con clics: primero su sección y su categoría si están
-## cerradas (con follow, comprueba que el tutorial resalta cada botón que se pulsa).
+## Abre sección y categoría si están cerradas y elige la herramienta (con follow, comprueba el resalte).
 func _open_tool(tool: String, what: String, follow: bool) -> void:
 	var build: BuildPanel = _game.get_node("BuildPanel")
 	for i: int in range(3):
@@ -269,7 +258,7 @@ func _open_tool(tool: String, what: String, follow: bool) -> void:
 			return
 
 
-## Coloca el mueble de una herramienta girándolo con el clic derecho hasta mirar a `rotation`.
+## Gira con el clic derecho hasta `rotation` y coloca.
 func _place(tool: String, cell: Vector2i, rotation: int) -> void:
 	await _open_tool(tool, tool, false)
 	await _bring_into_view(cell)
@@ -281,7 +270,7 @@ func _place(tool: String, cell: Vector2i, rotation: int) -> void:
 
 
 func _play(seed: int) -> void:
-	# Menú principal: sin partidas no hay Continuar; Nueva partida abre el juego.
+	# Sin partidas no hay Continuar; Nueva partida abre el juego.
 	_menu = MENU_SCENE.instantiate()
 	_menu.set("change_scene", func(_path: String) -> void:
 		_menu.queue_free()
@@ -296,7 +285,7 @@ func _play(seed: int) -> void:
 	_expect(_game != null and is_instance_valid(_game), "Nueva partida abre el juego")
 	if _game == null:
 		return
-	# El reloj corre solo con lo que la prueba deja pasar (así no salen eventos al azar).
+	# El reloj corre solo con lo que la prueba deja pasar (así no salen eventos).
 	GameClock.stop()
 	Staff.set_seed(seed)
 	Projects.set_seed(seed)
@@ -371,7 +360,6 @@ func _play(seed: int) -> void:
 	_expect(offer_button != null, "tras la entrevista se puede ofrecer (%d h)" % waited)
 	if offer_button == null:
 		return
-	# Si pide más que lo sugerido, se sube la oferta con «+».
 	var asked: int = int(candidate["asked_salary"])
 	var raises: int = 0
 	while staff_panel.get_offer(candidate_id) < asked and raises < 20:
@@ -431,7 +419,6 @@ func _play(seed: int) -> void:
 	_expect(_notices.any(func(text: String) -> bool: return text.begins_with("Terminaste el tutorial")), "avisa que terminó")
 	_expect(Staff.employees.size() == 1 and Economy.balance > 0, "la empresa sigue en pie: $%d" % Economy.balance)
 
-	# Todo con el ratón.
 	_expect(_key_events == 0, "no se usó el teclado: %d teclas" % _key_events)
 	_expect(_mouse_events > 50, "se jugó con el ratón: %d eventos" % _mouse_events)
 	print("Fase 7 (semilla %d): del menú a la primera entrega en el día %d con %d eventos del ratón (%d arrastres de cámara para ver casillas) y 0 teclas; saldo $%d, reputación %.2f." % [

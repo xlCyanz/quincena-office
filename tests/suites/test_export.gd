@@ -1,9 +1,6 @@
-# Prueba del hito 66: exportación de escritorio.
-# Criterio (lo que se puede ver sin exportar): hay presets de macOS, Windows y Linux que dejan
-# fuera las herramientas de desarrollo; el plugin QuincenaExport quita sus autoloads de toda
-# exportación; ningún archivo del juego depende de lo que se excluye; nombre, versión e icono
-# propios. La exportación real y su arranque los mira tests/export_desktop.sh (necesita las
-# plantillas de exportación; si faltan, esta parte lo avisa sin fallar).
+# Exportación de escritorio sin exportar: presets de macOS, Windows y Linux sin herramientas de
+# desarrollo, el plugin QuincenaExport quita sus autoloads, nada que viaja nombra lo excluido y
+# nombre, versión e icono propios. La exportación real es tests/export_desktop.sh.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=export
 extends Node
 
@@ -64,8 +61,8 @@ func _split_filter(text: String) -> Array[String]:
 	return parts
 
 
-# Un preset por plataforma, ejecutable, a build/, con todos los recursos, los JSON de data/ y
-# sin las herramientas. Devuelve lo que excluyen (igual en los tres).
+# Un preset por plataforma a build/, con recursos y JSON de data/ y sin las herramientas.
+# Devuelve lo que excluyen (igual en los tres).
 func _check_presets(presets: ConfigFile) -> Array[String]:
 	var sections: Array[String] = _preset_sections(presets)
 	var platforms: Array[String] = []
@@ -184,7 +181,7 @@ func _check_identity(presets: ConfigFile) -> void:
 					"Windows lleva la versión del juego")
 
 
-# Las plantillas de exportación no son parte del proyecto: si faltan solo se avisa.
+# Las plantillas no son parte del proyecto: si faltan solo se avisa.
 func _check_templates() -> void:
 	var info: Dictionary = Engine.get_version_info()
 	var folder: String = "%s.%s.%s.%s" % [info["major"], info["minor"], info["patch"], info["status"]]

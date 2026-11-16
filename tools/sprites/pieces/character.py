@@ -1,43 +1,8 @@
-# Personajes (docs/sprites_128.md, sección 9; estilo de tools/sprites/STYLE.md): empleados de oficina de
-# cabeza grande y cuerpo robusto, en 4 direcciones, de pie y sentados, con 6 conjuntos (STYLES).
-#
-#   character_<conjunto>stand_r0 … r3   lienzo 128×128, pies en (64, 112), unos 100 px de alto
-#   character_<conjunto>sit_r0 … r3     sentado, manos al frente como tecleando: la cadera a SIT_SEAT_Z =
-#                                       24 px sobre el piso, en la vertical del apoyo (64, 112)
-#   character_<conjunto>stand_r1_v1, _v2  la misma pose con otra paleta (v1 piel oscura, v2 piel clara)
-#   <conjunto> = "" (casual: camiseta, jeans y tenis), "office_" (camisa de manga larga y corbata),
-#                "executive_" (traje con saco), "woman_" (vestido y pelo largo), "woman_office_" (blusa
-#                y falda) y "woman_executive_" (saco y falda)
-#   character_stand_shadow       sombra de los pies, un solo tono (el juego la pone con transparencia)
-#   character_stand_r1_s80       el casual dibujado a tamaño final (BODY_SCALE 0.8 del juego, ~80 px)
-#   character_layers/            una imagen por capa y dirección (puestas en el orden de LAYER_ORDER dan
-#                                el sprite exacto), el cuerpo sin pelo (*_bald) para otro peinado y
-#                                layers.json con los colores de cada tono por Look (no son sprites sueltos)
-#   _sheets/character.png        hoja de contacto ×3 del casual, de pie y sentado sobre la silla
-#                                (no es arte del juego)
-#
-# Estilo (STYLE.md): contorno casi negro del tono de cada capa, 2 px bajo las suelas; línea interior
-# oscura de 1 px (DEEP) donde una pieza tapa a otra de la misma capa; colores saturados con base /
-# −25 % / −40 % exactos y un brillo; la cara son dos ojos oscuros angostos, sin nariz ni boca.
-#
-# Cómo está hecho
-# - El cuerpo es un modelo 3D chico hecho con campos de distancia (iso.sdf), escrito UNA vez en
-#   «px del cuerpo» (lat = a la derecha del personaje, fwd = hacia su frente, z = alto). El lienzo
-#   lo gira a las 4 direcciones y la luz se rehace sola en cada una.
-# - El cuerpo entero va girado TURN (18.4°) hacia la cámara respecto del eje de la casilla: así la
-#   línea de los hombros, el cinturón, las manos y los ojos siguen todos la MISMA proyección, una
-#   escalera de 4 px por 1 (con el 2:1 completo un brazo cuelga 13 px más abajo que el otro y la
-#   cabeza se ve ladeada; antes solo la cara se corregía y no coincidía con el cuerpo).
-# - El motor solo da la forma y la luz de cada pixel. El sombreado (bandas con los tonos exactos
-#   base / −25 % / −40 %), las líneas entre piezas, el contorno y los detalles se pintan aquí,
-#   para controlar cada pixel: sin manchas de menos de 3 px, sin puntas de 1 px en la silueta.
-# - La cara, el cuello de la camisa, la corbata, la hebilla y los pulgares se dibujan a mano en
-#   pantalla (a este tamaño cada pixel cuenta), colocados con la proyección del modelo. Las
-#   medidas del cuerpo dependen de la pose (Pose: de pie o sentado) y se escalan con Figure.k.
-# - Capas: piel, pelo, camisa, saco, corbata, pantalón (o falda), zapatos y cara, cada una con su rampa (Look).
-#   Cambiar de empleado es cambiar los colores: los índices de tono de cada pixel no cambian
-#   (build lo comprueba). build también mide lo que check.py no mide (pies, contorno, pixeles
-#   sueltos, puntas, colores por capa, sombra) y falla si algo no se cumple.
+# Personajes (docs/sprites_128.md, sección 9; STYLE.md): cabeza grande y cuerpo robusto, 4 direcciones,
+# de pie, sentado y animaciones, en 6 conjuntos de ropa (STYLES) y 3 paletas (VARIANTS).
+# Lienzo 128×128 con los pies en (64, 112); sentado, la cadera a SIT_SEAT_Z sobre el piso.
+# Modelo SDF en px del cuerpo (lat, fwd, z) girado TURN hacia la cámara; sombreado, contorno y
+# detalles se pintan aquí pixel a pixel. build se revisa a sí mismo (review) y falla si algo no cumple.
 import json
 import math
 import os
@@ -52,11 +17,10 @@ from pieces import chair_plant
 
 PX = 1.0 / iso.Z_METRIC  # 1 px del cuerpo en casillas
 CENTER = 0.5  # el personaje se para en el centro de la casilla
-# Giro hacia la cámara: la pendiente en pantalla de una línea lateral es tan(45° − giro) / 2.
-# Con 45° − atan(1/2) queda en 1/4: escalera limpia de 4 px por 1.
+# Giro hacia la cámara: con 45° − atan(1/2) una línea lateral queda en escalera de 4 px por 1.
 TURN = math.radians(45.0) - math.atan(0.5)
 
-# Alturas del modelo en px de sprite (el piso es 0; la coronilla queda hacia 98).
+# Alturas en px de sprite (piso 0, coronilla ~98).
 BELT_Z = 32.0  # borde de abajo del cinturón
 BELT_H = 3.0
 CUFF_Z = 38.0  # muñeca
@@ -68,14 +32,10 @@ SMALL_SCALE = 0.8  # BODY_SCALE del juego (OfficeCharacter): el personaje a tama
 
 
 class Pose(object):
-    """Medidas de una pose en px del cuerpo. arm = (hombro, codo, muñeca, centro de la mano,
-    radios de la mano) con lat hacia afuera (se espeja en el brazo izquierdo).
-    Para los cuadros de una animación (lado = −1 izquierda del personaje, +1 derecha):
-      feet    lado -> (adelante, levantado) de ese pie
-      swing   lado -> (codo, muñeca, mano) corrimiento hacia adelante de ese brazo
-      hands   lado -> cuánto sube esa mano (tecleando)
-      bob     cuánto sube todo el cuerpo sobre las piernas (el paso)
-      breath  cuánto suben los hombros y la cabeza (respirar); la cintura no se mueve"""
+    """Medidas de una pose en px del cuerpo. arm = (hombro, codo, muñeca, centro y radios de la mano),
+    lat hacia afuera. Por cuadro (lado −1 izquierda, +1 derecha): feet (adelante, levantado),
+    swing (corrimiento de codo, muñeca y mano), hands (sube la mano), bob (sube el cuerpo),
+    breath (suben hombros y cabeza)."""
 
     def __init__(self, name, sit, arm, height, feet=None, swing=None, hands=None, bob=0.0, breath=0.0):
         self.name = name
@@ -102,16 +62,14 @@ class Pose(object):
         return [(sign * p[0], p[1] + swing[i], p[2] + lift + up[i]) for i, p in enumerate(self.arm[:4])]
 
 
-# De pie: brazos abiertos hacia afuera y el codo apenas doblado hacia adelante; entre la mano y
-# la cadera queda aire (el brazo no se pega al cuerpo).
+# De pie: brazos abiertos y el codo apenas doblado; queda aire entre la mano y la cadera.
 STAND = Pose("stand", False, ((13.6, 0.0, 57.0), (16.0, 0.4, 47.5), (17.4, 2.4, CUFF_Z + 2.0),
                               (18.0, 3.0, CUFF_Z - 3.5), (4.6, 4.6, 5.2)), (96, 104))
-# Sentado: el brazo baja junto al cuerpo hasta el codo y el antebrazo va al frente, casi
-# horizontal, con las manos planas (palmas abajo) como sobre un teclado.
+# Sentado: antebrazo al frente, casi horizontal, manos planas como sobre un teclado.
 SIT = Pose("sit", True, ((13.6, 0.0, 54.0), (15.0, 1.5, 44.6), (10.8, 16.0, 45.6),
                          (9.8, 20.5, 45.4), (4.2, 4.8, 3.3)), (86, 100))
 
-# ---- animaciones: cada cuadro es una pose (el ciclo empalma: después del último va el primero)
+# ---- animaciones: cada cuadro es una pose; el ciclo empalma
 WALK_FRAMES = 8
 IDLE_FRAMES = 4
 TYPE_FRAMES = 4
@@ -121,8 +79,7 @@ ARM_SWING = (1.6, 4.0, 6.0)  # codo, muñeca y mano: van al revés de la pierna 
 
 
 def walk_poses():
-    """Caminar: el pie izquierdo adelante en el cuadro 3 y el derecho en el 7; el pie que avanza
-    va levantado, el cuerpo sube 1 px cuando las piernas se cruzan y los brazos van al revés."""
+    """Caminar: pie izquierdo adelante en el cuadro 3 y derecho en el 7; brazos al revés."""
     poses = []
     for i in range(WALK_FRAMES):
         t = 2.0 * math.pi * i / WALK_FRAMES
@@ -152,10 +109,8 @@ OUTLINE, DEEP, RIGHT, LEFT, BASE, LIGHT = pal.OUTLINE, pal.DEEP, pal.RIGHT, pal.
 LAYER_ORDER = ("shoes", "pants", "shirt", "jacket", "skin", "accent", "face", "hair")
 LAYER_ID = dict((name, index) for index, name in enumerate(LAYER_ORDER))
 
-# Bandas de luz por capa: (umbral mínimo de n·luz, tono), de más a menos luz. Los tonos son los
-# exactos de la guía (base, −25 %, −40 %). Lo que mira a la izquierda queda en la base, lo que
-# mira a la derecha en −25 % y lo que mira hacia abajo a la derecha (el canto que se aleja de la
-# luz) en −40 %: con −40 % en todo lo que mira a la derecha el frente entero quedaría en sombra.
+# Bandas de luz por capa: (umbral mínimo de n·luz, tono), de más a menos luz. Izquierda = base,
+# derecha = −25 %, abajo a la derecha = −40 %.
 BANDS = {
     "shoes": ((0.72, LIGHT), (-0.25, BASE), (-9.0, LEFT)),
     "pants": ((0.45, BASE), (-0.30, LEFT), (-9.0, RIGHT)),
@@ -176,9 +131,8 @@ PLUM_HUE = 330.0 / 360.0  # el contorno corre al ciruela, como el borde de la «
 
 
 def layer_ramp(base, light=0.35, name=None):
-    """Rampa corta de una capa, con el criterio de STYLE.md: contorno casi negro del mismo tono
-    (base × 0.26, más saturado, corrido al ciruela: como 3c1300 para la madera df823d), línea
-    interior DEEP (base × 0.5), −40 %, −25 % y base exactos de la guía y brillo cálido."""
+    """Rampa de una capa (STYLE.md): contorno (base × 0.26, al ciruela), línea DEEP (base × 0.5),
+    −40 %, −25 %, base y brillo cálido."""
     dark = pal.adjust(base, 0.26, 1.6, PLUM_HUE, 0.12, 0.30)
     deep = pal.adjust(base, 0.52, 1.25, PLUM_HUE, 0.06, 0.12)
     bright = pal.adjust(pal.lighten(base, light), 1.0, 0.95, pal.WARM_HUE, 0.10, 0.03)
@@ -186,8 +140,7 @@ def layer_ramp(base, light=0.35, name=None):
 
 
 class Look(object):
-    """Paletas de un empleado: una rampa por capa, a partir de un color cada una. Se crea una
-    vez por variante (el lienzo distingue las rampas por objeto)."""
+    """Una rampa por capa de un empleado; una instancia por variante (el lienzo distingue por objeto)."""
 
     def __init__(self, skin, hair, shirt, pants, shoes="e6e0d2", accent="c03d43", jacket=None):
         self.skin = layer_ramp(skin, light=0.30, name="skin")
@@ -220,9 +173,8 @@ class Style(object):
         self.jacket = jacket  # saco (capa jacket) sobre la camisa: se ve la V de la camisa y el puño
 
 
-# executive = traje (saco y pantalón del mismo color) con camisa y corbata; woman_executive = saco y falda.
-# casual = camiseta, jeans y tenis; office = camisa de manga larga con corbata, pantalón de vestir y
-# zapatos; woman = vestido y tenis; woman_office = blusa de manga larga con cuello y falda oscura.
+# executive = traje con camisa y corbata; office = camisa de manga larga y corbata; woman = vestido;
+# woman_office = blusa y falda; woman_executive = saco y falda; casual = camiseta y jeans.
 STYLES = (
     Style("casual", ""),
     Style("office", "office_", long_sleeve=True, tucked=True, collar=True, tie=True),
@@ -236,8 +188,7 @@ STYLES = (
 STYLE_BY_NAME = dict((style.name, style) for style in STYLES)
 
 DARK_SHOES = "3e2c28"
-# Por conjunto: "" = la base, "_v1" = piel oscura y pelo negro, "_v2" = piel clara y pelo claro.
-# Las variantes cambian solo la paleta (build lo comprueba).
+# "" = base, "_v1" = piel oscura y pelo negro, "_v2" = piel clara y pelo claro (solo cambia la paleta).
 LOOKS = {
     "casual": {
         "": Look(skin="f0b07a", hair="4a2c1c", shirt="e4d2a6", pants="41609e"),
@@ -370,8 +321,7 @@ def neighbours(mask, moves=MOVES4):
 
 
 def patches(key, mask):
-    """Manchas (4 vecinos) de pixeles de mask con la misma clave. Devuelve (etiqueta por pixel,
-    tamaño por etiqueta); la etiqueta −1 es «fuera de mask»."""
+    """Manchas (4 vecinos) de mask con la misma clave: (etiqueta por pixel, tamaño); −1 = fuera de mask."""
     label = np.full(key.shape, -1, dtype=np.int32)
     sizes = []
     h, w = key.shape
@@ -399,12 +349,8 @@ def patches(key, mask):
 # ---------------------------------------------------------------------- figura
 
 class Figure(object):
-    """Un lienzo de personaje más los búferes propios de este módulo:
-      light, nz   n·luz y componente vertical de la normal de cada pixel (los da el motor)
-      layer       capa de cada pixel (índice de LAYER_ORDER)
-      keep        detalles dibujados a mano: no se funden con lo de al lado
-      lat, fwd    coordenadas del cuerpo de cada pixel (después de measure())
-    """
+    """Lienzo de personaje con búferes propios: light y nz (del motor), layer (índice de LAYER_ORDER),
+    keep (dibujado a mano) y lat, fwd (coordenadas del cuerpo, tras measure())."""
 
     def __init__(self, rotation, look, pose=None, scale=1.0, style=None):
         self.c = iso.Canvas.character(rotation)
@@ -459,9 +405,8 @@ class Figure(object):
         rf = (CENTER - y) / (PX * self.k)
         return rl * self.cos + rf * self.sin, -rl * self.sin + rf * self.cos
 
-    # Vista canónica: el personaje mirando hacia la DERECHA de la pantalla (r1 de frente, r0 de
-    # espaldas). Las otras dos direcciones son su espejo (x -> 127 − x): los dibujos a mano se
-    # escriben una vez en la vista canónica y la luz se decide aparte, por el lado real.
+    # Vista canónica: mirando a la DERECHA de la pantalla (r1 de frente, r0 de espaldas); las otras
+    # dos direcciones son su espejo (x -> 127 − x). La luz se decide por el lado real.
 
     def flip(self, x):
         return x if self.toward > 0 else 127 - x
@@ -480,8 +425,7 @@ class Figure(object):
     # ------------------------------------------------------------------ piezas
 
     def solid(self, name, layer, fn, box, margin=2.0):
-        """Agrega una pieza: fn = campo en px del cuerpo, box = (lat0, lat1, fwd0, fwd1, z0, z1)
-        que la contiene. Guarda la luz de sus pixeles visibles."""
+        """Agrega una pieza: fn en px del cuerpo, box = (lat0, lat1, fwd0, fwd1, z0, z1) que la contiene."""
         c = self.c
         got = {}
 
@@ -541,8 +485,7 @@ class Figure(object):
         return mask
 
     def block(self, x, y, width, height, index, layer=None, over=None, keep=True):
-        """Pinta un bloque de pixeles del lienzo (x, y de la esquina de arriba a la izquierda).
-        over = máscara donde se permite pintar (por defecto todo lo dibujado)."""
+        """Pinta un bloque desde la esquina (x, y); over = dónde se permite (por defecto lo dibujado)."""
         c = self.c
         mask = (c.X >= x) & (c.X < x + width) & (c.Y >= y) & (c.Y < y + height)
         if over is not None:
@@ -550,10 +493,8 @@ class Figure(object):
         return self.tone(mask, index, layer, keep)
 
     def art(self, x, y, rows, legend, over=None, keep=True):
-        """Dibujo a mano en la vista canónica: rows = filas de texto, un carácter por pixel
-        (' ' o '.' = no tocar); legend = carácter -> (capa, tono). El tono puede ser 'darker' o
-        'lighter': un paso respecto de lo que hay debajo (sin cambiar de capa). (x, y) es la
-        esquina de arriba a la izquierda en la vista canónica."""
+        """Dibujo a mano en la vista canónica desde la esquina (x, y): rows = un carácter por pixel
+        (' ' o '.' = no tocar), legend = carácter -> (capa, tono); tono 'darker'/'lighter' = un paso sobre lo de debajo."""
         c = self.c
         for dy, row in enumerate(rows):
             for dx, char in enumerate(row):
@@ -571,9 +512,8 @@ class Figure(object):
                     self.tone(mask, index, layer, keep)
 
     def stroke(self, points, over, minimum=4):
-        """Línea de 1 px que sigue una curva del cuerpo: points = [(lat, fwd, z), …]. Solo se
-        pinta sobre `over`, donde la curva queda a la vista (no del otro lado del volumen), y
-        solo si se ven al menos `minimum` pixeles. Devuelve la máscara (sin pintar nada)."""
+        """Máscara de una línea de 1 px por una curva del cuerpo (points = [(lat, fwd, z), …]), solo sobre
+        `over` donde queda a la vista y con al menos `minimum` pixeles. No pinta."""
         c = self.c
         mask = np.zeros(c.alpha.shape, dtype=bool)
         last = None
@@ -630,8 +570,7 @@ class Figure(object):
         c.result = None
 
     def clean_silhouette(self):
-        """Silueta limpia: sin puntas (pixel opaco con un solo vecino opaco) ni muescas o
-        rendijas de 1 px (pixel vacío entre dos opacos)."""
+        """Silueta limpia: sin puntas (opaco con un solo vecino opaco) ni muescas de 1 px."""
         c = self.c
         for _ in range(8):
             spikes = c.alpha & (neighbours(c.alpha) <= 1)
@@ -654,15 +593,13 @@ class Figure(object):
     # ------------------------------------------------------------------ sombreado
 
     def horizontal_light(self):
-        """n·luz contando solo la parte horizontal de la normal (−1 … +1): en un tubo vertical
-        (las piernas) da bandas verticales limpias, sin que la cadera o una rodilla las corten."""
+        """n·luz con solo la parte horizontal de la normal: bandas verticales limpias en las piernas."""
         lx, ly, lz = iso.LIGHT_DIR
         flat = np.sqrt(np.maximum(1.0 - self.nz ** 2, 1.0e-6))
         return (self.light - self.nz * lz) / flat / math.hypot(lx, ly)
 
     def shade(self):
-        """Tono de cada pixel por bandas de luz, con los umbrales de su capa (el pantalón, con
-        la luz horizontal: horizontal_light)."""
+        """Tono de cada pixel por bandas de luz según los umbrales de su capa."""
         c = self.c
         flat_light = self.horizontal_light()
         for layer, bands in BANDS.items():
@@ -677,9 +614,8 @@ class Figure(object):
             c.paint(mask, index)
 
     def merge_small(self, minimum=MIN_PATCH, rounds=4):
-        """Funde con lo de al lado las manchas de tono de menos de `minimum` pixeles (ruido del
-        sombreado por bandas) y empareja los bordes de banda: un pixel con 3 de sus 4 vecinos de
-        otro mismo tono toma ese tono. No toca lo dibujado a mano (keep)."""
+        """Funde las manchas de tono de menos de `minimum` pixeles y empareja bordes de banda (3 de 4
+        vecinos mandan). No toca keep."""
         c = self.c
         for _ in range(rounds):
             changed = False
@@ -713,9 +649,8 @@ class Figure(object):
                 break
 
     def lines(self):
-        """Líneas entre piezas de la misma capa (brazo sobre el torso, la oreja sobre la
-        cabeza): solo donde las dos quedaron del MISMO tono y se fundirían; un paso más oscuro,
-        en el borde de la pieza que queda más cerca de la cámara."""
+        """Línea un paso más oscura entre piezas de la misma capa que quedaron del mismo tono, en el
+        borde de la que está más cerca de la cámara."""
         c = self.c
         a = c.alpha
         mark = np.zeros(a.shape, dtype=bool)
@@ -741,8 +676,7 @@ class Figure(object):
         return edge
 
     def ground_line(self):
-        """Contorno de 2 px donde la figura da contra el piso (STYLE.md, rasgo 1): la fila de
-        arriba del borde de abajo de los zapatos también va en el tono de contorno."""
+        """Contorno de 2 px contra el piso: también la fila de arriba del borde de abajo de los zapatos."""
         c = self.c
         shoes = c.alpha & (self.layer == LAYER_ID["shoes"])
         sole = shoes & ~shifted(c.alpha, 2, 0, False) & shifted(c.alpha, 1, 0, False)
@@ -769,8 +703,7 @@ class Figure(object):
         return alone
 
     def absorb_loose(self):
-        """Los pixeles sueltos que queden (salvo los dibujados a mano) toman el color más
-        repetido entre sus vecinos."""
+        """Los pixeles sueltos (salvo keep) toman el color más repetido entre sus vecinos."""
         c = self.c
         edge = c.alpha & (neighbours(c.alpha) < 4)
         for _ in range(4):
@@ -791,8 +724,7 @@ class Figure(object):
                     c.ramp_id[y, x] = rid
                     self.layer[y, x] = layer
             c.result = None
-        # Un pixel de contorno suelto (un zapato que asoma 1 px entre las piernas) toma el
-        # contorno de la capa vecina: sigue siendo contorno y se une a la línea de al lado.
+        # Un pixel de contorno suelto toma el contorno de la capa vecina y se une a la línea.
         alone = self.loose() & edge
         for y, x in zip(*np.nonzero(alone)):
             for dy, dx in MOVES8:
@@ -863,19 +795,15 @@ def build_model(fig, hair=True):
         fig.solid("pants", "pants", f_intersect(body, cut),
                   (-13.5, 13.5, -8.5, SIT_FEET_FWD + 7.5, 2.0, cut_z))
     else:
-        # Pantalón: cadera y piernas en UNA pieza. Cada pierna es un tubo que sube hasta el
-        # cinturón (cortado plano ahí) y las dos se funden arriba (unión suavizada): la cadera es
-        # redonda como las piernas, así el sombreado baja seguido del cinturón a los zapatos. Se
-        # abren un poco hacia los pies: entre los tobillos queda un hueco de 3 px.
+        # Pantalón: cadera y piernas en una pieza (tubos fundidos arriba, cortados en el cinturón), así el
+        # sombreado baja seguido; entre los tobillos quedan 3 px.
         both = [stand_leg(pose, sign, 7.0, 6.0, 6.0, pose.belt_z + 10.0) for sign in (-1.0, 1.0)]
         legs = f_blend(both[0], both[1], 2.5)
         reach = STRIDE + 2.0
         fig.solid("pants", "pants", f_intersect(legs, cut), (-14.0, 14.0, -8.5 - reach, 8.5 + reach, 2.0, cut_z))
-    # Camisa: el torso es una sola caja redondeada (caras limpias: arriba los hombros, el pecho
-    # y el costado), un poco más angosta en la cintura.
+    # Camisa: el torso es una caja redondeada, un poco más angosta en la cintura.
     fig.solid("torso", "jacket" if fig.style.jacket else "shirt", f_torso(pose, fig.style), (-13.2, 13.2, -8.6, 8.6, pose.belt_z - 4.0, pose.neck_z + 1.5))
-    # Brazos gruesos, manga corta: la manga (camisa) del hombro hasta SLEEVE del brazo; el resto
-    # del brazo, el antebrazo y la mano son UNA pieza de piel (sin línea en la muñeca).
+    # Manga corta hasta SLEEVE del brazo; el resto del brazo y la mano son una pieza de piel.
     for side, sign in (("l", -1.0), ("r", 1.0)):
         shoulder, elbow, wrist, hand = pose.arm_points(sign)
         radii = pose.arm[4]
@@ -909,8 +837,7 @@ def build_model(fig, hair=True):
 
 
 def stand_leg(pose, sign, r_top, r_low, hip_lat, hip_z):
-    """Pierna de pie: cadera → rodilla → tobillo. Con el pie adelantado o levantado (caminar) la
-    rodilla se dobla hacia adelante; parada es un tubo recto."""
+    """Pierna de pie: cadera → rodilla → tobillo; con el pie adelantado o levantado la rodilla se dobla."""
     step, lift = pose.foot(sign)
     ankle = (sign * SHOE_LAT, 0.4 + step, 7.5 + lift)
     hip = (sign * hip_lat, 0.0, hip_z)
@@ -920,8 +847,7 @@ def stand_leg(pose, sign, r_top, r_low, hip_lat, hip_z):
 
 
 def build_skirt(fig, cut_z):
-    """Falda (capa pants) y piernas de piel. De pie: campana hasta SKIRT_HEM. Sentada: cubre la
-    cadera y los muslos hasta antes de la rodilla; las canillas bajan a la vista."""
+    """Falda (capa pants) y piernas de piel: de pie campana hasta SKIRT_HEM, sentada hasta la rodilla."""
     pose = fig.pose
     if pose.sit:
         thigh_r = 6.2
@@ -965,14 +891,12 @@ def hair_center(fig):
 
 
 def build_hair(fig):
-    """Pelo corto con raya al costado: casquete que cubre arriba y atrás y flequillo peinado
-    hacia el lado largo."""
+    """Pelo corto con raya al costado: casquete y flequillo hacia el lado largo."""
     head_z = fig.pose.head_z
     cap = f_ellipsoid(hair_center(fig), HAIR_RADII)
 
     def hairline(lat, fwd, z):
-        # Alta en la frente (la vista es desde arriba: si no, el pelo tapa la cara), baja en las
-        # sienes y hasta la nuca por atrás.
+        # Alta en la frente (si no, tapa la cara), baja en las sienes y hasta la nuca.
         temple = np.clip((np.abs(lat) - 7.5) / 7.5, 0.0, 1.0) * np.clip((fwd + 2.5) / 7.5, 0.0, 1.0)
         line = head_z + 2.0 + fwd * 0.75 - 6.0 * temple
         return (line - z) * 0.8
@@ -1005,8 +929,7 @@ def hair_back(center, lat, z):
 
 
 def hair_strands(fig):
-    """Curvas del peinado en px del cuerpo: la raya y los mechones que salen de ella hacia el
-    lado largo, uno hacia el lado corto y los que caen por atrás hasta la nuca."""
+    """Curvas del peinado en px del cuerpo: la raya y sus mechones, y los que caen hasta la nuca."""
     center = hair_center(fig)
     hz = fig.pose.head_z
     curves = []
@@ -1018,8 +941,7 @@ def hair_strands(fig):
             curve.append(hair_top(center, lat, start + (end - start) * t + bend * math.sin(t * math.pi)))
         curves.append(curve)
     curves.append([hair_top(center, PART_LAT + 2.5 + t * 8.7, 3.75 - 3.1 * t) for t in np.linspace(0.0, 1.0, 12)])
-    # Por atrás: tres mechones que salen de la coronilla y se abren hacia la nuca, curvos
-    # (el corrimiento crece con el cuadrado de lo que bajan), cortos para que no parezcan rayas.
+    # Por atrás: tres mechones cortos y curvos de la coronilla a la nuca.
     for lat_top, lat_end, top, bottom in ((-3.75, -13.0, 13.5, -7.5), (1.9, 3.1, 15.0, -4.0), (6.2, 13.7, 12.5, -6.0)):
         curve = []
         for t in np.linspace(0.0, 1.0, 18):
@@ -1029,8 +951,7 @@ def hair_strands(fig):
 
 
 def hair_details(fig):
-    """Mechones (un paso más oscuros: parten el brillo en manchas menores) y, de espaldas, la
-    nuca recortada en dientes de 2 px."""
+    """Mechones un paso más oscuros y, de espaldas, la nuca en dientes de 2 px."""
     c = fig.c
     hair = fig.on("hair")
     if not hair.any():
@@ -1051,8 +972,7 @@ def hair_details(fig):
     done &= neighbours(done, MOVES8) > 0
     before = c.shade.copy()
     fig.tone(done, np.where(c.shade == LIGHT, BASE, RIGHT), keep=True)
-    # Donde un mechón cruza del brillo a la base cambia de color: el pixel que queda sin otro
-    # de su color al lado vuelve a su tono (no deja puntos sueltos).
+    # Un pixel de mechón que queda sin otro de su color al lado vuelve a su tono.
     alone = fig.loose() & done
     c.paint(alone, before)
     fig.keep &= ~alone
@@ -1078,7 +998,6 @@ def nape_teeth(fig):
 
 
 # ---------------------------------------------------------------------- detalles de volumen
-# Salen de las coordenadas del cuerpo de cada pixel, así giran con el modelo.
 
 def volume_details(fig):
     c = fig.c
@@ -1106,8 +1025,7 @@ def volume_details(fig):
             belt &= fig.fwd < 5.5  # sentado, la cara de arriba de los muslos no es cinturón
         fig.tone(belt, OUTLINE if not style.skirt else fig.darker(c.shade))
     elif style.jacket or not style.skirt:
-        # Ruedo de la camiseta: su borde de abajo, un paso más oscuro (cae sobre el pantalón).
-        # El vestido no lo lleva: sigue de largo en la falda.
+        # Ruedo de la camiseta, un paso más oscuro (el vestido no lo lleva).
         fig.tone(fig.of("torso") & (fig.zb < pose.belt_z + (-1.3 if style.jacket else 1.2)), fig.darker(c.shade))
     if style.skirt:
         # Ruedo de la falda.
@@ -1130,8 +1048,7 @@ def collar_band(fig):
 
 
 def leg_line(fig):
-    """Línea entre las piernas (son una sola pieza con la cadera): donde un pixel de una pierna
-    toca a la otra, se oscurece el de la pierna que queda más cerca."""
+    """Línea entre las piernas: oscurece el pixel de la pierna más cercana donde toca a la otra."""
     c = fig.c
     if fig.style.skirt:
         return np.zeros(c.alpha.shape, dtype=bool)  # las piernas son piezas aparte: las separa lines()
@@ -1152,9 +1069,8 @@ def leg_line(fig):
 
 
 # ---------------------------------------------------------------------- detalles a mano
-# Se dibujan en la vista canónica (mirando a la derecha) y se espejan solos. Cada uno tiene su
-# versión chica (Figure.k < 0.9) para el personaje a tamaño final: no se achica un dibujo de
-# pixeles, se dibuja de nuevo.
+# En la vista canónica (se espejan solos); cada uno tiene su versión chica (Figure.k < 0.9),
+# dibujada de nuevo, no achicada.
 
 def face(fig):
     """Dos ojos oscuros, altos y angostos, bajos en la cara: sin blanco, nariz ni boca (solo de frente)."""
@@ -1311,8 +1227,7 @@ def foot_shadow():
 
 
 # ---------------------------------------------------------------------- revisión propia
-# check.py solo mide formato y lienzo en los personajes; esto mide el resto y build falla si algo
-# no se cumple.
+# check.py solo mide formato y lienzo de los personajes; esto mide el resto.
 
 FEET = (64, 112)
 
@@ -1372,9 +1287,8 @@ def verify(fig, name):
 # ---------------------------------------------------------------------- capas y hojas
 
 def export_layers(fig, bald, folder, name):
-    """Una imagen por capa (con los colores del Look) que, puestas una sobre otra en el orden
-    de LAYER_ORDER, dan el sprite exacto (se comprueba), más el cuerpo sin pelo (`_bald`) para
-    poner otro peinado encima. No son sprites sueltos para check.py: van en character_layers/."""
+    """Una imagen por capa (apiladas por LAYER_ORDER dan el sprite exacto) y el cuerpo sin pelo
+    (`_bald`), en character_layers/."""
     sprite = np.array(fig.c.image)
     stack = np.zeros(sprite.shape, dtype=np.uint8)
     for layer_name in LAYER_ORDER:
@@ -1415,9 +1329,8 @@ def front_cell(fig):
 
 
 def chair_scene(out_dir, fig, name, tiles, load):
-    """Un sentado sobre la silla del piloto (chair_basic_seat/back), con el escritorio delante si
-    están generados; sin silla, sobre el piso solo. Respaldo encima en r0 y r3 (BACK_ON_TOP de
-    chair_plant), debajo en r1 y r2."""
+    """Sentado sobre la silla del piloto con el escritorio delante si existen; respaldo encima en
+    r0 y r3, debajo en r1 y r2."""
     rotation = fig.c.rotation
     scene = sheet.Scene(3, 3, top=70, margin=4)
     scene.fill_floor(tiles, seed=rotation)
@@ -1436,9 +1349,8 @@ def chair_scene(out_dir, fig, name, tiles, load):
 
 
 def build_sheet(out_dir, figures):
-    """_sheets/character.png (×3): todos los sprites sobre fondo (más el de pie achicado al 80 %
-    con vecino más cercano, para comparar con el dibujado a tamaño final), una escena de pie sobre
-    cerámica junto al escritorio y la silla del piloto, y los sentados sobre la silla."""
+    """_sheets/character.png (×3): todos los sprites, el de pie achicado al 80 % para comparar y
+    escenas de pie y sentado con la silla del piloto."""
     folder = os.path.join(out_dir, "_sheets")
     if not os.path.isdir(folder):
         os.makedirs(folder)
@@ -1490,20 +1402,14 @@ def build_sheet(out_dir, figures):
 
 
 # ---------------------------------------------------------------------- sentado en su silla
-#
-# El juego dibuja a quien se sienta junto con su silla en un solo cuadro. Para armarlo sin mezclar
-# los dos modelos se comparan sus profundidades pixel a pixel (los dos lienzos usan la misma
-# casilla, con el centro en (0.5, 0.5)): de cada cuadro sentado se guarda, por cada silla, la
-# parte de la silla que queda DELANTE de la persona (respaldo visto de espaldas, apoyabrazos,
-# asiento y pie delante de las piernas). El cuadro final es silla entera + persona + esa parte;
-# lo compone tools/sprites/export_game.py, que antes le cambia la paleta solo a la persona.
+# Se comparan profundidades pixel a pixel (misma casilla, centro en (0.5, 0.5)) y se guarda por
+# silla la parte que queda DELANTE de la persona; export_game.py compone silla + persona + esa parte.
 CHAIR_SPECS = (chair_plant.BASIC, chair_plant.ERGO)
 CHAIR_DIR = "character_chairs"
 # El lienzo de la silla tiene el centro de la casilla 16 px más arriba que el del personaje.
 CHAIR_SHIFT = 16
-# Lo que la silla tiene que ganarle a la persona para taparla (en casillas de profundidad): el
-# muslo apoya justo sobre el cojín y la rodilla cae al filo del asiento: con poco margen el canto
-# del cojín cruza sobre las piernas vistas de frente. El respaldo, visto de espaldas, gana de sobra.
+# Margen de profundidad (casillas) que la silla le gana a la persona para taparla; con poco, el
+# canto del cojín cruza sobre las piernas vistas de frente.
 CHAIR_BIAS = 8.0 / 64.0
 _chair_cache = {}
 

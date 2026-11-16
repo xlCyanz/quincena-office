@@ -1,28 +1,6 @@
-# Banco (diseño, 8 y 13.6). Hito 21: la calificación de crédito, una letra de la A a la
-# E que sale de un puntaje: base_score (C) más ingresos de contratos del mes pasado,
-# bienes (reventa de muebles y computadoras), antigüedad y pagos puntuales, menos los
-# atrasos (data/bank.json). Cada letra da un interés mensual y un límite de préstamo
-# (múltiplo del ingreso mensual, nunca menos de min_limit).
-#
-# Hito 22: préstamos con interés simple. Un préstamo guarda el capital con que se
-# reparte (base), la tasa, los meses y cuántas cuotas se pagaron; la cuota se cobra el
-# día 1 de cada mes siguiente. Se puede saldar antes (capital pendiente + interés de un
-# mes) y refinanciar una vez (más meses, tasa más alta).
-#
-# Hito 23: una cuota que no alcanza queda atrasada (overdue en el préstamo) con recargo
-# y se paga sola apenas alcanza el saldo. overdue_months cuenta los días 1 seguidos con
-# cuotas atrasadas: con warning_months el banco no presta y con seizure_months embarga
-# (Embargo). Si los muebles no alcanzan, la partida termina: EventBus.game_over.
-#
-# Hito 24: si la nómina no alcanza (EventBus.payroll_short) y el banco todavía presta,
-# ofrece un préstamo de emergencia (emergency_offer) por lo que falta, a tasa fija alta y
-# plazo fijo. Aceptarlo cobra el dinero (Staff paga la nómina con él) y crea un préstamo
-# con "emergency" = true, que no cuenta para el límite ni se refinancia; su primera cuota
-# es "first_due_day". Rechazarlo deja la nómina debida.
-#
-# Se recalcula el día 1 de cada mes (después del mantenimiento, porque Economy va antes
-# en la lista de autoloads) y en el momento de un atraso. Los pagos llegan por
-# EventBus.payment_recorded: la nómina (Staff) y el mantenimiento (Economy).
+# Banco: calificación A–E por puntaje (data/bank.json), que fija tasa y límite; préstamos de interés
+# simple con cuota el día 1, mora con recargo, embargo y préstamo de emergencia para la nómina.
+# Se recalcula el día 1 (después del mantenimiento de Economy) y al haber un atraso.
 extends Node
 
 const DATA_PATH: String = "res://data/bank.json"
@@ -32,7 +10,7 @@ const CONCEPT_PREPAYMENT: String = "Pago anticipado de préstamo"
 const CONCEPT_OVERDUE: String = "Cuota atrasada"
 const CONCEPT_SURPLUS: String = "Sobrante del embargo"
 const CONCEPT_EMERGENCY: String = "Préstamo de emergencia"
-## Inversionista (hito 58): el efectivo que pone (no es ingreso) y lo que se le paga cada mes.
+## Conceptos del inversionista: el efectivo que pone (no es ingreso) y su pago mensual.
 const CONCEPT_INVESTMENT: String = "Inversión"
 const CONCEPT_INVESTOR: String = "Pago al inversionista"
 ## Letra actual ("A" … "E").
@@ -41,11 +19,11 @@ var rating: String = "C"
 var score: int = 50
 ## Ingresos de contratos del mes pasado (lo que vale para el límite).
 var monthly_income: int = 0
-## Historial de pagos obligatorios.
+## Pagos obligatorios hechos a tiempo.
 var on_time_payments: int = 0
 var late_payments: int = 0
-## Préstamos activos: {"id", "amount" (lo pedido), "base" (capital que se reparte en las
-## cuotas), "rate", "months", "paid" (cuotas pagadas), "refinanced", "taken_day"}.
+## Préstamos activos: {"id", "amount", "base" (capital repartido en las cuotas), "rate",
+## "months", "paid" (cuotas pagadas), "refinanced", "taken_day"}.
 var loans: Array[Dictionary] = []
 var _next_loan_id: int = 1
 ## Días 1 seguidos con alguna cuota atrasada (0 = al día).
@@ -55,11 +33,10 @@ var game_over: bool = false
 ## Préstamo de emergencia ofrecido y sin responder: {"amount", "shortfall", "rate",
 ## "months", "installment", "total", "first_due_day"}; vacío si no hay.
 var emergency_offer: Dictionary = {}
-## Inversionista activo (hito 58), o {}: {"cash", "share", "months", "paid_months",
-## "paid_total", "income_before" (ingresos del mes en que se aceptó, que no le tocan), "day"}.
+## Inversionista activo, o {}: {"cash", "share", "months", "paid_months", "paid_total",
+## "income_before" (ingresos del mes en que se aceptó, que no le tocan), "day"}.
 var investor: Dictionary = {}
-## Solo para pruebas: false deja fuera el evento del inversionista (las pruebas anteriores al
-## hito 58 sortean los eventos con la lista de antes). No se guarda.
+## Solo para pruebas: false deja fuera el evento del inversionista. No se guarda.
 var investor_enabled: bool = true
 # Evita pagar atrasos dentro de otro pago (cada pago cambia el saldo).
 var _paying_overdue: bool = false
@@ -102,8 +79,7 @@ func get_rating_info(letter: String = "") -> Dictionary:
 	return {}
 
 
-## Interés mensual de un préstamo nuevo: el de la letra actual (0.045 = 4.5 %) menos el
-## descuento del contador (hito 37), sin bajar del mínimo.
+## Interés mensual de un préstamo nuevo (0.045 = 4.5 %): el de la letra menos el descuento del contador, con mínimo.
 func get_monthly_rate() -> float:
 	var rate: float = float(get_rating_info().get("monthly_rate", 0.0))
 	var discount: float = Staff.get_loan_rate_discount()
@@ -123,14 +99,13 @@ func get_due_on_first() -> int:
 	return total
 
 
-## Cuánto presta el banco como máximo: múltiplo de la letra × ingreso del mes pasado,
-## nunca menos de min_limit.
+## Máximo que presta el banco: múltiplo de la letra × ingreso del mes pasado, al menos min_limit.
 func get_limit() -> int:
 	var multiple: float = float(get_rating_info().get("limit_multiple", 0))
 	return maxi(int(_config_data().get("min_limit", 0)), roundi(multiple * monthly_income))
 
 
-## Valor de reventa de los muebles y computadoras de la oficina (lo que cuenta como bienes).
+## Valor de reventa de muebles y computadoras (los bienes).
 func get_assets_value() -> int:
 	var total: int = 0
 	for item: Dictionary in OfficeState.furniture:
@@ -142,8 +117,7 @@ func get_assets_value() -> int:
 	return total
 
 
-## Conceptos de la cuenta que cuentan como ingresos de contratos (la devolución de un
-## anticipo resta).
+## Conceptos que cuentan como ingresos de contratos (devolver un anticipo resta).
 func get_income_concepts() -> Array[String]:
 	return [Projects.CONCEPT_DELIVERY, Projects.CONCEPT_ADVANCE, Projects.CONCEPT_REFUND]
 
@@ -295,8 +269,7 @@ func loan_problem(amount: int, months: int) -> String:
 	return ""
 
 
-## Lo más que se puede pedir hoy en un préstamo: lo disponible del límite y, además, el
-## tope por préstamo de la etapa de la empresa (hito 27).
+## Lo más que se puede pedir hoy: lo disponible del límite, con el tope por préstamo de la etapa.
 func get_max_request() -> int:
 	var stage_cap: int = Company.get_max_loan()
 	return get_available() if stage_cap <= 0 else mini(get_available(), stage_cap)
@@ -391,8 +364,8 @@ func refinance(loan_id: int, extra_months: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-# Cobra la cuota de cada préstamo (el día 1). La que no alcanza queda atrasada con
-# recargo. Después cuenta los meses seguidos debiendo: aviso y, al final, embargo.
+# Cobra las cuotas del día 1; la que no alcanza queda atrasada con recargo. Luego cuenta los
+# meses seguidos debiendo: aviso y, al final, embargo.
 func _charge_installments() -> void:
 	var fee: float = float(get_config("late_fee_ratio"))
 	for loan: Dictionary in loans.duplicate():
@@ -476,7 +449,7 @@ func _seize() -> void:
 		MoneyFormat.format(debt), MoneyFormat.format(maxi(0, surplus))])
 
 
-# --- Inversionista (hito 58) ---
+# --- Inversionista ---
 
 ## Valor de configuración del inversionista (data/bank.json, investor).
 func get_investor_config(key: String) -> Variant:
@@ -525,8 +498,7 @@ func make_investor_offer(rng: RandomNumberGenerator) -> Dictionary:
 	return {"amount": cash, "months": months, "share": investor_share(cash, months, get_investor_income(Economy.get_current_month() - 1))}
 
 
-## Parte de los ingresos que pide por cash durante months meses con ese ingreso mensual:
-## la que le devuelve return_ratio veces lo que pone, entre share_range, redondeada a 1 %.
+## Parte de los ingresos que le devuelve return_ratio veces cash en months meses, dentro de share_range, a 1 %.
 func investor_share(cash: int, months: int, monthly: int) -> float:
 	var limits: Array = get_investor_config("share_range")
 	var share: float = cash * float(get_investor_config("return_ratio")) / maxf(1.0, float(monthly) * months)
@@ -703,7 +675,7 @@ func export_state() -> Dictionary:
 		"emergency_offer": emergency_offer.duplicate(), "investor": investor.duplicate()}
 
 
-## Restaura el banco. Una partida de antes del hito 21 se calcula con lo que hay.
+## Restaura el banco; sin datos de calificación la calcula con lo que hay.
 func import_state(state: Dictionary) -> void:
 	monthly_income = int(state.get("monthly_income", 0))
 	on_time_payments = int(state.get("on_time_payments", 0))
@@ -739,8 +711,7 @@ func import_state(state: Dictionary) -> void:
 	EventBus.bank_changed.emit()
 
 
-# Los datos se leen al usarlos por primera vez: así sirven aunque alguien llame a Bank
-# antes de su _ready (por ejemplo, un script que prepara la partida al arrancar).
+# Se leen al usarlos: sirven aunque llamen a Bank antes de su _ready.
 func _config_data() -> Dictionary:
 	if _data.is_empty():
 		_data = _load(DATA_PATH)

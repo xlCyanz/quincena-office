@@ -1,16 +1,12 @@
-# Empresa con la que empieza la partida (data/starting_company.json): local grande con
-# Oficina Ejecutiva, oficinas únicas, Recepción, Cuarto de limpieza y un Área de trabajo
-# llena de puestos; 40 empleados con equipos, líderes, gerentes, ejecutivos y personal de
-# apoyo, y contratos en curso. Se arma encima de una partida vacía (SaveManager.new_game)
-# usando las mismas reglas del juego: Builder marca las habitaciones y pone los muebles, y
-# Staff y Projects contratan, arman equipos y aceptan contratos.
+# Empresa de prueba (data/starting_company.json): local con habitaciones y puestos, 40 empleados
+# y contratos en curso. Se arma sobre una partida vacía con las reglas del juego (Builder, Staff, Projects).
 class_name StartingCompany
 extends RefCounted
 
 const DATA_PATH: String = "res://data/starting_company.json"
 ## Concepto del saldo con que empieza la empresa.
 const CONCEPT_CAPITAL: String = "Capital inicial"
-## Dinero para pagar la obra y los muebles mientras se arma (después el saldo se fija).
+## Dinero para la obra y los muebles mientras se arma (después se fija el saldo).
 const BUILD_BUDGET: int = 1000000
 
 
@@ -25,7 +21,7 @@ static func apply() -> Array[String]:
 	Economy.earn(BUILD_BUDGET, CONCEPT_CAPITAL)
 	_build_office(data, problems)
 	_hire_staff(data, problems)
-	# El saldo empieza limpio: sin la obra en los movimientos.
+	# Saldo limpio: sin la obra en los movimientos.
 	Economy.new_game()
 	Economy.earn(int(data.get("money", 0)) - Economy.balance, CONCEPT_CAPITAL)
 	Projects.reputation = float(data.get("reputation", 1.0))
@@ -56,9 +52,9 @@ static func _build_office(data: Dictionary, problems: Array[String]) -> void:
 		OfficeState.floors[cell] = String(data.get("floor", ConstructionCatalog.BARE_FLOOR))
 	for edge: Vector3i in GridEdge.get_lot_outline(OfficeState.lot):
 		OfficeState.edges[edge] = ConstructionCatalog.WALL
-	# La entrada de la Recepción con la puerta doble de vidrio, como ejemplo (hito 69).
+	# La entrada de la Recepción con la puerta doble de vidrio.
 	OfficeState.edges[entrance_door] = ConstructionCatalog.GLASS_DOOR
-	# Paredes de cada habitación hacia el resto del local, y su puerta.
+	# Paredes de cada habitación hacia el resto del local, con su puerta.
 	for room: Dictionary in data.get("rooms", []):
 		var rect: Rect2i = _rect(room["rect"])
 		for x: int in range(rect.position.x, rect.end.x):
@@ -85,7 +81,7 @@ static func _build_office(data: Dictionary, problems: Array[String]) -> void:
 			_place(builder, {"id": "basic_chair", "cell": [x, y + 1], "rotation": 0}, problems)
 
 
-# Bordes de una casilla de la habitación que dan a otra casilla del local fuera de ella.
+# Bordes de una casilla de la habitación hacia otra casilla del local fuera de ella.
 static func _inner_edges(cell: Vector2i, rect: Rect2i, lot_rect: Rect2i) -> Array[Vector3i]:
 	var edges: Array[Vector3i] = []
 	var x: int = GridEdge.AXIS_X
@@ -131,7 +127,7 @@ static func _hire_staff(data: Dictionary, problems: Array[String]) -> void:
 				_check(Staff.add_to_team(team["id"], employee["id"]), "sumar %s al equipo" % employee["name"], problems)
 		var leader: Dictionary = _hire(leader_role, "", problems)
 		leaders.append(-1 if leader.is_empty() else int(leader["id"]))
-	# Los gerentes primero: el CEO dirige solo hasta 5 líderes con equipo.
+	# Gerentes primero: el CEO dirige solo hasta 5 líderes con equipo.
 	var per_manager: int = int(data.get("leaders_per_manager", 0))
 	for index: int in range(int(data.get("managers", 0))):
 		var manager: Dictionary = _hire(StaffCatalog.get_manager_role(), "", problems)

@@ -1,10 +1,9 @@
-# Prueba del hito 30: ascensos por experiencia.
-# Criterio: un Pasante con 3 contratos y 30 días puede ascender a Junior: produce 16
-# puntos por jornada y su sueldo cambia en la nómina; antes de los umbrales no puede.
+# Ascensos: un Pasante con 3 contratos y 30 días asciende a Junior, hace 16 puntos por jornada
+# y su sueldo cambia en la nómina; antes de los umbrales no puede.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=promotions
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -20,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_thresholds()
 	_check_counting()
@@ -39,8 +38,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un área de trabajo de tres puestos, dinero de sobra y los
-# objetivos ya cumplidos (para que sus recompensas no cambien el saldo).
+# Tres puestos, dinero de sobra y objetivos cumplidos (sus recompensas no cambian el saldo).
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -63,7 +61,7 @@ func _new_game() -> void:
 		_expect(builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "computadora en %d" % x)
 
 
-# Contrata a alguien de ese cargo y nivel en la próxima llegada de candidatos.
+# Contrata a alguien de ese cargo y nivel en la próxima tanda de candidatos.
 func _hire(role: String, level: String) -> Dictionary:
 	var vacancy_id: int = Staff.open_vacancy(role, level, StaffCatalog.get_salary(role, level), true)["id"]
 	var arrival: int = int(StaffCatalog.get_hiring("arrival_hour"))
@@ -72,14 +70,13 @@ func _hire(role: String, level: String) -> Dictionary:
 	var candidate: Dictionary = Staff.get_vacancy(vacancy_id)["candidates"][0]
 	Staff.make_offer(candidate["id"], candidate["asked_salary"])
 	var employee: Dictionary = Staff.get_employee(candidate["id"])
-	# Sin rasgos (hito 50): esta prueba mide rendimientos exactos.
+	# Sin rasgos: se miden rendimientos exactos.
 	(employee.get("traits", []) as Array).clear()
 	_expect(not employee.is_empty(), "contratado: %s %s" % [role, level])
 	return employee
 
 
-# Lleva al equipo un contrato pequeño, lo trabaja unas horas de un día hábil y lo
-# entrega (o lo cancela).
+# El equipo trabaja un contrato pequeño unas horas de un día hábil y lo entrega (o lo cancela).
 func _work_contract(team_id: int, deliver: bool) -> void:
 	Projects.offers.append(Projects._make_offer(GameClock.get_day_count(), "small"))
 	var result: Dictionary = Projects.accept(Projects.offers[-1]["id"])
@@ -103,7 +100,6 @@ func _check_thresholds() -> void:
 	_expect(int(progress["projects_needed"]) == 3 and int(progress["days_needed"]) == 30, "pide 3 contratos y 30 días: %s" % progress)
 	_expect(not bool(progress["ready"]), "recién contratado no cumple")
 	_expect(not Staff.promote_problem(employee["id"], 2000).is_empty(), "no se puede ascender todavía")
-	# Con los días pero sin los contratos tampoco.
 	employee["hired_day"] = GameClock.get_day_count() - 30
 	_expect(not bool(Staff.get_promotion_progress(employee)["ready"]), "30 días sin contratos no alcanza")
 	employee["projects_worked"] = 3
@@ -111,11 +107,9 @@ func _check_thresholds() -> void:
 	_expect(not bool(Staff.get_promotion_progress(employee)["ready"]), "3 contratos y 29 días no alcanza")
 	employee["hired_day"] = GameClock.get_day_count() - 30
 	_expect(bool(Staff.get_promotion_progress(employee)["ready"]), "3 contratos y 30 días cumple")
-	# Los días cuentan solos con el reloj.
 	employee["hired_day"] = GameClock.get_day_count()
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * 3)
 	_expect(int(Staff.get_promotion_progress(employee)["days"]) == 3, "días en la empresa: %d" % Staff.get_promotion_progress(employee)["days"])
-	# Los niveles siguientes piden más; un Senior ya no asciende.
 	employee["level"] = "junior"
 	progress = Staff.get_promotion_progress(employee)
 	_expect(progress["next_level"] == "semi_senior" and int(progress["projects_needed"]) == 8 and int(progress["days_needed"]) == 90, "Junior → SemiSenior: 8 y 90")
@@ -151,7 +145,6 @@ func _check_counting() -> void:
 	Projects.assign(contract["id"], Projects.NO_TEAM)
 	Projects.deliver(contract["id"])
 	_expect(int(worker["projects_worked"]) == 1, "sin trabajar no cuenta")
-	# Quien deja la empresa no rompe la cuenta de los demás.
 	Projects.offers.append(Projects._make_offer(GameClock.get_day_count(), "small"))
 	Projects.accept(Projects.offers[-1]["id"])
 	contract = Projects.contracts[-1]
@@ -184,7 +177,7 @@ func _check_promotion() -> void:
 		and int(employee["skills"]["programming"]) >= skill_before, "su habilidad principal llega al mínimo de Junior: %d" % employee["skills"]["programming"])
 	_expect(int(employee["projects_worked"]) == 3, "conserva sus contratos para el próximo ascenso")
 	_expect(not bool(Staff.get_promotion_progress(employee)["ready"]), "para SemiSenior le falta")
-	# Produce como Junior: 2 puntos por hora, 16 por jornada de 8 horas.
+	# Como Junior: 2 puntos por hora, 16 por jornada de 8 horas.
 	employee["energy"] = 100
 	employee["mood"] = 100
 	Projects.offers.append(Projects._make_offer(GameClock.get_day_count(), "small"))
@@ -197,7 +190,6 @@ func _check_promotion() -> void:
 	var workers: Array[Dictionary] = Projects.get_workers(contract, at)
 	_expect(workers.size() == 1 and is_equal_approx(float(workers[0]["rate"]) * 8.0, 16.0), "rinde 16 puntos por jornada: %s" % [workers])
 	_expect(is_equal_approx(float(workers[0]["bug_chance"]), Projects.get_bug_chance("junior", 100.0)), "comete errores como Junior")
-	# La nómina paga lo de antes con el sueldo viejo y lo nuevo con el nuevo.
 	_expect(int(employee["carry"]) == earned_before, "lo ganado como Pasante queda aparte: %d" % employee["carry"])
 	var promoted_day: int = GameClock.get_day_count()
 	var count: int = Economy.movements.size()
@@ -240,7 +232,7 @@ func _check_save() -> void:
 	_expect(SaveManager.load_game("slot_4"), "cargar")
 	_expect(JSON.stringify(Staff.export_state()) == staff_before, "los contratos trabajados vuelven igual")
 	_expect(JSON.stringify(Projects.export_state()) == projects_before, "quién trabajó en cada contrato vuelve igual")
-	# Una partida de antes del hito 30 carga sin contratos trabajados.
+	# Partida vieja: sin contratos trabajados.
 	var old_staff: Dictionary = Staff.export_state()
 	for saved: Dictionary in old_staff["employees"]:
 		saved.erase("projects_worked")
@@ -268,7 +260,6 @@ func _check_card() -> void:
 	var text: String = card.get_text()
 	_expect(text.contains("Ascenso a Junior: contratos trabajados 1/3 · días en la empresa 12/30"), "progreso en la ficha: %s" % text)
 	_expect(not card.is_promote_visible(), "sin cumplir no hay fila Ascender")
-	# Cumple: aparece la fila con el sueldo de Junior sugerido.
 	employee["projects_worked"] = 3
 	employee["hired_day"] = GameClock.get_day_count() - 30
 	card.refresh()
@@ -283,7 +274,6 @@ func _check_card() -> void:
 	_expect(card.get_promote_salary() == junior + step, "+ suma %d" % step)
 	await _click(card.get_promote_minus_button())
 	_expect(card.get_promote_salary() == junior, "− resta")
-	# No baja hasta el sueldo actual.
 	var salary: int = employee["salary"]
 	for i: int in range(50):
 		card._change_promote_salary(-1)

@@ -1,6 +1,5 @@
-# Prueba del hito 45: ambiente y decoración.
-# Criterio: una habitación con plantas y cuadros sube la meta de ánimo; muchos escritorios
-# juntos la bajan; los objetos de pared van en bordes con pared.
+# Ambiente y decoración: adornos suben la meta de ánimo, muchos escritorios la bajan y los
+# objetos de pared van en bordes con pared.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=ambiance
 extends Node
 
@@ -112,7 +111,6 @@ func _check_wall_placement() -> void:
 	result = _builder.quote_place("painting", Vector2i(1, 3), 2)
 	_expect(not result["ok"], "en una puerta no se cuelga")
 	_expect(not _builder.quote_place("painting", Vector2i(9, 9), 2)["ok"], "fuera del local no")
-	# Un objeto de pared no ocupa la casilla ni estorba el paso.
 	_expect(OfficeState.get_blocking_cells().size() == blocked and OfficeState.find_furniture_at(Vector2i(3, 0)) < 0, "no ocupa piso")
 	_expect(_builder.place("small_plant", Vector2i(3, 0), 0)["ok"], "debajo cabe una planta")
 	# Una pared con algo colgado no se vende ni se cambia por puerta.
@@ -133,7 +131,7 @@ func _check_wall_placement() -> void:
 	_expect(result["ok"], "con un cuadro en el borde el terreno se compra: %s" % result["message"])
 	_expect(OfficeState.get_edge(painted) == ConstructionCatalog.WALL
 		and OfficeState.find_wall_item(Vector2i(5, 4), 3) >= 0, "la pared del cuadro queda cerrada y con el cuadro")
-	# El modo construcción elige la pared más cercana al ratón, del lado del ratón.
+	# Construir cuelga en la pared más cercana al ratón, de su lado.
 	var controller := BuildController.new()
 	controller.set("_pointer", Vector2(3.1, -0.35))
 	_expect(controller.call("_wall_slot") == [Vector2i(3, 0), 2], "cerca de la pared norte: %s" % [controller.call("_wall_slot")])
@@ -245,7 +243,7 @@ func _check_aquarium() -> void:
 	_expect(Staff.get_stress_target(employee) == maxi(0, before - 5), "dos peceras no suman")
 
 
-# Antes del hito 45 el aire acondicionado ocupaba una casilla de piso.
+# En partidas viejas el aire acondicionado ocupaba una casilla de piso.
 func _check_old_save() -> void:
 	_new_game()
 	_builder.mark_room(Workstations.WORK_AREA, OPEN_CELL)
@@ -270,7 +268,6 @@ func _check_old_save() -> void:
 	await get_tree().process_frame
 	_expect(not OfficeState.has_furniture("air_conditioner") and Economy.balance == balance + 800, "sin pared: se quita y devuelve $800")
 	_expect(_notices.any(func(text: String) -> bool: return text.begins_with("Aire acondicionado quitado")), "y avisa: %s" % [_notices])
-	# Una partida guardada con objetos de pared los conserva.
 	_new_game()
 	_builder.place("painting", Vector2i(4, 0), 2)
 	SaveManager.save_game("slot_5")

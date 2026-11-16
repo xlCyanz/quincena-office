@@ -1,17 +1,12 @@
-# Embargo (diseño, 8.4): qué muebles se lleva el banco para cubrir una deuda. Funciones
-# puras sobre los datos de OfficeState; Bank aplica el resultado.
-#
-# Cuenta la reventa de cada mueble (con su computadora, si tiene). La silla y el
-# escritorio del CEO no se embargan. Se lleva primero la decoración (lo que no es parte
-# de un puesto de trabajo), después los puestos libres y al final los ocupados; dentro de
-# cada grupo, lo que vale más primero, hasta cubrir la deuda.
+# Embargo: qué muebles se lleva el banco para cubrir una deuda (funciones puras; Bank aplica).
+# Cuenta la reventa con computadora; nunca la silla ni el escritorio del CEO. Orden: decoración,
+# puestos libres y puestos ocupados, y en cada grupo lo que más vale primero.
 class_name Embargo
 extends RefCounted
 
 
-## Plan de embargo: {"covers": bool, "value": int (reventa de todo lo embargable),
-## "take": Array[int] (índices en furniture, en el orden en que se los lleva),
-## "recovered": int (reventa de lo que se lleva)}. Si no cubre, take queda vacío.
+## Plan: {"covers", "value" (reventa de todo lo embargable), "take" (índices en furniture, en orden),
+## "recovered"}. Si no cubre, take queda vacío.
 static func plan(furniture: Array[Dictionary], rooms: Array[Dictionary], debt: int) -> Dictionary:
 	var protected: Dictionary[int, bool] = get_protected(furniture)
 	var tier: Dictionary[int, int] = {}
@@ -25,7 +20,7 @@ static func plan(furniture: Array[Dictionary], rooms: Array[Dictionary], debt: i
 		if protected.has(index):
 			continue
 		if not tier.has(index):
-			# Una silla asignada fuera de un puesto que funciona igual es de alguien: al final.
+			# Una silla asignada fuera de un puesto que funciona es de alguien: al final.
 			tier[index] = 2 if not String(furniture[index]["assigned_to"]).is_empty() else 0
 		candidates.append(index)
 		value += get_value(furniture[index])

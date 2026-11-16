@@ -1,7 +1,5 @@
-# Árbol de adorno del mapa: uno de los sprites tree_<n> (con su sombra) elegido por la
-# posición; sin sprites, el arte provisional: tronco y copa redonda sobre una casilla
-# fuera del local. Va en la capa ordenada por Y para que un personaje pase por delante o
-# por detrás. Su tamaño y su verde salen de la posición (MapDecor.noise).
+# Árbol de adorno: sprite tree_<n> con sombra elegido por la casilla, o tronco y copa provisionales.
+# Va en la capa ordenada por Y; tamaño y verde salen de la posición (MapDecor.noise).
 class_name TreeView
 extends Node2D
 
@@ -15,7 +13,7 @@ var _grid: OfficeGrid
 var _scale: float = 1.0
 var _trunk_color := Color.SADDLE_BROWN
 var _leaf_color := Color.FOREST_GREEN
-# Sprite del árbol ("" = arte provisional).
+# Sprite del árbol ("" = provisional).
 var _sprite: String = ""
 
 
@@ -38,7 +36,7 @@ func setup(grid: OfficeGrid, tree_cell: Vector2i) -> void:
 	queue_redraw()
 
 
-## Sprite con que se dibuja ("" = arte provisional).
+## Sprite con que se dibuja ("" = provisional).
 func get_sprite() -> String:
 	return _sprite
 

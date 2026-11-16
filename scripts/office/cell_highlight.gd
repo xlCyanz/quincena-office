@@ -1,5 +1,4 @@
-# Rombo semitransparente que marca una casilla. Se dibuja centrado en su posición,
-# que OfficeGrid coloca en el centro de la casilla bajo el cursor.
+# Rombo semitransparente sobre la casilla bajo el cursor (lo coloca OfficeGrid).
 class_name CellHighlight
 extends Node2D
 

@@ -1,11 +1,9 @@
-# Prueba del hito 34: horas extra, turno de noche y horario individual.
-# Criterio: un turno de 2 horas extra cobra 2 × 1.5 horas por día trabajado en la
-# nómina; un turno de 22 a 6 cobra el recargo; el horario individual cambia la hora de
-# llegada de esa persona.
+# Horas extra, noche y horario propio: 2 h extra cobran 2 × 1.5 h por día trabajado;
+# de 22 a 6 se cobra el recargo; el horario propio cambia la llegada de esa persona.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=overtime
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -22,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_schedule()
 	_check_rules()
@@ -43,8 +41,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un área de trabajo de tres puestos, dinero de sobra y los objetivos
-# cumplidos.
+# Tres puestos, dinero de sobra y objetivos cumplidos.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -80,7 +77,7 @@ func _hire(role: String, level: String) -> Dictionary:
 	return employee
 
 
-# Avanza hasta las 0:00 del día siguiente.
+# Hasta las 0:00 del día siguiente.
 func _to_midnight() -> void:
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY - GameClock.get_hour())
 
@@ -140,7 +137,7 @@ func _check_own_schedule() -> void:
 	result = Staff.clear_own_schedule(worker["id"])
 	_expect(result["ok"] and String(result["message"]).contains("al turno de %s" % team["name"]), "vuelve al turno: %s" % result["message"])
 	_expect(Staff.get_schedule(worker).start_hour == 9 and Staff.is_expected(key, 0, 9), "y llega con su equipo")
-	# Sin equipo, el horario propio reemplaza el del cargo y quitarlo vuelve a él.
+	# Sin equipo, el horario propio reemplaza el del cargo; quitarlo vuelve a él.
 	Staff.remove_from_team(worker["id"])
 	Staff.set_own_schedule(worker["id"], 6, WEEKDAYS)
 	_expect(Staff.is_expected(key, 0, 6), "sin equipo también tiene horario propio")
@@ -178,7 +175,7 @@ func _check_pay() -> void:
 	for employee: Dictionary in [day_worker, night_worker]:
 		employee["overtime_pay"] = 0.0
 		employee["night_pay"] = 0.0
-	# Un día hábil entero: 2 horas extra a 1.5 y 7 horas de noche a +20 %.
+	# Un día hábil: 2 h extra a 1.5 y 7 h de noche a +20 %.
 	var weekday: int = GameClock.get_weekday()
 	var previous_work: bool = WEEKDAYS.has(posmod(weekday - 1, GameConstants.DAYS_PER_WEEK))
 	_expect(WEEKDAYS.has(weekday) and previous_work, "la prueba empieza en un día hábil después de otro (%d)" % weekday)
@@ -190,7 +187,6 @@ func _check_pay() -> void:
 		1.4 * night_hour, float(night_worker["night_pay"])])
 	_expect(is_equal_approx(float(night_worker["overtime_pay"]), 0.0), "el turno de noche sin extra no las cobra")
 	_expect(Staff.get_extra_earned(day_worker) == roundi(3.0 * day_hour), "lo ganado de horas extra")
-	# Hasta la nómina del 15: cada día hábil suma lo mismo.
 	var expected_overtime: float = float(day_worker["overtime_pay"])
 	var expected_night: float = float(night_worker["night_pay"])
 	while GameClock.get_day() < GameConstants.PAYROLL_DAYS[0]:
@@ -207,7 +203,7 @@ func _check_pay() -> void:
 	_expect(absi(int(totals.get(Staff.CONCEPT_NIGHT, 0))) == roundi(expected_night), "y el recargo nocturno: %d" % roundi(expected_night))
 	_expect(totals.has(Staff.CONCEPT_PAYROLL), "los sueldos van aparte, como Nómina")
 	_expect(is_equal_approx(float(day_worker["overtime_pay"]), 0.0) and int(day_worker["owed"]) == 0, "después de pagar no queda nada")
-	# Sin dinero, las horas extra quedan debidas y se cobran con su concepto al alcanzar.
+	# Sin dinero las horas extra quedan debidas y se cobran con su concepto al alcanzar.
 	day_worker["overtime_pay"] = 30.0
 	Economy.spend(Economy.balance, "Prueba")
 	Staff._run_payroll()
@@ -250,7 +246,7 @@ func _check_save() -> void:
 	_expect(int(loaded["owed_overtime"]) == 10 and int(loaded["owed_night"]) == 5, "lo debido de extra se guarda")
 	_expect(WorkSchedule.from_dict(Staff.get_team(team["id"])["schedule"]).overtime == 3, "el turno guarda sus horas extra")
 	_expect(Staff.get_schedule(Staff.get_employee(worker["id"])).end_hour == 19, "y su salida")
-	# Una partida de antes del hito 34 carga sin horas extra ni horario propio.
+	# Partida vieja: sin horas extra ni horario propio.
 	for saved: Dictionary in state["employees"]:
 		for field: String in ["own_schedule", "overtime_pay", "night_pay", "owed_overtime", "owed_night"]:
 			saved.erase(field)
@@ -261,7 +257,6 @@ func _check_save() -> void:
 	_expect(not Staff.has_own_schedule(loaded) and float(loaded["overtime_pay"]) == 0.0 and int(loaded["owed_overtime"]) == 0,
 		"una partida vieja no tiene horas extra")
 	_expect(Staff.get_schedule(Staff.get_employee(worker["id"])).overtime == 0, "ni turnos con horas extra")
-	# Lo debido de extra nunca pasa de lo debido.
 	state["employees"][1]["owed"] = 4
 	state["employees"][1]["owed_overtime"] = 10
 	Staff.import_state(state)

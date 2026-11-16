@@ -1,5 +1,4 @@
-# Tiñe el piso de cada habitación con el color de su tipo. Va entre el piso y los
-# objetos, así que paredes y muebles quedan por encima. Solo se ve en modo construcción.
+# Tiñe el piso de cada habitación con el color de su tipo, bajo paredes y muebles. Solo en construcción.
 class_name RoomOverlay
 extends Node2D
 
@@ -13,7 +12,7 @@ func setup(grid: OfficeGrid) -> void:
 	_grid = grid
 
 
-## Habitaciones a teñir, tal como las guarda OfficeState.
+## Habitaciones a teñir (como en OfficeState).
 func set_rooms(rooms: Array[Dictionary]) -> void:
 	_rooms = rooms.duplicate()
 	queue_redraw()

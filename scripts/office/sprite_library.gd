@@ -1,12 +1,11 @@
-# Sprites del juego (fase 8): dónde está cada imagen y su punto de apoyo, según
-# data/sprites.json (lo escribe tools/sprites/export_game.py). Los sprites se dibujan a
-# SCALE px por px del mundo, así que en el mundo miden la mitad. Funciones estáticas.
+# Sprites del juego según data/sprites.json (lo escribe tools/sprites/export_game.py): imagen y
+# apoyo. Se dibujan a 1/SCALE (miden la mitad en el mundo). Funciones estáticas.
 class_name SpriteLibrary
 extends RefCounted
 
 const DATA_PATH: String = "res://data/sprites.json"
 const FOLDER: String = "res://assets/sprites/"
-## Opacidad de las sombras de piso (el sprite de sombra es de un solo tono opaco).
+## Opacidad de las sombras de piso (el sprite de sombra es opaco).
 const SHADOW_ALPHA: float = 0.3
 
 static var _data: Dictionary = {}
@@ -49,7 +48,7 @@ static func get_texture(sprite: String) -> Texture2D:
 	return texture
 
 
-## Rectángulo en px del mundo donde va el sprite si su punto de apoyo cae en `at`.
+## Rectángulo en px del mundo del sprite con su apoyo en `at`.
 static func get_rect(sprite: String, at: Vector2 = Vector2.ZERO) -> Rect2:
 	var sprites: Dictionary = get_data().get("sprites", {})
 	if not sprites.has(sprite):
@@ -60,7 +59,7 @@ static func get_rect(sprite: String, at: Vector2 = Vector2.ZERO) -> Rect2:
 	return Rect2(at - anchor / get_scale(), size / get_scale())
 
 
-## Dibuja un sprite en `canvas` con su punto de apoyo en `at`. Devuelve false si no existe.
+## Dibuja un sprite con su apoyo en `at`. False si no existe.
 static func draw(canvas: CanvasItem, sprite: String, at: Vector2 = Vector2.ZERO, modulate: Color = Color.WHITE) -> bool:
 	var texture: Texture2D = get_texture(sprite)
 	if texture == null:
@@ -69,8 +68,7 @@ static func draw(canvas: CanvasItem, sprite: String, at: Vector2 = Vector2.ZERO,
 	return true
 
 
-## Nombre del sprite de un mueble del juego con su rotación ("" si no tiene). part es
-## "seat" o "back" en los que van en partes (las sillas) y "shadow" da su sombra.
+## Sprite de un mueble con su rotación ("" si no tiene). part: "seat"/"back" en sillas, "shadow" la sombra.
 static func get_furniture_sprite(item_id: String, rotation: int, part: String = "") -> String:
 	var furniture: Dictionary = get_data().get("furniture", {})
 	if not furniture.has(item_id):
@@ -86,8 +84,7 @@ static func get_furniture_sprite(item_id: String, rotation: int, part: String = 
 	return sprite if has_sprite(sprite) else ""
 
 
-## Nombre del sprite de un objeto de pared colgado en un borde de ese eje (GridEdge.AXIS_X o
-## AXIS_Y); pick elige entre sus dibujos (los cuadros tienen varios). "" si no tiene.
+## Sprite de un objeto de pared en un borde de ese eje; pick elige entre sus dibujos. "" si no tiene.
 static func get_wall_item_sprite(item_id: String, axis: int, pick: int = 0) -> String:
 	var items: Dictionary = get_data().get("wall_items", {})
 	if not items.has(item_id):
@@ -97,13 +94,13 @@ static func get_wall_item_sprite(item_id: String, axis: int, pick: int = 0) -> S
 	return sprite if has_sprite(sprite) else ""
 
 
-## A cuántos px del mundo sobre el piso empieza el dibujo de un objeto de pared.
+## Altura sobre el piso (px del mundo) donde empieza el dibujo de un objeto de pared.
 static func get_wall_item_base(item_id: String) -> float:
 	var items: Dictionary = get_data().get("wall_items", {})
 	return float(items[item_id]["base_z"]) / get_scale() if items.has(item_id) else 0.0
 
 
-## Dibuja un sprite achicado por factor alrededor de su punto de apoyo, que cae en `at`.
+## Dibuja un sprite achicado por factor alrededor de su apoyo en `at`.
 static func draw_scaled(canvas: CanvasItem, sprite: String, at: Vector2, factor: float) -> bool:
 	var texture: Texture2D = get_texture(sprite)
 	if texture == null:
@@ -113,8 +110,8 @@ static func draw_scaled(canvas: CanvasItem, sprite: String, at: Vector2, factor:
 	return true
 
 
-## Sprite de un escritorio que se dibuja entero con lo que lleva encima (el largo): según su
-## computadora y cuántas pantallas extra tiene. "" si ese mueble no va así o no tiene computadora.
+## Sprite del escritorio entero con lo que lleva (el largo), según computadora y pantallas.
+## "" si no va así o no tiene computadora.
 static func get_desk_set_sprite(desk_id: String, computer_id: String, monitors: int, rotation: int, shadow: bool = false) -> String:
 	var base: String = get_desk_set_base(desk_id, computer_id, monitors)
 	if base.is_empty():
@@ -133,8 +130,7 @@ static func get_desk_set_base(desk_id: String, computer_id: String, monitors: in
 	return String(names[clampi(monitors, 0, names.size() - 1)])
 
 
-## A qué altura del modelo queda el teclado de un sprite de escritorio o de computadora, en
-## casillas a lo largo del mueble desde su punta −x; -1 si no se sabe.
+## Altura del teclado a lo largo del modelo (casillas desde la punta −x); -1 si no se sabe.
 static func get_seat_x(base: String) -> float:
 	var seats: Dictionary = get_data().get("seats", {})
 	return float(seats[base]) if seats.has(base) else -1.0
@@ -146,8 +142,7 @@ static func get_furniture_base(item_id: String) -> String:
 	return String(furniture[item_id]["base"]) if furniture.has(item_id) else ""
 
 
-## Dibuja solo una tira vertical de un sprite: las columnas de from a to, en px del sprite
-## medidos desde su punto de apoyo (que cae en `at`). Devuelve false si no existe.
+## Dibuja una tira vertical de un sprite (columnas from–to en px desde el apoyo). False si no existe.
 static func draw_strip(canvas: CanvasItem, sprite: String, at: Vector2, from: float, to: float) -> bool:
 	var texture: Texture2D = get_texture(sprite)
 	if texture == null:
@@ -165,33 +160,31 @@ static func draw_strip(canvas: CanvasItem, sprite: String, at: Vector2, from: fl
 	return true
 
 
-## Dibuja la sombra de piso de un sprite (a SHADOW_ALPHA). Devuelve false si no existe.
+## Dibuja la sombra de piso de un sprite (a SHADOW_ALPHA). False si no existe.
 static func draw_shadow(canvas: CanvasItem, sprite: String, at: Vector2 = Vector2.ZERO) -> bool:
 	return draw(canvas, sprite, at, Color(1.0, 1.0, 1.0, SHADOW_ALPHA))
 
 
-## Indica si hay una hoja de personaje con ese aspecto (conjunto de ropa y paleta).
+## Indica si hay hoja de personaje con ese aspecto.
 static func has_character_look(look: String) -> bool:
 	var looks: Dictionary = get_data().get("characters", {}).get("looks", {})
 	return looks.has(look)
 
 
-## Indica si las hojas de personajes traen esa pose (por ejemplo "type_basic_chair": tecleando
-## sentado en la silla básica, con la silla dibujada).
+## Indica si las hojas traen esa pose (p. ej. "type_basic_chair", con la silla dibujada).
 static func has_character_pose(pose: String) -> bool:
 	var poses: Dictionary = get_data().get("characters", {}).get("poses", {})
 	return poses.has(pose)
 
 
-## Cuadros de una pose de personaje ("stand", "sit", "idle", "walk", "type"); 0 si no existe.
+## Cuadros de una pose ("stand", "sit", "idle", "walk", "type"); 0 si no existe.
 static func get_character_frames(pose: String) -> int:
 	var poses: Dictionary = get_data().get("characters", {}).get("poses", {})
 	return int(poses[pose]["frames"]) if poses.has(pose) else 0
 
 
-## Dibuja un cuadro de un personaje con los pies en `at`: aspecto, pose, dirección (0–3,
-## como las rotaciones de los muebles) y cuadro. Devuelve false si no existe.
-## Con band (x = desde, y = hasta, en px del sprite sobre los pies) dibuja solo esa franja de alto.
+## Dibuja un cuadro de personaje con los pies en `at` (aspecto, pose, dirección 0–3, cuadro).
+## band (x desde, y hasta, px sobre los pies) dibuja solo esa franja. False si no existe.
 static func draw_character(canvas: CanvasItem, look: String, pose: String, rotation: int, frame: int,
 		at: Vector2 = Vector2.ZERO, band: Vector2 = Vector2.ZERO) -> bool:
 	var characters: Dictionary = get_data().get("characters", {})

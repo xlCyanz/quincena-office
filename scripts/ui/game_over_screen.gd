@@ -1,7 +1,5 @@
-# Pantalla de fin de partida (diseño, 8.4 y 17.2): aparece cuando el banco embarga la
-# empresa y los muebles no cubren la deuda. Muestra por qué se perdió y las estadísticas
-# (días jugados, empleados contratados, contratos entregados y mejor reputación), con un
-# botón al menú principal. Tapa todo el juego y no deja tocar nada más.
+# Pantalla de fin de partida: el embargo no cubrió la deuda. Muestra por qué se perdió,
+# las estadísticas y un botón al menú; tapa todo el juego.
 class_name GameOverScreen
 extends CanvasLayer
 
@@ -25,7 +23,7 @@ func _ready() -> void:
 	_cover = ColorRect.new()
 	_cover.color = DIM_COLOR
 	_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
-	# Atrapa los clics: no se puede tocar el juego de atrás.
+	# Atrapa los clics para que no se toque el juego de atrás.
 	_cover.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_cover)
 	var center := CenterContainer.new()

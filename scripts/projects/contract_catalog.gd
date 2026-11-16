@@ -1,11 +1,10 @@
-# Catálogo de contratos leído de data/contracts.json: tamaños, tipos de proyecto,
-# reglas de las ofertas y nombres de clientes. Se usa por su nombre de clase; el
-# archivo se lee una sola vez.
+# Catálogo de contratos (data/contracts.json): tamaños, tipos, reglas de ofertas y clientes.
+# Se lee una vez; se usa por su nombre de clase.
 class_name ContractCatalog
 extends RefCounted
 
 const CONTRACTS_PATH: String = "res://data/contracts.json"
-## Fases del trabajo, en el orden en que avanzan.
+## Fases del trabajo, en orden.
 const PHASES: Array[String] = ["design", "programming", "testing"]
 const PHASE_NAMES: Dictionary[String, String] = {"design": "diseño", "programming": "programación", "testing": "pruebas"}
 
@@ -32,8 +31,7 @@ static func get_size_range(size: String, key: String) -> Vector2i:
 	return Vector2i(int(values[0]), int(values[1]))
 
 
-## Plazo [mínimo, máximo] en días para un contrato de points puntos (hito 29): lo que
-## tarda al ritmo esperado de su tamaño por la holgura de offers.days_slack.
+## Plazo [mínimo, máximo] en días para points puntos: lo que tarda al ritmo de su tamaño × offers.days_slack.
 static func get_days_range(size: String, points: int) -> Vector2i:
 	var rate: float = maxf(1.0, float(get_size(size).get("points_per_day", 1)))
 	var slack: Array = get_offers("days_slack")
@@ -63,17 +61,17 @@ static func get_offers(key: String) -> Variant:
 	return _contracts()["offers"][key]
 
 
-## Valor de las visitas de clientes (data/contracts.json, visits).
+## Valor de contracts.json, visits.
 static func get_visits(key: String) -> Variant:
 	return _contracts()["visits"][key]
 
 
-## Valor de los errores (data/contracts.json, bugs).
+## Valor de contracts.json, bugs.
 static func get_bugs(key: String) -> Variant:
 	return _contracts()["bugs"][key]
 
 
-## Valor de la entrega (data/contracts.json, delivery).
+## Valor de contracts.json, delivery.
 static func get_delivery(key: String) -> Variant:
 	return _contracts()["delivery"][key]
 
@@ -83,7 +81,7 @@ static func get_points_per_bug(level: String) -> float:
 	return float(_contracts()["bugs"]["points_per_bug"].get(level, 30))
 
 
-## Valor de las reuniones (data/contracts.json, meetings; hito 47).
+## Valor de contracts.json, meetings.
 static func get_meetings(key: String) -> Variant:
 	return _contracts().get("meetings", {}).get(key, 1.0)
 

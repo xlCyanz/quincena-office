@@ -3,22 +3,9 @@
 #
 #   python3 tools/sprites/check.py DIR [--verbose] [--group grupo[,grupo]]
 #
-# Revisa todos los PNG de DIR (menos los que empiezan con sheet_, scene_, preview_ o _) y lee
-# los manifest*.json que escribe generate.py. Imprime los fallos y avisos y al final
-# «RESULTADO: OK» o «RESULTADO: FALLA». Sale con código 0 o 1.
-#
-# Qué comprueba:
-#   todos       PNG RGBA de 8 bits, alfa solo 0/255, cantidad de colores (aviso), lienzo según
-#               la guía, que nada quede recortado, y que el manifiesto coincida con el PNG
-#   pisos       rombo exacto de 4,096 px, prueba de desplazar ±64/±32 sin huecos ni encimados,
-#               4 variantes con el mismo borde, sin costura medible en las 16 parejas × 2 ejes,
-#               mismo brillo medio (BRIGHTNESS_TOLERANCE)
-#   muebles     apoyo en el centro del rombo de la casilla de anclaje, nada por debajo de la
-#               planta, la pieza llega al piso, caras lisas con los tonos exactos base / −25 % /
-#               −40 % que declara el manifiesto (o, en una rampa con caras declaradas de STYLE.md,
-#               los tonos de "faces" con la luz arriba a la izquierda), escalera 2:1 abajo (aviso)
-#   paredes     lienzo 72×160 / 72×64, apoyo, empalme con el tramo vecino sin hueco ni línea, y
-#               la baja con la misma cara de arriba que la alta
+# Revisa los PNG de DIR (menos sheet_, scene_, preview_ y _*) contra sus manifest*.json: formato,
+# lienzo, recortes, pisos (rombo, costuras, brillo), muebles (apoyo, tonos de cara) y paredes
+# (alto, empalmes). Imprime «RESULTADO: OK» o «RESULTADO: FALLA» y sale con 0 o 1.
 import argparse
 import glob
 import json
@@ -35,7 +22,7 @@ from PIL import Image  # noqa: E402
 import iso  # noqa: E402
 import palette as pal  # noqa: E402
 
-# Tolerancias (explícitas, en unidades de 0 a 255).
+# Tolerancias, en unidades de 0 a 255.
 BRIGHTNESS_TOLERANCE = 0.25  # diferencia máxima de brillo medio entre variantes de un piso
 CHANNEL_TOLERANCE = 0.5  # ídem por canal R, G, B
 SEAM_FACTOR = 1.25  # la costura puede contrastar hasta esto × la línea interior más marcada…
@@ -80,8 +67,7 @@ def _lum(rgb):
 
 
 def load_manifests(directory, groups=None):
-    """Entradas de los manifest*.json de la carpeta (archivo -> datos). Con groups, solo las de
-    esos grupos (manifest_<grupo>.json)."""
+    """Entradas de los manifest*.json (archivo -> datos); con groups, solo manifest_<grupo>.json."""
     entries = {}
     for path in sorted(glob.glob(os.path.join(directory, "manifest*.json"))):
         try:
@@ -139,8 +125,7 @@ def check_common(report, name, image, arr, entry, kind):
 
 
 def bottom_runs(alpha, top=False):
-    """Tramos irregulares de la escalera del borde de abajo (o del de arriba, con top=True):
-    largos distintos de 2 entre dos escalones de ±1 en el mismo sentido."""
+    """Tramos irregulares de la escalera 2:1 del borde de abajo (o de arriba con top=True)."""
     height, width = alpha.shape
     bottom = np.full(width, -1)
     cols = np.nonzero(alpha.any(axis=0))[0]
@@ -205,8 +190,7 @@ def check_floor(report, name, arr):
 
 
 def loose_pixels(tile):
-    """Fracción de pixeles del rombo (128×64) que no tienen ningún vecino (4 direcciones) de su
-    mismo color. Los vecinos de fuera del rombo son los de la misma casilla repetida."""
+    """Fracción de pixeles del rombo sin vecino (4 direcciones, con la casilla repetida) de su color."""
     mask = tile[..., 3] == 255
     big = np.zeros((64 * 3, 128 * 3, 3), dtype=np.int32) - 1
     for dx, dy in ((0, 0), (64, 32), (-64, 32), (64, -32), (-64, -32)):
@@ -227,9 +211,8 @@ def _lattice(height, width, origin_x, origin_y):
 
 
 def seam_contrast(tile_a, tile_b, axis):
-    """Contraste medio (0–255) entre pixeles vecinos a cada lado de la costura de A con B puesta
-    en su lado +u (axis 'u', abajo-derecha) o +v (abajo-izquierda), y el mayor contraste de las
-    líneas paralelas interiores de las dos casillas. Devuelve (costura, mayor interior)."""
+    """(costura, mayor interior): contraste medio (0–255) entre vecinos a cada lado de la costura de
+    A con B en su lado +u (abajo-derecha) o +v (abajo-izquierda), y el de las líneas interiores."""
     canvas = np.zeros((96, 192, 4), dtype=np.float64)
     ax = 0 if axis == "u" else 64
     bx = 64 if axis == "u" else 0
@@ -254,10 +237,8 @@ def seam_contrast(tile_a, tile_b, axis):
 
 
 def seam_jump(tile_a, tile_b, axis, width):
-    """Salto de color medio (0–255) entre las `width` líneas de antes y de después de la costura
-    de A con B (como en seam_contrast), y el mayor salto entre bandas vecinas del mismo ancho en
-    el interior. Detecta lo que no se repite (un degradado, una mancha cortada) aunque el borde
-    sea una junta. Devuelve (salto en la costura, mayor salto interior)."""
+    """(costura, mayor interior): salto de color medio (0–255) entre las `width` líneas a cada lado
+    de la costura y el mayor entre bandas interiores. Detecta lo que no se repite aunque el borde sea una junta."""
     canvas = np.zeros((96, 192, 4), dtype=np.float64)
     ax = 0 if axis == "u" else 64
     bx = 64 if axis == "u" else 0
@@ -350,9 +331,8 @@ def check_flat_faces(report, name, arr, entry):
         labels = {"top": "base", "left": "−25 %", "right": "−40 %"}
         declared_faces = face.get("faces") if face.get("declared") else None
         if declared_faces:
-            # Rampa de STYLE.md con lado y sombra propios (palette.style_ramp(side=, shadow=)): se
-            # exigen los tonos que declara el manifiesto en vez del −25 / −40 calculado, siempre
-            # que la luz siga arriba a la izquierda (brillo de arriba > izquierda ≥ derecha).
+            # Rampa de STYLE.md con lado y sombra propios: se exigen los tonos del manifiesto en vez del
+            # −25 / −40, si la luz sigue arriba a la izquierda (arriba > izquierda ≥ derecha).
             expected = dict((k, pal.hex_to_rgb(v)) for k, v in declared_faces.items())
             labels = {"top": "base declarada", "left": "lado declarado", "right": "sombra declarada"}
             report.check(name, pal.hex_to_rgb(declared_faces["top"]) == pal.hex_to_rgb(face["base"])
@@ -421,8 +401,7 @@ def check_furniture(report, name, arr, entry, kind):
                      % (lowest, int(origin[1])))
     check_flat_faces(report, name, arr, entry)
     if "off_grid" not in entry and not entry.get("curved", False):
-        # Sin el dato de la rejilla que anota el motor (cajas en múltiplos de 1/64: aristas 2:1
-        # seguras) solo queda medir la silueta del PNG.
+        # Sin la rejilla del motor solo queda medir la silueta del PNG.
         bad = bottom_runs(opaque)
         bad_top = bottom_runs(opaque, top=True)
         if bad or bad_top:
@@ -483,7 +462,7 @@ def check_wall(report, name, arr, entry):
     else:
         below = opaque & ((gu >= 1.0) | (gv >= half))
     report.check(name, not below.any(), "nada por debajo de la planta del tramo (%d px)" % int(below.sum()))
-    # Alto: la tabla de la sección 8 (el del manifiesto, en px del mundo, o el de la pieza por su nombre).
+    # Alto (sección 8): el del manifiesto (px del mundo) o el de la pieza por su nombre.
     world = (entry or {}).get("height")
     if world is None:
         world = WALL_HEIGHTS.get(_piece)
@@ -505,9 +484,8 @@ def check_wall(report, name, arr, entry):
 
 
 def _wall_composite(arr_a, arr_b, axis):
-    """Tramo A y el tramo B que le sigue hacia adelante (B tapa el canto de A). Devuelve la
-    imagen compuesta, la posición de A y de B en ella y la columna donde empieza la cara larga
-    del tramo de la derecha."""
+    """Compone A con el tramo B que le sigue hacia adelante. Devuelve la imagen, las posiciones de A
+    y B y la columna donde empieza la cara larga del tramo de la derecha."""
     height = arr_a.shape[0]
     canvas = np.zeros((height + 32, 72 + 64, 4), dtype=np.float64)
     if axis == "x":
@@ -522,12 +500,8 @@ def _wall_composite(arr_a, arr_b, axis):
 
 
 def wall_join(arr_a, arr_b, axis, top_z=None):
-    """Mide la unión de A con el tramo B que le sigue. Devuelve (hay hueco, desvío junto a la
-    unión, mayor desvío interior). Se mide el contraste (diferencia media, 0–255) entre columnas
-    vecinas de las caras largas y, si se conoce el alto (top_z en px de sprite), entre líneas
-    vecinas de la cara de arriba; el desvío es cuánto se aparta ese contraste del típico de la
-    pieza. Una línea, un corte en el contorno o un brillo en la unión dan un desvío mayor que el
-    de cualquier parte interior."""
+    """(hay hueco, desvío junto a la unión, mayor desvío interior) de la unión de A con B. El desvío es
+    cuánto se aparta el contraste entre columnas (y filas de la cara de arriba, con top_z) del típico de la pieza."""
     canvas, pos_a, pos_b, seam = _wall_composite(arr_a, arr_b, axis)
     opaque = canvas[..., 3] == 255
     # Hueco: una fila con pixeles a los dos lados de la unión y transparente justo en ella.
@@ -628,14 +602,12 @@ def check_wall_groups(report, walls):
                     report.warn(name, "no tiene la " + message)
 
 
-# Cuadros de animación de una pieza de pared (puerta que se abre, persiana): parte de la pared que
-# tiene que quedar igual que en la pieza cerrada.
+# Cuadros de animación de una pared (puerta, persiana): parte que debe quedar igual que la pieza cerrada.
 FRAME_SAME_MIN = 0.35
 
 
 def check_wall_frames(report, frames, directory, manifest):
-    """frames: nombre -> (arr, entry) de los cuadros (kind 'wall_frame'). Cada cuadro lleva base (la
-    pieza cerrada), base_offset (dónde cae el lienzo de la pieza dentro del cuadro) y anchor."""
+    """frames: nombre -> (arr, entry) de kind 'wall_frame', con base, base_offset y anchor."""
     sets = {}
     for name, (arr, entry) in sorted(frames.items()):
         base = (entry or {}).get("base")
@@ -676,8 +648,7 @@ def check_wall_frames(report, frames, directory, manifest):
 
 
 def check_item_frames(report, frames, directory):
-    """frames: nombre -> (arr, entry) de los cuadros de un objeto de pared (kind 'wall_item_frame'). Cada
-    cuadro tiene el lienzo, el apoyo y la silueta de su pieza (solo cambia lo de adentro)."""
+    """frames de un objeto de pared ('wall_item_frame'): mismo lienzo, apoyo y silueta que su pieza."""
     sets = {}
     for name, (arr, entry) in sorted(frames.items()):
         base = (entry or {}).get("base")
@@ -704,9 +675,7 @@ def check_item_frames(report, frames, directory):
 
 
 def check_tree_frames(report, frames, directory):
-    """frames: nombre -> (arr, entry) de los cuadros de un árbol (kind 'tree_frame', hojas que caen). Cada
-    cuadro tiene el lienzo y el apoyo de su árbol, lo tapa entero (solo se agregan hojas encima) y cumple
-    las reglas del árbol."""
+    """frames de un árbol ('tree_frame'): mismo lienzo y apoyo, lo tapa entero y cumple sus reglas."""
     sets = {}
     for name, (arr, entry) in sorted(frames.items()):
         check_other(report, name, arr, None, "tree")
@@ -784,8 +753,7 @@ def check_other(report, name, arr, entry, kind):
 # ---------------------------------------------------------------------- principal
 
 def run(directory, verbose=False, groups=None):
-    """Revisa la carpeta. groups = lista de grupos (los de generate.py): solo se revisan los
-    archivos de sus manifiestos, para no mezclar con lo que otro esté generando en la misma carpeta."""
+    """Revisa la carpeta; con groups, solo los archivos de esos manifiestos."""
     report = Report(verbose)
     manifest = load_manifests(directory)
     paths = sorted(glob.glob(os.path.join(directory, "*.png")))

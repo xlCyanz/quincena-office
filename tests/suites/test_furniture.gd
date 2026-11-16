@@ -1,6 +1,5 @@
-# Prueba del hito 6: colocar, girar y vender escritorio, silla, computadora
-# y planta. No se puede colocar sobre otro objeto ni bloquear el único acceso; la
-# reventa devuelve el 50%.
+# Muebles: colocar, girar y vender escritorio, silla, computadora y planta; no se coloca sobre
+# otro objeto ni tapando el único acceso; la reventa devuelve el 50 %.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=furniture
 extends Node
 
@@ -19,7 +18,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_catalog()
 	_check_place_and_overlap()
@@ -86,7 +85,6 @@ func _check_place_and_overlap() -> void:
 	result = builder.apply([{"edge": Vector3i(2, 5, GridEdge.AXIS_X), "kind": ConstructionCatalog.WALL}])
 	_expect(not result["ok"], "una pared en medio de un escritorio: %s" % [result])
 
-	# Donde hay un personaje no se coloca nada.
 	builder.occupied_cells = [Vector2i(0, 5)]
 	result = builder.place("small_plant", Vector2i(0, 5), 0)
 	_expect(not result["ok"], "una planta encima de un personaje: %s" % [result])
@@ -156,7 +154,6 @@ func _check_computer_and_sell() -> void:
 	result = builder.place("basic_computer", Vector2i(3, 3), 0)
 	_expect(not result["ok"], "colocar una computadora como mueble: %s" % [result])
 
-	# Vender: primero la computadora, luego el escritorio, cada uno al 50%.
 	result = builder.sell_furniture_at(Vector2i(4, 4))
 	_expect(result["ok"] and Economy.balance == money + 250 and _index_at(Vector2i(4, 4)) >= 0
 		and OfficeState.furniture[_index_at(Vector2i(4, 4))]["computer"].is_empty(), "vender la computadora: %s" % [result])
@@ -220,7 +217,6 @@ func _check_in_game_with_mouse() -> void:
 	await _click(panel.get_open_button().get_global_rect().get_center())
 	_expect(panel.is_build_mode() and GameClock.is_paused, "no se abrió el modo construcción en pausa")
 
-	# Escritorio sencillo, girado con un clic derecho antes de ponerlo.
 	await press.call("simple_desk")
 	var money: int = Economy.balance
 	await _click(at_cell.call(Vector2i(4, 5)), MOUSE_BUTTON_RIGHT)
@@ -233,13 +229,11 @@ func _check_in_game_with_mouse() -> void:
 	await _click(at_cell.call(Vector2i(4, 5)))
 	_expect(Economy.balance == money and _count_views(grid) == views, "se colocó otro escritorio encima")
 
-	# Computadora sobre el escritorio.
 	await press.call("basic_computer")
 	await _click(at_cell.call(Vector2i(4, 5)))
 	_expect(OfficeState.furniture[_index_at(Vector2i(4, 5))]["computer"] == "basic_computer"
 		and Economy.balance == money - 500, "instalar la computadora con el ratón")
 
-	# Girar con la herramienta.
 	await press.call(BuildController.TOOL_ROTATE)
 	await _click(at_cell.call(Vector2i(4, 5)))
 	_expect(OfficeState.furniture[_index_at(Vector2i(4, 5))]["rotation"] == 2, "girar con el ratón")
@@ -256,21 +250,18 @@ func _check_in_game_with_mouse() -> void:
 	await _click(at_cell.call(Vector2i(0, 7)))
 	_expect(_index_at(Vector2i(0, 7)) >= 0 and Economy.balance == money - 40, "colocar la planta con el ratón")
 
-	# Vender con el ratón: computadora y luego escritorio, al 50%.
 	await press.call(BuildController.TOOL_SELL)
 	money = Economy.balance
 	await _click(at_cell.call(Vector2i(4, 5)))
 	await _click(at_cell.call(Vector2i(4, 5)))
 	_expect(_index_at(Vector2i(4, 5)) < 0 and Economy.balance == money + 250 + 75, "vender computadora y escritorio")
 
-	# El CEO no atraviesa los muebles nuevos.
 	var path: Array[Vector2i] = game.ceo.get_path_cells()
 	for cell: Vector2i in path:
 		_expect(cell == OfficeState.find_furniture_assigned_to("ceo")["cell"] or _index_at(cell) < 0,
 			"el camino del CEO pasa por el mueble de %s" % cell)
 	_expect(_count_views(grid) == OfficeState.furniture.size(), "los muebles dibujados no coinciden con los guardados")
 
-	# Guardar y restaurar los muebles (con su rotación y computadora).
 	var saved: Dictionary = JSON.parse_string(JSON.stringify(OfficeState.export_state()))
 	var before: String = JSON.stringify(OfficeState.export_state())
 	OfficeState.import_state(saved)

@@ -1,28 +1,22 @@
-# Objetos de pared (docs/sprites_128.md, sección 7) en el estilo de tools/sprites/STYLE.md: cuadro
-# (3 dibujos), reloj, pizarra, televisor (la pantalla de presentaciones) y aire acondicionado, para pared _x y _y.
+# Objetos de pared (docs/sprites_128.md, sección 7) para pared _x y _y.
 #
 #   painting_x / _y                    cuadro con marco de madera naranja y un paisaje
 #   painting_abstract_x / _y           el mismo marco con bloques de color
 #   painting_sea_x / _y                el mismo marco con mar y un velero
 #   wall_clock_x / _y                  reloj redondo de aro negro, marcas y agujas a las 10:10
 #   whiteboard_x / _y                  pizarra blanca con marco de aluminio, garabatos y bandeja
-#   presentation_screen_x / _y         televisor grande negro apagado colgado (marco delgado, reflejos),
-#                                      en dos bordes, de media pared a casi el techo:
-#                                      lienzo 128×192, apoyo (64, 160)
+#   presentation_screen_x / _y         televisor apagado en dos bordes: lienzo 128×192, apoyo (64, 160)
 #   presentation_screen_chart_x / _y   el mismo encendido con una presentación (Sala de reuniones):
 #   presentation_screen_pie_x / _y     barras, torta con leyenda o portada con logo
 #   presentation_screen_title_x / _y
 #   …_chart_x_play_1 … _12 (y _pie, _title, _y)   la presentación se arma de a poco; el 12 es la pieza
 #   air_conditioner_x / _y             split blanco de 8 px de fondo, rejilla arriba, salida y luz
-#   _sheets/wall_items.png             hoja de contacto (no es arte del juego)
+#   _sheets/wall_items.png             hoja de contacto
 #   sheet_wall_items.png               los objetos colgados en una esquina de paredes altas
 #
-# Lienzo 64×128 (Canvas.wall_item): x de 0 a 1 a lo largo del borde, apoyo en el punto medio del
-# borde en el piso (32, 112), el mismo punto que el apoyo de un tramo de pared. El objeto sale de
-# la cara de la pared (y = medio grosor, 4 px) hacia la casilla y su base va a 48 px de sprite
-# (24 del mundo, WALL_ITEM_BASE_PX del juego); el alto es el `height` de data/furniture.json × 2.
-# Solo se ve la cara de adentro de las paredes altas del fondo: el juego no los dibuja en la cara
-# de atrás, y en las paredes bajas los achica pegados abajo (no hay versión baja).
+# Lienzo 64×128 (Canvas.wall_item): x de 0 a 1 a lo largo del borde, apoyo en el medio del borde en el
+# piso (32, 112), como un tramo de pared. Sale de la cara de la pared (4 px) con la base a 48 px de sprite
+# (WALL_ITEM_BASE_PX); alto = `height` × 2. Solo cara de adentro de paredes altas (sin versión baja).
 import os
 
 import numpy as np
@@ -52,8 +46,7 @@ def tall(item_id):
     return iso.world_px(item_data(item_id)["height"])
 
 
-# En un tramo _x el modelo corre de derecha a izquierda en pantalla: los dibujos se espejan para
-# que se lean igual en las dos paredes. La pieza de turno lo fija con set_axis.
+# En un tramo _x el modelo corre de derecha a izquierda: los dibujos se espejan (set_axis).
 _MIRROR = [False]
 
 
@@ -62,15 +55,14 @@ def set_axis(axis):
 
 
 def front(ctx, x0, z0, x1):
-    """Coordenadas de la cara de adelante en px, vista de frente: a de izquierda a derecha desde el
-    borde del objeto (x0–x1 a lo largo del tramo), b hacia arriba desde z0."""
+    """Coordenadas de la cara de adelante en px: a de izquierda a derecha desde x0, b hacia arriba desde z0."""
     a = (x1 - ctx.x) if _MIRROR[0] else (ctx.x - x0)
     return np.floor(a * 64.0 + 1.0e-6), np.floor(ctx.z - z0 + 1.0e-6)
 
 
 # ---------------------------------------------------------------------------- rampas
 
-# Marco de madera naranja (STYLE.md) y los colores de los dibujos como tonos agregados.
+# Marco de madera naranja y los colores de los dibujos como tonos agregados.
 FRAME = pal.style("wood_orange", name="painting")
 SKY = FRAME.add("8fc9e4")
 SKY_LIGHT = FRAME.add("b9def0")
@@ -104,9 +96,7 @@ MARKER_BLUE = BOARD.add("3d6fb0")
 MARKER_RED = BOARD.add("c03d43")
 MARKER_GREEN = BOARD.add("4c8a3a")
 
-# Televisor (en lugar de la pantalla de presentaciones, como el de la referencia): colgado de la pared
-# sin repisa, marco negro grueso con un filo gris claro afuera, pantalla apagada con reflejos finos en
-# diagonal y dos soportes cortos que asoman abajo.
+# Televisor (pantalla de presentaciones): marco negro con filo gris y dos soportes abajo.
 TV = pal.style("plastic_black", name="presentation_screen")
 TV_RIM = TV.add("6a6a78")  # filo de afuera, del lado de la luz
 TV_RIM_DARK = TV.add("4a4a56")  # filo de afuera, en sombra
@@ -114,7 +104,7 @@ TV_FRAME = TV.add("2e2e34")  # marco
 TV_GLASS = TV.add("1a1a1c")  # pantalla apagada
 TV_SHINE = TV.add("3a3a42")  # reflejo
 TV_SHINE2 = TV.add("2b2b31")  # reflejo tenue
-# Presentaciones (pantalla encendida, para la Sala de reuniones): diapositiva clara con barra azul.
+# Presentaciones (pantalla encendida): diapositiva clara con barra azul.
 SLIDE_BG = TV.add("e4ecee")
 SLIDE_SHADE = TV.add("c9d6da")  # fondo de los gráficos, renglones de la leyenda
 SLIDE_BLUE = TV.add("3d90c0")
@@ -125,9 +115,7 @@ SLIDE_RED = TV.add("c03d43")
 SLIDE_TEXT = TV.add("4f5862")
 SLIDE_WHITE = TV.add("ffffff")
 
-# Split como el de la referencia: frente blanco verdoso, tapa gris con un panel claro al final,
-# rejilla negra de salida abajo (debajo del frente, que sobresale), luz roja y tapa del extremo
-# con un rectángulo hundido.
+# Split: frente blanco verdoso, tapa gris, rejilla de salida bajo el frente y luz roja.
 AIR = pal.style_ramp("eef4f2", side="dce6e3", shadow="cbd6d3", outline="2a2a30", deep="6f7a80",
                      light="ffffff", name="air_conditioner")
 AIR_TOP = AIR.add("b4bbbf")  # tapa gris
@@ -201,7 +189,7 @@ def painting_face(art):
         inner = (a >= PAINT_BORDER) & (a < width - PAINT_BORDER) & (b >= PAINT_BORDER) & (b < height - PAINT_BORDER)
         drawn = art(a - PAINT_BORDER, b - PAINT_BORDER, width - 2 * PAINT_BORDER, height - 2 * PAINT_BORDER, index)
         index = np.where(inner, drawn, index)
-        # Filo del marco: claro arriba y a la izquierda (la luz), sombra en el borde de adentro.
+        # Filo del marco: claro arriba y a la izquierda, sombra adentro.
         lit = ~inner & ((b == height - 1) | (a == 0))
         index = np.where(lit, pal.LIGHT, index)
         shade = inner & ((b == height - PAINT_BORDER - 1) | (a == PAINT_BORDER))
@@ -236,7 +224,7 @@ def clock_face(ctx):
     # Marcas de las 12, 3, 6 y 9: un pixel junto al aro.
     ticks = ((a == r) & ((b == 2) | (b == CLOCK_D - 3))) | ((b == r) & ((a == 2) | (a == CLOCK_D - 3)))
     index = np.where(ticks, CLOCK_TICK, index)
-    # Agujas a las 10:10: la corta hacia arriba a la izquierda, la larga hacia arriba a la derecha.
+    # Agujas a las 10:10.
     hour = (da <= 0) & (db >= 0) & (np.abs(db - (-da) * 0.6) < 0.8) & (dist < 3.6)
     minute = (da >= 0) & (db >= 0) & (np.abs(db - da * 0.75) < 0.8) & (dist < 5.2)
     index = np.where(hour | minute, CLOCK_HAND, index)
@@ -246,7 +234,7 @@ def clock_face(ctx):
 
 
 def wall_clock(axis):
-    """Reloj redondo: filas de 1 px de alto, cada una tan ancha como el círculo en esa fila."""
+    """Reloj redondo armado en filas de 1 px, cada una del ancho del círculo."""
     c = iso.Canvas.wall_item(axis)
     z0 = BASE + (tall("wall_clock") - CLOCK_D) // 2
     r = CLOCK_D / 2.0
@@ -262,7 +250,7 @@ def wall_clock(axis):
                     tex={iso.BACK: lambda ctx, z0=z0: clock_face_at(ctx, z0)},
                     name="clock" if part is None else None, part=part, flat=False)
         part = pid if part is None else part
-    # El aro se ve también de canto: pintar las caras de arriba y de los lados con el aro.
+    # El aro de canto: caras de arriba y de los lados.
     rim = c.select(part=part) & ~c.select(part=part, face=iso.BACK)
     c.paint(rim, CLOCK_RIM, CLOCK)
     return c
@@ -299,7 +287,7 @@ def board_face(ctx):
         items |= (b == row) & (a >= 7) & (a < 18 - 3 * k) & (np.mod(a, 5) != 4)
         items |= (b == row) & (a == 5)
     index = np.where(title | under | items, MARKER_BLUE, index)
-    # Un gráfico a la derecha: ejes negros y una línea roja que sube; un círculo verde.
+    # Gráfico a la derecha y un círculo verde.
     axes = ((a == 29) & (b >= 6) & (b < 22)) | ((b == 6) & (a >= 29) & (a < 46))
     index = np.where(axes, CLOCK_HAND_BOARD, index)
     xs = a - 30
@@ -322,7 +310,7 @@ def whiteboard(axis):
     height = tall("whiteboard")
     c.box(BOARD_X[0], BOARD_X[1], FACE, FACE + BOARD_DEPTH, BASE, BASE + height, BOARD,
           tex={iso.BACK: board_face}, name="board")
-    # Bandeja para los marcadores, abajo, un poco más afuera, con dos marcadores encima.
+    # Bandeja con dos marcadores, un poco más afuera.
     c.box(BOARD_X[0] + 4 / 64.0, BOARD_X[1] - 4 / 64.0, FACE, FACE + 5 * PX, BASE - TRAY_H, BASE, BOARD,
           name="tray")
     tray = c.select(part=c.part_id("tray"))
@@ -337,11 +325,8 @@ def whiteboard(axis):
 
 # ---------------------------------------------------------------------------- televisor
 
-# Televisor grande en DOS bordes seguidos de la misma pared (x de 0 a 2), rectangular como uno de
-# verdad: 96 × 60 px, colgado de media pared (z 50) hasta casi el techo (z 110 de 120). Es mucho más alto que el `height` del juego (14 → 28 px) y que el lienzo de los
-# objetos de pared: va en uno de 128×192 (TV_CANVAS) con el apoyo en el piso, en el punto medio de
-# los dos bordes (la esquina que comparten): (64, 160). En el juego es de un borde: ocupar dos es un
-# cambio que se hace al conectar los sprites.
+# Televisor de 96 × 60 px en DOS bordes de la misma pared (x de 0 a 2), de z 50 a 110. Lienzo 128×192
+# (TV_CANVAS) con apoyo en la esquina que comparten los dos bordes: (64, 160). En el juego ocupa uno.
 TV_SPAN = 2
 TV_X = (16 / 64.0, 112 / 64.0)  # 96 px a lo largo, centrado (su fondo lo corre ~9 px)
 TV_Y = (FACE + 1 * PX, FACE + 5 * PX)  # 4 px de grueso: el canto se ve de costado
@@ -355,8 +340,7 @@ TV_ANCHOR = (64.0, 160.0)
 
 
 def wide_wall_item(axis):
-    """Lienzo de objeto de pared de dos bordes (128×192): el de Canvas.wall_item el doble de ancho
-    y con 32 px más arriba; x de 0 a 2 a lo largo."""
+    """Lienzo de objeto de pared de dos bordes (128×192); x de 0 a 2 a lo largo."""
     width, height = TV_CANVAS
     origin = (128.0 if axis == "x" else 0.0, height - 64.0)
     c = iso.Canvas(width, height, origin, size=(TV_SPAN, 0), rotation=0, swap=axis == "x", kind="wall_item",
@@ -382,8 +366,8 @@ def text_row(u, v, u0, v0, length, shift=0):
     return inside & marks[np.clip(u - u0, 0, int(length)).astype(int)]
 
 
-# Animación de la presentación encendida (_play_1 a _play_12): la diapositiva se arma de a poco y el
-# último cuadro es la pieza quieta. Cada parte entra con su propio tramo de t (0 a 1) y una curva suave.
+# Animación de la presentación (_play_1 a _play_12; el último es la pieza quieta). Cada parte entra en su
+# tramo de t (0 a 1).
 PLAY_FRAMES = 12
 
 
@@ -399,8 +383,7 @@ def reveal(mask, u, u0, length, amount):
 
 
 def slide(variant, u, v, gw, gh, t=1.0):
-    """Diapositiva vista de frente: u desde la izquierda, v desde arriba (px de la pantalla). t de 0 a
-    1 es el avance de la animación (1 = completa)."""
+    """Diapositiva de frente: u desde la izquierda, v desde arriba (px); t = avance (1 = completa)."""
     index = np.full(u.shape, SLIDE_BG)
     # Barra azul de título arriba (7 px) con el título en blanco y un punto naranja de logo.
     bar = v < 7
@@ -431,8 +414,7 @@ def slide(variant, u, v, gw, gh, t=1.0):
         index = np.where(reveal(text_row(u, v, 66, 36, gw - 70, 5), u, 66, gw - 70, notes) |
                          reveal(text_row(u, v, 66, 39, gw - 74, 8), u, 66, gw - 74, notes), SLIDE_SHADE, index)
     elif variant == "pie":
-        # Torta en tres partes (azul, naranja, verde) que se dibuja en un barrido como el reloj, y la
-        # leyenda con sus porcentajes.
+        # Torta en tres partes que se dibuja en un barrido, y la leyenda.
         cu, cv, r = 22.0, 29.5, 15.0
         du, dv = u + 0.5 - cu, v + 0.5 - cv
         dist = np.sqrt(du * du + dv * dv)
@@ -455,8 +437,7 @@ def slide(variant, u, v, gw, gh, t=1.0):
             index = np.where(reveal(text_row(u, v, 53, ly + 1, length, k * 4), u, 53, length, show), SLIDE_TEXT, index)
             index = np.where(reveal(text_row(u, v, 53, ly + 3, 12, k * 4 + 2), u, 53, 12, show), SLIDE_SHADE, index)
     else:
-        # Portada: el logo (cuadro azul con un rombo naranja) crece desde el centro, el título y el
-        # subtítulo se escriben y al final aparece la línea de fecha.
+        # Portada: el logo crece, se escriben título y subtítulo y al final la fecha.
         lx, ly = gw // 2 - 6, 13
         size = ease(t, 0.0, 0.35)
         half = 6.0 * size
@@ -496,9 +477,7 @@ def tv_face_for(variant, t=1.0):
             # Encendida: la diapositiva llena la pantalla, sin borde hundido.
             screen = slide(variant, ga, gh - 1 - gb, int(gw), int(gh), t)
             return np.where(glass, screen, index)
-        # Apagada, con 1 px oscuro arriba y a la izquierda (hundida) y reflejos finos en «\»: dos
-        # líneas juntas, una franja tenue y dos sueltas. En la pared _x la cara sube hacia la derecha:
-        # con menos peso de b la línea queda igual de parada en pantalla que en la _y.
+        # Apagada: hundida 1 px y reflejos en «\». En la _x, menos peso de b deja la línea igual de parada.
         k = 0.4 if _MIRROR[0] else 0.8
         d = np.floor((ga + gb * k) * 122.0 / (gw + gh * k))
         lines = (d == 44) | (d == 47) | (d == 76) | (d == 100)
@@ -510,9 +489,7 @@ def tv_face_for(variant, t=1.0):
 
 
 def presentation_screen(axis, variant="", t=1.0):
-    """Televisor colgado de dos bordes de pared (la pieza del juego sigue siendo presentation_screen).
-    variant: "" apagado; "chart", "pie" o "title", encendido con una presentación; t, el avance de su
-    animación (1 = completa)."""
+    """Televisor de dos bordes. variant: "" apagado o "chart", "pie", "title"; t = avance (1 = completa)."""
     c = wide_wall_item(axis)
     mounts = None
     for x in (TV_X[0] + 20 / 64.0, TV_X[1] - 23 / 64.0):
@@ -540,7 +517,7 @@ def air_face(ctx):
     index = np.asarray(ctx.base).copy() if np.ndim(ctx.base) else np.full(a.shape, ctx.base)
     # Arriba el filo redondeado: una fila más clara.
     index = np.where(b == height - 1, pal.LIGHT, index)
-    # Marca gris arriba a la izquierda y luz roja abajo a la derecha (2×2).
+    # Marca gris y luz roja (2×2).
     index = np.where((b >= height - 5) & (b < height - 3) & (a >= 4) & (a < 8), AIR_LOGO, index)
     led = (b >= 3) & (b < 5) & (a >= width - 13) & (a < width - 11)
     return np.where(led, AIR_LED, index)
@@ -574,7 +551,7 @@ def air_end(ctx):
 
 def air_grille(ctx):
     a, b = front(ctx, GRILLE_X[0], BASE, GRILLE_X[1])
-    # Rejilla de aletas: filas alternas con un punto claro cada 2 px (como un tejido).
+    # Rejilla de aletas: filas alternas con un punto claro cada 2 px.
     lit = (np.mod(a + b, 2) == 0) & (np.mod(b, 2) == 1)
     return np.where(lit, AIR_GRILLE_LIT, AIR_GRILLE)
 
@@ -612,8 +589,7 @@ PLAYS = {"presentation_screen_chart": "chart", "presentation_screen_pie": "pie",
 
 
 def corner_sheet(out_dir, images):
-    """Una esquina del fondo: tres tramos altos _x a la izquierda y tres _y a la derecha, con los
-    objetos colgados (el juego los dibuja después de la pared)."""
+    """Esquina del fondo con tres tramos altos _x y tres _y y los objetos colgados."""
     wall_x = walls.wall_piece("x", True)
     wall_x.finish(ground_outline=walls.FLOOR_LINE)
     wall_y = walls.wall_piece("y", True)

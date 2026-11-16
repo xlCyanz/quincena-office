@@ -1,7 +1,5 @@
-# Comandos de la consola Panku para probar sin jugar horas: dar dinero, saltar el tiempo
-# y fijar las barras de los empleados. Se usan como `qo.add_money(50000)` en la consola.
-# Pasan por las funciones públicas de los sistemas, que emiten sus propias señales de EventBus.
-# Solo para desarrollo: DevTools no los registra en una exportación release.
+# Comandos de la consola Panku (`qo.add_money(50000)`): dinero, tiempo y barras de los empleados.
+# Usan las funciones públicas de los sistemas. DevTools no los registra en release.
 class_name DevCommands
 extends RefCounted
 
@@ -40,7 +38,7 @@ func add_money(amount: int) -> String:
 	return "Saldo: $%d" % Economy.balance
 
 
-## Adelanta el reloj hora por hora (se cobran nóminas, cuotas y todo lo que toque).
+## Adelanta el reloj hora por hora (cobra todo lo que toque).
 func skip_hours(hours: int) -> String:
 	GameClock.fast_forward_hours(maxi(hours, 0))
 	return "Día %d, %02d:00" % [GameClock.get_day_count(), GameClock.get_hour()]
@@ -66,7 +64,7 @@ func set_energy(value: int) -> String:
 	return _set_bar("energy", value)
 
 
-## Abre la tarjeta de un evento (hito 43).
+## Abre la tarjeta de un evento.
 func event(event_id: String) -> String:
 	if Events.trigger(event_id):
 		return "Evento %s abierto." % event_id

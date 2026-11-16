@@ -1,15 +1,11 @@
-# Prueba única sin ventana: corre en orden las comprobaciones de todos los hitos
-# (tests/suites/, una parte por hito) y al final dice cuántas fallaron.
-# Ejecutar con:
-#   Godot --headless --path . res://tests/test_all.tscn
-# Solo algunas partes (separadas por coma, sin «test_»):
-#   Godot --headless --path . res://tests/test_all.tscn -- --only=reception,administration
-# Termina con código 0 si todo pasa y 1 si algo falla.
+# Prueba única sin ventana: corre en orden las partes de tests/suites/ y cuenta los fallos.
+#   Godot --headless --path . res://tests/test_all.tscn [-- --only=reception,administration]
+# Sale con 0 si todo pasa y 1 si algo falla.
 extends Node
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 const SUITES_DIR: String = "res://tests/suites/"
-## Partes en el orden de los hitos (1 a 69), cómo caminan, llegan y se ven las entrevistas, y la empresa inicial.
+## Partes en el orden de los hitos; las agregadas después van al final.
 const SUITES: Array[String] = [
 	"grid_camera", "game_clock", "new_game", "ceo", "construction", "furniture", "rooms", "money_ui",
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
@@ -17,27 +13,21 @@ const SUITES: Array[String] = [
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
 	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "office_chairs", "interview_view", "appointments", "build_sections", "quarters", "ground", "sprites", "starting_company", "dev_tools",
 ]
-## Primera parte que cuenta los baños (hito 52): las anteriores miden números exactos en
-## oficinas sin baño y corren con Staff.bathrooms_enabled en false.
+## Desde aquí cuentan los baños; las anteriores corren con Staff.bathrooms_enabled en false.
 const FIRST_BATHROOM_SUITE: String = "bathrooms"
-## Primera parte con candidatos según la empresa (hito 56): las anteriores cuentan
-## candidatos y habilidades exactos y corren con Staff.company_hiring_enabled en false.
+## Desde aquí, candidatos según la empresa; antes Staff.company_hiring_enabled en false.
 const FIRST_CANDIDATES_SUITE: String = "candidates"
-## Primera parte con el evento del inversionista (hito 58): las anteriores sortean los
-## eventos con la lista de antes y corren con Bank.investor_enabled en false.
+## Desde aquí sale el inversionista; antes Bank.investor_enabled en false.
 const FIRST_INVESTOR_SUITE: String = "investor"
-## Primera parte con la cámara suave (hito 68): las anteriores miden la cámara al instante y
-## corren con OfficeCamera.smoothing_enabled en false.
+## Desde aquí la cámara es suave; antes OfficeCamera.smoothing_enabled en false.
 const FIRST_CAMERA_VIEW_SUITE: String = "camera_view"
-## Primera parte con llegadas escalonadas: las anteriores miden quién entra a cada hora en
-## punto y corren con Staff.arrival_spread_enabled en false.
+## Desde aquí las llegadas son escalonadas; antes Staff.arrival_spread_enabled en false.
 const FIRST_ARRIVALS_SUITE: String = "arrivals"
-## Primera parte con la silla de visita de las oficinas: las anteriores arman oficinas con
-## una sola silla y corren con RoomRules.counts_enabled en false.
+## Desde aquí las oficinas piden silla de visita; antes RoomRules.counts_enabled en false.
 const FIRST_OFFICE_CHAIRS_SUITE: String = "office_chairs"
-## Ninguna parte puede tardar más que esto (hito 67: las largas son las simulaciones de fase).
+## Tope por parte; las más largas son las simulaciones de fase.
 const MAX_SUITE_SECONDS: float = 60.0
-## Nodos globales cuyas conexiones de señales deja cada parte (se quitan al terminarla).
+## Autoloads cuyas conexiones de señales se quitan al terminar cada parte.
 const AUTOLOADS: Array[String] = [
 	"EventBus", "GameClock", "Economy", "OfficeState", "Staff", "Projects", "Products", "Bank", "Company", "Events", "SaveManager",
 ]
@@ -48,12 +38,11 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# El suelo se pinta antes de la primera parte (tarda ~1 s), no en el primer cuadro de una partida.
+	# Se pinta una vez (~1 s) antes de la primera parte.
 	OfficeGrid.prepare_tile_set()
-	# Las partes esperan una partida nueva con el CEO solo y guardan en otra carpeta.
+	# Partida nueva con el CEO solo; guardado y opciones en archivos de prueba.
 	SaveManager.save_dir = "user://test_saves"
 	SaveManager.start_with_demo = false
-	# Y con las opciones por defecto en otro archivo, no las del jugador (hito 60).
 	Settings.path = "user://test_settings.cfg"
 	Settings.reset_to_defaults()
 	var only: Array[String] = _only_suites()
@@ -87,7 +76,7 @@ func _ready() -> void:
 # Corre una parte y devuelve (fallos, comprobaciones).
 func _run_suite(suite: String) -> Vector2i:
 	var before: Dictionary = _connections()
-	# Cada parte empieza como al abrir el juego: sin partida y con el reloj parado.
+	# Cada parte empieza sin partida y con el reloj parado.
 	OfficeState.lot = Lot.new()
 	GameClock.stop()
 	Staff.bathrooms_enabled = SUITES.find(suite) >= SUITES.find(FIRST_BATHROOM_SUITE)
@@ -110,7 +99,7 @@ func _run_suite(suite: String) -> Vector2i:
 	_drop_new_connections(before)
 	GameClock.stop()
 	node.queue_free()
-	# Las escenas que abrió la parte (menú o juego) se cierran; test_all vuelve a ser la actual.
+	# Se cierran las escenas que abrió la parte.
 	for child: Node in get_tree().root.get_children():
 		if child != self and not ProjectSettings.has_setting("autoload/%s" % child.name):
 			child.queue_free()
@@ -132,7 +121,7 @@ func _connections() -> Dictionary:
 	return found
 
 
-# Quita las conexiones que hizo una parte (por ejemplo, lambdas que escuchan avisos).
+# Quita las conexiones que dejó una parte (por ejemplo, lambdas que escuchan avisos).
 func _drop_new_connections(before: Dictionary) -> void:
 	for autoload: String in AUTOLOADS:
 		var node: Node = get_node("/root/%s" % autoload)

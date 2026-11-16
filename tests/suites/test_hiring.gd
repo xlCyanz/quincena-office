@@ -1,6 +1,5 @@
-# Prueba del hito 11: contratación.
-# Criterio: sin puesto de trabajo libre no se puede contratar; con puesto, el empleado
-# queda asignado a él y ningún puesto queda con dos empleados.
+# Contratación: sin puesto libre no se contrata; con puesto, el empleado queda en él y ningún
+# puesto tiene dos.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=hiring
 extends Node
 
@@ -20,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_workstations()
 	_check_no_station()
@@ -66,8 +65,8 @@ func _vacancy_with_candidates(count: int) -> Dictionary:
 	return vacancy
 
 
-# Área de trabajo de 3×3 al este de la Oficina Ejecutiva (x 3–5, y 0–2) con una puerta
-# al sur. Las paredes del oeste son las de la Oficina Ejecutiva.
+# Área de trabajo de 3×3 al este de la Oficina Ejecutiva (x 3–5, y 0–2), puerta al sur; las
+# paredes del oeste son las de la oficina.
 func _build_work_area(builder: Builder) -> void:
 	var y: int = GridEdge.AXIS_Y
 	var walls: Array[Dictionary] = [
@@ -107,10 +106,8 @@ func _check_workstations() -> void:
 	_expect(builder.install_computer("basic_computer", Vector2i(4, 0))["ok"], "instalar la computadora")
 	var free: Array[Dictionary] = Staff.get_free_workstations()
 	_expect(free.size() == 1 and free[0]["cell"] == Vector2i(4, 1), "un puesto libre en la silla: %s" % [free])
-	# Una silla que no está delante del escritorio no hace puesto.
 	_expect(builder.place("basic_chair", Vector2i(5, 0), 0)["ok"], "poner una silla al lado")
 	_expect(Staff.get_free_workstations().size() == 1, "la silla de al lado no es un puesto")
-	# Sin el área de trabajo no hay puesto.
 	_expect(builder.unmark_room(Vector2i(4, 1))["ok"], "quitar el área de trabajo")
 	_expect(Staff.get_free_workstations().is_empty(), "fuera de un área de trabajo no hay puesto")
 
@@ -137,14 +134,12 @@ func _check_offers() -> void:
 	var fair: Dictionary = vacancy["candidates"][1]
 	var ratio: float = float(StaffCatalog.get_hiring("counter_offer_ratio"))
 
-	# Muy por debajo: rechaza y se va.
 	var low_offer: int = floori(low["asked_salary"] * ratio) - 1
 	var result: Dictionary = Staff.make_offer(low["id"], low_offer)
 	_expect(result["ok"] and result["result"] == "rejected", "una oferta baja se rechaza: %s" % [result])
 	_expect(Staff.get_candidate(low["id"]).is_empty(), "el que rechaza se va")
 	_expect(Staff.employees.is_empty(), "nadie contratado tras el rechazo")
 
-	# Un poco por debajo: contraoferta con lo que pide.
 	var asked: int = fair["asked_salary"]
 	var near_offer: int = ceili(asked * ratio)
 	result = Staff.make_offer(fair["id"], near_offer)
@@ -204,7 +199,6 @@ func _check_protected_furniture() -> void:
 	_expect(not builder.rotate(Vector2i(4, 1))["ok"], "ni se gira su silla")
 	_expect(not builder.sell_furniture_at(Vector2i(1, 1))["ok"], "la silla del CEO sigue sin venderse")
 	_expect(Economy.balance == balance and OfficeState.furniture.size() == count, "nada cambió")
-	# Lo que no es de un puesto se sigue vendiendo.
 	_expect(builder.place("small_plant", Vector2i(5, 0), 0)["ok"] and builder.sell_furniture_at(Vector2i(5, 0))["ok"],
 		"una planta se compra y se vende")
 
@@ -235,7 +229,7 @@ func _check_interview() -> void:
 		"revela los valores reales: %s" % skills)
 	_expect(not Staff.interview_problem(first["id"]).is_empty(), "no se entrevista dos veces")
 
-	# La entrevista no cruza el almuerzo: a las 11:45 terminaría a las 12:15.
+	# No cruza el almuerzo: a las 11:45 terminaría a las 12:15.
 	GameClock.fast_forward_hours(2)
 	_expect(GameClock.get_hour() == 11, "son las 11: %d" % GameClock.get_hour())
 	_expect(Staff.interview_problem(second["id"]).is_empty(), "a las 11:00 sí cabe antes del almuerzo")
@@ -243,7 +237,6 @@ func _check_interview() -> void:
 	_expect(Staff.interview_problem(second["id"]).contains("almuerzo"), "11:45 cruza el almuerzo: %s" % Staff.interview_problem(second["id"]))
 	GameClock.fast_forward_hours(2)
 	_expect(Staff.start_interview(second["id"])["ok"], "a las 13:00 sí")
-	# Si el CEO se va a casa, la entrevista se corta y no puede empezar otra.
 	Staff.set_ceo_at_work(false)
 	_expect(Staff.interview.is_empty() and not second["interviewed"], "mandar al CEO a casa corta la entrevista")
 	_expect(not Staff.interview_problem(second["id"]).is_empty(), "sin el CEO no se entrevista")
@@ -269,7 +262,7 @@ func _check_save() -> void:
 	var hired: Dictionary = vacancy["candidates"][0]
 	var other: Dictionary = vacancy["candidates"][1]
 	_expect(Staff.start_interview(hired["id"])["ok"], "entrevistar antes de contratar")
-	GameClock.fast_forward_hours(1)  # Dura media hora.
+	GameClock.fast_forward_hours(1)  # dura media hora
 	_expect(Staff.make_offer(hired["id"], hired["asked_salary"])["result"] == "hired", "contratar al entrevistado")
 	_expect(Staff.employees[0]["interviewed"] and Staff.employees[0]["known_traits"].size() == 1,
 		"el empleado conserva lo que reveló la entrevista")
@@ -288,7 +281,7 @@ func _check_save() -> void:
 		"la silla sigue asignada")
 	_expect(Staff.has_working_station(Staff.employees[0]), "su puesto sigue funcionando")
 	_expect(other.is_empty() or Staff.get_candidate(other["id"]).is_empty(), "los demás candidatos se fueron al contratar")
-	# Una partida del hito 10 no tiene empleados ni entrevista.
+	# Una partida vieja no tiene empleados ni entrevista.
 	Staff.import_state({"vacancies": [], "next_id": 5})
 	_expect(Staff.employees.is_empty() and Staff.interview.is_empty(), "partida vieja sin empleados")
 
@@ -325,7 +318,6 @@ func _check_panel() -> void:
 	await get_tree().process_frame
 	_expect(panel.get_list_text().contains("Rasgos: "), "se ve el rasgo revelado: %s" % panel.get_list_text())
 
-	# Subir la oferta hasta lo que pide.
 	while panel.get_offer(candidate_id) < candidate["asked_salary"]:
 		await _click(panel.get_offer_step_buttons(candidate_id)[1])
 	while panel.get_offer(candidate_id) > candidate["asked_salary"]:
@@ -338,7 +330,6 @@ func _check_panel() -> void:
 	_expect(panel.get_list_text().contains("Empleados (1) · puestos libres: 0") and panel.get_list_text().contains(candidate["name"]),
 		"el empleado en la lista: %s" % panel.get_list_text())
 
-	# Sin puesto libre, ofrecer avisa por qué.
 	var vacancy2: Dictionary = _vacancy_with_candidates(1)
 	await get_tree().process_frame
 	var other_id: int = vacancy2["candidates"][0]["id"]

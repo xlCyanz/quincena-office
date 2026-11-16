@@ -1,8 +1,5 @@
-# Arte provisional del mapa alrededor del local, leído de data/map.json: el terreno del
-# solar con pasto variado, el camino de la entrada a la calle, y fuera del solar la acera
-# y la calle del lado de la entrada y pasto más oscuro en los otros lados, con árboles de
-# adorno. Funciones puras: la cuadrícula dibuja lo que dice plan(). Todo sale de la
-# posición de cada casilla (azar fijo), así el mapa se ve igual en cada partida.
+# Arte del mapa alrededor del local (data/map.json, funciones puras): pasto del solar, camino a la
+# calle y, afuera, acera y calle del lado de la entrada y pasto oscuro con árboles. Azar fijo por casilla.
 class_name MapDecor
 extends RefCounted
 
@@ -14,10 +11,10 @@ const PATH: String = "path"
 const OUTSIDE: String = "outside"
 const SIDEWALK: String = "sidewalk"
 const ROAD: String = "road"
-## Calle con su línea pintada; la cuadrícula elige la columna según hacia dónde corre.
+## Calle con su línea; la columna depende de hacia dónde corre.
 const ROAD_LINE: String = "road_line"
 
-## Sal del azar fijo de cada uso, para que no salgan siempre las mismas casillas.
+## Sal del azar fijo de cada uso.
 const SALT_STYLE: int = 1
 const SALT_TREE: int = 2
 const SALT_TREE_SIZE: int = 3
@@ -55,7 +52,7 @@ static func get_styles() -> Dictionary[String, Array]:
 	return styles
 
 
-## Número entre 0 y 1 fijo para una casilla y un uso (salt).
+## Número entre 0 y 1 fijo por casilla y uso (salt).
 static func noise(cell: Vector2i, salt: int) -> float:
 	var h: int = (cell.x * 73856093) ^ (cell.y * 19349663) ^ (salt * 83492791)
 	h = (h ^ (h >> 13)) * 1274126177
@@ -63,8 +60,7 @@ static func noise(cell: Vector2i, salt: int) -> float:
 	return float(h % 100000) / 100000.0
 
 
-## Familia de pasto de una casilla (sprites): por zonas, con ruido suave entre puntos cada
-## GRASS_ZONE casillas, así no se ve un solo dibujo repetido ni un salpicado casilla a casilla.
+## Familia de pasto de una casilla: por zonas de GRASS_ZONE con ruido suave, sin repetición visible.
 static func get_grass_family(cell: Vector2i) -> String:
 	var at: Vector2 = Vector2(cell) / float(GRASS_ZONE)
 	var corner := Vector2i(floori(at.x), floori(at.y))
@@ -72,7 +68,7 @@ static func get_grass_family(cell: Vector2i) -> String:
 	t = t * t * (Vector2(3.0, 3.0) - 2.0 * t)
 	var top: float = lerpf(noise(corner, SALT_GRASS), noise(corner + Vector2i(1, 0), SALT_GRASS), t.x)
 	var bottom: float = lerpf(noise(corner + Vector2i(0, 1), SALT_GRASS), noise(corner + Vector2i(1, 1), SALT_GRASS), t.x)
-	# El ruido suavizado se junta hacia el medio: se estira para que las cuatro familias salgan.
+	# El ruido suavizado se junta al medio: se estira para que salgan las cuatro familias.
 	var value: float = clampf(0.5 + (lerpf(top, bottom, t.y) - 0.5) * 1.8, 0.0, 0.9999)
 	var limit: float = 0.0
 	for family: Array in GRASS_FAMILIES:
@@ -82,8 +78,7 @@ static func get_grass_family(cell: Vector2i) -> String:
 	return String(GRASS_FAMILIES[0][0])
 
 
-## Dirección (en la cuadrícula) en que se sale del local por la entrada: de la casilla de
-## adentro a la de afuera. Sin entrada, hacia +y.
+## Dirección de salida por la entrada (de adentro a afuera); sin entrada, +y.
 static func get_exit_direction(lot: Lot, entrance_outside: Vector2i) -> Vector2i:
 	for direction: Vector2i in DIRECTIONS:
 		if lot.has_point(entrance_outside - direction):
@@ -91,14 +86,13 @@ static func get_exit_direction(lot: Lot, entrance_outside: Vector2i) -> Vector2i
 	return Vector2i(0, 1)
 
 
-## Eje de la cuadrícula a lo largo del que corre la calle (GridEdge.AXIS_X o AXIS_Y).
+## Eje a lo largo del que corre la calle (GridEdge.AXIS_X o AXIS_Y).
 static func get_road_axis(exit_direction: Vector2i) -> int:
 	return GridEdge.AXIS_X if exit_direction.x == 0 else GridEdge.AXIS_Y
 
 
-## Plano del mapa: {"tiles": casilla → estilo, para todo lo que no es local (el terreno
-## del solar y surround_width casillas alrededor), "trees": casillas con árbol,
-## "road_axis": eje de la calle}.
+## Plano: {"tiles": casilla → estilo (solar y surround_width alrededor, sin el local),
+## "trees": casillas con árbol, "road_axis"}.
 static func plan(site: Rect2i, lot: Lot, entrance_outside: Vector2i) -> Dictionary:
 	var data: Dictionary = get_data()
 	var surround: int = int(data.get("surround_width", 0))
@@ -107,7 +101,7 @@ static func plan(site: Rect2i, lot: Lot, entrance_outside: Vector2i) -> Dictiona
 	var trees: Array[Vector2i] = []
 	if site.size == Vector2i.ZERO:
 		return {"tiles": tiles, "trees": trees, "road_axis": get_road_axis(exit)}
-	# Camino: de la puerta hacia afuera hasta el borde del solar.
+	# Camino de la puerta hasta el borde del solar.
 	var path: Dictionary[Vector2i, bool] = {}
 	var step: Vector2i = entrance_outside
 	while site.has_point(step) and not lot.has_point(step):
@@ -135,10 +129,9 @@ static func plan(site: Rect2i, lot: Lot, entrance_outside: Vector2i) -> Dictiona
 	return {"tiles": tiles, "trees": trees, "road_axis": get_road_axis(exit)}
 
 
-# Estilo de una casilla fuera del solar: acera y calle del lado de la salida, pasto oscuro
-# en el resto.
+# Fuera del solar: acera y calle del lado de la salida, pasto oscuro en el resto.
 static func _outside_style(cell: Vector2i, site: Rect2i, exit: Vector2i, data: Dictionary) -> String:
-	var distance: int = 0  # casillas más allá del borde del solar, del lado de la salida
+	var distance: int = 0 # casillas más allá del borde, del lado de la salida
 	var along: int = 0  # posición a lo largo de la calle
 	match exit:
 		Vector2i(0, 1):
@@ -168,8 +161,7 @@ static func _outside_style(cell: Vector2i, site: Rect2i, exit: Vector2i, data: D
 	return OUTSIDE
 
 
-# Casillas del local y las que están a menos de margin de alguna (distancia en casillas,
-# contando diagonales).
+# Casillas del local y las que están a menos de margin (con diagonales).
 static func _near_cells(lot: Lot, margin: int) -> Dictionary[Vector2i, bool]:
 	var near: Dictionary[Vector2i, bool] = {}
 	var reach: int = maxi(margin - 1, 0)

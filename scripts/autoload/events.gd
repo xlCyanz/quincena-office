@@ -1,21 +1,8 @@
-# Eventos (diseño 10 y 19.2; hitos 43 y 44): situaciones que llegan como una tarjeta con un
-# texto corto y opciones. Cada hora de juego que pasa con el reloj andando y sin otra tarjeta
-# abierta se sortea si llega uno (en promedio uno cada mean_days días según la etapa) entre
-# los que cumplen sus condiciones (data/events.json), por su peso y sus modificadores. El
-# jugador tiene answer_seconds segundos reales para elegir, que solo corren con el reloj
-# andando (a cualquier velocidad; en pausa o en construcción la cuenta se detiene); si no
-# elige, se toma una opción al azar. Los efectos llaman a las funciones públicas de los
-# otros sistemas y todo pago pasa por Economy.
-#
-# La tarjeta abierta (card) es {"event_id", "title", "text", "options": [{"label",
-# "effects"}], "target", "seconds_left"}. target guarda sobre qué cae el evento (un
-# contrato, un producto, un equipo, un empleado, un monto), elegido al abrirla; los efectos
-# que dependen de él ya llevan su monto calculado. scheduled son los pagos que un cliente
-# atrasado devuelve más tarde: [{"day", "amount"}].
-#
-# Solo sortea con el reloj de una partida corriendo (GameClock.start, que hace la escena de
-# juego): las pruebas que adelantan el reloj con fast_forward_hours y el reloj detenido no
-# reciben eventos.
+# Eventos: tarjetas con opciones (data/events.json). Cada hora con el reloj de la partida andando
+# (GameClock.start; no en pruebas con fast_forward_hours) y sin otra tarjeta, se sortea uno entre los
+# que cumplen sus condiciones, por peso. answer_seconds reales solo corren con el reloj andando; al
+# acabarse se elige al azar. card: {"event_id", "title", "text", "options", "target", "seconds_left"};
+# target se elige al abrirla y los montos ya van calculados.
 extends Node
 
 const EVENTS_PATH: String = "res://data/events.json"
@@ -50,7 +37,7 @@ func new_game() -> void:
 	EventBus.event_changed.emit()
 
 
-## Fija la semilla del azar (las pruebas la usan para tener resultados repetibles).
+## Fija la semilla del azar (pruebas).
 func set_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
 
@@ -86,8 +73,7 @@ func get_weight(event_id: String) -> float:
 	return weight
 
 
-## Abre la tarjeta de ese evento si puede salir ahora (y no hay otra abierta). Lo usan el
-## sorteo, las pruebas y la consola de desarrollo. Devuelve si se abrió.
+## Abre la tarjeta de ese evento si puede salir y no hay otra abierta. Devuelve si se abrió.
 func trigger(event_id: String) -> bool:
 	if not card.is_empty() or not get_eligible_ids().has(event_id):
 		return false
@@ -109,8 +95,7 @@ func trigger(event_id: String) -> bool:
 	return true
 
 
-## Elige una opción de la tarjeta abierta: aplica sus efectos y la cierra. Devuelve el
-## texto del resultado ("" si no había tarjeta o la opción no existe).
+## Elige una opción de la tarjeta abierta, aplica sus efectos y la cierra. Devuelve el texto del resultado o "".
 func choose(index: int, by_timeout: bool = false) -> String:
 	if card.is_empty() or index < 0 or index >= (card["options"] as Array).size():
 		return ""
@@ -130,8 +115,7 @@ func choose(index: int, by_timeout: bool = false) -> String:
 	return message
 
 
-## Descuenta segundos reales de la cuenta atrás; al llegar a 0 elige una opción al azar.
-## Lo llama _process con el reloj andando; las pruebas lo usan para no esperar.
+## Descuenta segundos reales de la cuenta atrás; en 0 elige al azar. Las pruebas lo llaman directo.
 func advance_countdown(seconds: float) -> void:
 	if card.is_empty():
 		return
@@ -208,8 +192,7 @@ func export_state() -> Dictionary:
 	return {"card": card.duplicate(true), "scheduled": scheduled.duplicate(true), "rng_state": str(_rng.state)}
 
 
-## Restaura la tarjeta abierta y los pagos pendientes de una partida guardada. Sin datos
-## (partidas anteriores al hito 43) queda sin tarjeta.
+## Restaura la tarjeta abierta y los pagos pendientes; sin datos queda sin tarjeta.
 func import_state(state: Dictionary) -> void:
 	card = {}
 	var saved: Variant = state.get("card", {})
@@ -236,7 +219,7 @@ func import_state(state: Dictionary) -> void:
 	EventBus.event_changed.emit()
 
 
-# Al pasar una hora con el reloj de la partida andando: quizá llega un evento.
+# Cada hora con el reloj de la partida andando: quizá llega un evento.
 func _roll() -> void:
 	if not card.is_empty() or not _clock_running() or Bank.game_over:
 		return
@@ -318,8 +301,7 @@ func _available_options(event: Dictionary) -> Array[Dictionary]:
 	return options
 
 
-# Sobre qué cae un evento: un diccionario, {} si no necesita nada, o null si no hay sobre qué
-# caer (entonces no puede salir).
+# Sobre qué cae un evento: un diccionario, {} si no necesita nada o null si no puede salir.
 func _find_target(kind: String, args: Dictionary) -> Variant:
 	match kind:
 		"":
@@ -407,8 +389,7 @@ func _has_good_leader(team: Dictionary) -> bool:
 	return float(leader.get("skills", {}).get("leadership", 0.0)) >= float(_events_data().get("good_leader_from", 60))
 
 
-# Pone los datos del objetivo en el texto: {employee}, {employee2}, {product}, {client},
-# {team}, {amount}.
+# Pone los datos del objetivo en el texto ({employee}, {product}, {amount}…).
 func _fill(text: String, target: Dictionary) -> String:
 	var result: String = text
 	for key: String in ["employee", "employee2", "product", "client", "team"]:
@@ -422,8 +403,8 @@ func _fill(text: String, target: Dictionary) -> String:
 	return result
 
 
-# Calcula al abrir la tarjeta lo que depende del momento: el costo de las horas extra, la
-# multa, el precio de la computadora o lo retenido. Devuelve {} si no hace nada.
+# Calcula al abrir la tarjeta lo que depende del momento (horas extra, multa, computadora,
+# retenido). Devuelve {} si no hace nada.
 func _resolve(effect: Dictionary, target: Dictionary) -> Dictionary:
 	var resolved: Dictionary = effect.duplicate(true)
 	match String(effect["type"]):
@@ -522,8 +503,7 @@ func _apply(effect: Dictionary, target: Dictionary, title: String) -> String:
 	return ""
 
 
-# Proyectos en curso (contratos y de productos) que alcanza un efecto: los del CEO, los del
-# equipo del objetivo o todos.
+# Proyectos en curso (contratos y productos) que alcanza un efecto: del CEO, del equipo del objetivo o todos.
 func _projects_in_scope(scope: String, target: Dictionary) -> Array[Dictionary]:
 	var all: Array[Dictionary] = Projects.contracts.duplicate()
 	all.append_array(Products.get_active_projects())

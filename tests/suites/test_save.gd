@@ -1,10 +1,9 @@
-# Prueba del hito 9: autoguardado al final de cada día, guardado manual en
-# 5 ranuras y carga desde el menú. Criterio: tras guardar, cerrar y cargar, la oficina,
-# el dinero y la fecha son idénticos.
+# Guardado: autoguardado al terminar el día, 5 ranuras manuales y carga desde el menú; tras
+# guardar, cerrar y cargar, oficina, dinero y fecha quedan idénticos.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=save
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -48,13 +47,13 @@ func _clear_saves() -> void:
 		dir.remove(file)
 
 
-# Todo lo que tiene que quedar idéntico: oficina, dinero (con sus movimientos) y fecha.
+# Lo que tiene que quedar idéntico: oficina, dinero (con movimientos) y fecha.
 func _snapshot() -> String:
 	return JSON.stringify({"office": OfficeState.export_state(), "economy": Economy.export_state(),
 		"clock": GameClock.export_state()})
 
 
-# Una partida con cambios en todo: paredes, piso, muebles, habitación, dinero y fecha.
+# Cambios en todo: paredes, piso, muebles, habitación, dinero y fecha.
 func _play_a_while() -> void:
 	SaveManager.new_game()
 	var builder := Builder.new()
@@ -85,7 +84,7 @@ func _check_round_trip() -> void:
 		"texto de la ranura: %s" % SaveManager.describe_slot("slot_3"))
 	_expect(SaveManager.describe_slot("slot_1") == "Ranura 1 — vacía", "ranura vacía: %s" % SaveManager.describe_slot("slot_1"))
 
-	# "Cerrar": se borra todo con una partida nueva; luego se carga.
+	# «Cerrar»: partida nueva y luego cargar.
 	SaveManager.new_game()
 	_expect(_snapshot() != before, "la partida nueva debería ser distinta")
 	_expect(SaveManager.load_game("slot_3"), "cargar la ranura 3")
@@ -144,7 +143,7 @@ func _close_game(game: Node) -> void:
 func _check_autosave_in_game() -> void:
 	_clear_saves()
 	SaveManager.new_game()
-	# Sin escena de juego abierta no se autoguarda (por ejemplo, en el menú).
+	# Sin escena de juego abierta (en el menú) no se autoguarda.
 	GameClock.fast_forward_hours(24)
 	_expect(not SaveManager.has_save(SaveManager.AUTOSAVE), "se autoguardó sin partida abierta")
 	SaveManager.new_game()
@@ -193,7 +192,6 @@ func _check_settings_and_reload() -> void:
 		"al cerrar Ajustes vuelve el tiempo")
 	await _close_game(game)
 
-	# Cerrar y cargar: la oficina, el dinero, la fecha, la cámara y el CEO, iguales.
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_2"), "cargar la ranura 2")
 	# Se guardó sin la pausa de Ajustes (el jugador no estaba en pausa).
@@ -208,7 +206,6 @@ func _check_settings_and_reload() -> void:
 
 
 func _check_menu() -> void:
-	# El menú muestra las ranuras: las vacías no se pueden pulsar.
 	var menu: Control = MENU_SCENE.instantiate()
 	add_child(menu)
 	await get_tree().process_frame

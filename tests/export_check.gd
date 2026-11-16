@@ -1,12 +1,10 @@
-# Revisión de una exportación (hito 66): se corre sobre el .pck exportado, fuera del proyecto:
+# Revisa una exportación sobre su .pck, fuera del proyecto (lo llama tests/export_desktop.sh):
 #   Godot --headless --main-pack build/linux/quincena_office.pck -s <ruta absoluta>/tests/export_check.gd
-# (tests/export_desktop.sh lo hace con cada plataforma). Mira que el paquete no traiga las
-# herramientas de desarrollo ni sus autoloads, que estén los sistemas del juego y sus datos, y
-# que el menú principal cargue. Imprime «EXPORTACIÓN: OK» y sale con 0, o los fallos y 1.
+# Sin herramientas de desarrollo, con sistemas y datos, y el menú carga. Sale con 0 o 1.
 extends SceneTree
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
-## Autoloads del juego (los de project.godot sin los de desarrollo).
+## Autoloads del juego (sin los de desarrollo).
 const GAME_AUTOLOADS: Array[String] = [
 	"EventBus", "Settings", "GameClock", "Economy", "OfficeState", "Staff", "Projects", "Products", "Bank",
 	"Company", "Events", "Tutorial", "SaveManager",
@@ -48,7 +46,6 @@ func _run() -> void:
 		_expect(not FileAccess.get_file_as_string(path).is_empty(), "falta el dato %s" % path)
 	_expect(ProjectSettings.get_setting("application/config/name") == "Quincena Office", "el nombre del juego")
 	_expect(String(ProjectSettings.get_setting("application/run/main_scene")) == MENU_SCENE_PATH, "la escena inicial es el menú")
-	# El menú principal carga y muestra sus botones.
 	_expect(change_scene_to_file(MENU_SCENE_PATH) == OK, "no se pudo abrir el menú principal")
 	for i: int in range(5):
 		await process_frame

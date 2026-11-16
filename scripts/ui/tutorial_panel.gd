@@ -1,8 +1,5 @@
-# Tarjeta del tutorial (hito 63): arriba, entre los paneles de la izquierda y el reloj,
-# muestra el paso actual de Tutorial con «Saltar», y resalta lo que el paso pide con un
-# marco y una flecha que se mueve. Lo resaltado lo da target_provider (main.gd: un botón o
-# el local en pantalla); de la lista del paso se usa lo primero que se vea. No atrapa clics
-# fuera de la tarjeta: el resto de la interfaz sigue igual.
+# Tarjeta del tutorial arriba con «Saltar»; resalta lo que pide el paso (lo primero que se vea)
+# con un marco y una flecha. Solo atrapa clics en la tarjeta.
 class_name TutorialPanel
 extends CanvasLayer
 
@@ -21,8 +18,7 @@ const ARROW_BOB: float = 6.0
 
 ## Rectángulo en pantalla de lo que se resalta (clave de data/tutorial.json), o Rect2() si no se ve.
 var target_provider: Callable = func(_key: String) -> Rect2: return Rect2()
-## Rectángulos del dinero y del reloj en pantalla (Hud.get_corner_rects); la tarjeta va entre
-## los dos, pegada al reloj (hito 65: con la interfaz grande puede ir bajo el reloj).
+## Rectángulos del dinero y del reloj (Hud.get_corner_rects): la tarjeta va entre los dos, pegada al reloj.
 var corners_provider: Callable = func() -> Array[Rect2]: return [] as Array[Rect2]
 
 var _panel: PanelContainer
@@ -146,7 +142,7 @@ func _update_highlight() -> void:
 	var framed: Rect2 = rect.grow(FRAME_GROW)
 	_frame.position = framed.position
 	_frame.size = framed.size
-	# La flecha va del lado con más espacio: arriba de lo que está abajo y al revés.
+	# La flecha va del lado con más espacio.
 	var screen_height: float = get_viewport().get_visible_rect().size.y
 	var bob: float = sin(_time * 5.0) * ARROW_BOB
 	if framed.get_center().y > screen_height / 2.0:

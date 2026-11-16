@@ -1,10 +1,9 @@
-# Prueba del hito 16: producción.
-# Criterio: el CEO solo produce 24 puntos por día; 2 programadores y 1 diseñador Junior
-# producen 48; la programación no empieza antes de la mitad del diseño.
+# Producción: el CEO solo hace 24 puntos por día; 2 programadores y 1 diseñador Junior, 48;
+# la programación no empieza antes de la mitad del diseño.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=production
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -22,7 +21,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	_check_rates()
@@ -61,7 +60,7 @@ func _total(contract: Dictionary) -> float:
 	return total
 
 
-# Un contrato de prueba con muchos puntos para que los topes no molesten.
+# Muchos puntos para que los topes no molesten.
 func _big_contract(points: int) -> Dictionary:
 	Projects.accept(Projects.offers[0]["id"])
 	var contract: Dictionary = Projects.contracts[-1]
@@ -79,7 +78,7 @@ func _check_rates() -> void:
 	_expect(_near(Production.get_rate("junior", 25.0, 0.0), 1.5), "un junior cansado rinde 1.5")
 	_expect(_near(Production.get_rate("junior", 100.0, 0.3), 2.6) and _near(Production.get_computer_bonus("basic_computer"), 0.0),
 		"computadora pro +30%, básica sin extra")
-	# Hito 19: el ánimo bajo 50 baja el rendimiento hasta 70 % con ánimo 0.
+	# Ánimo bajo 50 baja el rendimiento hasta 70 % con ánimo 0.
 	_expect(_near(Production.get_mood_factor(100.0), 1.0) and _near(Production.get_mood_factor(50.0), 1.0)
 		and _near(Production.get_mood_factor(25.0), 0.85) and _near(Production.get_mood_factor(0.0), 0.7), "efecto del ánimo")
 	_expect(_near(Production.get_rate("junior", 25.0, 0.0, 0.0), 2.0 * 0.75 * 0.7), "cansado y desanimado se multiplican")
@@ -102,11 +101,9 @@ func _check_phases() -> void:
 	contract["progress"]["programming"] = 49.5
 	Production.apply(contract, programmer)
 	_expect(_near(contract["progress"]["programming"], 50.0), "programación no pasa el porcentaje de diseño")
-	# Un generalista rinde completo en la primera fase con lugar.
 	var ceo: Array[Dictionary] = [{"phase": "", "rate": 3.0}]
 	Production.apply(contract, ceo)
 	_expect(_near(contract["progress"]["design"], 53.0), "el CEO trabaja en diseño")
-	# Diseño y programación en la misma hora: el diseño abre lugar primero.
 	var both: Array[Dictionary] = [{"phase": "programming", "rate": 2.0}, {"phase": "design", "rate": 2.0}]
 	Production.apply(contract, both)
 	_expect(_near(contract["progress"]["design"], 55.0) and _near(contract["progress"]["programming"], 52.0), "orden de las fases")
@@ -130,7 +127,6 @@ func _check_ceo() -> void:
 	GameClock.fast_forward_hours(24)
 	_expect(_near(_total(contract), 24.0 + 13.0 * 3.0), "quedándose rinde 13 horas: %.1f" % (_total(contract) - 24.0))
 	_expect(_notices.any(func(text: String) -> bool: return text.contains("dormido")), "aviso de que se durmió")
-	# Una entrevista le quita su media hora.
 	_new_game()
 	contract = _big_contract(1000)
 	var vacancy: int = Staff.open_vacancy("programmer", "junior", 1200, true)["id"]
@@ -138,11 +134,11 @@ func _check_ceo() -> void:
 	var before: float = _total(contract)
 	_expect(Staff.start_interview(Staff.get_vacancy(vacancy)["candidates"][0]["id"])["ok"], "empezar una entrevista a las 9")
 	GameClock.fast_forward_hours(3)  # 12:00
-	# Dura media hora (9:00–9:30): esa hora rinde la mitad y las 10 y las 11 enteras.
+	# Media hora (9:00–9:30): esa hora rinde la mitad, las 10 y las 11 enteras.
 	_expect(_near(_total(contract) - before, 1.5 + 3.0 + 3.0), "durante la entrevista (9:00–9:30) no produce: %.1f" % (_total(contract) - before))
 
 
-# Empleados de mentira sentados en puestos de verdad.
+# Empleados falsos sentados en puestos de verdad.
 func _add_staff(roles: Array[String]) -> Array[int]:
 	var builder := Builder.new()
 	Economy.earn(20000, "Prueba")
@@ -200,7 +196,6 @@ func _check_team() -> void:
 		"diseño +16 y programación +32: %s" % [contract["progress"]])
 	_expect(_near(_total(contract) - 600.0, 48.0), "2 programadores y 1 diseñador Junior producen 48 por día")
 	_expect(_near(Projects.get_hourly_rate(contract), 6.0), "a las 8:00 del martes rinden 6 por hora")
-	# Un vendedor en el equipo no suma puntos; un empleado cansado rinde menos.
 	var seller_ids: Array[int] = []
 	Staff.get_employee(staff_ids[2])["role"] = "salesperson"
 	var workers: Array[Dictionary] = Projects.get_workers(contract, Staff.get_absolute_hour() + 2)
@@ -209,13 +204,12 @@ func _check_team() -> void:
 	workers = Projects.get_workers(contract, Staff.get_absolute_hour() + 2)
 	_expect(_near(float(workers[0]["rate"]) + float(workers[1]["rate"]), 3.5), "cansado rinde 1.5")
 	_expect(seller_ids.is_empty(), "datos")
-	# Sin puesto que funcione no trabaja.
 	OfficeState.furniture.filter(func(item: Dictionary) -> bool: return item["cell"] == Vector2i(3, 1))[0]["assigned_to"] = ""
 	_expect(Projects.get_workers(contract, Staff.get_absolute_hour() + 2).size() == 1, "sin puesto no trabaja")
 
 
-# Un diseñador y un programador desde cero: la programación espera la mitad del diseño
-# y nunca la pasa; sin QA, las pruebas avanzan con ayudantes y el contrato termina.
+# Diseñador y programador desde cero: la programación espera la mitad del diseño y nunca la pasa;
+# sin QA las pruebas avanzan con ayudantes y termina.
 func _check_overlap() -> void:
 	_new_game()
 	var roles: Array[String] = ["designer", "programmer"]
@@ -224,7 +218,7 @@ func _check_overlap() -> void:
 	Projects.accept(Projects.offers[0]["id"])
 	var contract: Dictionary = Projects.contracts[0]
 	_expect(contract["team_id"] == team["id"], "lo lleva el equipo")
-	# Sin plazo encima: atrasado subiría el estrés y podrían renunciar (hito 19).
+	# Sin plazo encima: atrasado subiría el estrés y podrían renunciar.
 	contract["deadline_day"] = int(contract["deadline_day"]) + 1000
 	var opened_at: float = -1.0
 	var testing_at: float = -1.0

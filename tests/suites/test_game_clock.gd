@@ -1,5 +1,5 @@
-# Prueba del hito 2: duración del día a cada velocidad, pausa, cambio de
-# mes y de semana, señales en orden y guardado del estado del reloj.
+# Reloj: duración del día a cada velocidad, pausa, cambio de mes y semana, señales en orden
+# y guardado.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=game_clock
 extends Node
 
@@ -24,13 +24,13 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MAIN_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.hour_changed.connect(_on_hour_changed)
 	EventBus.day_changed.connect(_on_day_changed)
 
-	# Todo lo que sigue corre en un solo fotograma, así el _process real del reloj
-	# no se mezcla con los pasos simulados.
+	# Todo lo que sigue corre en un solo fotograma: el _process real del reloj no se mezcla con
+	# los pasos simulados.
 	_check_start()
 	for index: int in range(GameConstants.CLOCK_SPEEDS.size()):
 		_check_day_length(index)
@@ -113,7 +113,6 @@ func _check_day_length(speed_index: int) -> void:
 		var hour_length: float = _hour_times[i] - _hour_times[i - 1]
 		_expect(absf(hour_length - expected_hour) <= FRAME_SECONDS * 1.5,
 			"%s una hora duró %.3f s, se esperaban %.2f s" % [label, hour_length, expected_hour])
-	# Las horas llegan seguidas y la medianoche pasa a las 0.
 	for i: int in range(1, _hours.size()):
 		_expect(_hours[i] == (_hours[i - 1] + 1) % GameConstants.HOURS_PER_DAY,
 			"%s horas fuera de orden: %d tras %d" % [label, _hours[i], _hours[i - 1]])

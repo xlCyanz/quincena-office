@@ -1,11 +1,9 @@
-# Prueba del hito 22: préstamos.
-# Criterio: $10,000 a 10 meses en C cuesta $14,500 en cuotas de $1,450 cobradas el día
-# 1; no se puede pedir más que el límite; el pago anticipado ahorra intereses;
-# refinanciar no se puede dos veces.
+# Préstamos: $10,000 a 10 meses en C cuestan $14,500 en cuotas de $1,450 el día 1; no se
+# pasa el límite; saldar antes ahorra intereses; no se refinancia dos veces.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=loans
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -21,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_quote()
 	_check_limit()
@@ -42,20 +40,20 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en C con $4,000 de ingresos del mes pasado: límite 3 × 4,000 = $12,000.
+# En C con $4,000 de ingresos del mes pasado: límite 3 × 4,000 = $12,000.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
 	Projects.set_seed(SEED)
 	Bank.monthly_income = 4000
-	Company.stage = 3  # Mediana empresa: sin tope por préstamo de la etapa (hito 27).
+	Company.stage = 3  # Sin tope por préstamo de la etapa.
 	_expect(Bank.rating == "C" and Bank.get_limit() == 12000, "parte en C con límite $12,000: %s %d" % [Bank.rating, Bank.get_limit()])
 
 
 func _to_next_month() -> void:
 	var target: int = GameClock.get_month() * GameConstants.DAYS_PER_MONTH
 	GameClock.fast_forward_hours((target - GameClock.get_day_count()) * GameConstants.HOURS_PER_DAY - GameClock.get_hour())
-	# Que la nota no cambie a mitad de la prueba: el ingreso queda fijo.
+	# Ingreso fijo para que la nota no cambie a mitad de la prueba.
 	Bank.monthly_income = 4000
 
 
@@ -93,7 +91,6 @@ func _check_installments() -> void:
 	Bank.request_loan(10000, 10)
 	var loan: Dictionary = Bank.loans[0]
 	_expect(Bank.get_installment(loan) == 1450, "cuota $1,450")
-	# El mismo día no se cobra nada; la primera cuota llega el día 1.
 	_expect(_sum(Bank.CONCEPT_INSTALLMENT) == 0, "sin cuota el día del préstamo")
 	_to_next_month()
 	_expect(_sum(Bank.CONCEPT_INSTALLMENT) == -1450 and int(loan["paid"]) == 1, "el día 1 cobra $1,450")
@@ -119,7 +116,6 @@ func _check_prepay() -> void:
 	var result: Dictionary = Bank.prepay(loan["id"])
 	_expect(result["ok"] and Economy.balance == before - cost and Bank.loans.is_empty(), "saldado: %s" % result["message"])
 	_expect(result["message"].contains("ahorras $2,700"), "ahorra intereses: %s" % result["message"])
-	# Sin dinero no se puede saldar.
 	Bank.request_loan(5000, 6)
 	Economy.charge(Economy.balance, "Prueba")
 	_expect(not Bank.prepay(Bank.loans[0]["id"])["ok"] and Bank.loans.size() == 1, "sin dinero no se salda")
@@ -140,11 +136,9 @@ func _check_refinance() -> void:
 		and Bank.get_remaining_principal(loan) == 7000, "refinanciado: %s" % result["message"])
 	var again: Dictionary = Bank.refinance(loan["id"], 3)
 	_expect(not again["ok"] and again["message"].contains("ya se refinanció"), "no se refinancia dos veces: %s" % again["message"])
-	# La última cuota cierra el total justo.
 	for month: int in range(13):
 		_to_next_month()
 	_expect(Bank.loans.is_empty(), "refinanciado también termina")
-	# Un préstamo a 24 meses ya no se puede alargar.
 	Bank.request_loan(1000, 24)
 	_expect(Bank.get_max_refinance_extra(Bank.loans[0]) == 0 and not Bank.refinance(Bank.loans[0]["id"], 3)["ok"], "24 meses es el tope")
 
@@ -203,7 +197,6 @@ func _check_panel() -> void:
 	_expect(Bank.loans.size() == 1 and bank.get_loan_status().begins_with("Préstamo de $10,000"), "pedido: %s" % bank.get_loan_status())
 	_expect(bank.get_loans_text().contains("$10,000 al 4.5 % mensual · cuota $1,450 · 10 cuotas · capital pendiente $10,000"), "renglón: %s" % bank.get_loans_text())
 	var loan_id: int = Bank.loans[0]["id"]
-	# Refinanciar: elegir los meses y confirmar.
 	bank.get_refinance_button(loan_id).pressed.emit()
 	await get_tree().process_frame
 	_expect(bank.get_loans_text().contains("+3 meses: 13 cuotas de"), "vista del refinanciado: %s" % bank.get_loans_text())
@@ -213,7 +206,6 @@ func _check_panel() -> void:
 	bank.get_confirm_button().pressed.emit()
 	await get_tree().process_frame
 	_expect(Bank.get_remaining_months(Bank.loans[0]) == 14 and bank.get_refinance_button(loan_id).disabled, "refinanciado desde el menú")
-	# Saldar: pide confirmación.
 	bank.get_prepay_button(loan_id).pressed.emit()
 	await get_tree().process_frame
 	_expect(Bank.loans.size() == 1 and bank.get_loans_text().contains("¿Saldar por"), "pide confirmar: %s" % bank.get_loans_text())

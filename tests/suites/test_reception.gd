@@ -1,10 +1,9 @@
-# Prueba del hito 36: recepcionista y visitas de clientes.
-# Criterio: con recepcionista presente la visita deja su oferta; sin él, el cliente se va
-# y la oferta se pierde; con sofá espera más.
+# Recepción y visitas: con recepcionista presente la visita deja su oferta; sin él el cliente se va
+# y se pierde; con sofá espera más.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=reception
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -13,7 +12,7 @@ const SEED: int = 20261114
 const RECEPTIONIST: String = "receptionist"
 const COUNTER_CELL := Vector2i(4, 5)
 const CHAIR_CELL := Vector2i(4, 6)
-## El sofá va contra la pared del este, de (5, 6) a (5, 7).
+## Sofá contra la pared este, de (5, 6) a (5, 7).
 const SOFA_CELL := Vector2i(5, 6)
 const SOFA_ROTATION: int = 3
 
@@ -26,7 +25,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_catalog()
 	_check_station()
@@ -49,8 +48,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Startup, con dinero de sobra y los objetivos cumplidos. Con
-# reception, una Recepción alrededor de la entrada con su mostrador y una silla delante.
+# Startup, dinero de sobra y objetivos cumplidos; con reception, Recepción en la entrada con mostrador y silla.
 func _new_game(reception: bool = true, stage: int = 1) -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -104,18 +102,17 @@ func _hire(role: String, level: String) -> Dictionary:
 	return employee
 
 
-# Avanza hasta las 9:00 de un día hábil (lunes a viernes).
+# Hasta las 9:00 de un día hábil.
 func _to_weekday_morning() -> void:
 	var hours: int = posmod(9 - GameClock.get_hour(), GameConstants.HOURS_PER_DAY)
 	GameClock.fast_forward_hours(hours if hours > 0 else GameConstants.HOURS_PER_DAY)
 	while GameClock.get_weekday() > 4:
 		GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
-	# Sin las visitas y ofertas que hayan llegado solas.
+	# Sin las visitas y ofertas que llegaron solas.
 	Projects.visits.clear()
 	Projects.offers.clear()
 
 
-# Un cliente llega ahora con una oferta pequeña.
 func _visit() -> Dictionary:
 	var offer: Dictionary = Projects._make_offer(GameClock.get_day_count(), "small")
 	Projects._add_visit(offer)
@@ -148,7 +145,6 @@ func _check_station() -> void:
 	var stations: Array[Dictionary] = Workstations.find_all(OfficeState.furniture, OfficeState.rooms, Workstations.RECEPTION)
 	_expect(stations.size() == 1 and stations[0]["cell"] == CHAIR_CELL, "la silla delante del mostrador es un puesto: %s" % [stations])
 	_expect(Workstations.find_free(OfficeState.furniture, OfficeState.rooms).is_empty(), "no es un puesto del Área de trabajo")
-	# Una segunda silla delante del mismo mostrador no es otro puesto.
 	_expect(Builder.new().place("basic_chair", Vector2i(5, 6), 0)["ok"], "otra silla delante")
 	_expect(Workstations.find_all(OfficeState.furniture, OfficeState.rooms, Workstations.RECEPTION).size() == 1, "un recepcionista por mostrador")
 	var receptionist: Dictionary = _hire(RECEPTIONIST, "senior")
@@ -172,7 +168,6 @@ func _check_enabled() -> void:
 	var sofa: Array[Vector2i] = FurnitureCatalog.get_footprint("waiting_sofa", SOFA_CELL, SOFA_ROTATION)
 	_expect(Projects.get_waiting_spots().slice(0, 2) == sofa and Projects.get_waiting_spots().size() == 5,
 		"primero en el sofá: %s" % [Projects.get_waiting_spots()])
-	# Sin mostrador la Recepción no funciona: no vienen.
 	var counter: int = OfficeState.find_furniture_at(COUNTER_CELL)
 	OfficeState.furniture.remove_at(counter)
 	_expect(not Projects.visits_enabled(), "sin mostrador no vienen")
@@ -195,7 +190,6 @@ func _check_arrivals() -> void:
 	for day: int in range(50):
 		Projects._process_arrivals(GameClock.get_day_count())
 	_expect(Projects.visits.is_empty() and not Projects.offers.is_empty(), "sin Recepción todas van a la bandeja")
-	# Las visitas cuentan para el tope de la bandeja.
 	_new_game()
 	for i: int in range(6):
 		_visit()
@@ -211,7 +205,7 @@ func _check_attended() -> void:
 	_expect(Projects.visits.size() == 1 and not _has_offer(offer), "el cliente espera en la Recepción")
 	GameClock.fast_forward_hours(1)
 	_expect(Projects.visits.is_empty() and _has_offer(offer), "con la recepcionista presente deja su oferta")
-	# Si la recepcionista llega más tarde, pero antes de que se vaya, lo atiende.
+	# Si llega más tarde, pero antes de que se vaya el cliente, lo atiende.
 	Staff.set_own_schedule(receptionist["id"], 11, [0, 1, 2, 3, 4])
 	_to_weekday_morning()
 	offer = _visit()
@@ -229,7 +223,6 @@ func _check_left() -> void:
 	_expect(Projects.visits.size() == 1, "sin recepcionista espera")
 	GameClock.fast_forward_hours(1)
 	_expect(Projects.visits.is_empty() and not _has_offer(offer), "a las 3 horas se va y la oferta se pierde")
-	# Un recepcionista fuera de su horario tampoco lo atiende.
 	_hire(RECEPTIONIST, "senior")
 	_to_weekday_morning()
 	while GameClock.get_weekday() != 5:
@@ -302,7 +295,7 @@ func _check_ui() -> void:
 	var visitors: Dictionary = game.get("visitors")
 	_expect(visitors.has(int(offer["id"])), "el cliente aparece en la oficina")
 	var visitor: Visitor = visitors.get(int(offer["id"]))
-	# Si la entrada está ocupada espera en la calle sin verse (una persona por casilla).
+	# Con la entrada ocupada espera en la calle sin verse (una persona por casilla).
 	_expect(visitor != null and visitor.activity == OfficeCharacter.Activity.WALKING_TO_DESK
 		and visitor.get_seat_cell() == SOFA_CELL, "y va al sofá")
 	_expect(visitor != null and visitor.display_name == "Cliente de %s" % offer["client"], "con su nombre")
@@ -321,11 +314,10 @@ func _check_ui() -> void:
 		found = found or roles.get_item_text(index).begins_with("Recepcionista")
 	_expect(found, "Personal ofrece la vacante de recepcionista")
 	staff_panel.set_open(false)
-	# Al irse, el personaje sale.
 	Projects.visits.clear()
 	EventBus.visits_changed.emit()
 	await get_tree().process_frame
-	# Si todavía esperaba en la calle para entrar, se va sin entrar (y se borra).
+	# Si aún esperaba en la calle, se va sin entrar y se borra.
 	_expect(not visitors.has(int(offer["id"])) and (not is_instance_valid(visitor)
 		or visitor.activity == OfficeCharacter.Activity.WALKING_OUT), "el cliente se va caminando")
 	game.queue_free()

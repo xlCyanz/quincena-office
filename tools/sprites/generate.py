@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-# Genera los sprites: corre cada módulo de tools/sprites/pieces/ y escribe sus PNG y su manifiesto.
-#
+# Genera los sprites: corre cada pieces/<grupo>.py (build(out_dir), guarda con iso.save; los "_" no se corren)
+# y escribe sus PNG y manifest_<grupo>.json, que usa check.py (--check lo corre al final).
 #   python3 tools/sprites/generate.py --out DIR [--only grupo[,grupo…]] [--check] [--list]
-#
-# Cada archivo pieces/<grupo>.py expone build(out_dir) -> lista de rutas escritas (guardando con
-# iso.save). Los que empiezan con "_" no se corren (sirven para código compartido entre piezas).
-# Por cada grupo se escribe DIR/manifest_<grupo>.json con lienzo, apoyo, planta y colores base,
-# que check.py usa. --check corre el verificador al final (con --only, solo sobre esos grupos).
-# Sin piezas no hace nada y sale bien.
 import argparse
 import importlib
 import os
@@ -96,7 +90,7 @@ def main():
     print("%d archivos en %s (%d grupos)" % (total, out_dir, len(groups)))
     status = 1 if failed else 0
     if args.check:
-        # Con --only se revisan solo esos grupos: otro puede estar generando en la misma carpeta.
+        # Con --only, solo esos grupos: otro puede estar generando en la misma carpeta.
         status = max(status, check.run(out_dir, groups=groups if wanted else None))
     return status
 

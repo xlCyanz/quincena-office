@@ -1,10 +1,9 @@
-# Prueba del hito 19: ánimo y renuncias.
-# Criterio: un empleado con ánimo bajo varios días avisa y, si no se le retiene, se va;
-# con un aumento a tiempo se queda.
+# Ánimo y renuncias: con ánimo bajo varios días avisa y, sin retenerlo, se va; con un
+# aumento a tiempo se queda.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=morale
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -21,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	_check_targets()
@@ -47,7 +46,7 @@ func _morale(key: String) -> int:
 	return int(StaffCatalog.get_morale(key))
 
 
-# Partida nueva con un área de trabajo de dos puestos y dinero de sobra.
+# Dos puestos y dinero de sobra.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -68,7 +67,6 @@ func _new_game() -> void:
 	_notices.clear()
 
 
-# Contrata a un programador Junior en la próxima llegada de candidatos.
 func _hire() -> Dictionary:
 	var vacancy_id: int = Staff.open_vacancy("programmer", "junior", 1000, true)["id"]
 	var arrival: int = int(StaffCatalog.get_hiring("arrival_hour"))
@@ -81,7 +79,7 @@ func _hire() -> Dictionary:
 	return employee
 
 
-# Pasa un día entero (una medianoche).
+# Una medianoche.
 func _next_day() -> void:
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 
@@ -90,7 +88,7 @@ func _set_ratio(employee: Dictionary, ratio: float) -> void:
 	employee["salary"] = roundi(Staff.get_market_salary(employee) * ratio)
 
 
-# Un contrato llevado por el equipo de employee.
+# Contrato llevado por el equipo de employee.
 func _give_contract(employee: Dictionary) -> Dictionary:
 	var team: Dictionary = Staff.create_team()
 	Staff.add_to_team(team["id"], employee["id"])
@@ -124,7 +122,6 @@ func _check_targets() -> void:
 	employee["stress"] = _morale("stressed_from")
 	_expect(Staff.get_mood_target(employee) == base + _morale("underpaid_mood") + idle + _morale("stressed_mood"), "estresado")
 	employee["stress"] = 20
-	# Con contrato ya no está ocioso; atrasado o cansado sube la meta del estrés.
 	_set_ratio(employee, 1.0)
 	var contract: Dictionary = _give_contract(employee)
 	_expect(not Staff.is_idle(employee), "con contrato tiene trabajo")
@@ -152,7 +149,6 @@ func _check_drift() -> void:
 	employee["mood"] = target - 2
 	_next_day()
 	_expect(int(employee["mood"]) == target, "sube sin pasarse: %d" % employee["mood"])
-	# Un contrato atrasado sube el estrés de a stress_step.
 	var contract: Dictionary = _give_contract(employee)
 	contract["deadline_day"] = GameClock.get_day_count() - 1
 	contract["cancel_day"] = GameClock.get_day_count() + 100
@@ -228,7 +224,6 @@ func _check_retention() -> void:
 	for day: int in range(_morale("notice_days") + 2):
 		_next_day()
 	_expect(not Staff.get_employee(employee["id"]).is_empty(), "días después sigue en la empresa")
-	# Lo ganado sigue sumando: el sueldo viejo hasta el aumento y el nuevo desde ahí.
 	_expect(Staff.get_earned(employee) > earned, "sigue ganando")
 
 
@@ -237,12 +232,10 @@ func _check_raise_request() -> void:
 	var employee: Dictionary = _hire()
 	_set_ratio(employee, 1.0)
 	var today: int = GameClock.get_day_count()
-	# Recién contratado no pide aumento.
 	for i: int in range(300):
 		Staff._maybe_ask_raise(employee, today)
 	_expect((employee["raise_request"] as Dictionary).is_empty(), "antes de %d días no pide" % _morale("raise_request_min_days"))
 	employee["last_raise_day"] = today - _morale("raise_request_min_days")
-	# Bien pagado tampoco.
 	_set_ratio(employee, StaffCatalog.get_morale("raise_request_below_ratio"))
 	for i: int in range(300):
 		Staff._maybe_ask_raise(employee, today)
@@ -260,20 +253,17 @@ func _check_raise_request() -> void:
 		"pide un 10 %%: %d de %d" % [request["amount"], employee["salary"]])
 	_expect(int(request["until_day"]) == today + _morale("raise_request_days"), "tiene %d días para responder" % _morale("raise_request_days"))
 	_expect(_notices[-1] == "%s pide un aumento de %s." % [employee["name"], MoneyFormat.format(int(request["amount"]))], "aviso: %s" % _notices[-1])
-	# Negarlo baja el ánimo.
 	var mood: int = employee["mood"]
 	_expect(Staff.deny_raise(employee["id"]), "negar")
 	_expect(int(employee["mood"]) == mood + _morale("raise_deny_mood") and (employee["raise_request"] as Dictionary).is_empty(),
 		"negado baja %d: %d" % [_morale("raise_deny_mood"), employee["mood"]])
 	_expect(not Staff.deny_raise(employee["id"]), "sin pedido no hay nada que negar")
-	# Dejarlo pasar también.
 	employee["raise_request"] = {"amount": 100, "until_day": today + 1}
 	employee["mood"] = Staff.get_mood_target(employee)
 	mood = employee["mood"]
 	_next_day()
 	_expect((employee["raise_request"] as Dictionary).is_empty() and int(employee["mood"]) == mood + _morale("raise_deny_mood"),
 		"sin respuesta vence y baja el ánimo: %d → %d" % [mood, employee["mood"]])
-	# Aceptarlo lo sube.
 	employee["raise_request"] = {"amount": 100, "until_day": GameClock.get_day_count() + 3}
 	mood = employee["mood"]
 	var salary: int = employee["salary"]
@@ -297,7 +287,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_4"), "cargar")
 	_expect(JSON.stringify(Staff.export_state()) == before, "el ánimo y los avisos vuelven igual")
-	# Una partida de antes del hito 19 carga sin avisos ni pedidos.
+	# Partida vieja: carga sin avisos ni pedidos.
 	var old: Dictionary = Staff.export_state()
 	for saved: Dictionary in old["employees"]:
 		for field: String in ["carry", "bad_days", "quit_day", "min_energy", "last_raise_day", "raise_request"]:
@@ -327,7 +317,7 @@ func _check_card() -> void:
 	_expect(text.contains("Renuncia: se va en 4 días"), "la ficha muestra el aviso: %s" % text)
 	_expect(text.contains("Pide un aumento de %s (2 días para responder" % MoneyFormat.format(100)), "y el pedido: %s" % text)
 	_expect(card.get_accept_raise_button().is_visible_in_tree() and card.get_deny_raise_button().is_visible_in_tree(), "botones del pedido")
-	# Aceptar el pedido (100 de 1000 y algo no llega al 10 %: sigue el aviso).
+	# 100 sobre 1000 y algo no llega al 10 %: sigue el aviso.
 	var salary: int = employee["salary"]
 	await _click(card.get_accept_raise_button())
 	_expect(int(employee["salary"]) == salary + 100 and (employee["raise_request"] as Dictionary).is_empty(), "aceptado desde la ficha: %d" % employee["salary"])
@@ -351,7 +341,7 @@ func _check_card() -> void:
 	await get_tree().process_frame
 
 
-# El aviso del Hud no tapa el dinero ni el reloj: un texto largo se parte en líneas.
+# El aviso del Hud no tapa dinero ni reloj: un texto largo se parte en líneas.
 func _check_notice() -> void:
 	_new_game()
 	var game: Node = GAME_SCENE.instantiate()

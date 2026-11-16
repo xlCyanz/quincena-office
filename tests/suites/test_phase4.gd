@@ -1,25 +1,13 @@
-# Prueba del hito 39: comprobación de la fase 4. Simula una empresa que empieza con el
-# CEO solo y crece como un jugador con una política simple:
-#   - cada mañana entrega lo terminado (sin errores conocidos, o el día del plazo), le da a
-#     cada equipo libre la oferta más grande y al CEO solo pequeñas;
-#   - construye por pasos (puestos en el local inicial, Recepción, terreno al este con
-#     puestos, terreno al norte con oficinas únicas y Cuarto de limpieza, más terreno al
-#     este) cuando hacen falta puestos y el saldo cubre la obra y una reserva;
-#   - contrata con vacantes (sin publicidad, al sueldo que piden) siguiendo un plan:
-#     cuatro equipos de 8 (2 diseñadores, 4 programadores, 2 QA) con su líder desde Startup,
-#     vendedores, contador, recepcionista, limpieza, un gerente desde Pequeña empresa que
-#     dirige a los líderes y un ejecutivo en Mediana empresa;
-#   - en Pequeña empresa arma una Sala de servidores (terreno al norte de la primera oficina
-#     única) y el primer equipo libre desarrolla y lanza un producto pequeño (desde el
-#     hito 42, Mediana empresa pide uno lanzado) en vez de llevar un contrato;
-#   - el CEO trabaja de 8 a 17.
-# Criterio: llega a Mediana empresa sin quebrar; dirigir 4 departamentos se nota en los
-# ingresos (con un ejecutivo, el mismo mes rinde más). Imprime un resumen por mes para
-# ajustar data/staff.json, data/stages.json y data/contracts.json.
+# Comprobación de la fase 4: desde el CEO solo, una política de jugador llega a Mediana empresa sin quebrar.
+# Política: cada mañana entrega lo terminado y da a cada equipo libre la oferta más grande (al CEO,
+# pequeñas); construye por pasos cuando faltan puestos y alcanza con reserva; contrata por vacantes
+# 4 equipos de 8 con líder, vendedores, apoyo, un gerente y un ejecutivo; en Pequeña empresa arma la
+# Sala de servidores y lanza un producto pequeño; el CEO de 8 a 17. Compara también 4 departamentos
+# con el CEO contra un ejecutivo e imprime un resumen por mes para ajustar los datos.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=phase4
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const SEED: int = 39
@@ -32,7 +20,7 @@ const TEAM_COUNT: int = 4
 ## Un equipo recibe contratos desde que tiene estos miembros.
 const TEAM_READY: int = 4
 
-## Rasgos de los hitos 50 y 51 que esta simulación no usa todavía.
+## Rasgos que la simulación quita (la fase 6 los usa).
 const PRODUCTION_TRAITS: Array[String] = ["night_owl", "perfectionist", "sociable", "mentor", "unpunctual", "coffee_addict"]
 
 var _failures: int = 0
@@ -42,7 +30,7 @@ var _game_over_day: int = 0
 var _builder := Builder.new()
 var _build_steps: Array[Callable] = []
 var _built: int = 0
-# Cargos por contratar, en orden; cada uno {"role", "level", "team"} (team = índice o -1).
+# Cargos por contratar, en orden: {"role", "level", "team"} (team = índice o -1).
 var _plan: Array[Dictionary] = []
 var _pending: Dictionary = {}
 var _team_ids: Array[int] = []
@@ -78,8 +66,7 @@ func _check_growth() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
 	Projects.set_seed(SEED)
-	# La primera oferta salió antes de fijar la semilla: se cambia por una sorteada con ella
-	# para que la simulación dé siempre lo mismo.
+	# La primera oferta salió antes de fijar la semilla: se cambia por una sorteada con ella para repetir siempre igual.
 	Projects.offers.clear()
 	Projects.create_offer("small")
 	Products.set_seed(SEED)
@@ -101,8 +88,7 @@ func _check_growth() -> void:
 	_expect(Company.stage >= 3, "llega a Mediana empresa en %d meses (etapa %d, %d empleados)" % [months, Company.stage, Staff.employees.size()])
 	_expect(not Staff.get_leaders().is_empty() and not Staff.get_managers().is_empty(), "con líderes y un gerente")
 	if Company.stage >= 3:
-		# Ya en Mediana empresa: contrata un ejecutivo (cuando la reserva alcance) y sigue un
-		# mes más.
+		# En Mediana empresa: contrata un ejecutivo cuando alcance la reserva y sigue un mes más.
 		_plan.push_front({"role": StaffCatalog.get_executive_role(), "level": "senior", "team": -1})
 		var days: int = 0
 		var shown: int = _month_rows.size()
@@ -123,7 +109,6 @@ func _check_growth() -> void:
 		_expect(not Bank.game_over and Economy.balance > 0, "sigue sin quebrar con el ejecutivo: saldo %d" % Economy.balance)
 
 
-# Un día con la política: contratos, obra, vacantes; el CEO de 8 a 17.
 func _play_day() -> void:
 	if Bank.game_over:
 		return
@@ -155,13 +140,13 @@ func _ready_to_deliver(contract: Dictionary, today: int) -> bool:
 		and (int(contract["bugs_found"]) == 0 or today >= int(contract["deadline_day"]) - 1)
 
 
-# Desde Pequeña empresa y hasta lanzar el primero: Sala de servidores y un producto pequeño
-# que hace el primer equipo que queda libre (con QA, sale con pocos errores).
+# Desde Pequeña empresa hasta lanzar el primero: Sala de servidores y un producto pequeño
+# del primer equipo libre (con QA, sale con pocos errores).
 func _manage_product() -> void:
 	if Company.stage < ProductCatalog.get_min_stage() or Products.launched_count > 0:
 		return
 	if not _servers_built:
-		# Va al norte de la primera oficina única: espera a que esté construido el bloque norte.
+		# Al norte de la primera oficina única: espera a que esté el bloque norte.
 		if _built > _build_steps.find(_build_north) and Economy.balance >= _build_servers(true) + _reserve_months * _monthly_costs():
 			_build_servers(false)
 			_servers_built = true
@@ -178,12 +163,11 @@ func _manage_product() -> void:
 			return
 
 
-# Tamaños de contrato que toma ese equipo.
 func _sizes_for(_team: Dictionary) -> Array[String]:
 	return _team_sizes
 
 
-# Acepta la oferta más grande de esos tamaños (en orden) y se la da a ese equipo o al CEO.
+# Acepta la oferta más grande de esos tamaños (en orden) para ese equipo o el CEO.
 func _take_offer(team_id: int, sizes: Array) -> void:
 	for size: String in sizes:
 		for offer: Dictionary in Projects.offers:
@@ -194,7 +178,7 @@ func _take_offer(team_id: int, sizes: Array) -> void:
 				return
 
 
-# Gastos de un mes: sueldos más mantenimiento (más la cuota de los préstamos).
+# Sueldos, mantenimiento y cuotas de un mes.
 func _monthly_costs(extra_salary: int = 0) -> int:
 	var total: int = extra_salary + Economy.get_monthly_maintenance()
 	for employee: Dictionary in Staff.employees:
@@ -208,8 +192,7 @@ func _grow() -> void:
 	_hire_arrived()
 	if not _pending.is_empty():
 		return
-	# El primero de la plantilla que falta y ya se puede contratar (los líderes esperan a
-	# Startup y el gerente a Pequeña empresa). Quien se va vuelve a faltar.
+	# El primero que falta y ya se puede contratar (líderes desde Startup, gerente desde Pequeña empresa); quien se va vuelve a faltar.
 	var next: Dictionary = {}
 	for entry: Dictionary in _missing():
 		if Staff.role_problem(entry["role"]).is_empty():
@@ -228,8 +211,7 @@ func _grow() -> void:
 		_pending = {"vacancy": opened["id"], "plan": next}
 
 
-# Lo que falta de la plantilla (_plan), en orden: compara cuántos de cada cargo pide cada
-# equipo (o la empresa, con team −1) con los que hay.
+# Lo que falta de _plan, en orden: cuántos de cada cargo pide cada equipo (o la empresa, team −1) contra los que hay.
 func _missing() -> Array[Dictionary]:
 	var have: Dictionary = {}
 	for employee: Dictionary in Staff.employees:
@@ -249,7 +231,7 @@ func _missing() -> Array[Dictionary]:
 	return missing
 
 
-# Contrata al primer candidato que llegó (con el sueldo que pide).
+# Contrata al primer candidato que llegó por lo que pide.
 func _hire_arrived() -> void:
 	if _pending.is_empty():
 		return
@@ -266,8 +248,7 @@ func _hire_arrived() -> void:
 	if Staff.employees.size() == before:
 		return
 	var employee: Dictionary = Staff.employees[-1]
-	# Sin los rasgos del hito 50 hasta que el hito 59 ajuste el balance con ellos (leal y
-	# ambicioso ya contaban en la competencia).
+	# Sin rasgos de producción: el balance de esta fase es sin ellos (leal y ambicioso sí cuentan).
 	_drop_production_traits(employee)
 	var plan: Dictionary = _pending["plan"]
 	_pending = {}
@@ -308,7 +289,7 @@ func _make_plan() -> void:
 # --- Obra -------------------------------------------------------------------------
 
 
-# Construye el siguiente paso de obra que da puestos para ese cargo, si alcanza.
+# Siguiente paso de obra que da puestos para ese cargo, si alcanza.
 func _build_next(role: String) -> void:
 	while _built < _build_steps.size():
 		var cost: int = int(_build_steps[_built].call(true))
@@ -324,7 +305,7 @@ func _wall(x: int, y: int, axis: int, kind: String = ConstructionCatalog.WALL) -
 	return {"edge": Vector3i(x, y, axis), "kind": kind}
 
 
-# Puestos: escritorio con computadora y silla. rotation 2 = la silla queda al sur.
+# Puestos: escritorio con computadora y silla; rotation 2 = silla al sur.
 func _stations(cells: Array[Vector2i], rotation: int, quote: bool) -> int:
 	var cost: int = 0
 	var front: Vector2i = FurnitureCatalog.get_front(rotation)
@@ -349,7 +330,7 @@ func _row(xs: Array, y: int) -> Array[Vector2i]:
 
 
 # 1. Área de trabajo en el local inicial: 3 puestos junto a la Oficina Ejecutiva y 3 más abajo
-# (la casilla (5, 3) queda libre para pasar al pasillo de la fila 2).
+# ((5, 3) libre para pasar al pasillo de la fila 2).
 func _build_start_desks(quote: bool) -> int:
 	var cost: int = _stations(_row([3, 4, 5], 0), 2, true) + _stations(_row([2, 3, 4], 3), 2, true)
 	if quote:
@@ -381,14 +362,13 @@ func _build_reception(quote: bool) -> int:
 	return cost
 
 
-# Dos filas de puestos en un terreno de las filas 0 a 5 (junto al Área de trabajo, no a la
-# Recepción): escritorios en y 0 con la silla en 1 y sillas en 3 con escritorios en 4 mirando
-# al norte; las filas 2 y 5 son pasillos.
+# Dos filas de puestos en las filas 0 a 5: escritorios en y 0 con silla en 1 y sillas en 3 con
+# escritorios en 4 mirando al norte; filas 2 y 5 de pasillo.
 func _east_block(top_xs: Array, bottom_xs: Array, quote: bool) -> int:
 	return _stations(_row(top_xs, 0), 2, quote) + _stations(_row(bottom_xs, 4), 0, quote)
 
 
-# 3. Terreno al este (x 6 a 15) con 19 puestos; (15, 0) queda libre para pasar al norte.
+# 3. Terreno al este (x 6 a 15) con 19 puestos; (15, 0) libre para pasar al norte.
 func _build_east(quote: bool) -> int:
 	var land: Dictionary = _builder.quote_land(Builder.SIDE_EAST, 6, 10, 0)
 	var cost: int = int(land["cost"]) + _east_block(range(6, 15), range(6, 16), true)
@@ -399,8 +379,8 @@ func _build_east(quote: bool) -> int:
 	return cost
 
 
-# 4. Terreno al norte (x 3 a 15, y −4 a −1): dos oficinas únicas, un Área de trabajo con 6
-# puestos y un Cuarto de limpieza, con puertas al pasillo de la fila −1.
+# 4. Terreno al norte (x 3 a 15, y −4 a −1): dos oficinas únicas, Área de trabajo con 6 puestos
+# y Cuarto de limpieza, con puertas al pasillo de la fila −1.
 func _build_north(quote: bool) -> int:
 	var land: Dictionary = _builder.quote_land(Builder.SIDE_NORTH, 13, 4, 3)
 	var walls: Array[Dictionary] = []
@@ -432,8 +412,7 @@ func _build_north(quote: bool) -> int:
 # 5. Más terreno al este (x 16 a 21, hasta el borde del solar) con 12 puestos más.
 func _build_east_more(quote: bool) -> int:
 	var xs: Array = range(16, 22)
-	# El terreno del norte (y el de la Sala de servidores) corrió el borde de arriba del
-	# local: las filas 0 a 5 empiezan a esta distancia de él.
+	# El terreno del norte corrió el borde de arriba: las filas 0 a 5 empiezan a esta distancia de él.
 	var offset: int = -OfficeState.lot_rect.position.y
 	var land: Dictionary = _builder.quote_land(Builder.SIDE_EAST, 6, 6, offset)
 	var cost: int = int(land["cost"]) + _east_block(xs, xs, true)
@@ -444,8 +423,7 @@ func _build_east_more(quote: bool) -> int:
 	return cost
 
 
-# 6. Sala de servidores: terreno al norte de la primera oficina única (x 3 a 4, y −6 a −5)
-# con puerta a la oficina, un aire acondicionado y un rack.
+# 6. Sala de servidores al norte de la primera oficina única (x 3 a 4, y −6 a −5) con puerta a ella, aire y un rack.
 func _build_servers(quote: bool) -> int:
 	var land: Dictionary = _builder.quote_land(Builder.SIDE_NORTH, 2, 2, 3)
 	var walls: Array[Dictionary] = [_wall(3, -5, GridEdge.AXIS_Y, ConstructionCatalog.DOOR), _wall(4, -5, GridEdge.AXIS_Y)]
@@ -456,7 +434,7 @@ func _build_servers(quote: bool) -> int:
 	_ok(_builder.buy_land(Builder.SIDE_NORTH, 2, 2, 3), "terreno de la Sala de servidores")
 	_ok(_builder.apply(walls), "paredes de la Sala de servidores")
 	_ok(_builder.mark_room(OfficeState.SERVER_ROOM, Vector2i(3, -6)), "Sala de servidores")
-	# Colgado en la pared del contorno norte (hito 45).
+	# En la pared del contorno norte.
 	_ok(_builder.place("air_conditioner", Vector2i(4, -6), 2), "aire acondicionado")
 	_ok(_builder.place("server_rack", Vector2i(4, -5), 0), "rack")
 	return cost
@@ -465,8 +443,8 @@ func _build_servers(quote: bool) -> int:
 # --- Departamentos ----------------------------------------------------------------
 
 
-# Desde la empresa a la que llegó (guardada sin ejecutivos): tres meses con el CEO dirigiendo
-# los 4 departamentos contra los mismos tres meses con un ejecutivo en Desarrollo.
+# Desde la empresa guardada sin ejecutivos: tres meses con el CEO dirigiendo los 4 departamentos
+# contra los mismos tres con un ejecutivo en Desarrollo.
 func _check_departments() -> void:
 	if Company.stage < 3:
 		return
@@ -493,8 +471,7 @@ func _check_departments() -> void:
 		"dirigir 4 departamentos se nota en los ingresos: %d contra %d (el ejecutivo se paga solo)" % [without, with_executive])
 
 
-# Ingresos de contratos de los próximos meses completos, con la política de contratos y sin
-# contratar ni construir.
+# Ingresos de contratos de los próximos meses completos, sin contratar ni construir.
 func _income_over_months(months: int) -> int:
 	Staff.set_seed(SEED + 1)
 	Projects.set_seed(SEED + 1)
@@ -536,15 +513,14 @@ func _record_month(month: int) -> void:
 		Projects.delivered_count, Projects.reputation, Bank.rating])
 
 
-# La política no asciende: el ambicioso (hito 51) no se molesta por esperar; el
-# hito 59 la revisa con todos los rasgos.
+# La política no asciende: el ambicioso no se molesta por esperar (la fase 6 lo revisa con todos los rasgos).
 func _forget_promotion_waits() -> void:
 	for employee: Dictionary in Staff.employees:
 		if int(employee.get("promotion_ready_day", Staff.NOT_MISSING)) != Staff.NOT_MISSING:
 			employee["promotion_ready_day"] = GameClock.get_day_count()
 
 
-# Quita los rasgos de producción e impuntual y adicto al café (hitos 50 y 51) y deja los demás.
+# Quita los rasgos de producción, impuntual y adicto al café; deja los demás.
 func _drop_production_traits(employee: Dictionary) -> void:
 	var traits: Array = employee.get("traits", [])
 	traits.assign(traits.filter(func(trait_id: Variant) -> bool:

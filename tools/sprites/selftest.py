@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-# Prueba propia del motor: dibuja piezas de ejemplo con todas las primitivas y arma hojas para
-# mirarlas. No es arte del juego.
+# Prueba del motor: dibuja piezas de ejemplo con todas las primitivas y mide lo que fija la guía.
 #
 #   python3 tools/sprites/selftest.py [--out DIR]
 #
-# Escribe en DIR (por defecto una carpeta temporal) los PNG de prueba, su manifiesto, las hojas
-# sheet_*.png ampliadas, y corre check.py sobre la carpeta.
+# Escribe en DIR (por defecto una carpeta temporal) los PNG, su manifiesto y hojas sheet_*.png.
 import argparse
 import contextlib
 import io
@@ -60,8 +58,7 @@ def drawers(ctx):
 
 
 def cabinet(c):
-    """Mueble de 2×1 asimétrico para ver las rotaciones: cuerpo con cajones al frente (−y),
-    tablero con vuelo y una cajita arriba en la esquina (x0, frente)."""
+    """Mueble 2×1 asimétrico para ver las rotaciones (cajones al frente −y, cajita en la esquina)."""
     c.box(1 / 16, 31 / 16, 3 / 16, 15 / 16, 0, 38, WOOD, tex={iso.FRONT: drawers, "sides": wood_side}, name="body")
     for z in (8, 20, 32):
         c.box(11 / 16, 21 / 16, 5 / 32, 3 / 16, z, z + 2, METAL, name="handle%d" % z)
@@ -83,8 +80,7 @@ def build_boxes(out_dir):
 
 
 def chair(c):
-    """Silla con primitivas curvas para ver que también giran: asiento y respaldo acolchados
-    (soft_box), respaldo en la espalda (+y), patas cilíndricas y un panel inclinado de apoyabrazos."""
+    """Silla con primitivas curvas para ver que también giran (respaldo en +y)."""
     for x, y in ((0.30, 0.30), (0.70, 0.30), (0.30, 0.70), (0.70, 0.70)):
         c.cylinder(x, y, 1 / 32, 0, 18, METAL, name="leg")
     c.soft_box(0.22, 0.78, 0.22, 0.78, 16, 26, 4, BLUE, name="seat")
@@ -127,9 +123,7 @@ def build_curves(out_dir):
 
 
 def style_desk(c):
-    """Escritorio con el estilo de STYLE.md (rampas con caras declaradas y acabado 'salvaje'):
-    patas, cajonera con tirador, tablero con vuelo y cosas encima (monitor, maceta con hojas,
-    cojín) para ver contorno, línea interior, brillo de arista y esquinas recortadas."""
+    """Escritorio con el estilo de STYLE.md (acabado 'salvaje') y cosas encima."""
     wood, black = pal.WOOD_ORANGE, pal.PLASTIC_BLACK
     for x, y in ((3 / 32, 5 / 32), (57 / 32, 5 / 32), (3 / 32, 25 / 32), (57 / 32, 25 / 32)):
         c.box(x, x + 3 / 32, y, y + 3 / 32, 0, 38, wood, name="leg")
@@ -295,9 +289,8 @@ def _runs(values):
 
 
 def stair_errors(mask):
-    """Errores de escalera 2:1 de una región convexa: huecos por columna, columnas salteadas y
-    tramos interiores del borde de arriba o de abajo (entre dos escalones de ±1 en el mismo
-    sentido) que no miden 2 px."""
+    """Errores de escalera 2:1 de una región convexa: huecos, columnas salteadas y tramos
+    interiores del borde que no miden 2 px."""
     cols = np.nonzero(mask.any(axis=0))[0]
     if len(cols) == 0:
         return 0
@@ -454,8 +447,7 @@ def measure():
         outline = tuple(int(v) for v in image[np.nonzero(opaque.any(axis=1))[0][0], np.nonzero(opaque[np.nonzero(opaque.any(axis=1))[0][0]])[0][0], :3])
         t.check(outline == red[pal.OUTLINE], "la silueta lleva el tono de contorno de la rampa, r%d" % rotation)
     t.check(max(pal.ramp("000000")[pal.OUTLINE]) > 0, "el contorno de una base negra no es negro puro")
-    # Acabado 'salvaje' (STYLE.md): rampas, contorno de 2 px contra el piso, brillo de arista,
-    # esquinas recortadas, línea interior; 'classic' sigue como antes.
+    # Acabado 'salvaje' (STYLE.md) frente a 'classic'.
     t.check(iso.DEFAULT_STYLE == "salvaje", "el acabado por defecto es 'salvaje'")
     for key, ramp in sorted(pal.STYLE_RAMPS.items()):
         t.check(ramp.declared and pal.light_order_ok(ramp) and min(max(c) for c in ramp) >= pal.MIN_OUTLINE_VALUE,
@@ -569,8 +561,7 @@ def _silent_check(directory):
 
 
 def negative_tests(out_dir):
-    """Rompe a propósito una cosa por vez en una copia de los sprites de prueba y exige que
-    check.py la detecte con el mensaje esperado. Devuelve la cantidad de casos NO detectados."""
+    """Rompe una cosa por vez en una copia y exige que check.py la detecte. Devuelve los no detectados."""
     names = [n for n in os.listdir(out_dir) if n.endswith(".json") or (n.endswith(".png") and not n.startswith("sheet_"))]
     work = tempfile.mkdtemp(prefix="quincena_sprites_negative_")
     left = pal.darken(WOOD.base_hex, 0.25)

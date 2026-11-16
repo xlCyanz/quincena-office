@@ -1,24 +1,10 @@
 #!/usr/bin/env python3
-# Vista previa del piloto: arma una oficina con los PNG ya generados y una hoja de contacto.
+# Vista previa: arma una oficina con los PNG de generate.py y una hoja de contacto.
 #
 #   python3 tools/sprites/preview.py DIR [--out CARPETA] [--seed N]
 #
-# DIR es la carpeta donde generate.py escribió los sprites y sus manifest*.json. Escribe en
-# --out (por defecto DIR):
-#   _preview_x1.png   oficina de 6×5 casillas de cerámica rodeada de 3 casillas de pasto, a 1:1
-#   _preview_x2.png   lo mismo ampliado ×2 sin suavizar
-#   _contact_x3.png   todas las piezas (las de los manifiestos) ×3 con su nombre, por grupo
-#
-# No es arte del juego: sirve para mirar las piezas juntas. El orden de dibujo copia al juego:
-#   - pisos, después todas las sombras de piso juntas (una sola capa con transparencia, así dos
-#     sombras que se pisan no se oscurecen el doble);
-#   - lo demás por la Y de pantalla de su punto de orden: muebles en el centro de su planta − 1 px
-#     del mundo (FurnitureView.SORT_BIAS_PX), el respaldo de la silla en el centro de su franja de
-#     atrás (BACKREST_DEPTH 0.18, asiento metido SEAT_INSET 0.15), paredes en el medio de su borde
-#     (+0.5 px los _x, sort_bias del manifiesto), personas en su casilla;
-#   - si dos cosas empatan, van paredes, muebles, sombra de la computadora, computadora, respaldo
-#     y personas, en ese orden.
-# Los muebles chicos (planta pequeña) se ponen al 60 % en un cuarto de casilla, como el juego.
+# Escribe en --out (por defecto DIR) _preview_x1.png, _preview_x2.png y _contact_x3.png.
+# Ordena como el juego: pisos, sombras en una sola capa y lo demás por la Y de su punto de orden.
 import argparse
 import os
 import sys
@@ -70,8 +56,7 @@ class PreviewScene(sheet.Scene):
         return self.cell_point(gx, gy)[1]
 
     def put(self, image, at, anchor, sort_at, rank, bias=0.0):
-        """image con su apoyo en el punto at = (gx, gy) de la cuadrícula; se ordena por la Y del
-        punto sort_at más bias (px de sprite) y, si empata, por rank."""
+        """image con su apoyo en at = (gx, gy); ordena por la Y de sort_at + bias (px de sprite), luego rank."""
         px, py = self.cell_point(at[0], at[1])
         key = (self.sort_y(sort_at[0], sort_at[1]) + bias, rank, len(self._items))
         self._items.append((key, len(self._items), image, int(round(px - anchor[0])), int(round(py - anchor[1]))))
@@ -115,8 +100,7 @@ def scaled(image, anchor, factor):
 
 
 class Office(object):
-    """Arma la escena. Las casillas del local van de (0, 0) a (OFFICE_COLS − 1, OFFICE_ROWS − 1);
-    en la escena se corren GRASS casillas para dejar lugar al pasto."""
+    """Arma la escena; el local se corre GRASS casillas para dejar lugar al pasto."""
 
     def __init__(self, directory, seed):
         self.directory = directory
@@ -162,8 +146,7 @@ class Office(object):
     # ------------------------------------------------------------------ paredes
 
     def wall(self, name, x, y, axis):
-        """Tramo en el borde (x, y, axis) del local: _x entre (x, y) y (x + 1, y), _y entre
-        (x, y) y (x, y + 1)."""
+        """Tramo en el borde (x, y, axis): _x de (x, y) a (x + 1, y), _y de (x, y) a (x, y + 1)."""
         image = self.img(name)
         entry = self.manifest.get(name + ".png", {})
         anchor = tuple(entry.get("anchor", (36, image.size[1] - 18)))
@@ -246,8 +229,7 @@ class Office(object):
 
     def build(self):
         self.floors()
-        # Puerta alta en el lado de arriba a la derecha (bordes _y del fondo), baja al frente
-        # abajo a la derecha (bordes _x del frente).
+        # Puerta alta al fondo y baja al frente.
         self.walls(tall_door=(2, "y"), low_door=(3, "x"))
         # Cuatro puestos, uno por rotación (la silla en la casilla del frente del escritorio).
         self.desk(1, 1, 1)

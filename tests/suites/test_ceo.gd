@@ -1,7 +1,5 @@
-# Prueba del hito 4 (con la jornada del hito 12): el CEO llega a su
-# escritorio por un camino válido, esquiva obstáculos, queda bien ordenado respecto a
-# los muebles, sale a almorzar, se queda hasta que el jugador lo manda a casa y, con
-# la oficina vacía, el tiempo salta a su próxima llegada.
+# CEO: llega a su escritorio por un camino válido, esquiva obstáculos, se ordena bien con los
+# muebles, sale a almorzar, se queda hasta que lo mandan a casa y la oficina vacía salta a su llegada.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=ceo
 extends Node
 
@@ -31,7 +29,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_schedule()
 	_check_pathfinder_detour()
@@ -48,7 +46,7 @@ func _ready() -> void:
 	_ceo.left_office.connect(func() -> void: _left_count += 1)
 	EventBus.hour_changed.connect(func(hour: int) -> void: _visible_at_hour[hour] = _ceo.visible)
 	EventBus.day_changed.connect(func(day: int, _month: int) -> void: _days_seen.append(day))
-	# Desde aquí el tiempo se mueve a mano: así la prueba no depende de los fotogramas.
+	# Desde aquí el tiempo se mueve a mano: la prueba no depende de los fotogramas.
 	GameClock.stop()
 	_ceo.set_process(false)
 
@@ -73,7 +71,7 @@ func _expect(condition: bool, message: String) -> void:
 
 # Avanza el reloj y al CEO fotograma a fotograma hasta que se cumpla la condición.
 func _walk_until(condition: Callable, max_seconds: float, label: String) -> void:
-	# Los topes están pensados con horas de 10 s reales; con horas más largas crecen igual.
+	# Topes pensados con horas de 10 s reales; escalan con horas más largas.
 	max_seconds *= GameConstants.SECONDS_PER_GAME_HOUR / 10.0
 	var lot: Rect2i = OfficeState.lot_rect
 	var elapsed: float = 0.0
@@ -93,8 +91,8 @@ func _walk_until(condition: Callable, max_seconds: float, label: String) -> void
 	_expect(condition.call(), "%s: no ocurrió en %.0f s" % [label, max_seconds])
 
 
-# Comprueba que un camino sea válido: pasos de una casilla, dentro del local, sin
-# atravesar muebles (salvo la silla de destino) ni paredes, y tan corto como el mejor posible.
+# Camino válido: pasos de una casilla dentro del local, sin cruzar muebles (salvo la silla de
+# destino) ni paredes, y tan corto como el mejor.
 func _check_path(start: Vector2i, path: Array[Vector2i], goal: Vector2i, label: String) -> void:
 	_expect(not path.is_empty(), "%s: camino vacío" % label)
 	if path.is_empty():
@@ -114,7 +112,7 @@ func _check_path(start: Vector2i, path: Array[Vector2i], goal: Vector2i, label: 
 	_expect(path.size() == best, "%s: %d pasos, el más corto tiene %d" % [label, path.size(), best])
 
 
-# Búsqueda en anchura independiente de AStarGrid2D, para comparar longitudes.
+# Búsqueda en anchura aparte de AStarGrid2D, para comparar longitudes.
 func _bfs_distance(start: Vector2i, goal: Vector2i, lot: Rect2i, blocked: Array[Vector2i]) -> int:
 	var distances: Dictionary[Vector2i, int] = {start: 0}
 	var queue: Array[Vector2i] = [start]
@@ -190,7 +188,7 @@ func _check_pause_freezes() -> void:
 func _check_seated() -> void:
 	_expect(_sat_count == 1, "sat_down se emitió %d veces" % _sat_count)
 	_expect(_ceo.get_cell() == _seat and _ceo.grid_position == Vector2(_seat), "el CEO no quedó en la silla")
-	# Sentado frente a su escritorio se dibuja arrimado a él y frente al teclado, como su silla (fase 8).
+	# Sentado se dibuja arrimado al escritorio y frente al teclado, como su silla.
 	var tuck: Vector2 = Vector2(FurnitureCatalog.get_front(int(OfficeState.get_desk_facing(_seat).get("direction", 0)))) * FurnitureView.SEAT_TUCK \
 		+ FurnitureView.get_seat_shift(_seat)
 	_expect(not OfficeState.get_desk_facing(_seat).is_empty()
@@ -199,9 +197,8 @@ func _check_seated() -> void:
 	_expect(GameClock.get_hour() == 8, "llegar (%.0f s) no debería pasar de las 8:59" % walk_seconds)
 
 
-# En la capa ordenada por Y, quien tiene mayor y se dibuja encima. Sentado, el CEO
-# va delante de su silla y del escritorio; caminando, va delante de un mueble si está
-# más cerca de quien mira (x + y mayor) y detrás si está más lejos.
+# En la capa ordenada por Y, mayor y va encima. Sentado, el CEO va delante de su silla y del
+# escritorio; caminando, delante de un mueble más lejano (x + y menor) y detrás de uno más cercano.
 func _check_sorting() -> void:
 	var objects: Node = _grid.get_node("Objects")
 	_expect(objects.y_sort_enabled and _ceo.get_parent() == objects, "el CEO no está en la capa ordenada por Y")
@@ -212,7 +209,7 @@ func _check_sorting() -> void:
 	_expect(views.size() == OfficeState.furniture.size(), "se dibujan %d muebles" % views.size())
 	for view: FurnitureView in views:
 		_expect(_ceo.position.y > view.position.y, "sentado, el CEO queda detrás de %s" % view.item_id)
-	# El respaldo de su silla queda del lado de quien mira (+y), así que va delante del CEO.
+	# El respaldo de su silla queda del lado de quien mira (+y): va delante del CEO.
 	for child: Node in objects.get_children():
 		if child is FurnitureView and child.part == FurnitureView.PART_BACKREST:
 			var back: Vector2i = -FurnitureCatalog.get_front(child.rotation_index)
@@ -253,13 +250,11 @@ func _check_leaving_and_skip() -> void:
 	_expect(_ceo.visible and _ceo.activity == Ceo.Activity.WALKING_TO_DESK, "a las 13 el CEO no vuelve")
 	_walk_until(func() -> bool: return _ceo.activity == Ceo.Activity.SEATED, 30.0, "volver del almuerzo")
 
-	# No tiene horario: a las 17:00 y de noche sigue sentado.
 	GameClock.advance((20 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
 	_walk_until(func() -> bool: return GameClock.get_hour() == 20, 10.0, "llegar a las 20")
 	_expect(_ceo.activity == Ceo.Activity.SEATED and _left_count == left_before + 1,
 		"a las 20 el CEO sigue trabajando hasta que lo manden a casa")
 
-	# El botón lo manda a casa.
 	_days_seen.clear()
 	_visible_at_hour.clear()
 	var button: Button = _game.get_ceo_button()
@@ -273,10 +268,9 @@ func _check_leaving_and_skip() -> void:
 		_check_path(_seat, path, OfficeState.entrance, "salida")
 		_expect(not OfficeState.lot_rect.has_point(outside), "el último paso no sale del local")
 	_walk_until(func() -> bool: return _left_count == left_before + 2, 30.0, "salir del local")
-	# Durante el salto (por ejemplo, a las 23:00 y a las 3:00) no está en la oficina.
+	# Durante el salto (por ejemplo a las 23:00 y a las 3:00) no está en la oficina.
 	_expect(_visible_at_hour.get(23, true) == false and _visible_at_hour.get(3, true) == false,
 		"el CEO seguía en la oficina de noche: %s" % [_visible_at_hour])
-	# Al quedar vacía, el tiempo saltó al martes a las 8 y el CEO llegó solo.
 	_expect(GameClock.get_weekday() == 1 and GameClock.get_hour() == 8 and GameClock.get_minute() == 0,
 		"tras salir el lunes, el reloj está en el día %d a las %d:%02d" % [
 			GameClock.get_weekday(), GameClock.get_hour(), GameClock.get_minute()])
@@ -286,12 +280,12 @@ func _check_leaving_and_skip() -> void:
 	_walk_until(func() -> bool: return _ceo.activity == Ceo.Activity.SEATED, 30.0, "volver al escritorio")
 
 
-# El viernes al mandarlo a casa, el salto pasa el fin de semana y avisa de cada día.
-# El sábado puede volver si el jugador lo manda a la oficina.
+# El viernes, al mandarlo a casa, el salto pasa el fin de semana avisando cada día; el sábado
+# vuelve si el jugador lo manda.
 func _check_weekend_skip() -> void:
 	var friday: int = 4 - GameClock.get_weekday()
 	GameClock.advance(friday * GameConstants.HOURS_PER_DAY * GameConstants.SECONDS_PER_GAME_HOUR)
-	# Durante esos días el CEO sale a almorzar y vuelve; se le deja terminar cada trayecto.
+	# Esos días sale a almorzar y vuelve; se le deja terminar cada trayecto.
 	_walk_until(func() -> bool: return GameClock.get_weekday() == 4 and _ceo.activity == Ceo.Activity.SEATED,
 		600.0, "llegar al viernes sentado")
 	GameClock.advance((16 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
@@ -301,7 +295,6 @@ func _check_weekend_skip() -> void:
 	_walk_until(func() -> bool: return _left_count == left_before + 1, 60.0, "salir el viernes")
 	_expect(GameClock.get_weekday() == 0 and GameClock.get_hour() == 8, "tras el viernes el reloj no está en lunes a las 8")
 	_expect(_days_seen.size() == 3, "en el fin de semana se avisaron %d días" % _days_seen.size())
-	# Se va otra vez y vuelve a mano: viene aunque no sea su hora.
 	_walk_until(func() -> bool: return _ceo.activity == Ceo.Activity.SEATED, 30.0, "sentarse el lunes")
 	Staff.set_ceo_at_work(false)
 	_expect(_ceo.activity == Ceo.Activity.WALKING_OUT, "mandado a casa, sale")

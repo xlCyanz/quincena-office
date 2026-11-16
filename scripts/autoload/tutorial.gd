@@ -1,10 +1,6 @@
-# Tutorial guiado (diseño 21.2; hito 63): una lista de pasos en data/tutorial.json, cada uno
-# con su texto, lo que se resalta y la condición que lo da por cumplido, leída del estado de
-# los sistemas como los objetivos (Company.get_objective_progress) o de lo que el jugador hizo
-# en la interfaz (EventBus.ui_action). Arranca en una partida nueva mientras el jugador no lo
-# haya terminado o saltado nunca (opción tutorial_seen); se puede saltar y retomar desde
-# Ajustes, y se guarda en la partida. Una partida sin tutorial guardado carga sin él, como
-# si ya lo hubiera terminado. No bloquea nada: solo muestra el paso (TutorialPanel).
+# Tutorial guiado: pasos de data/tutorial.json con texto, resaltado y condición (estado de los
+# sistemas o EventBus.ui_action). Aparece en partidas nuevas hasta terminarlo o saltarlo una vez
+# (opción tutorial_seen); se retoma desde Ajustes y se guarda. No bloquea nada (TutorialPanel).
 extends Node
 
 const TUTORIAL_PATH: String = "res://data/tutorial.json"
@@ -38,7 +34,7 @@ func new_game() -> void:
 	EventBus.tutorial_changed.emit()
 
 
-## Mientras se prepara o carga una partida no se revisan los pasos (estado a medias).
+## Mientras se prepara o carga una partida no se revisan los pasos.
 func begin_load() -> void:
 	_loading = true
 
@@ -135,8 +131,7 @@ func export_state() -> Dictionary:
 	return {"active": active, "step": step, "finished": finished, "actions": actions.duplicate()}
 
 
-## Sin estado (una partida de antes del hito 63) carga sin tutorial, como terminado. Un paso
-## que ya no existe vuelve al primero.
+## Sin estado carga sin tutorial, como terminado; un paso que ya no existe vuelve al primero.
 func import_state(state: Dictionary) -> void:
 	actions.clear()
 	for action: Variant in state.get("actions", []):

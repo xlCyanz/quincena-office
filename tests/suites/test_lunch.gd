@@ -1,17 +1,15 @@
-# Prueba del hito 53: almuerzo en la oficina.
-# Criterio: con la sala armada, quien cabe almuerza dentro, recupera más energía y rinde
-# media hora; los demás salen.
+# Almuerzo dentro: con la sala armada quien cabe almuerza dentro, recupera más energía
+# y rinde media hora; los demás salen.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=lunch
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const SEED: int = 20261153
 const LUNCH_HOUR: int = 12
-## Sala de descanso: el espacio abierto del local fuera del Área de trabajo (norte) y de
-## la Oficina Ejecutiva; sus muebles van contra la pared oeste.
+## Sala de descanso: lo abierto fuera del Área de trabajo y la Oficina Ejecutiva; muebles contra la pared oeste.
 const BREAK_CELL := Vector2i(3, 4)
 const COFFEE_CELL := Vector2i(0, 4)
 const FRIDGE_CELL := Vector2i(0, 5)
@@ -26,7 +24,7 @@ var _builder := Builder.new()
 
 func _ready() -> void:
 	SaveManager.save_dir = "user://test_saves"
-	# Sin baños para medir la producción exacta (los baños tienen su parte).
+	# Sin baños para medir la producción exacta.
 	Staff.bathrooms_enabled = false
 	_check_data()
 	_check_seats()
@@ -45,8 +43,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un Área de trabajo de tres puestos al norte y la Sala de descanso con
-# su cafetera en el resto del local.
+# Área de trabajo de tres puestos al norte y Sala de descanso con cafetera en el resto.
 func _new_game() -> void:
 	GameClock.stop()
 	SaveManager.new_game()
@@ -78,8 +75,7 @@ func _set_up_lunch() -> void:
 	_expect(_builder.place("dining_table", TABLE_CELL, 0)["ok"], "mesa de comedor")
 
 
-# Tres empleados con puesto y copias sin puesto hasta llegar a total: todos almuerzan a
-# las 12 (de 8 a 17).
+# Tres con puesto y copias sin puesto hasta total; todos almuerzan a las 12.
 func _hire_staff(total: int) -> Array[Dictionary]:
 	var hired: Array[Dictionary] = []
 	for index: int in range(mini(total, 3)):
@@ -96,7 +92,7 @@ func _hire_staff(total: int) -> Array[Dictionary]:
 	return hired
 
 
-# Una hora (absoluta) del próximo día hábil a esa hora del reloj.
+# Hora absoluta del próximo día hábil a esa hora del reloj.
 func _hour_at(clock_hour: int) -> int:
 	var at: int = Staff.get_absolute_hour() + 1
 	while Staff.get_weekday_at(at) >= 5 or posmod(at, 24) != clock_hour:
@@ -132,7 +128,6 @@ func _check_data() -> void:
 		"el doble de energía y media hora de trabajo")
 
 
-# Asientos solo con nevera, microondas y mesa en una Sala de descanso que funciona.
 func _check_seats() -> void:
 	_new_game()
 	_expect(OfficeState.get_lunch_seats() == 0, "solo con cafetera no hay almuerzo dentro")
@@ -169,7 +164,6 @@ func _check_who_eats() -> void:
 	_expect(not Staff.get_lunch_inside(at).has(Staff.employee_key(people[0]["id"])), "quien faltó no almuerza dentro")
 
 
-# Dentro descansa el doble que fuera.
 func _check_energy() -> void:
 	_new_game()
 	_set_up_lunch()
@@ -179,11 +173,10 @@ func _check_energy() -> void:
 		person["energy"] = 50
 	GameClock.fast_forward_hours(1)
 	var rest: int = int(StaffCatalog.get_workday("energy_per_rest_hour"))
-	# Con café (hito 54) quien almuerza dentro recupera un poco más.
+	# Con café, un poco más.
 	var inside: int = rest * 2 + int(StaffCatalog.get_breaks("coffee_energy"))
 	_expect(int(people[0]["energy"]) == 50 + inside, "dentro +%d: %d" % [inside, people[0]["energy"]])
 	_expect(int(people[4]["energy"]) == 50 + rest, "fuera +%d: %d" % [rest, people[4]["energy"]])
-	# Sin microondas todos salen.
 	OfficeState.furniture = OfficeState.furniture.filter(func(item: Dictionary) -> bool: return item["id"] != "microwave")
 	_go_to(_hour_at(LUNCH_HOUR))
 	people[0]["energy"] = 50
@@ -191,7 +184,6 @@ func _check_energy() -> void:
 	_expect(int(people[0]["energy"]) == 50 + rest, "sin microondas sale y descansa normal")
 
 
-# Almorzando dentro rinde media hora; fuera nada.
 func _check_production() -> void:
 	_new_game()
 	_set_up_lunch()
@@ -207,7 +199,7 @@ func _check_production() -> void:
 	_expect(working > 0.0 and is_equal_approx(_rate_of(contract, key, at), working * 0.5), "el empleado rinde la mitad: %.2f de %.2f" % [_rate_of(contract, key, at), working])
 	var ceo_working: float = _rate_of(ceo_contract, "ceo", at - 1)
 	_expect(ceo_working > 0.0 and is_equal_approx(_rate_of(ceo_contract, "ceo", at), ceo_working * 0.5), "el CEO también")
-	# Con otro empleado más antiguo ocupando el último asiento, el tercero sale y no rinde.
+	# Otro más antiguo ocupa el último asiento: el tercero sale y no rinde.
 	var copy: Dictionary = people[0].duplicate(true)
 	copy["id"] = 999
 	Staff.employees.push_front(copy)
@@ -247,7 +239,6 @@ func _check_ui() -> void:
 	for character: OfficeCharacter in eaters:
 		spots_used[character.get_seat_cell()] = true
 	_expect(spots_used.size() == 4, "cada uno en su lugar")
-	# Termina el almuerzo: vuelven a sus sillas.
 	GameClock.fast_forward_hours(1)
 	_expect(eater.get_seat_cell() == OfficeState.find_furniture_assigned_to(Staff.employee_key(people[0]["id"]))["cell"], "vuelve a su silla")
 	_expect(game.ceo.get_seat_cell() == OfficeState.find_furniture_assigned_to("ceo")["cell"], "y el CEO a la suya")

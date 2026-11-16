@@ -1,6 +1,5 @@
-# Prueba del hito 35: plantillas de turno y agenda semanal (menú Horarios).
-# Criterio: cambiar una plantilla cambia el turno de todos sus equipos; la agenda marca
-# la hora en que un equipo no tiene líder presente.
+# Plantillas de turno y agenda (menú Horarios): cambiar una plantilla cambia el turno de sus
+# equipos; la agenda marca las horas en que un equipo no tiene líder presente.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=agenda
 extends Node
 
@@ -24,7 +23,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_defaults()
 	_check_templates()
@@ -44,8 +43,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Startup con un área de trabajo de tres puestos, dinero de sobra y los
-# objetivos cumplidos.
+# Partida nueva en Startup con tres puestos, dinero y los objetivos cumplidos.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -180,11 +178,10 @@ func _check_agenda() -> void:
 	# Coincide con el rendimiento real.
 	_expect(is_equal_approx(Staff.get_team_factor(team, 9), 0.75) and is_equal_approx(Staff.get_team_factor(team, 15), 1.0),
 		"el hueco es la hora en que rinde 75 %")
-	# En Emprendimiento rinde igual sin líder: no hay huecos.
+	# En Emprendimiento sin líder rinde igual: no hay huecos.
 	Company.stage = 0
 	_expect(Staff.get_agenda_gaps(0).is_empty(), "en Emprendimiento no hay huecos")
 	Company.stage = 1
-	# Un equipo vacío no marca huecos.
 	Staff.remove_from_team(worker["id"])
 	Staff.remove_from_team(leader["id"])
 	_expect(Staff.get_agenda_gaps(0).is_empty(), "un equipo sin miembros no tiene huecos")
@@ -218,7 +215,7 @@ func _check_save() -> void:
 	Staff.import_state(state)
 	_expect(int(Staff.get_team(follows["id"])["template_id"]) == Staff.NO_TEMPLATE and _start(Staff.get_team(follows["id"])) == 9,
 		"sin su plantilla, turno propio")
-	# Una partida de antes del hito 35 empieza con las plantillas de siempre.
+	# Una partida vieja empieza con las plantillas de siempre.
 	state.erase("shift_templates")
 	state.erase("next_template_id")
 	for team: Dictionary in state["teams"]:
@@ -259,7 +256,6 @@ func _check_ui() -> void:
 	(panel.get_team_control(team["id"], "later") as Button).pressed.emit()
 	await get_tree().process_frame
 	_expect(_start(team) == 10 and _start(other) == 9, "con turno propio solo cambia ese equipo")
-	# Plantillas.
 	panel.get_view_button(TeamsPanel.VIEW_TEMPLATES).pressed.emit()
 	await get_tree().process_frame
 	_expect(panel.get_view() == TeamsPanel.VIEW_TEMPLATES and panel.get_create_button().text == "Crear plantilla", "vista Plantillas")
@@ -279,7 +275,6 @@ func _check_ui() -> void:
 	(panel.get_template_control(4, "delete") as Button).pressed.emit()
 	await get_tree().process_frame
 	_expect(Staff.shift_templates.size() == 3, "borrar una plantilla")
-	# Agenda.
 	panel.get_view_button(TeamsPanel.VIEW_AGENDA).pressed.emit()
 	await get_tree().process_frame
 	_expect(not panel.get_create_button().visible, "la agenda no crea nada")

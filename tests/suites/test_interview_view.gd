@@ -1,7 +1,5 @@
-# Prueba de cómo se ve una entrevista (pedido después del hito 69): el candidato entra y
-# se sienta en la silla de visita de la oficina de quien lo entrevista, el CEO en su oficina o el
-# ejecutivo de Administración en la suya; al terminar la media hora se va. La ficha del
-# ejecutivo dice a quién entrevista.
+# Cómo se ve una entrevista: el candidato se sienta en la silla de visita de quien entrevista
+# (CEO o ejecutivo de Administración) y se va al terminar; la ficha dice a quién entrevista.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=interview_view
 extends Node
 
@@ -82,12 +80,11 @@ func _check_ceo() -> void:
 	_expect(Staff.start_interview(int(candidate["id"]))["ok"], "el CEO entrevista")
 	_check_spot(game, "ceo", "CEO")
 	var visitor: Visitor = game.interviewee
-	# A la media hora termina y el candidato se va.
 	GameClock.advance(30 * GameConstants.SECONDS_PER_GAME_HOUR / 60.0 / GameClock.get_time_scale())
 	Staff.check_interview()
 	_expect(Staff.interview.is_empty() and game.interviewee == null, "al terminar ya no hay entrevista")
 	_expect(visitor != null and visitor.activity == OfficeCharacter.Activity.WALKING_OUT, "el candidato se va")
-	# Cortarla (el CEO se va a casa) también lo manda afuera.
+	# Cortarla (el CEO se va a casa) también lo saca.
 	var other: Dictionary = _candidate()
 	if not other.is_empty() and Staff.start_interview(int(other["id"]))["ok"]:
 		var second: Visitor = game.interviewee

@@ -1,8 +1,5 @@
-# Objetivos guiados (diseño, 9.4, 12.2 y 17.2; hito 28): una lista corta a la izquierda,
-# bajo el dinero, con los objetivos que se ven ahora (Company.get_visible_objectives),
-# cómo va cada uno y su recompensa. Se pliega con su encabezado. La escena de juego la
-# pliega sola mientras hay un panel del lado izquierdo abierto (set_suppressed) y, al
-# cerrarlo, vuelve como el jugador la tenía. Sin objetivos pendientes no se muestra.
+# Objetivos guiados: lista plegable a la izquierda, bajo el dinero, con su avance y recompensa.
+# Se pliega sola con un panel izquierdo abierto y luego vuelve como la tenía el jugador.
 class_name ObjectivesPanel
 extends CanvasLayer
 
@@ -15,7 +12,7 @@ const REWARD_COLOR := Color(0.55, 0.85, 0.5)
 var _panel: PanelContainer
 var _header: Button
 var _rows: VBoxContainer
-# Lo que eligió el jugador (true = desplegada) y si un panel izquierdo la tapa.
+# Elección del jugador (true = desplegada) y si un panel izquierdo la tapa.
 var _expanded: bool = true
 var _suppressed: bool = false
 
@@ -48,13 +45,13 @@ func _ready() -> void:
 	_refresh()
 
 
-## Despliega (true) o pliega (false) la lista, como el encabezado.
+## Despliega (true) o pliega (false) la lista.
 func set_expanded(expanded: bool) -> void:
 	_expanded = expanded
 	_refresh()
 
 
-## Un panel izquierdo está abierto (true): la lista se pliega hasta que se cierre.
+## true: un panel izquierdo está abierto y la lista se pliega hasta que se cierre.
 func set_suppressed(suppressed: bool) -> void:
 	_suppressed = suppressed
 	_refresh()
@@ -72,7 +69,7 @@ func get_header_button() -> Button:
 	return _header
 
 
-## Lo que muestra la lista, un renglón por línea (para las pruebas).
+## Texto de la lista, un renglón por línea (para las pruebas).
 func get_text() -> String:
 	var lines: Array[String] = [_header.text]
 	if _rows.visible:

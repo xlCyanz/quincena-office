@@ -1,5 +1,4 @@
-# Línea discontinua que marca el límite del solar (el mapa que se puede comprar). Va
-# sobre el piso y debajo de muebles y personajes.
+# Línea discontinua del límite del solar, sobre el piso y bajo muebles y personajes.
 class_name SiteBorder
 extends Node2D
 
@@ -9,7 +8,7 @@ var _width: float = 2.0
 var _dash: float = 16.0
 
 
-## Toma el solar y lo dibuja con la orientación actual de la cuadrícula.
+## Toma el solar y lo dibuja.
 func setup(grid: OfficeGrid, site: Rect2i) -> void:
 	var data: Dictionary = MapDecor.get_data().get("border", {})
 	_color = Color(String(data.get("color", "ffffff")), float(data.get("alpha", 0.6)))

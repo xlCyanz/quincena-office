@@ -1,10 +1,9 @@
-# Prueba del hito 8: cuenta empresarial, cobro del mantenimiento el día 1
-# y la interfaz superpuesta mínima (dinero, reloj, velocidades y botón Construir).
-# Criterio: el saldo cambia con cada compra y el día 1 se descuenta $5 por m².
+# Dinero e interfaz: el saldo cambia con cada compra y el día 1 se cobran $5 por m²
+# de mantenimiento; dinero, reloj, velocidades y Construir en pantalla.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=money_ui
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -19,7 +18,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_format()
 	_check_maintenance()
@@ -36,7 +35,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Avanza el reloj hasta la hora 00:00 del día indicado del mes actual o siguiente.
+# Hasta las 00:00 del día siguiente.
 func _skip_to_midnight_of_next_day() -> void:
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY - GameClock.get_hour())
 
@@ -55,7 +54,7 @@ func _check_maintenance() -> void:
 	SaveManager.new_game()
 	_expect(Economy.balance == 20000 and Economy.movements.is_empty(), "la partida empieza con $20,000 y sin movimientos")
 	_expect(Economy.get_maintenance(48) == 240, "el mantenimiento de 48 m² es $240")
-	# Del día 1 al día 30 no se cobra nada (el primer cobro es el día 1 del mes 2).
+	# El primer cobro es el día 1 del mes 2.
 	while GameClock.get_day() < 30:
 		_skip_to_midnight_of_next_day()
 	GameClock.fast_forward_hours(23)
@@ -67,10 +66,9 @@ func _check_maintenance() -> void:
 	var movement: Dictionary = Economy.movements.back()
 	_expect(movement == {"day": 1, "month": 2, "concept": Economy.CONCEPT_MAINTENANCE, "amount": -240},
 		"movimiento del mantenimiento: %s" % [movement])
-	# Un mes entero de golpe (como el salto del CEO) cobra una sola vez.
+	# Un mes entero de golpe cobra una sola vez.
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * GameConstants.DAYS_PER_MONTH)
 	_expect(GameClock.get_month() == 3 and Economy.balance == 20000 - 480, "un mes más, un cobro más: %d" % Economy.balance)
-	# El cobro es proporcional al local: $5 por m².
 	OfficeState.lot_rect = Rect2i(0, 0, 10, 12)
 	var before: int = Economy.balance
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * GameConstants.DAYS_PER_MONTH)
@@ -89,13 +87,12 @@ func _check_account() -> void:
 	builder.sell_furniture_at(Vector2i(5, 5))
 	_expect(Economy.balance == 19930 and Economy.movements.back()["amount"] == 20, "vender la planta: %d" % Economy.balance)
 	_expect(not Economy.spend(30000) and Economy.balance == 19930, "una compra sin dinero no se cobra")
-	# Un gasto obligatorio sí puede dejar el saldo en negativo; luego no se puede comprar.
+	# Un gasto obligatorio puede dejar el saldo en negativo; luego no se compra.
 	Economy.spend(19900)
 	Economy.charge(240, Economy.CONCEPT_MAINTENANCE)
 	_expect(Economy.balance == -210 and not Economy.can_afford(1), "el mantenimiento deja el saldo en %d" % Economy.balance)
 	var result: Dictionary = builder.place("small_plant", Vector2i(5, 5), 0)
 	_expect(not result["ok"] and Economy.balance == -210, "con saldo negativo no se compra")
-	# Guardar y restaurar la cuenta.
 	var before: String = JSON.stringify(Economy.export_state())
 	Economy.import_state(JSON.parse_string(before))
 	_expect(JSON.stringify(Economy.export_state()) == before, "la cuenta no se restauró igual")
@@ -135,7 +132,6 @@ func _check_hud() -> void:
 	_expect(clock.contains("Lun 1 · Mes 1") and clock.contains(" 08:0") and clock.contains("Nómina en 14 días"),
 		"reloj en pantalla: %s" % clock)
 
-	# Velocidades y pausa con el ratón.
 	await _click(hud.get_speed_button(1))
 	_expect(GameClock.speed_index == 1 and not GameClock.is_paused and hud.get_speed_button(1).button_pressed,
 		"elegir 2x con el ratón")
@@ -149,14 +145,13 @@ func _check_hud() -> void:
 	await _click(hud.get_speed_button(0))
 	_expect(GameClock.get_time_scale() == 1.0, "volver a 1x con el ratón")
 
-	# En modo construcción el tiempo queda en pausa y los botones no lo cambian.
+	# En construcción el tiempo queda en pausa y los botones no lo cambian.
 	await _click(panel.get_open_button())
 	await get_tree().process_frame
 	_expect(GameClock.is_paused and hud.get_speed_button(2).disabled, "en modo construcción los botones se desactivan")
 	await _click(hud.get_speed_button(2))
 	_expect(GameClock.is_paused and GameClock.speed_index == 0, "un botón de velocidad cambió el tiempo en modo construcción")
 
-	# El dinero en pantalla cambia con cada compra.
 	# Muebles → Decoración → Planta pequeña.
 	for i: int in range(3):
 		await _click(panel.get_button_toward("small_plant"))
@@ -179,7 +174,6 @@ func _check_hud() -> void:
 	await get_tree().process_frame
 	_expect(not GameClock.is_paused and not hud.get_speed_button(0).disabled, "al salir se recupera el tiempo")
 
-	# El día 1 del mes siguiente se descuenta el mantenimiento y se ve en pantalla.
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * GameConstants.DAYS_PER_MONTH)
 	await get_tree().process_frame
 	_expect(hud.get_balance_text() == "$19,720", "dinero tras el mantenimiento: %s" % hud.get_balance_text())

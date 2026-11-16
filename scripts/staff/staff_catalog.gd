@@ -1,6 +1,5 @@
-# Cargos, niveles, sueldos y valores de contratación leídos de data/staff.json, y
-# nombres y rasgos de data/names.json, una sola vez. Se usa por su nombre de clase,
-# por ejemplo StaffCatalog.get_salary("programmer", "junior").
+# Cargos, niveles, sueldos y contratación (data/staff.json) y nombres y rasgos (data/names.json),
+# leídos una vez. Uso: StaffCatalog.get_salary("programmer", "junior").
 class_name StaffCatalog
 extends RefCounted
 
@@ -11,14 +10,14 @@ static var _staff: Dictionary = {}
 static var _names: Dictionary = {}
 
 
-## Ids de los cargos que se pueden pedir en una vacante, en el orden del archivo.
+## Cargos que se pueden pedir en una vacante, en el orden del archivo.
 static func get_role_ids() -> Array[String]:
 	var ids: Array[String] = []
 	ids.assign(_staff_data()["roles"].keys())
 	return ids
 
 
-## Ids de los niveles, de Pasante a Senior.
+## Niveles, de Pasante a Senior.
 static func get_level_ids() -> Array[String]:
 	var ids: Array[String] = []
 	ids.assign(_staff_data()["levels"].keys())
@@ -49,7 +48,7 @@ static func get_main_skill(role: String) -> String:
 	return String(_staff_data()["roles"][role]["main_skill"])
 
 
-## Sueldo mensual de la tabla (diseño, 13.2) para un cargo y un nivel.
+## Sueldo mensual de la tabla para un cargo y nivel.
 static func get_salary(role: String, level: String) -> int:
 	var data: Dictionary = _staff_data()["roles"][role]
 	if data.has("fixed_salary"):
@@ -58,7 +57,7 @@ static func get_salary(role: String, level: String) -> int:
 	return int(salaries[get_level_ids().find(level)])
 
 
-## Lo que pide ascender a un nivel: {"projects", "days"}, o vacío si nadie asciende a él.
+## Requisitos para ascender a un nivel: {"projects", "days"}, o vacío.
 static func get_promotion(level: String) -> Dictionary:
 	var promotion: Dictionary = _staff_data().get("promotion", {}).get(level, {})
 	if promotion.is_empty():
@@ -66,43 +65,42 @@ static func get_promotion(level: String) -> Dictionary:
 	return {"projects": int(promotion.get("projects", 0)), "days": int(promotion.get("days", 0))}
 
 
-## Nivel siguiente (de Pasante a Senior), o "" si ya es el más alto.
+## Nivel siguiente, o "" si ya es el más alto.
 static func get_next_level(level: String) -> String:
 	var levels: Array[String] = get_level_ids()
 	var index: int = levels.find(level)
 	return levels[index + 1] if index >= 0 and index + 1 < levels.size() else ""
 
 
-## Indica si un cargo tiene niveles (los de sueldo fijo no los tienen).
+## Indica si un cargo tiene niveles (los de sueldo fijo no).
 static func has_levels(role: String) -> bool:
 	return not _staff_data()["roles"].get(role, {}).has("fixed_salary")
 
 
-## Etapa de la empresa (índice) desde la que existe un cargo.
+## Etapa (índice) desde la que existe un cargo.
 static func get_role_min_stage(role: String) -> int:
 	return int(_staff_data()["roles"].get(role, {}).get("min_stage", 0))
 
 
-## Nombre de un cargo con su nivel ("Programador Junior") o solo el cargo si no tiene
-## niveles ("Líder de equipo").
+## «Programador Junior», o solo el cargo si no tiene niveles («Líder de equipo»).
 static func describe_title(role: String, level: String) -> String:
 	if not has_levels(role):
 		return get_role_name(role)
 	return "%s %s" % [get_role_name(role), get_level_name(level)]
 
 
-## Tipo de habitación donde trabaja un cargo (work_area si no dice otra cosa).
+## Tipo de habitación donde trabaja un cargo (work_area por defecto).
 static func get_workplace(role: String) -> String:
 	return String(_staff_data()["roles"].get(role, {}).get("workplace", Workstations.WORK_AREA))
 
 
-## Valor de data/staff.json, management (gerentes y escalera de cargos).
+## Valor de staff.json, management (gerentes y escalera de cargos).
 static func get_management(key: String) -> Variant:
 	return _staff_data()["management"][key]
 
 
-## Cargo al que asciende alguien: un Senior (de un cargo con niveles) al primero de la
-## escalera de dirección y cada cargo de la escalera al siguiente; "" si no hay.
+## Cargo siguiente: un Senior pasa al primero de la escalera de dirección y cada escalón al
+## siguiente; "" si no hay.
 static func get_next_role(role: String, level: String) -> String:
 	var ladder: Array = get_management("ladder")
 	if has_levels(role):
@@ -111,22 +109,22 @@ static func get_next_role(role: String, level: String) -> String:
 	return String(ladder[index + 1]) if index >= 0 and index + 1 < ladder.size() else ""
 
 
-## Valor de data/staff.json, departments.
+## Valor de staff.json, departments.
 static func get_departments(key: String) -> Variant:
 	return _staff_data()["departments"][key]
 
 
-## Valor de data/staff.json, competition (ofertas de otras empresas, hito 38).
+## Valor de staff.json, competition.
 static func get_competition(key: String) -> Variant:
 	return _staff_data()["competition"][key]
 
 
-## Valor de data/staff.json, accounting (contador, hito 37).
+## Valor de staff.json, accounting.
 static func get_accounting(key: String) -> Variant:
 	return _staff_data()["accounting"][key]
 
 
-## Valor de data/staff.json, cleaning (suciedad y limpieza, hito 37).
+## Valor de staff.json, cleaning.
 static func get_cleaning(key: String) -> Variant:
 	return _staff_data()["cleaning"][key]
 
@@ -142,7 +140,7 @@ static func get_department_name(department: String) -> String:
 	return String(get_departments("names").get(department, department))
 
 
-## Departamento de un cargo, o "" (líderes, gerentes y ejecutivos no son de ninguno).
+## Departamento de un cargo, o "" (la dirección no es de ninguno).
 static func get_role_department(role: String) -> String:
 	return String(get_departments("roles").get(role, ""))
 
@@ -162,7 +160,7 @@ static func get_leader_role() -> String:
 	return String(get_teams("leader_role"))
 
 
-## Horario por defecto de un cargo: {"days", "start_hour", "end_hour"} (ver WorkSchedule).
+## Horario por defecto de un cargo: {"days", "start_hour", "end_hour"}.
 static func get_role_schedule(role: String) -> Dictionary:
 	return WorkSchedule.from_dict(_staff_data()["roles"][role].get("schedule", {})).to_dict()
 
@@ -172,23 +170,22 @@ static func get_shirt_color(role: String) -> Color:
 	return Color(String(_staff_data()["roles"].get(role, {}).get("shirt_color", "888888")))
 
 
-## Valor de la jornada (data/staff.json, workday): lunch_offset, start_energy, …
+## Valor de staff.json, workday.
 static func get_workday(key: String) -> Variant:
 	return _staff_data()["workday"][key]
 
 
-## Valor de los equipos y sus turnos (data/staff.json, teams).
+## Valor de staff.json, teams.
 static func get_teams(key: String) -> Variant:
 	return _staff_data()["teams"][key]
 
 
-## Valor de horas extra y turno de noche (data/staff.json, overtime).
+## Valor de staff.json, overtime.
 static func get_overtime(key: String) -> Variant:
 	return _staff_data()["overtime"][key]
 
 
-## Días de la semana con que empieza el turno de un equipo nuevo.
-## Plantillas de turno con que empieza la partida: [{"name", "schedule"}].
+## Plantillas de turno iniciales: [{"name", "schedule"}].
 static func get_default_templates() -> Array[Dictionary]:
 	var templates: Array[Dictionary] = []
 	for data: Dictionary in _staff_data()["teams"]["templates"]:
@@ -200,6 +197,7 @@ static func get_default_templates() -> Array[Dictionary]:
 	return templates
 
 
+## Días con que empieza el turno de un equipo nuevo.
 static func get_default_team_days() -> Array[int]:
 	var days: Array[int] = []
 	for day: Variant in _staff_data()["teams"]["default_days"]:
@@ -207,42 +205,42 @@ static func get_default_team_days() -> Array[int]:
 	return days
 
 
-## Valor de la nómina y los despidos (data/staff.json, payroll).
+## Valor de staff.json, payroll.
 static func get_payroll(key: String) -> int:
 	return int(_staff_data()["payroll"][key])
 
 
-## Valor del ánimo, el estrés, las renuncias y los aumentos (data/staff.json, morale).
+## Valor de staff.json, morale (ánimo, estrés, renuncias y aumentos).
 static func get_morale(key: String) -> float:
 	return float(_staff_data()["morale"][key])
 
 
-## Valor de la producción (data/staff.json, production).
+## Valor de staff.json, production.
 static func get_production(key: String) -> Variant:
 	return _staff_data()["production"][key]
 
 
-## Puntos por hora de trabajo de un nivel (diseño, 13.3).
+## Puntos por hora de trabajo de un nivel.
 static func get_points_per_hour(level: String) -> float:
 	return float(_staff_data()["production"]["points_per_hour"].get(level, 0.0))
 
 
-## Hora a la que el CEO se queda dormido si sigue en la oficina.
+## Hora en que el CEO se duerme si sigue en la oficina.
 static func get_ceo_sleep_hour() -> int:
 	return int(_staff_data()["ceo"]["sleep_hour"])
 
 
-## Hora a la que llega solo el CEO (data/staff.json, ceo.arrival_hour).
+## Hora a la que llega solo el CEO (ceo.arrival_hour).
 static func get_ceo_arrival_hour() -> int:
 	return int(_staff_data()["ceo"]["arrival_hour"])
 
 
-## Días de la semana (0 = lunes) en que el CEO llega solo.
-## Minutos antes de arrival_hour en que el CEO llega a abrir la oficina (siempre puntual).
+## Minutos antes de arrival_hour en que el CEO llega a abrir.
 static func get_ceo_open_minutes() -> int:
 	return int(_staff_data()["ceo"]["open_minutes"])
 
 
+## Días (0 = lunes) en que el CEO llega solo.
 static func get_ceo_arrival_days() -> Array[int]:
 	var days: Array[int] = []
 	for day: Variant in _staff_data()["ceo"]["arrival_days"]:
@@ -268,12 +266,12 @@ static func get_skill_range_width() -> int:
 	return int(_staff_data()["skill_range_width"])
 
 
-## Un valor de la sección "hiring" de data/staff.json.
+## Un valor de staff.json, hiring.
 static func get_hiring(key: String) -> Variant:
 	return _staff_data()["hiring"][key]
 
 
-## Rango [mínimo, máximo] de un valor de "hiring" guardado como par.
+## Rango [mínimo, máximo] de un par de "hiring".
 static func get_hiring_range(key: String) -> Vector2i:
 	return _pair(get_hiring(key))
 
@@ -300,7 +298,7 @@ static func get_trait_name(trait_id: String) -> String:
 	return String(_names_data()["traits"].get(trait_id, trait_id))
 
 
-## Un efecto de un rasgo (data/staff.json, traits.effects), o default si no lo tiene.
+## Un efecto de un rasgo (traits.effects), o default.
 static func get_trait_effect(trait_id: String, key: String, default: Variant = null) -> Variant:
 	return (_staff_data()["traits"]["effects"].get(trait_id, {}) as Dictionary).get(key, default)
 
@@ -310,32 +308,32 @@ static func get_trait_effects(trait_id: String) -> Dictionary:
 	return _staff_data()["traits"]["effects"].get(trait_id, {})
 
 
-## Cada cuántos días en la empresa se descubre un rasgo más.
-## Valor del almuerzo dentro (data/staff.json, lunch; hito 53).
+## Valor de staff.json, lunch.
 static func get_lunch(key: String) -> float:
 	return float(_staff_data()["lunch"][key])
 
 
-## Valor de las pausas (data/staff.json, breaks; hito 54).
-## Valor de los iconos de estado (data/staff.json, status_icons; hito 57).
+## Valor de staff.json, status_icons.
 static func get_status_icons(key: String) -> Variant:
 	return _staff_data()["status_icons"][key]
 
 
+## Valor de staff.json, breaks.
 static func get_breaks(key: String) -> float:
 	return float(_staff_data()["breaks"][key])
 
 
-## Valor de las llegadas escalonadas (data/staff.json, arrivals).
+## Valor de staff.json, arrivals.
 static func get_arrivals(key: String) -> float:
 	return float(_staff_data()["arrivals"][key])
 
 
-## Valor de los baños (data/staff.json, bathrooms; hito 52).
+## Valor de staff.json, bathrooms.
 static func get_bathrooms(key: String) -> float:
 	return float(_staff_data()["bathrooms"][key])
 
 
+## Cada cuántos días en la empresa se descubre otro rasgo.
 static func get_trait_discover_days() -> int:
 	return int(_staff_data()["traits"]["discover_days"])
 

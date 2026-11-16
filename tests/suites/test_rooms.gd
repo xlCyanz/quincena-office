@@ -1,10 +1,9 @@
-# Prueba del hito 7: detección de espacios cerrados con puerta, asignación
-# de tipo de habitación y validación de requisitos. La Recepción exige pared exterior
-# (y contener la entrada).
+# Habitaciones: espacios cerrados con puerta, tipo de habitación y requisitos; la Recepción
+# exige pared exterior y contener la entrada.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=rooms
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -19,7 +18,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_catalog()
 	_check_starting_spaces()
@@ -73,7 +72,7 @@ func _check_catalog() -> void:
 
 func _check_starting_spaces() -> void:
 	SaveManager.new_game()
-	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores.
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
 	_expect(spaces.size() == 2, "la oficina inicial tiene 2 espacios: %d" % spaces.size())
 	var office: Dictionary = spaces[RoomRules.space_index_at(spaces, Vector2i(0, 0))]
@@ -92,11 +91,10 @@ func _check_starting_spaces() -> void:
 
 func _check_mark_and_rules() -> void:
 	SaveManager.new_game()
-	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores.
 	var builder := Builder.new()
 	var money: int = Economy.balance
 
-	# Recepción en el espacio principal: toca la pared exterior y contiene la entrada.
 	var result: Dictionary = builder.mark_room("reception", Vector2i(4, 6))
 	_expect(result["ok"] and _room_type_at(OfficeState.entrance) == "reception" and Economy.balance == money,
 		"marcar la Recepción: %s" % [result])
@@ -111,7 +109,7 @@ func _check_mark_and_rules() -> void:
 	_expect(RoomRules.mark_problem("bathroom", open_space, [], Vector2i.ZERO).contains("no está cerrado"),
 		"un espacio sin cerrar no se puede marcar")
 
-	# Esquina cerrada sin puerta: no se puede marcar; con puerta, sí.
+	# Esquina cerrada sin puerta: no se marca; con puerta, sí.
 	var x: int = GridEdge.AXIS_X
 	var y: int = GridEdge.AXIS_Y
 	result = builder.apply([_wall(1, 6, x), _wall(1, 7, x), _wall(0, 5, y), _wall(1, 5, y)])
@@ -125,7 +123,6 @@ func _check_mark_and_rules() -> void:
 	_expect(RoomRules.missing_mandatory(OfficeState.rooms) == ["Baño (1 de 2)"],
 		"obligatorias que faltan: %s" % [RoomRules.missing_mandatory(OfficeState.rooms)])
 
-	# La Recepción exige pared exterior y contener la entrada.
 	_expect(builder.apply(_interior_room_changes())["ok"], "construir la habitación interior")
 	builder.unmark_room(OfficeState.entrance)
 	result = builder.quote_mark_room("reception", Vector2i(3, 3))
@@ -139,15 +136,14 @@ func _check_mark_and_rules() -> void:
 	_expect(builder.mark_room("break_room", Vector2i(3, 3))["ok"], "marcar la sala de descanso")
 	result = builder.mark_room("break_room", Vector2i(5, 7))
 	_expect(not result["ok"] and String(result["message"]).contains("Solo puede haber una"), "dos salas de descanso: %s" % [result])
-	# Cambiar el tipo de una habitación (la Sala de reuniones se habilita con la primera
-	# oferta grande, hito 47).
+	# Cambiar el tipo (la Sala de reuniones se habilita con la primera oferta grande).
 	Projects.meeting_room_unlocked = true
 	result = builder.mark_room("meeting_room", Vector2i(3, 3))
 	_expect(result["ok"] and _room_type_at(Vector2i(4, 4)) == "meeting_room"
 		and RoomRules.room_index_at(OfficeState.rooms, Vector2i(3, 3)) == OfficeState.rooms.size() - 1
 		and OfficeState.rooms.size() == 3, "cambiar de tipo: %s" % [OfficeState.rooms])
 
-	# Quitar: la Oficina Ejecutiva no se puede quitar ni cambiar de tipo.
+	# La Oficina Ejecutiva no se quita ni cambia de tipo.
 	_expect(not builder.unmark_room(Vector2i(0, 0))["ok"], "se quitó la Oficina Ejecutiva")
 	_expect(not builder.mark_room("single_office", Vector2i(0, 0))["ok"], "se cambió el tipo de la Oficina Ejecutiva")
 	result = builder.unmark_room(Vector2i(3, 3))
@@ -158,7 +154,7 @@ func _check_mark_and_rules() -> void:
 
 func _check_requirements() -> void:
 	SaveManager.new_game()
-	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores.
 	var builder := Builder.new()
 	builder.apply(_interior_room_changes())
 	builder.mark_room("work_area", Vector2i(3, 3))
@@ -172,7 +168,6 @@ func _check_requirements() -> void:
 	_expect(not status.contains("escritorio") and status.contains("falta silla"), "solo falta la silla: %s" % status)
 	_expect(builder.place("basic_chair", Vector2i(4, 4), 0)["ok"], "poner la silla")
 	_expect(builder.room_status(_room_at(Vector2i(3, 3)))["ok"], "la oficina única amueblada debería funcionar")
-	# Sin el escritorio ejecutivo, la Oficina Ejecutiva deja de funcionar.
 	var chair: int = OfficeState.find_furniture_at(Vector2i(1, 1))
 	var desk: int = OfficeState.find_furniture_at(Vector2i(1, 0))
 	OfficeState.furniture.remove_at(desk)
@@ -180,15 +175,15 @@ func _check_requirements() -> void:
 	_expect(chair >= 0 and status.contains("falta escritorio ejecutivo"), "Oficina Ejecutiva sin escritorio: %s" % status)
 
 
-# Mudar la Oficina Ejecutiva: marcarla en otro espacio pregunta antes y, con un escritorio y una
-# silla libre delante, pasa al CEO ahí y deja la oficina de antes sin marcar.
+# Mudar la Oficina Ejecutiva: marcarla en otro espacio pregunta antes y, con escritorio y silla libre
+# delante, pasa al CEO ahí y deja la de antes sin marcar.
 func _check_move_ceo_office() -> void:
 	SaveManager.new_game()
 	Economy.earn(20000, "Prueba")
 	var builder := Builder.new()
 	var x: int = GridEdge.AXIS_X
 	var y: int = GridEdge.AXIS_Y
-	# Otro espacio cerrado con puerta: las casillas (3..5, 0..2).
+	# Otro espacio cerrado con puerta: (3..5, 0..2).
 	_expect(builder.apply([_wall(3, 2, y), _wall(4, 2, y, ConstructionCatalog.DOOR), _wall(5, 2, y)])["ok"], "cerrar otra oficina")
 	var target := Vector2i(4, 1)
 	var old_seat: Vector2i = OfficeState.find_furniture_assigned_to("ceo")["cell"]
@@ -201,11 +196,10 @@ func _check_move_ceo_office() -> void:
 	result = builder.quote_mark_room("executive_office", target)
 	_expect(result["ok"] and bool(result.get("confirm", false)) and String(result["message"]).begins_with("¿Mudar")
 		and result["seat"] == Vector2i(3, 1), "con escritorio y silla pide confirmar: %s" % result["message"])
-	# Marcar sin confirmar no cambia nada.
 	result = builder.mark_room("executive_office", target)
 	_expect(not result["ok"] and _room_type_at(target) != "executive_office"
 		and OfficeState.find_furniture_assigned_to("ceo")["cell"] == old_seat, "sin confirmar no se muda")
-	# Con el ratón: el clic pregunta, No lo deja como estaba y Sí lo muda.
+	# Con el ratón: el clic pregunta, No lo deja igual y Sí lo muda.
 	var game: Node = GAME_SCENE.instantiate()
 	add_child(game)
 	await get_tree().process_frame
@@ -244,7 +238,7 @@ func _check_move_ceo_office() -> void:
 
 func _check_walls_change_rooms() -> void:
 	SaveManager.new_game()
-	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores.
 	var builder := Builder.new()
 	var x: int = GridEdge.AXIS_X
 	var y: int = GridEdge.AXIS_Y
@@ -260,7 +254,7 @@ func _check_walls_change_rooms() -> void:
 	_expect(_room_type_at(Vector2i(0, 7)) == "reception" and OfficeState.rooms.size() == 2
 		and _room_at(OfficeState.entrance)["cells"].size() == 39, "el baño se unió a la Recepción: %s" % [OfficeState.rooms])
 
-	# Las paredes exteriores no se venden: la Recepción no se puede abrir a la calle.
+	# Las paredes exteriores no se venden: la Recepción no se abre a la calle.
 	var money: int = Economy.balance
 	for edge: Vector3i in [Vector3i(5, 0, x), Vector3i(-1, 0, x)]:
 		result = builder.apply([{"edge": edge, "kind": ""}])
@@ -268,14 +262,13 @@ func _check_walls_change_rooms() -> void:
 			and OfficeState.get_edge(edge) == ConstructionCatalog.WALL, "vender la pared exterior %s: %s" % [edge, result])
 	_expect(_room_type_at(OfficeState.entrance) == "reception" and _room_type_at(Vector2i(0, 0)) == "executive_office",
 		"las habitaciones siguen igual")
-	# Si un espacio se abriera a la calle, la habitación se desharía (por eso Builder
-	# protege la Oficina Ejecutiva con locked).
+	# Abierto a la calle la habitación se desharía (por eso Builder protege la Oficina Ejecutiva con locked).
 	var open_edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
 	open_edges.erase(Vector3i(-1, 0, x))
 	var reconciled: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms,
 		RoomRules.find_spaces(OfficeState.lot, open_edges), OfficeState.entrance, OfficeState.furniture)
 	_expect(RoomRules.room_index_at(reconciled, Vector2i(0, 0)) < 0, "una Oficina Ejecutiva abierta debería deshacerse")
-	# Agrandarla sí: al quitar una pared interior, absorbe el espacio vecino.
+	# Agrandarla sí: al quitar una pared interior absorbe el espacio vecino.
 	builder.mark_room("reception", OfficeState.entrance)
 	result = builder.apply([_wall(2, 0, x, "")])
 	_expect(result["ok"] and _room_at(Vector2i(5, 7))["type"] == "executive_office"
@@ -305,7 +298,7 @@ func _click(at: Vector2) -> void:
 
 func _check_in_game_with_mouse() -> void:
 	SaveManager.new_game()
-	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores (hito 27).
+	Company.stage = 2  # Pequeña empresa: oficinas únicas y sala de servidores.
 	var game: Node = GAME_SCENE.instantiate()
 	add_child(game)
 	await get_tree().process_frame
@@ -316,7 +309,7 @@ func _check_in_game_with_mouse() -> void:
 	var overlay: RoomOverlay = grid.get_node("RoomOverlay")
 	var at_cell: Callable = func(cell: Vector2i) -> Vector2:
 		return grid.get_canvas_transform() * grid.cell_to_world(cell)
-	# Abre con clics la sección (y la categoría de muebles) de la herramienta y la elige.
+	# Abre con clics la sección (y la categoría) de la herramienta y la elige.
 	var press: Callable = func(tool: String) -> void:
 		for i: int in range(3):
 			await _click(panel.get_button_toward(tool).get_global_rect().get_center())
@@ -341,7 +334,6 @@ func _check_in_game_with_mouse() -> void:
 	await press.call("reception")
 	await _click(at_cell.call(Vector2i(4, 6)))
 
-	# Guardar y restaurar las habitaciones.
 	var before: String = JSON.stringify(OfficeState.export_state())
 	OfficeState.import_state(JSON.parse_string(before))
 	_expect(JSON.stringify(OfficeState.export_state()) == before, "las habitaciones no se restauraron igual")

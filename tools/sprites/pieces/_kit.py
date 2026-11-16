@@ -1,5 +1,4 @@
-# Ayudas compartidas por los muebles de office_extra.py, break_room.py y services.py (el "_" del
-# nombre hace que generate.py no lo cargue como grupo).
+# Ayudas compartidas por office_extra.py, break_room.py y services.py (con "_" generate.py no lo carga).
 import os
 
 import numpy as np
@@ -10,7 +9,7 @@ from pieces import chair_plant
 
 
 def g(v):
-    """A la rejilla de 1/64 de casilla (las cajas la necesitan para que sus aristas salgan 2:1)."""
+    """Redondea a 1/64 de casilla para que las aristas de las cajas salgan 2:1."""
     return round(v * 64.0) / 64.0
 
 
@@ -19,7 +18,7 @@ def plain(ctx):
 
 
 def grid(ctx):
-    """a, b (px desde abajo a la izquierda de la cara), ancho y alto, enteros."""
+    """(a, b, ancho, alto) de la cara en px enteros; a, b desde abajo a la izquierda."""
     return np.floor(ctx.a), np.floor(ctx.b), np.floor(ctx.w), np.floor(ctx.h)
 
 
@@ -42,8 +41,7 @@ def sunken(index, a, b, a0, a1, b0, b1, dark, lit):
 
 
 def drawers(count, line, handle, margin=1, foot=2, handle_w=0.4, label=None):
-    """Frente de cajonera: `count` cajones iguales separados por una rendija `line`, cada uno con un
-    tirador horizontal `handle` (y una etiqueta clara `label` si se pide) y un zócalo oscuro."""
+    """Textura de cajonera: `count` cajones con rendija `line`, tirador `handle`, etiqueta opcional y zócalo."""
     def tex(ctx):
         a, b, w, h = grid(ctx)
         index = plain(ctx)

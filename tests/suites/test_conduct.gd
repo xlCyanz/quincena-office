@@ -1,7 +1,5 @@
-# Prueba del hito 51: rasgos de conducta e historial.
-# Criterio: un impuntual llega tarde y falta a veces y se ve en su puntualidad; sin cafetera
-# el adicto rinde menos; al ambicioso le baja el ánimo si no se le asciende; el leal tarda
-# más en renunciar.
+# Rasgos de conducta e historial: impuntual (tarde, ausencias, puntualidad), adicto al café,
+# ambicioso sin ascenso y leal que tarda más en renunciar.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=conduct
 extends Node
 
@@ -11,8 +9,8 @@ signal finished(failures: int, checks: int)
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const SEED: int = 20261151
 const DAY_HOUR: int = 10
-## La Sala de descanso es el espacio grande del local (fuera de la Oficina Ejecutiva y el
-## Área de trabajo); la cafetera va en medio.
+## Sala de descanso: el espacio grande fuera de la Oficina Ejecutiva y el Área de trabajo;
+## la cafetera va en medio.
 const BREAK_CELL := Vector2i(3, 4)
 const COFFEE_CELL := Vector2i(4, 5)
 const SIM_DAYS: int = 140
@@ -45,8 +43,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un área de trabajo de tres puestos, dinero de sobra y los objetivos
-# ya cumplidos.
+# Partida nueva con tres puestos, dinero y los objetivos cumplidos.
 func _new_game() -> void:
 	GameClock.stop()
 	SaveManager.new_game()
@@ -139,7 +136,7 @@ func _check_data() -> void:
 	_expect(Staff.describe_trait("loyal").contains("el doble"), "describe al leal: %s" % Staff.describe_trait("loyal"))
 
 
-# Las horas en que falta no cuenta como presente ni produce.
+# En las horas en que falta no cuenta como presente ni produce.
 func _check_missing() -> void:
 	_new_game()
 	var worker: Dictionary = _hire("programmer", "junior")
@@ -155,7 +152,6 @@ func _check_missing() -> void:
 	_expect(_worker(contract, worker, at).is_empty() and not _worker(contract, worker, at + 1).is_empty(), "no produce mientras falta")
 	worker["missing_until"] = at + 9
 	_expect(not Staff.is_expected(key, weekday, 10) and not Staff.is_expected(key, weekday, 16), "ausente: falta toda la jornada")
-	# Una semana después ya no cuenta.
 	_expect(Staff.is_expected(key, weekday, 10) == false, "la marca es de ese día")
 	_go_to(at + 24 * 7 + 2)
 	_expect(Staff.is_expected_now(key) or not Staff.get_schedule(worker).is_working(GameClock.get_weekday(), GameClock.get_hour()),
@@ -186,7 +182,6 @@ func _check_unpunctual() -> void:
 
 		"puntualidad: %d %% y %d %%" % [Staff.get_punctuality(punctual), Staff.get_punctuality(late_one)])
 	_expect(absent == 0 or _notices.any(func(text: String) -> bool: return text.contains("faltó")), "una ausencia avisa")
-	# El sorteo es el mismo con la misma semilla.
 	_new_game()
 	var again: Dictionary = _hire("programmer", "junior", ["unpunctual"])
 	var other: Dictionary = _hire("designer", "junior")
@@ -209,7 +204,6 @@ func _check_coffee() -> void:
 	_expect(is_equal_approx(float(_worker(contract, addict, at)["rate"]), plain * 0.85), "sin café el adicto rinde 85 %")
 	_build_break_room()
 	_expect(Staff.has_coffee() and is_equal_approx(float(_worker(contract, addict, at)["rate"]), plain), "con cafetera rinde normal")
-	# Se acabó el café: ese día rinde menos.
 	Events.trigger("coffee")
 	Events.choose(1)
 	_expect(not Staff.has_coffee() and is_equal_approx(float(_worker(contract, addict, at)["rate"]), plain * 0.85),
@@ -311,7 +305,7 @@ func _check_save() -> void:
 		and int(loaded["bugs_caused"]) == 7 and int(loaded["missing_from"]) == 100 and int(loaded["missing_until"]) == 109
 		and int(loaded["promotion_ready_day"]) == 4, "se guarda el historial")
 	_expect(Staff.coffee_out_day == GameClock.get_day_count(), "y el día sin café")
-	# Una partida del hito 50 no tenía historial.
+	# Una partida vieja no tenía historial.
 	var state: Dictionary = Staff.export_state()
 	for saved: Dictionary in state["employees"]:
 		for field: String in ["late_count", "absent_count", "on_time_count", "bugs_caused", "missing_from", "missing_until", "promotion_ready_day"]:

@@ -1,10 +1,9 @@
-# Prueba del hito 12: jornada de los empleados.
-# Criterio: cada empleado llega a su puesto por un camino válido y se va al terminar;
-# la ficha muestra sus barras; con la oficina vacía el tiempo salta a la próxima entrada.
+# Jornada: cada empleado llega a su puesto por un camino válido y se va al terminar; la ficha
+# muestra sus barras; con la oficina vacía el tiempo salta a la próxima entrada.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=workday
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -25,7 +24,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_catalog()
 	_check_expected()
@@ -80,14 +79,14 @@ func _check_expected() -> void:
 	_expect(Staff.hours_until_anyone_expected() == 15, "próxima llegada: %d h" % Staff.hours_until_anyone_expected())
 	Staff.employees.clear()
 	_expect(Staff.hours_until_anyone_expected() == 15, "el CEO también llega solo el martes a las 8")
-	# El CEO llegó solo el martes; el viernes a las 17 se lo manda a casa: vuelve el lunes a las 8.
+	# El CEO llegó solo el martes; mandado a casa el viernes a las 17, vuelve el lunes a las 8.
 	GameClock.fast_forward_hours(4 * 24)
 	_expect(Staff.ceo_at_work, "el CEO volvió solo")
 	Staff.ceo_at_work = false
 	_expect(GameClock.get_weekday() == 4 and Staff.hours_until_anyone_expected() == 63, "del viernes 17 al lunes 8: %d h" % Staff.hours_until_anyone_expected())
 
 
-# Partida nueva con un área de trabajo de dos puestos, un programador y un vendedor.
+# Dos puestos, un programador y un vendedor.
 func _start_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -134,10 +133,9 @@ func _character(employee: Dictionary) -> Employee:
 	return _game.employees.get(employee["id"])
 
 
-# Avanza el reloj y a todos los personajes fotograma a fotograma hasta que se cumpla la
-# condición, comprobando que nadie atraviese muebles ni paredes.
+# Avanza reloj y personajes cuadro a cuadro hasta la condición, comprobando que nadie atraviese muebles ni paredes.
 func _walk_until(condition: Callable, max_seconds: float, label: String) -> void:
-	# Los topes están pensados con horas de 10 s reales; con horas más largas crecen igual.
+	# Los topes son para horas de 10 s reales: se escalan.
 	max_seconds *= GameConstants.SECONDS_PER_GAME_HOUR / 10.0
 	var elapsed: float = 0.0
 	var blocked: Array[Vector2i] = OfficeState.get_furniture_cells()
@@ -183,9 +181,8 @@ func _check_arrival() -> void:
 		"cada uno en su silla")
 
 
-# A las 12 salen todos; con la oficina vacía el tiempo salta a las 13 y vuelven.
-# Cada uno almuerza a la 4.ª hora de su jornada: el CEO y el programador (desde las 8) a
-# las 12 y el vendedor (desde las 9) a las 13.
+# A las 12 salen todos y con la oficina vacía el tiempo salta a las 13. Cada uno almuerza a la 4.ª hora:
+# el CEO y el programador (desde las 8) a las 12, el vendedor (desde las 9) a las 13.
 func _check_lunch() -> void:
 	GameClock.advance((11 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
 	_walk_until(func() -> bool: return GameClock.get_hour() == 12, 10.0, "llegar a las 12")
@@ -198,7 +195,7 @@ func _check_lunch() -> void:
 	_expect(_game.ceo.activity == OfficeCharacter.Activity.WALKING_TO_DESK
 		and _character(_programmer).activity == OfficeCharacter.Activity.WALKING_TO_DESK, "a las 13 vuelven del almuerzo")
 	_expect(_character(_seller).activity == OfficeCharacter.Activity.WALKING_OUT, "a las 13 sale el vendedor")
-	# La energía bajó 6 por hora trabajada y subió 4 en el almuerzo: 9, 10, 11 y 12 → −18 + 4.
+	# Energía −6 por hora trabajada y +4 en el almuerzo: 9, 10, 11 y 12 → −18 + 4.
 	_expect(int(_programmer["energy"]) == 86, "energía a las 13: %d" % _programmer["energy"])
 	_walk_until(func() -> bool: return GameClock.get_hour() == 14, 90.0, "llegar a las 14")
 	_walk_until(_all_seated, 60.0, "sentados tras almorzar")
@@ -209,7 +206,6 @@ func _check_lunch() -> void:
 func _check_card() -> void:
 	var card: EmployeeCard = _game.get_node("EmployeeCard")
 	_expect(not card.is_open(), "la ficha empieza cerrada")
-	# Clic sobre el programador sentado.
 	var character: Employee = _character(_programmer)
 	var screen: Vector2 = _game.get_canvas_transform() * (character.position + Vector2(0.0, -30.0))
 	await _click_at(screen)
@@ -224,7 +220,6 @@ func _check_card() -> void:
 	# Se actualiza sola con la hora.
 	GameClock.advance(GameConstants.SECONDS_PER_GAME_HOUR)
 	_expect(card.get_bar_value("energy") == 74.0, "la barra baja con la hora: %.0f" % card.get_bar_value("energy"))
-	# Desde Personal, el botón Ficha abre la del vendedor.
 	var panel: StaffPanel = _game.get_node("StaffPanel")
 	panel.set_open(true)
 	await get_tree().process_frame
@@ -233,13 +228,12 @@ func _check_card() -> void:
 		"Ficha desde Personal: %s" % card.get_text())
 	panel.set_open(false)
 	card.close()
-	# Un clic en el piso vacío no abre nada.
 	await _click_at(_game.get_canvas_transform() * _game.get_node("OfficeGrid").grid_to_world(Vector2(4.0, 6.0)))
 	_expect(not card.is_open(), "un clic en el piso no abre la ficha")
 
 
-# El CEO se queda hasta que lo mandan a casa (a las 15), el programador se va a las 17
-# y el vendedor a las 18. Cuando sale el último, el tiempo salta al martes a las 8.
+# El CEO se va cuando lo mandan (15), el programador a las 17 y el vendedor a las 18;
+# al salir el último, el tiempo salta al martes a las 8.
 func _check_end_of_day() -> void:
 	# El CEO se va a las 15: los empleados siguen, así que no hay salto.
 	GameClock.advance(maxi(0, 15 - GameClock.get_hour()) * GameConstants.SECONDS_PER_GAME_HOUR)
@@ -271,7 +265,7 @@ func _check_end_of_day() -> void:
 func _check_energy_overnight() -> void:
 	_expect(int(_programmer["energy"]) == 100 and int(_seller["energy"]) == 100, "la energía se recupera de noche: %d, %d" % [
 		_programmer["energy"], _seller["energy"]])
-	# Desde el hito 19 el ánimo se mueve 3 por día hacia su meta; el estrés queda en 20.
+	# El ánimo se mueve 3 por día hacia su meta; el estrés queda en 20.
 	_expect(absi(int(_programmer["mood"]) - 70) == 3 and int(_programmer["stress"]) == 20, "ánimo y estrés del día: %d, %d" % [
 		_programmer["mood"], _programmer["stress"]])
 	_walk_until(_all_seated, 120.0, "todos sentados el martes")
@@ -297,7 +291,7 @@ func _check_save() -> void:
 		var character: Employee = _game.employees.get(employee_id)
 		_expect(character != null and character.activity == OfficeCharacter.Activity.SEATED and character.get_cell() == cells[employee_id],
 			"el empleado %d vuelve sentado en su silla" % employee_id)
-	# Un empleado sin datos de jornada (partida del hito 11) toma los de su cargo.
+	# Partida vieja sin datos de jornada: toma los de su cargo.
 	var old: Dictionary = Staff.export_state()
 	for saved: Dictionary in old["employees"]:
 		for key: String in ["schedule", "energy", "mood", "stress"]:

@@ -1,9 +1,6 @@
-# Opciones del jugador (hito 60): se guardan en un ConfigFile aparte de las partidas y se
-# aplican al iniciar y al cambiarlas. Los valores por defecto están en data/settings.json;
-# un valor que falta o no sirve vuelve al suyo. Los sistemas leen get_value cuando lo
-# necesitan (SaveManager el autoguardado, GameClock la velocidad inicial, main.gd las pausas).
-# Desde el hito 65 también la escala de la interfaz (content_scale_factor de la ventana) y
-# el alto mínimo de todo botón que entra al árbol (min_button_height, para el clic cómodo).
+# Opciones del jugador: ConfigFile aparte de las partidas, con valores por defecto en
+# data/settings.json (un valor roto vuelve al suyo). Aplica pantalla completa, escala de la
+# interfaz y alto mínimo de los botones; lo demás lo leen los sistemas con get_value.
 extends Node
 
 const DATA_PATH: String = "res://data/settings.json"
@@ -35,8 +32,7 @@ func get_min_button_height() -> float:
 	return float(_settings_data().get("min_button_height", 44))
 
 
-# Todo botón que entra al árbol mide al menos min_button_height de alto (hito 65). La consola
-# de desarrollo (Panku) queda como es.
+# Todo botón que entra al árbol mide al menos min_button_height (salvo los de Panku).
 func _on_node_added(node: Node) -> void:
 	var button := node as BaseButton
 	if button == null or String(button.get_path()).contains("/Panku"):
@@ -67,8 +63,7 @@ func get_value(key: String) -> Variant:
 	return _values.get(key)
 
 
-## Indica si un valor sirve para esa opción: del mismo tipo que el de defecto y, la
-## velocidad y la escala, dentro de las que hay.
+## Indica si un valor sirve: del tipo del de defecto y, la velocidad y la escala, entre las que hay.
 func is_valid(key: String, value: Variant) -> bool:
 	var defaults: Dictionary = get_defaults()
 	if not defaults.has(key):
@@ -101,8 +96,7 @@ func set_value(key: String, value: Variant) -> bool:
 	return true
 
 
-## Lee el archivo de opciones; lo que falta o no sirve queda con su valor por defecto.
-## Aplica todas.
+## Lee el archivo de opciones (lo que falta o no sirve, por defecto) y las aplica todas.
 func load_settings() -> void:
 	var defaults: Dictionary = get_defaults()
 	_values = defaults.duplicate()

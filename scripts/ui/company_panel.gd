@@ -1,12 +1,5 @@
-# Menú Empresa (diseño, 9.1 y 12.3; hito 27): la etapa actual y lo que desbloqueó, el
-# progreso hacia la siguiente (cada requisito con lo que hay y lo que pide), la
-# reputación, el valor de la empresa, los ingresos y gastos del mes y, desde el hito 33,
-# los departamentos con quién los dirige y cuánto rinden. Desde el hito 48, la meta
-# final: salir a bolsa (Corporación y valor), con su botón y una confirmación.
-#
-# No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos, Equipos y
-# Banco (abrir uno cierra los otros; lo hace la escena de juego). Se construye en
-# código; su botón va en la barra de menús.
+# Menú Empresa (lado izquierdo, no pausa): etapa y requisitos de la siguiente, reputación, valor,
+# ingresos y gastos del mes, departamentos, servidores, baños y la salida a bolsa con confirmación.
 class_name CompanyPanel
 extends CanvasLayer
 
@@ -24,7 +17,7 @@ const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
 const MET_COLOR := Color(0.55, 0.85, 0.5)
 const AMOUNT_WIDTH: float = 140.0
 
-# Botón «?» de ayuda (hito 64).
+# Botón «?» de ayuda.
 var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
@@ -54,7 +47,7 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
-	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	# Ancho y alto según la pantalla y la barra de menús.
 	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
 	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
@@ -224,7 +217,7 @@ func get_repair_button() -> Button:
 	return _repair_button
 
 
-# Baños (hito 52): inodoros que cuentan, cuántos hacen falta ahora y la reparación.
+# Baños: inodoros que cuentan, cuántos hacen falta y la reparación.
 func _add_bathroom_section() -> void:
 	_repair_button = null
 	var capacity: int = Staff.get_toilet_capacity()
@@ -259,7 +252,7 @@ func get_confirm_ipo_button() -> Button:
 	return _confirm_ipo_button
 
 
-# Meta final (hito 48): lo que pide salir a bolsa, el botón y su confirmación.
+# Salir a bolsa: lo que pide, el botón y su confirmación.
 func _add_ipo_section() -> void:
 	_ipo_button = null
 	_confirm_ipo_button = null

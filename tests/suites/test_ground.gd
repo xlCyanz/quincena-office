@@ -1,7 +1,5 @@
-# Prueba del suelo con más detalle (pedido después del hito 69): pisos y terreno se pintan
-# con GroundPainter.DETAIL veces más píxeles por casilla y la capa se dibuja achicada y
-# suavizada; las casillas siguen midiendo 64×32 en el mundo. El TileSet se pinta una vez y
-# lo comparten las partidas; los dibujos se repiten cada casilla sin costuras.
+# Suelo con detalle: pisos y terreno a GroundPainter.DETAIL veces más píxeles, capa achicada y
+# suavizada, casillas de 64×32 en el mundo, TileSet pintado una vez y dibujos sin costuras.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=ground
 extends Node
 
@@ -41,7 +39,7 @@ func _check_painter() -> void:
 		_expect(GroundPainter.MATERIALS.has(style), "%s tiene material" % style)
 	_expect(GroundPainter.get_material("wood") == GroundPainter.WOOD and GroundPainter.get_material("grass") == GroundPainter.GRASS,
 		"madera y pasto")
-	# El ruido y los dibujos se repiten cada casilla: los bordes opuestos coinciden.
+	# Ruido y dibujos se repiten cada casilla: los bordes opuestos coinciden.
 	var same: bool = true
 	for step: int in range(10):
 		var v: float = step / 10.0

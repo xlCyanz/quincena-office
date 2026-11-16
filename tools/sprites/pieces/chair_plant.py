@@ -1,28 +1,7 @@
-# Sillas de oficina (4 rotaciones, enteras y partidas en asiento y respaldo) y plantas, con el
-# estilo de tools/sprites/STYLE.md («Isometric Interiors»: contorno oscuro, colores saturados,
-# cojines abultados con 1 px de sombra abajo).
-#
-#   chair_basic_r0..r3            silla básica: base de 5 patas negra con ruedas, asiento y
-#                                 respaldo tapizados en rojo
-#   chair_basic_seat_r0..r3       base, columna y asiento (lo que el juego dibuja como pieza principal)
-#   chair_basic_back_r0..r3       respaldo y su soporte en «J» (pieza aparte para el orden de profundidad)
-#   chair_ergonomic_r0..r3 (+ _seat_, _back_)
-#                                 silla ergonómica: más alta, asiento azul oscuro, apoyabrazos y
-#                                 respaldo de malla negra con marco
-#   plant_small                   planta pequeña (mueble chico: dibujada como si ocupara la casilla;
-#                                 el juego la achica al 60 %), formas grandes y contorno de 2 px
-#   plant_small_q                 la misma planta dibujada ya a su tamaño final (60 %, unos 77×77 px
-#                                 dentro de 128×128): pixel art nativo para dibujar sin achicar
-#   plant_large                   planta grande en maceta blanca con franja roja
-#
-# Capas de la silla. El juego dibuja el respaldo como pieza aparte y lo ordena por su franja de
-# atrás: con r0 y r3 (respaldo hacia quien mira) va ENCIMA del asiento; con r1 y r2, DEBAJO. La
-# capa que queda debajo va entera (también lo que la otra tapa) y la de encima lleva solo sus
-# pixeles visibles: puestas en ese orden dan exactamente la silla entera, y un desfase entre las
-# dos no abre rendijas.
-#
-# En sillas `height` de data/furniture.json es el alto del ASIENTO (el respaldo sigue hacia
-# arriba) y en plantas el de la maceta (las hojas siguen hacia arriba).
+# Sillas de oficina (4 rotaciones, enteras y en capas asiento/respaldo) y plantas, con el estilo de STYLE.md.
+# Capas: el juego dibuja el respaldo encima del asiento en r0 y r3 y debajo en r1 y r2; la de abajo va
+# entera y la de encima solo con sus pixeles visibles, así juntas dan la silla exacta.
+# `height` de data/furniture.json es el alto del asiento (sillas) o de la maceta (plantas).
 import math
 import os
 from collections import deque
@@ -41,22 +20,15 @@ ERGO_ITEM = ITEMS["ergonomic_chair"]
 SMALL_ITEM = ITEMS["small_plant"]
 LARGE_ITEM = ITEMS["large_plant"]
 
-# Tapizado rojo de STYLE.md. Su brillo de la tabla (bc3f41) casi no se distingue de la base: el
-# reflejo del cojín abultado lleva un rojo más claro, para que el bulto se lea.
-# Tapizado rojo de la silla básica: un tono más oscuro que el rojo de la guía, que es también el
-# de la corbata de los personajes. Los cuadros de «sentado en su silla» cambian la paleta de la
-# persona color por color y ningún tono de una silla puede coincidir con uno de la ropa, la piel
-# o el pelo (lo comprueba tools/sprites/export_game.py).
+# Rojo de la silla básica, más oscuro que el de la guía. Ningún tono de una silla puede coincidir con la
+# ropa, la piel o el pelo de los personajes (lo comprueba export_game.py).
 FABRIC = pal.style_ramp("a8323b", side="86262f", shadow="6c1e1f", outline="3a0b1c", deep="5f0f09", light="cf4f4b",
                         name="chair_red")
-# Asiento de la ergonómica: azul oscuro (el color de data/furniture.json, 2a3b4f, más saturado)
-# con las caras de la guía; contorno casi negro.
+# Asiento de la ergonómica: azul oscuro con contorno casi negro.
 FABRIC_ERGO = pal.style_ramp("33507a", outline="0e1626", light="4f73a3", name="chair_navy")
 PLASTIC = pal.PLASTIC_BLACK
 METAL = pal.METAL_LIGHT
-# Macetas y hojas de STYLE.md.
-# Barro con las caras de la guía (−25 % / −40 % del naranja): el lado de la tabla (8e6d53) es gris
-# y en una maceta torneada dejaba franjas sin color.
+# Barro con las caras de la guía (el lado de la tabla es gris y deja franjas en la maceta).
 CLAY = pal.style("clay", declared=False, name="pot_clay")
 CERAMIC = pal.CERAMIC_WHITE
 POT_RED = pal.UPHOLSTERY_RED
@@ -77,8 +49,7 @@ STAR_TURN = 54  # un brazo apunta al frente: ninguna rueda queda bajo el soporte
 PLASTIC_BANDS = ((0.66, pal.LIGHT), (0.40, pal.BASE), (0.0, pal.LEFT), (-0.44, pal.RIGHT), (-9.0, pal.DEEP))
 WHEEL_BANDS = ((0.55, pal.LEFT), (-0.2, pal.RIGHT), (-9.0, pal.DEEP))
 COLUMN_BANDS = ((-0.10, pal.LEFT), (9.0, pal.RIGHT))
-# Tela: reflejo claro arriba a la izquierda del bulto, base, lado −25 %, −40 % y 1 px de sombra
-# profunda abajo (el cojín abultado).
+# Tela: reflejo, base, lado −25 %, −40 % y 1 px de sombra abajo (cojín abultado).
 FABRIC_BANDS = ((0.93, pal.LIGHT), (0.50, pal.BASE), (0.05, pal.LEFT), (-0.40, pal.RIGHT), (-9.0, pal.DEEP))
 
 
@@ -90,10 +61,9 @@ def _spec(item, name, **kw):
     return spec
 
 
-# Asiento a 24 px del piso, la altura de la cadera del personaje sentado (character.SIT_SEAT_Z): más
-# alto que eso la silla se ve grande junto al escritorio (44) y el personaje se hunde en el cojín.
+# Asiento a 24 px, la cadera del personaje sentado (character.SIT_SEAT_Z).
 SEAT_TOP = 24
-# Silla básica: cojín de 7 px de grueso y respaldo grueso y abultado, que apenas pasa del escritorio.
+# Silla básica: cojín de 7 px y respaldo grueso.
 BASIC = _spec(CHAIR_ITEM, "chair_basic", seat_top=SEAT_TOP, cushion=16, pan=13, hub=6, post=23,
               back=(18 / 64.0, 46 / 64.0, 46 / 64.0, 54 / 64.0, 28, 52), back_corner=7, back_edge=3.0,
               bracket_top=40)
@@ -118,8 +88,7 @@ def _extrude(profile, across, edge):
 
 
 def sdf_cushion(cx, cy, half_x, half_y, z0, z1, corner, edge):
-    """Cojín horizontal: planta de esquinas redondas (corner px) y aristas de arriba y abajo
-    suaves (edge px). Medidas de planta en casillas, alto en px."""
+    """Cojín horizontal de esquinas (corner px) y aristas (edge px) redondas; planta en casillas, alto en px."""
     def fn(x, y, z):
         plan = _round_rect((x - cx) * iso.Z_METRIC, (y - cy) * iso.Z_METRIC, half_x * iso.Z_METRIC,
                            half_y * iso.Z_METRIC, corner)
@@ -151,8 +120,7 @@ def seat_tex(spec):
 
 
 def back_tex(spec):
-    """Respaldo. Tapizado: costura en marco a 3 px del borde en las dos caras anchas. Malla: marco
-    de 2 px del plástico y adentro rayas horizontales de 1 px (la trama de la malla vista de lejos)."""
+    """Respaldo: costura a 3 px del borde (tapizado) o marco con rayas de malla."""
     x0, x1, _, _, z0, z1 = spec["back"]
 
     def tex(ctx):
@@ -171,8 +139,7 @@ def back_tex(spec):
 
 
 def chair_model(c, spec, group=None):
-    """Modelo con rotación 0: el frente mira a −y y el respaldo queda en +y. group = "seat" o
-    "back" arma solo esa capa (para sacarla entera, sin lo que la otra le tapa)."""
+    """Silla en rotación 0 (frente a −y, respaldo en +y). group = "seat" o "back" arma solo esa capa."""
     cx = 0.5
     cy = spec["seat_cy"]
     top, cushion, pan_z, hub = spec["seat_top"], spec["cushion"], spec["pan"], spec["hub"]
@@ -208,8 +175,7 @@ def chair_model(c, spec, group=None):
                 c.capsule((ax, cy - 8 / 64, top + 7), (ax, cy + 8 / 64, top + 7), 2.4, PLASTIC,
                           bands=PLASTIC_BANDS, name="arm")
     if group in (None, "back"):
-        # Soporte en «J»: un brazo que sale de abajo del asiento y sube en diagonal, el poste
-        # corto y una placa chica atornillada al respaldo.
+        # Soporte en «J»: brazo diagonal desde abajo del asiento, poste y placa.
         post = spec["post"]
         mid = (by0 + by1) / 2.0
         c.capsule((cx, cy + 10 / 64, pan_z + 1), (cx, mid + 1 / 64, post + 1), 2.2, PLASTIC, bands=PLASTIC_BANDS,
@@ -268,11 +234,8 @@ def _long_runs(mask, minimum):
 
 
 def edge_light(c, part, index=pal.LIGHT, minimum=8, behind=None):
-    """Brillo de 1 px en la arista superior izquierda de una pieza curva (el motor solo lo pone
-    en caras de arriba de cajas): la línea va justo por dentro del contorno, donde la pieza da
-    al vacío por arriba y a la izquierda, y solo sobre lo que ya mira hacia arriba. Los tramos
-    de menos de `minimum` px no se pintan. behind = piezas que quedan detrás de esta: cuentan
-    como vacío (la arista sigue con luz aunque asome algo atrás, como el soporte del respaldo)."""
+    """Brillo de 1 px por dentro de la arista superior izquierda de una pieza curva, sobre lo que mira arriba.
+    Omite tramos de menos de `minimum` px; behind = piezas de atrás que cuentan como vacío."""
     own = c.select(part=part)
     solid = c.alpha if behind is None else c.alpha & ~c.select(part=behind)
     top_edge = own & ~_moved(solid, -1, 0)
@@ -283,9 +246,7 @@ def edge_light(c, part, index=pal.LIGHT, minimum=8, behind=None):
 
 
 def crease_light(c, part, index=pal.LIGHT, minimum=8):
-    """Brillo en la arista entre lo de arriba de una pieza curva y su cara izquierda (la que
-    mira a la luz): la última fila de los tonos de arriba, justo sobre el tono −25 %. Es la
-    arista que le toca a un respaldo que corre en «\\», donde la superior izquierda casi no existe."""
+    """Brillo en la arista entre lo de arriba de una pieza curva y su cara izquierda (respaldos en «\\»)."""
     own = c.select(part=part)
     upper = own & ((c.shade == pal.BASE) | (c.shade == pal.SOFT))
     below = _moved(own & (c.shade == pal.LEFT), 1, 0)
@@ -293,15 +254,11 @@ def crease_light(c, part, index=pal.LIGHT, minimum=8):
 
 
 def tidy_finish(c, parts=None, passes=3):
-    """Quita los pixeles sueltos que deja el ACABADO (el motor solo limpia el sombreado por
-    bandas de piezas sin textura): una banda de 2 px a lo largo de un borde inclinado a la que
-    el contorno o una sombra le comen 1 px queda como línea punteada. Cada pixel cuyo tono final
-    no repite ninguno de sus 8 vecinos toma el de su vecino de arriba, abajo o al lado (de su
-    mismo material y que no sea contorno) y queda fijo."""
+    """Quita los pixeles sueltos del acabado: el que no repite tono con ningún vecino toma el de un vecino
+    de su material (no contorno)."""
     for _ in range(passes):
         c.finish(**c._finish_options)
-        # Brillos de menos de 4 px (un destello en la esquina redonda del cojín) se leen como
-        # pixeles sueltos: vuelven al tono de arriba.
+        # Brillos de menos de 4 px se leen sueltos: vuelven al tono base.
         glint = c.alpha & (c.final_shade == pal.LIGHT)
         short = glint & ~_long_runs(glint, 4)
         if short.any():
@@ -329,12 +286,9 @@ def tidy_finish(c, parts=None, passes=3):
 
 
 def plug_holes(c, ramp, index, part, largest=12, finish=True, notches=False, other=None):
-    """Tapa los agujeros transparentes encerrados de hasta `largest` px (entre patas, soporte y
-    bandeja dejarían ver motas del piso) con un tono del material, por detrás de todo.
-    finish=False los deja en ese tono exacto (sin brillo ni sombra del acabado).
-    notches=True tapa también las muescas: un pixel vacío con pieza en 3 de sus 4 lados.
-    other = (piezas, pieza): lo tapado que toca a una de esas `piezas` pasa a ser de `pieza` en
-    vez de `part` (para que cada capa de la silla se lleve lo suyo)."""
+    """Tapa agujeros transparentes encerrados de hasta `largest` px con un tono del material, por detrás.
+    finish=False los deja sin acabado; notches=True tapa también muescas (vacío con pieza en 3 lados);
+    other = (piezas, pieza): lo tapado que toca esas piezas pasa a ser de `pieza`."""
     holes = np.zeros_like(c.alpha)
     h, w = c.alpha.shape
     for group in _groups(~c.alpha, diagonal=False):
@@ -365,11 +319,8 @@ def plug_holes(c, ramp, index, part, largest=12, finish=True, notches=False, oth
 
 
 def floor_shadow(c, shapes):
-    """Sombra en el piso para *_shadow.png, de un solo tono con alfa 255 y recortada a la
-    planta. shapes, en coordenadas del modelo: ("disc", x, y, radio, z0, z1) o
-    ("bar", x0, y0, x1, y1, radio, z0, z1), una barra de puntas redondas. Cada forma se corre
-    hacia abajo a la derecha según su alto (SHADOW_SHIFT por cada 64 px), así un respaldo alto
-    tira su sombra más lejos."""
+    """Sombra de un tono en el piso, recortada a la planta. shapes: ("disc", x, y, r, z0, z1) o
+    ("bar", x0, y0, x1, y1, r, z0, z1); cada forma se corre SHADOW_SHIFT por cada 64 px de alto."""
     ys, xs = np.mgrid[0:c.height, 0:c.width]
     rx = xs + 0.5 - c.origin[0]
     ry = ys + 0.5 - c.origin[1]
@@ -405,7 +356,7 @@ def save_shadow(c, out_dir, name, shapes):
 
 
 def chair_shadow(spec):
-    """Base, asiento y respaldo: como el respaldo cambia de lado, cada rotación tiene su sombra."""
+    """Sombra de base, asiento y respaldo (cambia con la rotación)."""
     bx0, bx1, by0, by1, bz0, bz1 = spec["back"]
     return [("disc", 0.5, 0.5, spec["star"] + 0.02, 0, 6),
             ("disc", 0.5, spec["seat_cy"], 0.25, spec["cushion"], spec["seat_top"]),
@@ -424,8 +375,7 @@ def chair_canvas(spec, rotation, group=None):
                    other=(BACK_PARTS, "bracket") if group is None else None)
     if group in (None, "seat"):
         c.no_finish(c.select(part="column"))
-        # Con el respaldo atrás (r1, r2) su soporte asoma sobre el canto del asiento: el brillo
-        # sigue de largo por encima de él en vez de cortarse en dos rayas.
+        # En r1 y r2 el brillo sigue por encima del soporte que asoma.
         edge_light(c, "seat", behind=None if rotation in BACK_ON_TOP else BACK_PARTS)
     if group in (None, "back"):
         # La placa del soporte lleva su arista de arriba en el tono base del plástico.
@@ -440,8 +390,7 @@ def chair_canvas(spec, rotation, group=None):
 
 
 def chair_layers(spec, c, rotation):
-    """(asiento, respaldo) como imágenes: la capa de abajo entera y la de arriba con sus pixeles
-    visibles (ver la cabecera del archivo)."""
+    """(asiento, respaldo): la capa de abajo entera y la de arriba con sus pixeles visibles."""
     full = np.array(c.image)
     back_seen = c.crop(c.select(part=BACK_PARTS))
     seat_seen = c.crop(c.alpha) & ~back_seen
@@ -456,8 +405,8 @@ def chair_layers(spec, c, rotation):
 
 
 def check_chair(spec, c, rotation, seat, back):
-    """Lo que check.py no mira de las capas: que recompongan la silla en el orden del juego, que
-    el respaldo no baje de la planta ni salga del lienzo y que no queden agujeros encerrados."""
+    """Comprueba que las capas recompongan la silla, que el respaldo no baje de la planta ni salga del
+    lienzo y que no queden agujeros encerrados."""
     full = np.array(c.image)
     seat_px, back_px = np.array(seat), np.array(back)
     lower, upper = (seat_px, back_px) if rotation in BACK_ON_TOP else (back_px, seat_px)
@@ -496,8 +445,7 @@ def build_chair(out_dir, spec):
         seat, back = chair_layers(spec, c, rotation)
         check_chair(spec, c, rotation, seat, back)
         order = "over" if rotation in BACK_ON_TOP else "under"
-        # Las dos capas van como mueble: check.py les revisa lienzo, apoyo, que nada baje de la
-        # planta y que lleguen al rombo. Lo demás lo revisa check_chair().
+        # Las capas van como mueble para check.py; lo demás lo revisa check_chair().
         files.append(iso.save(seat, out_dir, "%s_seat_r%d" % (name, rotation), kind="furniture", layer="seat",
                               layer_of="%s_r%d.png" % (name, rotation), curved=True, **meta))
         files.append(iso.save(back, out_dir, "%s_back_r%d" % (name, rotation), kind="furniture", layer="back",
@@ -508,9 +456,8 @@ def build_chair(out_dir, spec):
 # ---------------------------------------------------------------------- hojas
 
 def _leaf_spine(c, base, azimuth, elevation, bend, length, twist=0.0, steps=40):
-    """Nervio de una hoja en pixeles del lienzo. Sale de base = (x, y, z) hacia el azimut
-    (grados en la planta del modelo), empieza con `elevation` grados sobre el piso, se va
-    doblando `bend` grados hasta la punta y gira `twist` grados de lado. length en px."""
+    """Nervio de una hoja en px del lienzo desde base (x, y, z): azimut y elevación en grados; se dobla
+    `bend` y gira `twist` grados hasta la punta. length en px."""
     x, y, z = base
     points = [c.project(x, y, z)]
     step = length / float(steps)
@@ -527,9 +474,8 @@ def _leaf_spine(c, base, azimuth, elevation, bend, length, twist=0.0, steps=40):
 
 
 def _leaf_width(t, shape, lit_side):
-    """Medio ancho relativo (0–1) a lo largo de la hoja (t de 0 en el tallo a 1 en la punta).
-    Las dos mitades no son iguales: la que mira a la luz es más ancha cerca del tallo y la otra
-    más cerca de la punta, así ningún borde queda derecho como hecho con regla."""
+    """Medio ancho relativo (0–1) a lo largo de la hoja (t: 0 tallo, 1 punta); las dos mitades difieren
+    para que ningún borde quede recto."""
     stalk = 0.06  # tramo de tallito sin lámina
     body = np.clip((t - stalk) / (1.0 - stalk), 0.0, 1.0)
     if shape == "round":  # paleta de punta redonda
@@ -544,11 +490,9 @@ def _leaf_width(t, shape, lit_side):
 
 
 def leaf_pattern(spine, half_width, tones, shape="oval"):
-    """Dibuja una hoja en pantalla, con dos bandas de tono partidas por el nervio.
-
-    spine = puntos (x, y) del nervio en px del lienzo; tones = (mitad con luz, mitad en sombra,
-    nervio o None, borde de la mitad con luz, borde de la mitad en sombra). El borde de 1 px
-    separa cada hoja de las que tapa. Devuelve (índices, x0, y0) con −1 = vacío."""
+    """Hoja en pantalla en dos tonos partidos por el nervio, con borde de 1 px. spine = puntos del nervio
+    en px; tones = (luz, sombra, nervio o None, borde con luz, borde en sombra).
+    Devuelve (índices, x0, y0) con −1 = vacío."""
     lit, dark, rib, edge_lit, edge_dark = tones
     margin = int(math.ceil(half_width)) + 2
     x0 = int(math.floor(spine[:, 0].min())) - margin
@@ -604,8 +548,7 @@ def _tidy(mask):
 
 
 def _no_pimples(mask):
-    """Quita los granitos: un pixel que sobresale solo de un borde recto de 5 px o más (la punta
-    de una hoja vista de frente). Las puntas finas, que salen de un borde angosto, se quedan."""
+    """Quita el pixel que sobresale solo de un borde recto de 5 px o más; las puntas finas se quedan."""
     padded = np.pad(mask, 3, mode="constant")
     h, w = mask.shape
 
@@ -634,10 +577,8 @@ def _leaf_depth(c, leaf):
 
 
 def add_leaves(c, ramp, leaves, pivot, name="leaves"):
-    """Pone las hojas (dicts con base, azimuth, elevation, bend, twist, length, width, tones y
-    shape) como sellos, de la más lejana a la más cercana. Todas toman la profundidad de
-    pivot = (x, y, z) más un escalón por hoja, así quedan por delante de la maceta y del
-    tronco. Los sellos no giran: sirve para piezas de una sola imagen."""
+    """Pone las hojas como sellos, de la más lejana a la más cercana, con la profundidad de pivot más un
+    escalón por hoja (delante de maceta y tronco). Los sellos no giran."""
     order = sorted(leaves, key=lambda leaf: _leaf_depth(c, leaf))
     px, py = c.project(*pivot)
     px, py = int(math.floor(px)), int(math.floor(py))
@@ -649,9 +590,8 @@ def add_leaves(c, ramp, leaves, pivot, name="leaves"):
                 name=name)
 
 
-# (mitad con luz, mitad en sombra, nervio, borde con luz, borde en sombra). Como en el estilo de
-# referencia cada hoja lleva todo su borde del contorno oscuro de las hojas: las de adelante se
-# separan de las de atrás por una línea casi negra y el racimo se lee aunque se achique.
+# Tonos (luz, sombra, nervio, borde con luz, borde en sombra); el borde en contorno oscuro separa
+# cada hoja de las de atrás.
 TONES_TOP = (pal.LIGHT, pal.BASE, None, pal.OUTLINE, pal.OUTLINE)
 TONES_LIT = (pal.BASE, pal.LEFT, pal.LIGHT, pal.OUTLINE, pal.OUTLINE)
 TONES_DIM = (pal.LEFT, pal.RIGHT, pal.BASE, pal.OUTLINE, pal.OUTLINE)
@@ -679,8 +619,7 @@ def fill_gaps(c, ramp, index, part="leaves", largest=10):
 
 # ---------------------------------------------------------------------- macetas
 
-# Maceta torneada: franja de luz en el tono base, −25 %, −40 % y sombra en el borde derecho. Los
-# límites son posiciones relativas al radio de cada fila, así las franjas siguen la conicidad.
+# Maceta torneada: límites relativos al radio de cada fila, así las franjas siguen la conicidad.
 POT_BANDS = ((-0.74, pal.LEFT), (-0.40, pal.BASE), (0.10, pal.LEFT), (0.78, pal.RIGHT), (9.0, pal.DEEP))
 LIP_WIDTH = 2 / 64.0  # grosor del labio visto desde arriba
 
@@ -740,8 +679,7 @@ def pot(c, radius_bottom, radius_top, height, lip=5, saucer=False, covered=False
 
 
 def thick_outline(c, width=2):
-    """Contorno de `width` px: los pixeles a menos de `width` del vacío toman el contorno de su
-    material (la planta chica se achica al 60 % y un contorno de 1 px se perdería)."""
+    """Contorno de `width` px (la planta chica se achica al 60 % y 1 px se perdería)."""
     c.finish(**c._finish_options)
     solid = c.alpha
     edge = np.zeros_like(solid)
@@ -757,13 +695,11 @@ def thick_outline(c, width=2):
 # ---------------------------------------------------------------------- plantas
 
 # Anillos de la planta chica: (hojas, elevación, caída, largo, ancho, nivel, giro, torsión).
-# Pocas hojas, anchas y redondas: al 60 % siguen siendo manchas grandes de color.
 SMALL_RINGS = ((5, 14, 50, 31, 10.5, 0, 20, 12), (5, 46, 48, 29, 10.0, 1, 56, -12), (3, 80, 46, 25, 9.0, 2, 10, 10))
 
 
 def small_plant(c, scale=1.0, rings=SMALL_RINGS):
-    """Mata de hojas anchas en tres pisos sobre una maceta de barro. scale achica todo (planta,
-    maceta y hojas) alrededor del centro de la casilla, para la versión a tamaño final."""
+    """Mata de hojas anchas en tres pisos sobre maceta de barro; scale achica todo (versión a tamaño final)."""
     s = scale
     pot(c, 10 / 64 * s, 14 / 64 * s, 22 * s, lip=max(3, int(round(5 * s))), covered=True)
     top = 22 * s
@@ -788,8 +724,7 @@ LARGE_TWEAKS = {9: {"bend": 24, "elevation": -12, "twist": -20}, 6: {"bend": 16,
 
 
 def large_plant(c):
-    """Arbolito de tronco fino con hojas grandes y anchas en racimos, en maceta blanca de franja
-    roja con plato. El tronco solo se dibuja hasta donde empiezan las hojas."""
+    """Arbolito de hojas grandes en racimos, en maceta blanca de franja roja con plato."""
     pot(c, 8 / 64, 12 / 64, 28, lip=6, saucer=True, ramp=CERAMIC, band=(9, 15, POT_RED))
     cx, cy = 0.5, 0.5
     top = 62
@@ -853,8 +788,7 @@ def _load(out_dir, name):
 
 
 def build_sheets(out_dir):
-    """Hoja de contacto del grupo en _sheets/chair_plant.png (×3): las piezas sueltas sobre
-    fondo y una escena sobre piso, junto al escritorio del piloto si ya está generado."""
+    """Hoja de contacto en _sheets/chair_plant.png: piezas sueltas y una escena con escritorios."""
     folder = os.path.join(out_dir, "_sheets")
     if not os.path.isdir(folder):
         os.makedirs(folder)

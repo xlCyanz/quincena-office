@@ -1,58 +1,51 @@
-# Cuadrícula isométrica de la oficina: dibuja el piso del local, el mapa de alrededor
-# (MapDecor) y resalta la casilla que está bajo el cursor. Es el único lugar que convierte
-# entre píxeles y casillas; el resto del juego trabaja siempre con casillas (Vector2i).
-#
-# La vista es siempre desde la misma esquina (el giro de la vista se quitó después del hito 69).
+# Cuadrícula isométrica: dibuja el piso, el mapa (MapDecor) y la casilla bajo el cursor. Único lugar
+# que convierte entre píxeles y casillas. La vista es siempre desde la misma esquina.
 class_name OfficeGrid
 extends Node2D
 
-## Casilla bajo el cursor, o NO_CELL si el cursor está fuera del local.
+## Casilla bajo el cursor, o NO_CELL fuera del local.
 const NO_CELL := Vector2i(-1, -1)
 
-## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos con zoom.
+## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos.
 const TILE_OVERLAP_PX: float = 1.0
 
-## Hasta cuántas casillas hacia atrás (x e y menores, lo que queda más arriba en pantalla) de la
-## casilla de fuera de un borde se mira si hay local: una pared alta ahí lo taparía.
+## Casillas hacia atrás (x e y menores) de la casilla de fuera de un borde donde se busca local
+## (una pared alta lo taparía).
 const BEHIND_WALL_REACH: int = 3
 
-## Paredes arriba: todas las piezas de borde se dibujan a su alto (para colgar y ver lo colgado);
-## abajo (lo normal), solo las de atrás y las demás bajitas para ver adentro. Es solo la vista:
-## quien lo cambia vuelve a llamar a build().
+## Paredes arriba: todas las piezas a su alto; abajo, solo las de atrás. Solo la vista: al cambiarlo, build().
 var walls_up: bool = false
 
 var hovered_cell: Vector2i = NO_CELL
 
 var _floor_source_id: int = -1
-# El TileSet del suelo se pinta una sola vez por ejecución (tarda ~1 s) y lo comparten
-# todas las partidas: depende solo de los colores de data/.
+# El TileSet del suelo se pinta una vez por ejecución (~1 s) y se comparte (depende solo de data/).
 static var _shared_tile_set: TileSet = null
 static var _shared_rows: Dictionary[String, int] = {}
 static var _shared_columns: Dictionary[String, int] = {}
 static var _shared_source_id: int = -1
-# true si el TileSet salió del atlas de sprites (data/sprites.json) y no de GroundPainter.
+# true si el TileSet salió del atlas de sprites y no de GroundPainter.
 static var _shared_from_sprites: bool = false
 var _lot := Lot.new()
 var _site_rect := Rect2i()
-# Casilla de fuera del local junto a la entrada (de ahí sale el camino a la calle).
+# Casilla de fuera junto a la entrada (de ahí sale el camino a la calle).
 var _entrance_outside := Vector2i(-1, -1)
-# Fila del atlas de cada tipo de piso o estilo del mapa, y cuántas variantes tiene.
+# Fila del atlas de cada piso o estilo del mapa, y cuántas variantes tiene.
 var _atlas_rows: Dictionary[String, int] = {}
 var _atlas_columns: Dictionary[String, int] = {}
-# Plano del mapa (MapDecor.plan) y con qué datos se hizo, para no rehacerlo si no cambió.
+# Plano del mapa (MapDecor.plan) y sus datos, para no rehacerlo si no cambió.
 var _map_plan: Dictionary = {}
 var _map_signature: String = ""
-# Lo que se dibuja fuera del solar, debajo del piso, y la línea del límite del solar.
+# Lo de fuera del solar (bajo el piso) y la línea del límite.
 var _surroundings := TileMapLayer.new()
 var _site_border := SiteBorder.new()
 
 @onready var _floor: TileMapLayer = $Floor
 @onready var _highlight: CellHighlight = $CellHighlight
 @onready var _room_overlay: RoomOverlay = $RoomOverlay
-# Capa ordenada por Y: muebles y personajes. Lo que está más abajo en pantalla
-# (más cerca de quien mira) se dibuja encima.
+# Capa ordenada por Y: muebles y personajes (lo de más abajo en pantalla, encima).
 @onready var _objects: Node2D = $Objects
-# Manchas de suciedad (hito 37); se crea en _ready, justo encima del tinte de habitaciones.
+# Manchas de suciedad; se crea en _ready, encima del tinte de habitaciones.
 var _dirt_overlay := DirtOverlay.new()
 
 
@@ -60,8 +53,7 @@ func _ready() -> void:
 	_floor.tile_set = _get_tile_set()
 	_surroundings.name = "Surroundings"
 	_surroundings.tile_set = _floor.tile_set
-	# El suelo tiene GroundPainter.DETAIL veces más píxeles que la casilla: la capa se achica
-	# a la casilla de siempre. Es pixel art: sin suavizar de cerca y con mipmaps de lejos.
+	# El suelo tiene DETAIL veces más píxeles: la capa se achica a la casilla. Sin suavizar de cerca, mipmaps de lejos.
 	for layer: TileMapLayer in [_floor, _surroundings]:
 		layer.scale = Vector2.ONE / GroundPainter.DETAIL
 		layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
@@ -82,9 +74,8 @@ func _process(_delta: float) -> void:
 	update_hover(get_global_mouse_position())
 
 
-## Dibuja la oficina: el piso de cada casilla, las paredes y puertas de los bordes,
-## los muebles y el tinte de las habitaciones. Recibe los datos tal como los guarda
-## OfficeState. Alrededor del local dibuja el terreno del solar (ver set_site).
+## Dibuja la oficina (piso, bordes, muebles y tinte de habitaciones) con los datos de OfficeState,
+## y alrededor el terreno del solar (ver set_site).
 func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
 		furniture: Array[Dictionary], rooms: Array[Dictionary] = []) -> void:
 	_lot = lot
@@ -108,23 +99,22 @@ func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vec
 	_dirt_overlay.set_rooms(rooms)
 
 
-## Vuelve a dibujar la suciedad de las habitaciones (hito 37).
+## Redibuja la suciedad de las habitaciones.
 func set_dirt(rooms: Array[Dictionary]) -> void:
 	_dirt_overlay.set_rooms(rooms)
 
 
-## Capa de suciedad (para las pruebas).
+## Capa de suciedad (para pruebas).
 func get_dirt_overlay() -> DirtOverlay:
 	return _dirt_overlay
 
 
-## Muestra u oculta el tinte de las habitaciones (se ve en modo construcción).
+## Muestra u oculta el tinte de las habitaciones.
 func set_rooms_visible(rooms_visible: bool) -> void:
 	_room_overlay.visible = rooms_visible
 
 
-## Convierte píxeles del mundo a una posición de cuadrícula con decimales (la inversa
-## de grid_to_world). Sirve para saber qué borde está más cerca del ratón.
+## Píxeles del mundo a posición de cuadrícula con decimales (inversa de grid_to_world).
 func world_to_grid(world_position: Vector2) -> Vector2:
 	var origin: Vector2 = cell_to_world(Vector2i.ZERO)
 	var basis := Transform2D(cell_to_world(Vector2i(1, 0)) - origin, cell_to_world(Vector2i(0, 1)) - origin, origin)
@@ -146,11 +136,10 @@ func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
 	_place_corner_posts(views)
 
 
-# Postes de esquina (sprites): tapan la muesca donde dos tramos se juntan en L. Cada tramo
-# dibuja, después de sí mismo, los postes de sus dos puntas: así el poste queda encima de
-# los dos tramos y se ordena con ellos frente a muebles y personas.
+# Postes de esquina: cada tramo dibuja después de sí los postes de sus puntas, así quedan encima
+# y se ordenan con él.
 func _place_corner_posts(views: Dictionary[Vector3i, EdgePieceView]) -> void:
-	# Vértice (x, y) = punto (x + 0.5, y + 0.5) de la cuadrícula; brazo = hacia dónde sale el tramo.
+	# Vértice (x, y) = punto (x + 0.5, y + 0.5); brazo = hacia dónde sale el tramo.
 	var corners: Dictionary[Vector2i, Dictionary] = {}
 	for edge: Vector3i in views:
 		for end: Array in _edge_vertices(edge):
@@ -163,28 +152,25 @@ func _place_corner_posts(views: Dictionary[Vector3i, EdgePieceView]) -> void:
 				views[edge].add_post(sprite, grid_to_world(Vector2(end[0]) + Vector2(0.5, 0.5)))
 
 
-# Los dos vértices de un borde, cada uno con el brazo que el borde es para ese vértice.
+# Los dos vértices de un borde con el brazo que es para cada uno.
 func _edge_vertices(edge: Vector3i) -> Array[Array]:
 	if edge.z == GridEdge.AXIS_X:
 		return [[Vector2i(edge.x, edge.y - 1), EdgePieceView.ARM_PLUS_Y], [Vector2i(edge.x, edge.y), EdgePieceView.ARM_MINUS_Y]]
 	return [[Vector2i(edge.x - 1, edge.y), EdgePieceView.ARM_PLUS_X], [Vector2i(edge.x, edge.y), EdgePieceView.ARM_MINUS_X]]
 
 
-## Indica si la pieza de un borde se dibuja a su alto: con las paredes arriba (walls_up),
-## todas; si no, solo las del contorno de atrás.
+## Indica si la pieza de un borde va a su alto: todas con walls_up; si no, solo las de atrás.
 func is_tall_edge(edge: Vector3i) -> bool:
 	return walls_up or is_back_edge(edge)
 
 
-## Indica si un borde es del contorno de atrás: la casilla de fuera del local queda detrás
-## (más arriba en pantalla) de la de dentro. Ahí las paredes van altas; las demás, bajas.
+## Indica si un borde es del contorno de atrás (la casilla de fuera queda más arriba en pantalla).
 func is_back_edge(edge: Vector3i) -> bool:
 	var cells: Array[Vector2i] = GridEdge.get_cells(edge)
 	# La segunda casilla de un borde siempre queda más abajo en pantalla que la primera.
 	if _lot.has_point(cells[0]) or not _lot.has_point(cells[1]):
 		return false
-	# Con el local en forma de L (terreno comprado hacia adelante o a un lado) un tramo así puede
-	# tener local detrás: alto lo taparía, así que va bajo.
+	# Con el local en L un tramo así puede tener local detrás: alto lo taparía, así que va bajo.
 	for back_x: int in range(BEHIND_WALL_REACH + 1):
 		for back_y: int in range(BEHIND_WALL_REACH + 1):
 			if _lot.has_point(cells[0] - Vector2i(back_x, back_y)):
@@ -192,14 +178,12 @@ func is_back_edge(edge: Vector3i) -> bool:
 	return true
 
 
-## Añade un objeto (por ejemplo, un personaje) a la capa ordenada por Y.
+## Añade un objeto (p. ej. un personaje) a la capa ordenada por Y.
 func add_object(node: Node2D) -> void:
 	_objects.add_child(node)
 
 
-## Convierte una posición de cuadrícula con decimales (por ejemplo, un personaje a
-## medio camino entre dos casillas) a píxeles del mundo. Las casillas enteras caen
-## en su centro, igual que cell_to_world.
+## Posición de cuadrícula con decimales a píxeles del mundo (las casillas enteras caen en su centro).
 func grid_to_world(grid_position: Vector2) -> Vector2:
 	var origin: Vector2 = cell_to_world(Vector2i.ZERO)
 	var axis_x: Vector2 = cell_to_world(Vector2i(1, 0)) - origin
@@ -229,14 +213,13 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 			backrest.setup(self, item, FurnitureView.PART_BACKREST)
 
 
-## Fija el solar: el mapa fijo de terreno que rodea al local, y la casilla de fuera de la
-## entrada (de ahí sale el camino a la calle). Se dibuja en build().
+## Fija el solar y la casilla de fuera de la entrada. Se dibuja en build().
 func set_site(site_rect: Rect2i, entrance_outside: Vector2i = Vector2i(-1, -1)) -> void:
 	_site_rect = site_rect
 	_entrance_outside = entrance_outside
 
 
-## Plano del mapa con que se dibujó (MapDecor.plan; para las pruebas).
+## Plano del mapa dibujado (para pruebas).
 func get_map_plan() -> Dictionary:
 	return _map_plan
 
@@ -255,8 +238,7 @@ func get_site_border() -> SiteBorder:
 	return _site_border
 
 
-# Rehace el plano del mapa, lo de fuera del solar, los árboles y el borde si cambió el
-# local, el solar o la entrada (al comprar terreno).
+# Rehace mapa, lo de fuera, árboles y borde si cambió el local, el solar o la entrada.
 func _update_map() -> void:
 	var signature: String = "%s|%s|%d|%s" % [_site_rect, _entrance_outside, _lot.get_cells().size(),
 		_lot.get_bounds()]
@@ -281,8 +263,7 @@ func _update_map() -> void:
 	_site_border.setup(self, _site_rect)
 
 
-# Variante del piso de una casilla del local. Con sprites, una al azar fijo (todas tienen el
-# mismo brillo medio); con el arte pintado, en tablero.
+# Variante del piso de una casilla: con sprites al azar fijo; con arte pintado, en tablero.
 func _floor_variant(cell: Vector2i, floor_type: String) -> int:
 	if not _shared_from_sprites:
 		return posmod(cell.x + cell.y, 2)
@@ -290,9 +271,8 @@ func _floor_variant(cell: Vector2i, floor_type: String) -> int:
 	return mini(floori(MapDecor.noise(cell, MapDecor.SALT_STYLE) * count), count - 1)
 
 
-# Casilla del atlas de un estilo del mapa: una variante al azar fijo; la línea de la
-# calle va en la columna de su dirección en pantalla. Con sprites, el pasto elige además
-# su familia por zonas (MapDecor.get_grass_family) y la línea tiene una fila por eje.
+# Casilla del atlas de un estilo del mapa: variante al azar fijo; la calle en la columna de su
+# dirección. Con sprites el pasto elige familia por zonas y la línea tiene una fila por eje.
 func _map_tile(cell: Vector2i, style: String) -> Vector2i:
 	if _shared_from_sprites:
 		var axis: int = int(_map_plan.get("road_axis", GridEdge.AXIS_X))
@@ -308,8 +288,7 @@ func _map_tile(cell: Vector2i, style: String) -> Vector2i:
 	return Vector2i(mini(floori(MapDecor.noise(cell, MapDecor.SALT_STYLE) * count), count - 1), row)
 
 
-## Indica si una fila del atlas dibuja un estilo: la suya o, con sprites, la de una de sus
-## familias (el pasto tiene varias: grass_plain, grass_lush…).
+## Indica si una fila del atlas dibuja un estilo (la suya o, con sprites, una de sus familias).
 func is_style_row(row: int, style: String) -> bool:
 	for name: String in _atlas_rows:
 		if _atlas_rows[name] == row and (name == style or name.begins_with(style + "_")):
@@ -317,9 +296,8 @@ func is_style_row(row: int, style: String) -> bool:
 	return false
 
 
-## Rombo del solar en píxeles del mundo, como Transform2D: origin es la esquina de
-## arriba, x recorre el lado a lo largo del eje x de la cuadrícula e y el del eje y.
-## Un punto está dentro si affine_inverse() * punto queda entre 0 y 1 en ambos ejes.
+## Rombo del solar en px del mundo como Transform2D (origin arriba, x e y a lo largo de los ejes).
+## Un punto está dentro si affine_inverse() * punto queda entre 0 y 1.
 func get_site_world_area() -> Transform2D:
 	var origin: Vector2 = grid_to_world(Vector2(_site_rect.position) - Vector2(0.5, 0.5))
 	var side_x: Vector2 = grid_to_world(Vector2(_site_rect.end.x, _site_rect.position.y) - Vector2(0.5, 0.5)) - origin
@@ -347,8 +325,7 @@ func cell_to_world(cell: Vector2i) -> Vector2:
 	return _floor.to_global(_floor.map_to_local(cell))
 
 
-## Convierte un punto de la pantalla (por ejemplo, el ratón) a píxeles del mundo,
-## teniendo en cuenta la posición y el zoom de la cámara.
+## Punto de la pantalla a píxeles del mundo, con la posición y zoom de la cámara.
 func screen_to_world(screen_position: Vector2) -> Vector2:
 	return get_canvas_transform().affine_inverse() * screen_position
 
@@ -358,7 +335,7 @@ func screen_to_cell(screen_position: Vector2) -> Vector2i:
 	return world_to_cell(screen_to_world(screen_position))
 
 
-## Rectángulo en píxeles del mundo que cubre todo el local (lo usa la cámara).
+## Rectángulo en px del mundo que cubre todo el local (para la cámara).
 func get_lot_world_rect() -> Rect2:
 	var half_tile: Vector2 = Vector2(GameConstants.TILE_SIZE) / 2.0
 	var lot: Rect2i = get_lot_rect()
@@ -370,7 +347,7 @@ func get_lot_world_rect() -> Rect2:
 	return bounds
 
 
-## Actualiza el resaltado según un punto del mundo (normalmente, el ratón).
+## Actualiza el resaltado según un punto del mundo (el ratón).
 func update_hover(world_position: Vector2) -> void:
 	var cell: Vector2i = world_to_cell(world_position)
 	if not is_in_lot(cell):
@@ -383,8 +360,7 @@ func update_hover(world_position: Vector2) -> void:
 		_highlight.position = to_local(cell_to_world(cell))
 
 
-## Pinta el TileSet del suelo si todavía no está (tarda ~1 s): el menú principal y las
-## pruebas lo llaman antes, así la partida no se traba en su primer cuadro.
+## Pinta el TileSet del suelo si falta (~1 s); el menú y las pruebas lo llaman antes para no trabar la partida.
 static func prepare_tile_set() -> void:
 	if _shared_tile_set == null:
 		_shared_tile_set = _build_sprite_tile_set()
@@ -393,8 +369,7 @@ static func prepare_tile_set() -> void:
 		_shared_tile_set = _build_tile_set()
 
 
-# TileSet a partir del atlas de sprites del suelo; null si no hay atlas (entonces se pinta
-# con GroundPainter). El terreno sin comprar y el pasto sin familia usan el pasto liso.
+# TileSet desde el atlas de sprites; null si no hay. Terreno sin comprar y pasto sin familia usan el liso.
 static func _build_sprite_tile_set() -> TileSet:
 	var ground: Dictionary = SpriteLibrary.get_ground()
 	var path: String = String(ground.get("file", ""))
@@ -437,7 +412,7 @@ static func _build_sprite_tile_set() -> TileSet:
 	return tile_set
 
 
-# El TileSet del suelo, pintado la primera vez y compartido después.
+# TileSet del suelo, pintado la primera vez y compartido.
 func _get_tile_set() -> TileSet:
 	prepare_tile_set()
 	_atlas_rows = _shared_rows
@@ -446,9 +421,8 @@ func _get_tile_set() -> TileSet:
 	return _shared_tile_set
 
 
-# Crea el TileSet en código con texturas generadas (GroundPainter, arte provisional).
-# Cada fila del atlas es un estilo de piso o del mapa; cada columna, una variante (los
-# pisos usan dos, en tablero). La calle con línea tiene una columna por dirección.
+# TileSet provisional con GroundPainter: fila = estilo, columna = variante (pisos en tablero, la
+# calle una por dirección).
 static func _build_tile_set() -> TileSet:
 	var floor_types: Array[String] = [ConstructionCatalog.BARE_FLOOR, ConstructionCatalog.TERRAIN]
 	floor_types.append_array(ConstructionCatalog.get_floor_types())
@@ -483,7 +457,7 @@ static func _build_tile_set() -> TileSet:
 		for column: int in range(styles[row].size()):
 			var offset: Vector2i = Vector2i(column, row) * tile_size
 			if style == MapDecor.ROAD_LINE:
-				# Una columna por dirección de la calle: (2, 1) es el eje x de la pantalla isométrica, (-2, 1) el eje y.
+				# Una columna por dirección de la calle: (2, 1) eje x de la pantalla, (-2, 1) eje y.
 				GroundPainter.paint(image, offset, tile_size, style, road, 0, overlap, line_color,
 					Vector2(2.0, 1.0) if column == 0 else Vector2(-2.0, 1.0))
 			else:

@@ -1,8 +1,5 @@
-# Menú Ajustes (diseño, 12.3 y hito 60): tres pestañas, Guardar (en una ranura manual),
-# Cargar (el autoguardado o una ranura) y Opciones (las de Settings), y Salir al menú.
-# Cargar y salir piden confirmación: lo que no se guardó se pierde. El sonido llega en la
-# fase 8. Se construye en código; su botón va en la barra de menús (attach_button) y los
-# botones avisan con señales.
+# Menú Ajustes: pestañas Guardar, Cargar y Opciones, y Salir al menú.
+# Cargar y salir piden confirmación; los botones avisan con señales.
 class_name SettingsPanel
 extends CanvasLayer
 
@@ -36,7 +33,7 @@ var _status_label: Label
 var _quit_button: Button
 var _close_button: Button
 var _main_rows: VBoxContainer
-# Las pestañas se desplazan si no entran en pantalla (hito 65).
+# Las pestañas se desplazan si no entran en pantalla.
 var _sections_scroll: ScrollContainer
 var _sections_box: VBoxContainer
 var _confirm_box: VBoxContainer
@@ -107,7 +104,7 @@ func _ready() -> void:
 		_load_buttons[slot] = button
 	_options = OptionsList.new()
 	_sections[TAB_OPTIONS].add_child(_options)
-	# Tutorial (hito 63): se retoma donde quedó o se vuelve a empezar si se terminó.
+	# Tutorial: se retoma donde quedó o vuelve a empezar si se terminó.
 	_tutorial_button = Button.new()
 	_tutorial_button.custom_minimum_size = Vector2(0, 44)
 	_tutorial_button.pressed.connect(_on_tutorial_pressed)
@@ -153,10 +150,9 @@ func _ready() -> void:
 	set_tab(TAB_SAVE)
 
 
-# Al cambiar de pestaña o de pregunta cambia el alto: se vuelve a centrar con su tamaño
-# mínimo (después de que los contenedores lo recalculen).
+# Al cambiar de pestaña o de pregunta se vuelve a centrar con su tamaño mínimo (ya recalculado).
 func _fit() -> void:
-	# La pestaña entra entera si cabe; si no, se desplaza dentro del panel (hito 65).
+	# La pestaña entra entera si cabe; si no, se desplaza dentro del panel.
 	var view_height: float = _panel.get_viewport_rect().size.y
 	var other: float = _panel.get_combined_minimum_size().y - _sections_scroll.get_combined_minimum_size().y
 	_sections_scroll.custom_minimum_size.y = minf(_sections_box.get_combined_minimum_size().y,
@@ -219,7 +215,7 @@ func refresh_slots() -> void:
 		_load_buttons[slot].disabled = not SaveManager.has_save(slot)
 
 
-## Pone los controles de Opciones como están las opciones (sin volver a guardarlas).
+## Pone los controles de Opciones según las opciones, sin guardarlas.
 func refresh_options() -> void:
 	_options.refresh()
 

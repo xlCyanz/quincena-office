@@ -1,17 +1,6 @@
-# Menú Equipos (diseño, 6 y 12.3): crear equipos, elegir sus miembros, su turno (hora de
-# entrada y días; la salida la marca la jornada de 8 horas más el almuerzo) y el
-# contrato que llevan. También qué contrato lleva el CEO y quién está sin equipo.
-# Desde el hito 31 cada equipo muestra su líder (un líder de equipo añadido entra como
-# líder) y, desde Startup, si rinde menos por no tener a su líder presente. Desde el
-# hito 34 el turno suma horas extra (ShiftEditor) y marca a quien tiene horario propio.
-# Desde el hito 35 se llama Horarios y tiene tres vistas: Equipos (cada uno sigue una
-# plantilla o tiene turno propio), Plantillas (nombre y turno; cambiarla cambia todos sus
-# equipos) y Agenda (un día a la vez: quién trabaja cada hora y los huecos sin líder).
-#
-# No pausa el tiempo. Ocupa el lado izquierdo, como Personal y Proyectos (abrir uno
-# cierra los otros; lo hace la escena de juego). Se construye en código y solo se
-# rehace cuando cambia algo que muestra, para no cerrar una lista desplegable abierta
-# cada hora de juego.
+# Menú Horarios (lado izquierdo, no pausa) con tres vistas: Equipos (miembros, líder, turno,
+# plantilla y proyecto), Plantillas (cambiar una cambia sus equipos) y Agenda (un día, huecos sin líder).
+# Solo se rehace si cambia lo que muestra, para no cerrar una lista desplegable abierta.
 class_name TeamsPanel
 extends CanvasLayer
 
@@ -40,7 +29,7 @@ const AGENDA_STATE_NAMES: Dictionary[String, String] = {
 	Staff.AGENDA_OFF: "libre", Staff.AGENDA_WORK: "trabaja", Staff.AGENDA_LUNCH: "almuerzo", Staff.AGENDA_GAP: "hueco",
 }
 
-# Botón «?» de ayuda (hito 64).
+# Botón «?» de ayuda.
 var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
@@ -79,7 +68,7 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
-	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	# Ancho y alto según la pantalla y la barra de menús.
 	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
 	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
@@ -206,9 +195,8 @@ func get_status_text() -> String:
 	return _status_label.text
 
 
-## Control de un equipo: "delete", "earlier", "later", "add", "add_choice", "project",
-## "day_0" … "day_6", "remove_<id del empleado>", "leader_label" o "remove_leader". null
-## si no existe.
+## Control de un equipo: "delete", "earlier", "later", "add", "add_choice", "project", "day_N",
+## "remove_<id>", "leader_label" o "remove_leader"; null si no existe.
 func get_team_control(team_id: int, control: String) -> Control:
 	return _controls.get(team_id, {}).get(control)
 
@@ -226,7 +214,7 @@ func get_list_text() -> String:
 	return "\n".join(texts)
 
 
-# Resumen de todo lo que muestra el panel: si no cambió, no hace falta rehacerlo.
+# Resumen de lo que muestra el panel: si no cambió, no se rehace.
 func _signature() -> String:
 	var people: Array[String] = []
 	for employee: Dictionary in Staff.employees:
@@ -237,7 +225,7 @@ func _signature() -> String:
 		owners.append("%d:%d" % [contract["id"], contract["team_id"]])
 	for project: Dictionary in Products.get_active_projects():
 		owners.append("p%d:%d:%s" % [project.get("product_id", project.get("id", 0)), project["team_id"], project.has("product_id")])
-	# Si el líder está presente cambia lo que se muestra solo al empezar o terminar su turno.
+	# La presencia del líder solo cambia al empezar o terminar su turno.
 	var presence: Array[bool] = [Staff.leaders_required()]
 	for team: Dictionary in Staff.teams:
 		presence.append(Staff.is_leader_present(team, Staff.get_absolute_hour()))
@@ -429,9 +417,8 @@ func _add_team(team: Dictionary) -> void:
 	_list.add_child(HSeparator.new())
 
 
-# Lista desplegable con los contratos en curso y los productos en desarrollo para un
-# equipo (o el CEO). Elegir uno se lo da; "Ninguno" lo deja sin proyecto. Cada opción
-# guarda en su metadata {"kind": "contract"/"product", "id"}.
+# Lista de contratos en curso y productos en desarrollo para un equipo o el CEO; "Ninguno" lo
+# deja sin proyecto. La metadata de cada opción es {"kind": "contract"/"product", "id"}.
 func _project_choice(team_id: int) -> OptionButton:
 	var choice := OptionButton.new()
 	choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -522,8 +509,7 @@ func _add_templates() -> void:
 		_list.add_child(HSeparator.new())
 
 
-# Vista Agenda: un día; una fila por equipo y por persona con horario propio, una
-# columna por hora, y debajo los huecos.
+# Vista Agenda: una fila por equipo y por persona con horario propio, una columna por hora y los huecos.
 func _add_agenda() -> void:
 	var days_row := HBoxContainer.new()
 	_list.add_child(days_row)
@@ -607,7 +593,7 @@ func _add_section(text: String) -> void:
 	_list.add_child(label)
 
 
-# Etiqueta corta dentro de una fila: sin cortar líneas, para que no quede de ancho 0.
+# Etiqueta corta de una fila, sin cortar líneas para que no quede de ancho 0.
 func _row_label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text

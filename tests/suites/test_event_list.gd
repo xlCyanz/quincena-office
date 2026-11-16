@@ -1,7 +1,5 @@
-# Prueba del hito 44: lista de eventos.
-# Criterio: con contador la inspección de impuestos no multa; con baterías no hay apagón;
-# sin personal de limpieza aparece la oficina sucia. Además: el archivero baja la multa, un
-# buen líder evita la reunión inútil y cada efecto nuevo hace lo que dice.
+# Lista de eventos: el contador evita la multa y el archivero la baja, las baterías el apagón,
+# la limpieza la oficina sucia y un buen líder la reunión inútil; cada efecto hace lo que dice.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=event_list
 extends Node
 
@@ -107,7 +105,7 @@ func _check_catalog() -> void:
 		ids.append(String(event["id"]))
 	for event_id: String in DESIGN_EVENTS:
 		_expect(ids.has(event_id), "está el evento %s" % event_id)
-	# El inversionista (hito 58) es el único evento que no está en 10.2.
+	# El inversionista es el único evento fuera de 10.2.
 	_expect(ids.size() == DESIGN_EVENTS.size() + 1 and ids.has("investor"), "los 16 eventos de 10.2 y el inversionista: %d" % ids.size())
 	var good: float = 0.0
 	var bad: float = 0.0
@@ -123,8 +121,8 @@ func _check_catalog() -> void:
 		"baterías $1,500 y archivero $250")
 
 
-# El Baño funciona con inodoro y lavamanos; la Sala de descanso con cafetera, y esta baja
-# la probabilidad de quedarse sin café.
+# El Baño funciona con inodoro y lavamanos; la Sala de descanso con cafetera, que baja la
+# probabilidad de quedarse sin café.
 func _check_rooms() -> void:
 	_new_game()
 	_add_employee(901, "programmer")
@@ -175,7 +173,6 @@ func _check_tax() -> void:
 	Events.trigger("tax")
 	_expect(_option_money(0) == -1000, "con archivero, la mitad: %d" % _option_money(0))
 	Events.choose(0)
-	# Con contador no hay multa.
 	_add_employee(901, "accountant")
 	_expect(is_equal_approx(Events.get_weight("tax"), 0.5), "con contador pesa la mitad")
 	Events.trigger("tax")

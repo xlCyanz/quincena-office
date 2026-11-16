@@ -1,6 +1,5 @@
-# Prueba del hito 54: Sala de descanso y pausas.
-# Criterio: un cansado toma una pausa si hay sofá libre y recupera energía; el ping pong
-# sube el ánimo y baja un poco la producción; la máquina da su ingreso diario.
+# Sala de descanso y pausas: un cansado descansa en un sofá libre y recupera energía; el ping
+# pong sube el ánimo y baja un poco la producción; la máquina cobra cada día.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=breaks
 extends Node
 
@@ -9,8 +8,7 @@ signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const SEED: int = 20261154
-## Sala de descanso: el espacio abierto del local fuera del Área de trabajo (norte) y de
-## la Oficina Ejecutiva.
+## Sala de descanso: el espacio abierto fuera del Área de trabajo (norte) y de la Oficina Ejecutiva.
 const BREAK_CELL := Vector2i(3, 4)
 const COFFEE_CELL := Vector2i(0, 4)
 const WATER_CELL := Vector2i(0, 5)
@@ -25,7 +23,7 @@ var _builder := Builder.new()
 
 func _ready() -> void:
 	SaveManager.save_dir = "user://test_saves"
-	# Sin baños para medir la producción exacta (los baños tienen su parte).
+	# Sin baños, para medir la producción exacta.
 	Staff.bathrooms_enabled = false
 	_check_data()
 	_check_places()
@@ -46,8 +44,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un Área de trabajo de tres puestos al norte y la Sala de descanso con
-# su cafetera en el resto del local.
+# Partida nueva con tres puestos al norte y la Sala de descanso con su cafetera en el resto.
 func _new_game() -> void:
 	GameClock.stop()
 	SaveManager.new_game()
@@ -176,7 +173,6 @@ func _check_breaks() -> void:
 	_expect(int(people[2]["energy"]) == before[2] + int(StaffCatalog.get_workday("energy_per_work_hour")), "el que trabajó pierde lo normal")
 	_expect(Staff.get_breaks(Staff.get_absolute_hour()).is_empty(), "a las 12 almuerzan: nadie en pausa")
 	_expect(Staff.get_breaks(now - 5).is_empty(), "las pausas viejas se olvidan")
-	# Sin café la pausa recupera solo 15.
 	_go_to(_hour_at(10))
 	people[1]["energy"] = 20
 	GameClock.fast_forward_hours(1)

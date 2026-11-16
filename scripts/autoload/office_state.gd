@@ -1,22 +1,21 @@
-# Estado de la oficina: casillas, paredes, muebles y habitaciones, en coordenadas de cuadrícula.
-# Pisos y bordes (paredes y puertas) desde el hito 5; muebles en el 6 y detección de
-# habitaciones en el 7. Este autoload solo guarda datos: comprar y vender lo hace Builder.
+# Estado de la oficina en coordenadas de cuadrícula: local, pisos, bordes, muebles y habitaciones.
+# Solo guarda datos: comprar y vender lo hace Builder.
 extends Node
 
 ## Oficina con la que empieza toda partida nueva.
 const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
-## Mueble quitado del juego (el escritorio amplio): las partidas viejas lo cambian por uno sencillo.
+## Mueble quitado (el escritorio amplio): las partidas viejas lo cambian por uno sencillo.
 const REMOVED_WIDE_DESK: String = "wide_desk"
 const REMOVED_MID_COMPUTER: String = "mid_computer"
 ## Tipo de la Sala de servidores (data/rooms.json).
 const SERVER_ROOM: String = "server_room"
 const EXECUTIVE_OFFICE: String = "executive_office"
-## Baño: sus inodoros dan la capacidad (hito 52).
+## Baño: sus inodoros dan la capacidad.
 const BATHROOM: String = "bathroom"
-## Sala de descanso: almuerzo dentro (hito 53).
+## Sala de descanso: almuerzo dentro y pausas.
 const BREAK_ROOM: String = "break_room"
 
-## Casillas que ocupa el local (hito 25: crece al comprar terreno y puede no ser un rectángulo).
+## Casillas del local (crece al comprar terreno; puede no ser un rectángulo).
 var lot := Lot.new()
 
 ## Rectángulo que encierra el local. Asignarlo deja el local con ese rectángulo.
@@ -26,34 +25,27 @@ var lot_rect: Rect2i:
 	set(value):
 		lot = Lot.from_rect(value)
 
-## Casillas del solar: el mapa fijo que rodea al local, con el local en el centro.
+## Casillas del solar: el mapa fijo con el local en el centro.
 var site_rect := Rect2i()
 
-# Habitaciones que funcionan, mesas, muebles de la Sala de descanso e inodoros: los piden
-# varias veces por hora los baños, el almuerzo, las pausas y la producción. Solo se usa
-# mientras el reloj procesa una hora (GameClock.in_hour_tick); se borra al cambiar la
-# oficina o la hora, y al empezar o cargar una partida.
+# Consultas pedidas muchas veces por hora (habitaciones que funcionan, mesas, Sala de descanso,
+# inodoros). Solo vale con GameClock.in_hour_tick; se borra al cambiar oficina u hora y al empezar o cargar.
 var _query_cache: Dictionary[String, Variant] = {}
 
 ## Tipo de piso de cada casilla del local (ver ConstructionCatalog).
 var floors: Dictionary[Vector2i, String] = {}
 
-## Piezas en los bordes: GridEdge → ConstructionCatalog.WALL, DOOR o WINDOW. Un borde que no
-## está en el diccionario está libre.
+## Piezas en los bordes: GridEdge → pieza de ConstructionCatalog; un borde que no está, libre.
 var edges: Dictionary[Vector3i, String] = {}
 
-## Habitaciones: cada una es {"type": String, "cells": Array[Vector2i], "dirt": float}
-## (dirt = suciedad de 0 a cleaning.max_dirt, hito 37; puede faltar y vale 0).
+## Habitaciones: {"type", "cells": Array[Vector2i], "dirt"} (dirt 0..cleaning.max_dirt; si falta, 0).
 var rooms: Array[Dictionary] = []
 
-## Muebles: cada uno es {"id": String, "cell": Vector2i, "rotation": int,
-## "assigned_to": String, "computer": String, "monitor": String}. cell es la casilla de
-## anclaje, assigned_to dice quién lo usa ("" si nadie), computer la computadora
-## instalada en un escritorio y monitor su segundo monitor ("" si no tiene; puede faltar). Comprar, girar y vender lo hace Builder.
+## Muebles: {"id", "cell" (anclaje), "rotation", "assigned_to" (quién lo usa o ""), "computer",
+## "monitor" (en un escritorio; "" si no tiene, puede faltar)}. Los cambia Builder.
 var furniture: Array[Dictionary] = []
 
-# Casilla → índice de habitación (get_room_index_map), con el hash de las casillas de
-# las habitaciones con que se armó.
+# Casilla → índice de habitación (get_room_index_map), con el hash de las casillas con que se armó.
 var _room_map: Dictionary[Vector2i, int] = {}
 var _room_map_key: int = 0
 
@@ -75,8 +67,7 @@ func _ready() -> void:
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _query_cache.clear())
 
 
-## Prepara la oficina de una partida nueva: el local inicial y lo que dice
-## STARTING_OFFICE_PATH.
+## Prepara la oficina de una partida nueva con lo que dice STARTING_OFFICE_PATH.
 func new_game() -> void:
 	_query_cache.clear()
 	lot = Lot.from_rect(Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE))
@@ -121,7 +112,7 @@ static func site_around(lot: Rect2i) -> Rect2i:
 	return Rect2i(lot.position - offset, GameConstants.MAX_SITE_SIZE)
 
 
-## Devuelve el primer mueble asignado a alguien (por ejemplo, "ceo"), o un diccionario vacío.
+## Primer mueble asignado a alguien (por ejemplo, "ceo"), o {}.
 func find_furniture_assigned_to(who: String) -> Dictionary:
 	for item: Dictionary in furniture:
 		if item["assigned_to"] == who:
@@ -142,8 +133,7 @@ func cells_of_furniture(items: Array[Dictionary]) -> Array[Vector2i]:
 	return cells
 
 
-## Casillas que tapan el paso: las de los muebles menos las de los que se pisan (la
-## alfombra, hito 45).
+## Casillas que tapan el paso: las de los muebles menos los que se pisan (la alfombra).
 func get_blocking_cells() -> Array[Vector2i]:
 	return blocking_cells_of(furniture)
 
@@ -156,8 +146,7 @@ func blocking_cells_of(items: Array[Dictionary]) -> Array[Vector2i]:
 	return cells
 
 
-## Índice del objeto de pared colgado en esa cara (su casilla y la rotación que deja la
-## pared detrás), o -1.
+## Índice del objeto de pared colgado en esa cara (casilla y rotación que deja la pared detrás), o -1.
 func find_wall_item(cell: Vector2i, rotation: int) -> int:
 	return find_wall_item_in(furniture, cell, rotation)
 
@@ -180,9 +169,8 @@ func wall_items_on(edge: Vector3i) -> Array[int]:
 	return found
 
 
-## Escritorio o mostrador que tiene su frente hacia una casilla (quien se sienta ahí queda
-## delante de él): {direction (0–3, hacia el mueble, como las rotaciones), computer (si tiene
-## computadora), index (el mueble en furniture)}. Vacío si no hay ninguno. Con varios, prefiere el que tiene computadora.
+## Escritorio o mostrador con el frente hacia esa casilla: {direction (0–3, hacia el mueble),
+## computer, index}, o {}. Con varios prefiere el que tiene computadora.
 func get_desk_facing(cell: Vector2i) -> Dictionary:
 	var found: Dictionary = {}
 	for direction: int in range(FurnitureCatalog.FRONT_DIRECTIONS.size()):
@@ -202,8 +190,7 @@ func get_desk_facing(cell: Vector2i) -> Dictionary:
 	return found
 
 
-## Índice en furniture del mueble que ocupa una casilla, o -1 si está libre. Con quarter
-## (0–3) prefiere el mueble chico de ese cuarto; si no hay, el primero de la casilla.
+## Índice del mueble en una casilla, o -1. Con quarter (0–3) prefiere el chico de ese cuarto.
 func find_furniture_at(cell: Vector2i, quarter: int = -1) -> int:
 	var found: int = -1
 	for index: int in range(furniture.size()):
@@ -239,14 +226,13 @@ func set_floor(cell: Vector2i, floor_type: String) -> void:
 	floors[cell] = floor_type
 
 
-## Indica si una pared cierra el paso por un borde (las puertas y los bordes libres no).
+## Indica si el borde cierra el paso (puertas y bordes libres no).
 func blocks_passage(edge: Vector3i) -> bool:
 	var kind: String = get_edge(edge)
 	return kind == ConstructionCatalog.WALL or kind == ConstructionCatalog.WINDOW
 
 
-## Puntos de ambiente de la puerta de vidrio para una habitación (hito 69): solo va en la
-## entrada, así que cuenta para la habitación que tiene la casilla de entrada.
+## Puntos de ambiente de la puerta de vidrio: cuentan para la habitación con la casilla de entrada.
 func get_room_door_ambiance(room: Dictionary) -> int:
 	if get_edge(get_entrance_edge()) != ConstructionCatalog.GLASS_DOOR:
 		return 0
@@ -259,7 +245,7 @@ func get_entrance_edge() -> Vector3i:
 	return GridEdge.between(entrance, get_outside_of_entrance())
 
 
-## Ventanas que dan a una habitación: bordes con ventana que tocan alguna de sus casillas.
+## Ventanas que tocan alguna casilla de la habitación.
 func count_room_windows(room: Dictionary) -> int:
 	var count: int = 0
 	var cells: Array = room["cells"]
@@ -273,8 +259,7 @@ func count_room_windows(room: Dictionary) -> int:
 	return count
 
 
-## Casilla de fuera del local a la que se sale por la entrada: la vecina fuera del
-## local cuyo borde tiene la puerta (o, si no hay puerta, la primera vecina de fuera).
+## Casilla de fuera a la que se sale por la entrada: la vecina tras la puerta (sin puerta, la primera de fuera).
 func get_outside_of_entrance() -> Vector2i:
 	var fallback := Vector2i(-1, -1)
 	for direction: Vector2i in [Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)]:
@@ -288,7 +273,7 @@ func get_outside_of_entrance() -> Vector2i:
 	return fallback
 
 
-## Devuelve la primera habitación del tipo indicado, o un diccionario vacío.
+## Primera habitación del tipo indicado, o {}.
 func find_room(room_type: String) -> Dictionary:
 	for room: Dictionary in rooms:
 		if room["type"] == room_type:
@@ -296,7 +281,7 @@ func find_room(room_type: String) -> Dictionary:
 	return {}
 
 
-## Suciedad de una habitación (hito 37).
+## Suciedad de una habitación.
 static func get_room_dirt(room: Dictionary) -> float:
 	return float(room.get("dirt", 0.0))
 
@@ -306,9 +291,8 @@ func get_room_index_at(cell: Vector2i) -> int:
 	return RoomRules.room_index_at(rooms, cell)
 
 
-## Índice de habitación de cada casilla que está en alguna (para buscar muchas de una
-## vez). Se guarda mientras las casillas de las habitaciones no cambien; la suciedad no
-## cuenta. No modificar el resultado.
+## Índice de habitación de cada casilla (para buscar muchas a la vez). Guardado mientras las casillas
+## no cambien; no modificar el resultado.
 func get_room_index_map() -> Dictionary[Vector2i, int]:
 	var parts: Array = []
 	for room: Dictionary in rooms:
@@ -316,7 +300,7 @@ func get_room_index_map() -> Dictionary[Vector2i, int]:
 	var key: int = parts.hash()
 	if key != _room_map_key or (_room_map.is_empty() and not rooms.is_empty()):
 		_room_map = {}
-		# Al revés, para que con casillas repetidas gane la primera como en room_index_at.
+		# Al revés: con casillas repetidas gana la primera, como en get_room_index_at.
 		for index: int in range(rooms.size() - 1, -1, -1):
 			for cell: Vector2i in rooms[index]["cells"]:
 				_room_map[cell] = index
@@ -347,8 +331,7 @@ func count_racks(room: Dictionary) -> int:
 	return count
 
 
-## Capacidad para productos: los racks de la Sala de servidores que funciona (cada rack
-## es una unidad; un producto usa las de su tamaño).
+## Capacidad para productos: racks de la Sala de servidores que funciona (1 rack = 1 unidad).
 func get_server_capacity() -> int:
 	var room: Dictionary = get_server_room()
 	return 0 if room.is_empty() else count_racks(room)
@@ -371,8 +354,7 @@ func _find_working_room(room_type: String) -> Dictionary:
 	return {}
 
 
-## Mesas de comedor de la Sala de descanso que funciona si también tiene nevera y
-## microondas (hito 53: almuerzo dentro); vacío si no se puede almorzar dentro.
+## Mesas de comedor de la Sala de descanso que funciona si también tiene nevera y microondas; si no, vacío.
 func get_lunch_tables() -> Array[Dictionary]:
 	if not GameClock.in_hour_tick:
 		return _find_lunch_tables()
@@ -407,13 +389,12 @@ func get_lunch_seats() -> int:
 	return seats
 
 
-## Casillas libres de la Sala de descanso junto a las mesas de comedor, adonde caminan los
-## que almuerzan dentro (en orden; puede haber menos que asientos).
+## Casillas libres junto a las mesas de comedor, en orden (puede haber menos que asientos).
 func get_lunch_spots() -> Array[Vector2i]:
 	return _spots_near(get_lunch_tables())
 
 
-## Muebles dentro de la Sala de descanso que funciona (hito 54).
+## Muebles dentro de la Sala de descanso que funciona.
 func get_break_room_items() -> Array[Dictionary]:
 	if not GameClock.in_hour_tick:
 		return _find_break_room_items()
@@ -434,8 +415,7 @@ func _find_break_room_items() -> Array[Dictionary]:
 	return items
 
 
-## Suma de un valor de los muebles de la Sala de descanso que funciona, contando uno de
-## cada tipo (break_mood, distraction, vending_income).
+## Suma de un campo (break_mood, distraction, vending_income) de la Sala de descanso, uno por tipo.
 func get_break_room_effect(field: String) -> float:
 	var total: float = 0.0
 	var counted: Dictionary[String, bool] = {}
@@ -482,7 +462,7 @@ func _spots_near(items: Array[Dictionary]) -> Array[Vector2i]:
 	return spots
 
 
-## Inodoros dentro de los Baños que funcionan (hito 52).
+## Inodoros dentro de los Baños que funcionan.
 func count_working_toilets() -> int:
 	if not GameClock.in_hour_tick:
 		return _count_working_toilets()
@@ -503,8 +483,7 @@ func _count_working_toilets() -> int:
 	return count
 
 
-## Lo que cuestan al mes los muebles con costo mensual (los racks, estén donde estén),
-## sin descuentos.
+## Costo mensual de los muebles que lo tienen (los racks, estén donde estén), sin descuentos.
 func get_furniture_monthly_cost() -> int:
 	var total: int = 0
 	for item: Dictionary in furniture:
@@ -521,8 +500,7 @@ func has_trash_can(room: Dictionary) -> bool:
 	return false
 
 
-## Suma la suciedad de people_hours horas-persona a la habitación de room_index (la
-## mitad con zafacón), sin pasar del máximo.
+## Suma la suciedad de people_hours horas-persona a la habitación (la mitad con zafacón), hasta el máximo.
 func add_dirt(room_index: int, people_hours: float) -> void:
 	if room_index < 0 or room_index >= rooms.size():
 		return
@@ -539,7 +517,7 @@ func clean_room(room_index: int, amount: float) -> void:
 		rooms[room_index]["dirt"] = maxf(0.0, get_room_dirt(rooms[room_index]) - amount)
 
 
-## Deja todas las habitaciones limpias (limpieza externa de un evento, hito 44).
+## Deja todas las habitaciones limpias (evento de limpieza externa).
 func clean_all() -> void:
 	for room: Dictionary in rooms:
 		room["dirt"] = 0.0
@@ -560,8 +538,7 @@ func get_dirtiest_room() -> int:
 	return best
 
 
-## Casilla libre de una habitación donde puede pararse alguien (sin muebles y que no sea
-## la entrada), o la primera si no hay.
+## Casilla libre de una habitación para pararse (sin muebles ni la entrada), o la primera.
 func get_room_spot(room_index: int) -> Vector2i:
 	var cells: Array[Vector2i] = rooms[room_index]["cells"]
 	var taken: Array[Vector2i] = get_blocking_cells()
@@ -571,8 +548,7 @@ func get_room_spot(room_index: int) -> Vector2i:
 	return cells[0]
 
 
-## Devuelve el estado de la oficina para guardarlo (hito 9). Las casillas se
-## guardan como listas [x, y] para que pasen por JSON sin perderse.
+## Devuelve el estado de la oficina para guardarlo; las casillas van como [x, y] para JSON.
 func export_state() -> Dictionary:
 	var saved_rooms: Array = []
 	for room: Dictionary in rooms:
@@ -605,10 +581,10 @@ func export_state() -> Dictionary:
 	}
 
 
-## Restaura el estado de la oficina desde una partida guardada (hito 9).
+## Restaura el estado de la oficina desde una partida guardada.
 func import_state(state: Dictionary) -> void:
 	_query_cache.clear()
-	# Antes del hito 25 el local era solo un rectángulo ("lot").
+	# Partidas viejas: el local era solo un rectángulo ("lot").
 	if state.has("lot_cells"):
 		var cells: Array[Vector2i] = []
 		for pair: Array in state["lot_cells"]:
@@ -640,9 +616,8 @@ func import_state(state: Dictionary) -> void:
 	_hang_wall_items()
 
 
-# El escritorio amplio (2×1) ya no existe: en una partida vieja cada uno pasa a ser un
-# escritorio sencillo, con su computadora, en la casilla de las dos que tiene un asiento
-# delante de su frente (así el puesto sigue funcionando); si ninguna, en la de anclaje.
+# Escritorio amplio de una partida vieja → escritorio sencillo con su computadora, en la casilla con
+# un asiento delante (sigue siendo puesto) o en la de anclaje.
 func _replace_removed_furniture() -> void:
 	for item: Dictionary in furniture:
 		if String(item["id"]) != REMOVED_WIDE_DESK:
@@ -657,8 +632,7 @@ func _replace_removed_furniture() -> void:
 		# La computadora media ya no existe: pasa a básica.
 		if String(item["computer"]) == REMOVED_MID_COMPUTER:
 			item["computer"] = "basic_computer"
-		# Las pantallas extra ahora solo van en un escritorio largo con computadora pro: las que
-		# no cumplen se quitan y se devuelve lo pagado.
+		# Las pantallas extra que ya no caben (escritorio largo con pro) se quitan devolviendo lo pagado.
 		var count: int = FurnitureCatalog.get_monitor_count(item)
 		if count <= 0:
 			continue
@@ -680,9 +654,8 @@ func _has_seat_at(cell: Vector2i) -> bool:
 	return false
 
 
-# Antes del hito 45 el aire acondicionado ocupaba una casilla de piso: cada objeto de
-# pared que no está en una cara de pared libre se cuelga en la más cercana de su
-# habitación (o de su casilla). Si no hay ninguna, se quita y se devuelve lo pagado.
+# Cuelga cada objeto de pared que no está en una cara libre en la más cercana de su habitación
+# (partidas viejas); si no hay, lo quita devolviendo lo pagado.
 func _hang_wall_items() -> void:
 	var removed: Array[Dictionary] = []
 	var placed: Array[Dictionary] = []
@@ -734,12 +707,12 @@ func _furniture_from_data(item: Dictionary) -> Dictionary:
 		"computer": String(item.get("computer", "")),
 		"monitor": String(item.get("monitor", "")),
 		"monitors": int(item.get("monitors", 0 if String(item.get("monitor", "")).is_empty() else 1)),
-		# Los muebles chicos guardan su cuarto; las partidas viejas los ponen en el primero.
+		# Los chicos guardan su cuarto; las partidas viejas los ponen en el primero.
 		"quarter": int(item.get("quarter", 0 if FurnitureCatalog.is_small(String(item["id"])) else -1)),
 	}
 
 
-# JSON guarda los números como decimales; aquí vuelven a ser casillas enteras.
+# JSON guarda los números como decimales: vuelven a casillas enteras.
 func _to_cell(pair: Array) -> Vector2i:
 	return Vector2i(int(pair[0]), int(pair[1]))
 

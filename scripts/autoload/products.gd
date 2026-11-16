@@ -1,28 +1,6 @@
-# Productos propios (diseño, 7.5 y 13.5; hito 41): proyectos de la empresa sin cliente,
-# sin plazo y sin anticipo. Se desarrollan igual que un contrato (fases, puntos por hora
-# y errores con Production) y la empresa los paga con los sueldos hasta lanzarlos.
-#
-# Un producto es {"id", "name", "type", "size", "points": {"design", "programming",
-# "testing"}, "total_points", "progress", "bugs_hidden", "bugs_found", "bugs_fixed",
-# "fix_progress", "team_id", "worked_by", "state", "started_day", "design_done",
-# "design_skill"}; state es "development" mientras se hace y "launched" desde que se
-# lanza. team_id usa los mismos valores que un contrato (Projects.CEO_TEAM,
-# Projects.NO_TEAM o el id de un equipo). design_done y design_skill suman los puntos de
-# diseño y esos puntos por el valor del nivel de quien los hizo (la calidad).
-#
-# Lanzado (hito 42) suma "launched_day", "quality" (0 a 1), "curve" (parte del pico de
-# usuarios por el ciclo de vida), "phase" (growth, plateau o decline), "phase_days",
-# "production_bugs", "bug_loss" (parte de los usuarios perdida por esos errores) y, mientras
-# se actualiza, "update": un proyecto como el de desarrollo ({"product_id", "points",
-# "progress", errores, "team_id", "worked_by"}) que cuenta para el tope. Cada día
-# (day_changed) avanza el ciclo y cobra «Ingreso de productos». Los racks de la Sala de
-# servidores se reparten en orden de lanzamiento (get_supported_ids).
-#
-# Se empieza desde la etapa de data/products.json con una Sala de servidores que
-# funcione. Los productos en desarrollo y los contratos comparten el tope de proyectos
-# en curso (Projects.get_contract_limit) y un equipo lleva un proyecto a la vez: dar un
-# producto a un equipo suelta su contrato y al revés (Projects.release_team,
-# release_team). Todo el azar (los errores) sale de _rng, cuyo estado se guarda.
+# Productos propios: proyectos sin cliente, plazo ni anticipo que se desarrollan como un contrato
+# y, lanzados, dan ingreso diario según su ciclo de vida, su calidad y los racks que tienen.
+# Comparten con los contratos el tope de proyectos y los equipos; el azar sale de _rng (se guarda).
 extends Node
 
 const STATE_DEVELOPMENT: String = "development"
@@ -37,7 +15,7 @@ var products: Array[Dictionary] = []
 var _next_id: int = 1
 ## Cuántos productos se empezaron (elige el nombre del siguiente).
 var _started_count: int = 0
-## Cuántos productos se lanzaron en la partida (lo pide Mediana empresa).
+## Productos lanzados en la partida (lo pide Mediana empresa).
 var launched_count: int = 0
 var _rng := RandomNumberGenerator.new()
 
@@ -48,7 +26,7 @@ func _ready() -> void:
 	EventBus.day_changed.connect(func(_day: int, _month: int) -> void: _live_day())
 
 
-## Prepara los productos de una partida nueva: ninguno.
+## Prepara una partida nueva sin productos.
 func new_game() -> void:
 	products.clear()
 	_next_id = 1
@@ -58,7 +36,7 @@ func new_game() -> void:
 	EventBus.products_changed.emit()
 
 
-## Fija la semilla del azar (las pruebas la usan para tener resultados repetibles).
+## Fija la semilla del azar (pruebas).
 func set_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
 
@@ -72,8 +50,7 @@ func start_problem() -> String:
 	return Projects.limit_problem()
 
 
-## Empieza un producto de ese tipo y tamaño y se lo da al primer equipo libre (o al CEO).
-## Devuelve {"ok", "message", "id"}.
+## Empieza un producto y se lo da al primer equipo libre (o al CEO). Devuelve {"ok", "message", "id"}.
 func start(type_id: String, size: String) -> Dictionary:
 	if not ProductCatalog.get_type_ids().has(type_id) or not ProductCatalog.get_size_ids().has(size):
 		return {"ok": false, "message": "Ese producto no existe.", "id": 0}
@@ -101,9 +78,8 @@ func start(type_id: String, size: String) -> Dictionary:
 	return {"ok": true, "message": message, "id": product["id"]}
 
 
-## Le da un producto (en desarrollo o su actualización) a un equipo (o al CEO, o a nadie
-## con Projects.NO_TEAM). Un equipo lleva un proyecto a la vez: si llevaba otro producto o
-## un contrato, ese queda sin equipo. Devuelve {"ok", "message"}.
+## Le da un producto (o su actualización) a un equipo, al CEO o a nadie (Projects.NO_TEAM); lo que
+## llevaba ese equipo queda sin equipo. Devuelve {"ok", "message"}.
 func assign(product_id: int, team_id: int) -> Dictionary:
 	var project: Dictionary = get_project(product_id)
 	if project.is_empty():
@@ -130,8 +106,7 @@ func get_project(product_id: int) -> Dictionary:
 	return product.get("update", {})
 
 
-## Abandona un producto en desarrollo, o la actualización de uno lanzado: se pierde lo
-## hecho, sin otro costo (el producto lanzado sigue como estaba).
+## Abandona un producto en desarrollo o la actualización de uno lanzado, sin otro costo.
 func abandon(product_id: int) -> Dictionary:
 	var product: Dictionary = get_product(product_id)
 	if product.is_empty() or get_project(product_id).is_empty():
@@ -163,8 +138,7 @@ func launch_problem(product_id: int) -> String:
 	return ""
 
 
-## Lanza un producto terminado: deja de contar para el tope, ocupa sus racks y empieza a
-## tener usuarios. Los errores que quedan (ocultos y encontrados) pasan a producción.
+## Lanza un producto terminado: deja el tope, ocupa sus racks y sus errores pasan a producción.
 func launch(product_id: int) -> Dictionary:
 	var problem: String = launch_problem(product_id)
 	if not problem.is_empty():
@@ -198,8 +172,7 @@ func update_problem(product_id: int) -> String:
 	return Projects.limit_problem()
 
 
-## Empieza la actualización de un producto lanzado: un proyecto con una parte de sus puntos
-## que se le da al primer equipo libre (o al CEO). Mientras tanto sigue dando ingreso.
+## Empieza la actualización de un producto lanzado (sigue dando ingreso mientras tanto).
 func start_update(product_id: int) -> Dictionary:
 	var problem: String = update_problem(product_id)
 	if not problem.is_empty():
@@ -234,8 +207,7 @@ func retire(product_id: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-## Suelta el producto que lleva un equipo (queda sin equipo); lo usa Projects al darle un
-## contrato a ese equipo.
+## Suelta el producto que lleva un equipo (Projects lo llama al darle un contrato).
 func release_team(team_id: int) -> void:
 	var product: Dictionary = get_product_of(team_id)
 	if not product.is_empty():
@@ -250,8 +222,7 @@ func get_product(product_id: int) -> Dictionary:
 	return {}
 
 
-## Proyecto de producto (en desarrollo o actualización) que lleva un equipo (o el CEO con
-## Projects.CEO_TEAM), o vacío.
+## Proyecto de producto que lleva un equipo (o el CEO con Projects.CEO_TEAM), o vacío.
 func get_product_of(team_id: int) -> Dictionary:
 	if team_id == Projects.NO_TEAM:
 		return {}
@@ -286,7 +257,7 @@ func get_active_projects() -> Array[Dictionary]:
 	return list
 
 
-## Proyectos de productos en curso (cuentan para el tope de proyectos en curso).
+## Cuántos proyectos de productos hay en curso (cuentan para el tope).
 func get_development_count() -> int:
 	return get_active_projects().size()
 
@@ -296,8 +267,7 @@ func get_active_count() -> int:
 	return get_launched().filter(func(product: Dictionary) -> bool: return get_users(product) > 0).size()
 
 
-## Le quita usuarios a un producto lanzado (un evento: servidor caído o un competidor):
-## suma a bug_loss, que una actualización devuelve a 0.
+## Le quita usuarios a un producto lanzado (eventos); una actualización lo devuelve a 0.
 func add_user_loss(product_id: int, amount: float) -> void:
 	var product: Dictionary = get_product(product_id)
 	if product.is_empty() or product["state"] != STATE_LAUNCHED:
@@ -351,8 +321,7 @@ static func get_quality_factor(quality: float) -> float:
 	return low + (float(ProductCatalog.get_quality("max_factor")) - low) * quality
 
 
-## Parte del pico de usuarios que tiene hoy un producto lanzado (ciclo de vida, errores en
-## producción y racks).
+## Parte del pico de usuarios que tiene hoy un producto lanzado (ciclo, errores y racks).
 func get_users_ratio(product: Dictionary) -> float:
 	if product["state"] != STATE_LAUNCHED:
 		return 0.0
@@ -423,8 +392,7 @@ func export_state() -> Dictionary:
 		"launched_count": launched_count, "rng_state": str(_rng.state)}
 
 
-## Restaura los productos de una partida guardada. Sin datos (partidas anteriores al
-## hito 41) queda sin productos.
+## Restaura los productos de una partida guardada; sin datos queda sin productos.
 func import_state(state: Dictionary) -> void:
 	products.clear()
 	for saved: Dictionary in state.get("products", []):
@@ -455,7 +423,7 @@ func import_state(state: Dictionary) -> void:
 	EventBus.products_changed.emit()
 
 
-# Copia tolerante de los campos de avance de un proyecto guardado (producto o actualización).
+# Copia tolerante del avance de un proyecto guardado (producto o actualización).
 func _import_project(saved: Dictionary) -> Dictionary:
 	var project: Dictionary = saved.duplicate(true)
 	var points: Dictionary = saved.get("points", {})
@@ -514,8 +482,7 @@ func _note_design(project: Dictionary, done: Array[Dictionary]) -> void:
 				* ProductCatalog.get_level_value(String(item["worker"].get("level", "")))
 
 
-# Termina una actualización: corrige los errores en producción (quedan los de la
-# actualización) y el producto vuelve a su mejor momento.
+# Termina una actualización: corrige los errores en producción y vuelve al pico.
 func _finish_update(product: Dictionary) -> void:
 	var update: Dictionary = product["update"]
 	product["production_bugs"] = int(update["bugs_hidden"]) + int(update["bugs_found"])
@@ -527,8 +494,7 @@ func _finish_update(product: Dictionary) -> void:
 	EventBus.send_notice(EventBus.target_product(int(product["id"])), "Actualización terminada: %s vuelve a su mejor momento." % describe_title(product))
 
 
-# Un día de vida de los productos lanzados: avanza el ciclo, los errores en producción
-# quitan usuarios y se cobra el ingreso del día.
+# Un día de vida: avanza el ciclo, los errores quitan usuarios y se cobra el ingreso.
 func _live_day() -> void:
 	var launched: Array[Dictionary] = get_launched()
 	if launched.is_empty():
@@ -542,7 +508,7 @@ func _live_day() -> void:
 		match String(product["phase"]):
 			PHASE_GROWTH:
 				product["curve"] = minf(1.0, float(product["curve"]) + (1.0 - start) / growth_days * get_growth_speed())
-				# Con un margen: la suma de los pasos puede quedar apenas debajo de 1.
+				# Margen: la suma de los pasos puede quedar apenas debajo de 1.
 				if float(product["curve"]) >= 1.0 - Production.EPSILON:
 					product["curve"] = 1.0
 					product["phase"] = PHASE_PLATEAU

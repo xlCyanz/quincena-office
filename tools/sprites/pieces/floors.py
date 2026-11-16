@@ -5,18 +5,15 @@
 #   floor_wood_0..3      8 tablas angostas de madera naranja con cortes escalonados, moteado y vetas
 #   floor_carpet_0..3    alfombra lila de pared a pared: ruido de dominós en 4 tonos, algo agrupado
 #   floor_bare_0..3      concreto (sin piso): grises cálidos de poco contraste, poros y una grieta fina
-#   ground_grass_<familia>_0..3    pasto del solar en 4 familias que empalman entre sí: plain (liso),
-#                        patchy (manchones), lush (tupido, muchas matas) y sunny (claro); se mezclan por zonas
+#   ground_grass_<familia>_0..3    pasto del solar en 4 familias que empalman: plain, patchy, lush y sunny
 #   ground_outside_<familia>_0..3  lo mismo fuera del solar, 15 % más oscuro
 #   ground_path_0..3     camino de grava: muchas piedras con cara clara, lado y contorno-sombra
 #   ground_sidewalk_0..3 acera: una losa por casilla con junta en el borde y bisel
 #   ground_road_0..3     calle: asfalto de granos sueltos
 #   ground_road_line_x_0..3 / _y_0..3  calle con la línea amarilla por el medio a lo largo de x o de y
 #
-# Las 4 variantes de cada material comparten el borde y tienen la MISMA cantidad de pixeles de
-# cada color (se comprueba al generar): mismo color medio exacto, sin tablero de ajedrez.
-# Todo se dibuja en la rejilla isométrica (grid.iu, grid.iv): cada celda es 1 px y un
-# rectángulo de ella es un rombo en pantalla, así las líneas salen 2:1.
+# Las 4 variantes de cada material comparten el borde y tienen la MISMA cantidad de pixeles por color.
+# Se dibuja en la rejilla isométrica (grid.iu, grid.iv): celda = 1 px, así las líneas salen 2:1.
 import os
 
 import numpy as np
@@ -54,9 +51,8 @@ def brightness(index, colors):
 
 
 def repetition(tiles, colors):
-    """Cuánto del dibujo se repite en cada casilla: varianza del promedio de las variantes entre
-    la varianza total del brillo. Es la autocorrelación que se espera en un mosaico al azar a un
-    paso de casilla: 0.25 con 4 variantes que no se parecen en nada, 1.0 si son iguales."""
+    """Varianza del promedio de las variantes entre la varianza total del brillo: 0.25 si las 4
+    no se parecen, 1.0 si son iguales."""
     mask = tiles[0][0].mask
     values = np.array([brightness(index, colors)[mask] for _grid, index in tiles])
     mean = values.mean()
@@ -65,11 +61,7 @@ def repetition(tiles, colors):
 
 # ---------------------------------------------------------------------- cerámica
 
-# Cerámica blanca al estilo de los pisos de losas de la referencia: 2×2 losas por casilla, junta
-# gris de 1 px (no negra), bisel claro en los cantos de arriba (la luz viene de arriba a la
-# izquierda) y oscuro en los de abajo, esquinas redondeadas (el pixel de la esquina es junta) y
-# las losas en dos tonos apenas distintos, en damero. Algunas losas llevan el reflejo en diagonal
-# (dos franjas, una ancha y una fina); las variantes cambian qué losas lo tienen.
+# 2×2 losas por casilla en damero de dos tonos; las variantes cambian qué losas llevan reflejo.
 (C_JOINT, C_SHADE, C_SOFT_SHADE, C_OTHER, C_BASE, C_GLAZE, C_LIGHT) = range(7)
 CERAMIC = pal.palette([
     "9a9897",                                     # junta
@@ -81,16 +73,14 @@ CERAMIC = pal.palette([
     "ffffff",                                     # bisel de arriba a la izquierda
 ], name="ceramic")
 SLAB = 32  # celdas de eje por losa (2×2 por casilla); la junta es la primera fila de cada losa
-# Reflejo: franjas en diagonal (pantalla "/") de la losa, dadas por k = 2·du − dv: (k0, k1, largo
-# mínimo y máximo en du). Lo de cada losa va en celdas de su campo (2 … 30).
+# Reflejo: franjas "/" con k = 2·du − dv: (k0, k1, du mínimo, du máximo), en celdas de la losa (2 … 30).
 CERAMIC_GLINTS = {
     "wide": ((14, 19, 6, 24), (24, 25, 10, 26)),
     "thin": ((8, 10, 4, 18),),
     "none": (),
 }
-# Losas de cada variante (0 arriba, 1 derecha, 2 izquierda, 3 abajo): reflejo de cada una. El
-# ancho va siempre en una losa del tono base (0 o 3) y el fino en una del otro tono (1 o 2): así
-# las 4 variantes tienen los mismos pixeles por color.
+# Reflejo de cada losa (0 arriba, 1 derecha, 2 izquierda, 3 abajo) por variante. El ancho va en
+# una losa del tono base (0 o 3) y el fino en una del otro (1 o 2): mismos pixeles por color.
 CERAMIC_LAYOUTS = (
     ("wide", "thin", "none", "none"),
     ("none", "none", "thin", "wide"),
@@ -113,7 +103,7 @@ def ceramic_tile(variant):
         area = grid.mask & field & (slab == number)
         for k0, k1, low, high in CERAMIC_GLINTS[glint]:
             index[area & (k >= k0) & (k <= k1) & (du >= low) & (du <= high)] = C_GLAZE
-    # Biseles: claro arriba (los dos cantos), gris abajo a la izquierda, más oscuro abajo a la derecha.
+    # Biseles: claro arriba, gris abajo a la izquierda, más oscuro abajo a la derecha.
     index[(dv == 1) & (du >= 1)] = C_LIGHT
     index[(du == 1) & (dv >= 1)] = C_LIGHT
     index[(dv == SLAB - 1) & (du >= 1)] = C_SOFT_SHADE
@@ -128,11 +118,8 @@ def ceramic_tile(variant):
 
 # ---------------------------------------------------------------------- madera
 
-# Tablas angostas de madera naranja (como el piso de tablas de la referencia): 8 filas por casilla
-# a lo largo de u, separadas por una línea oscura de 1 px (en pantalla, la escalera 2:1 de trazos
-# de 2 px); cada tabla tiene su tono plano con un moteado de dominós del tono vecino y alguna veta
-# oscura corta. Cada fila tiene dos cortes a 32 celdas: la tabla que cruza el borde de la casilla
-# es igual en las 4 variantes (si no, se cortaría) y la de adentro cambia de tono, moteado y veta.
+# 8 filas de tablas a lo largo de u con dos cortes a 32 celdas: la tabla que cruza el borde de la
+# casilla es igual en las 4 variantes y la de adentro cambia.
 W = pal.WOOD_FLOOR
 (W_SEAM, W_GRAIN, W_DARK, W_MID, W_BASE, W_LIGHT, W_SHINE) = range(7)
 WOOD = pal.palette([
@@ -148,16 +135,15 @@ PLANK = 8           # celdas de eje de ancho (8 por casilla)
 INNER_LENGTH = 32   # distancia entre los dos cortes de una fila
 WOOD_CUTS = (3, 19, 11, 27, 7, 23, 15, 31)  # primer corte de cada fila; escalonados
 WOOD_MOTTLE = 0.16  # parte de los dominós de una tabla con el tono vecino
-# Tablas: (tono, semilla del moteado, veta (a, b, largo) o None). a a lo largo (0 … 30), b a lo
-# ancho del cuerpo (0 … 6). Las primeras 8 son las de adentro; las 8 siguientes, las que cruzan.
+# Tablas: (tono, semilla, veta (a, b, largo) o None); a a lo largo (0 … 30), b a lo ancho (0 … 6).
+# Las primeras 8 son las de adentro; las 8 siguientes, las que cruzan.
 WOOD_KITS = (
     (W_BASE, 11, (5, 3, 6)), (W_MID, 12, None), (W_LIGHT, 13, (16, 2, 5)), (W_BASE, 14, None),
     (W_DARK, 15, (9, 4, 4)), (W_LIGHT, 16, None), (W_MID, 17, (20, 3, 6)), (W_BASE, 18, (3, 1, 4)),
     (W_MID, 21, None), (W_BASE, 22, (12, 4, 5)), (W_LIGHT, 23, None), (W_MID, 24, (6, 2, 6)),
     (W_BASE, 25, None), (W_LIGHT, 26, (18, 5, 4)), (W_BASE, 27, None), (W_MID, 28, (10, 3, 5)),
 )
-# Qué tabla de adentro va en cada fila y si va al revés a lo largo, por variante. La de la última
-# fila toca el borde de la casilla (su canto de abajo) y es igual en las 4.
+# Por variante: (tabla de adentro, al revés) de cada fila. La última toca el borde y es igual en las 4.
 WOOD_LAYOUTS = (
     ((0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0)),
     ((5, 1), (6, 0), (0, 1), (4, 0), (2, 1), (3, 1), (1, 0), (7, 0)),
@@ -169,8 +155,7 @@ MOTTLE_DOWN = {W_DARK: W_GRAIN, W_MID: W_DARK, W_BASE: W_MID, W_LIGHT: W_BASE}
 
 
 def paint_plank(index, area, a, b, kit):
-    """Pinta una tabla: tono, moteado (la mitad un tono arriba y la mitad uno abajo, siempre la
-    misma cantidad: la elección va por el azar de la tabla en sus coordenadas a, b) y veta."""
+    """Pinta una tabla: tono, moteado (mitad un tono arriba, mitad uno abajo) y veta."""
     tone, seed, grain = WOOD_KITS[kit]
     index[area] = tone
     chance = pattern.hash2(a, b, seed)
@@ -208,12 +193,9 @@ def wood_tile(variant):
 
 # ---------------------------------------------------------------------- ruido de dominós
 
-# Alfombra, pasto, concreto, grava, acera y calle se arman igual, como los pisos de ruido de la
-# referencia (alfombra lila, cuadros azules): cada dominó (los 2 px de una celda de la rejilla)
-# toma uno de unos pocos tonos cercanos según un azar propio más manchas suaves periódicas, con
-# una cantidad EXACTA de cada tono. El anillo del borde sale de un azar común a las 4 variantes
-# (si no, se cortaría) y hacia adentro pasa de a poco al de la variante. Encima van formas chicas
-# (matas, piedritas, poros) que son las mismas en las 4 variantes y cambian de lugar.
+# Alfombra, pasto, concreto, grava, acera y calle: cada dominó (2 px) toma un tono por azar más manchas
+# suaves, con cantidad EXACTA de cada tono. El anillo del borde es común a las 4 variantes. Encima van
+# formas chicas (matas, piedritas), las mismas en las 4 pero en otro lugar.
 
 BLEND = 10  # celdas de eje desde el borde en que el dibujo propio de la variante entra de a poco
 SHAPE_MARGIN = 4  # celdas de eje que las formas dejan libres junto al borde
@@ -257,8 +239,7 @@ class Noise(object):
 
 
 def blended(grid, shared, own, width=BLEND):
-    """Campo que en el borde es el común (igual en las 4 variantes) y hacia adentro pasa al de la
-    variante: así no se nota dónde termina cada casilla."""
+    """Campo común en el borde que pasa al de la variante hacia adentro."""
     distance = np.minimum(np.minimum(grid.iu, CELL - 1 - grid.iu), np.minimum(grid.iv, CELL - 1 - grid.iv))
     weight = np.clip(distance / float(width), 0.0, 1.0)
     weight = weight * weight * (3.0 - 2.0 * weight)
@@ -266,9 +247,8 @@ def blended(grid, shared, own, width=BLEND):
 
 
 def shape_pixels(rows, colors):
-    """Convierte un dibujo en filas de letras en una lista (dx, dy, color). El pie es la fila de
-    abajo (dy = 0); dy negativo = hacia arriba. '.' = vacío. Cada fila va de a pares desde la
-    columna 0 (dominós enteros, sin medios pixeles sueltos)."""
+    """Dibujo en filas de letras -> [(dx, dy, color)]. dy = 0 la fila de abajo, negativo hacia arriba;
+    '.' = vacío. Las filas van de a pares desde la columna 0 (dominós enteros)."""
     pixels = []
     for row, line in enumerate(rows):
         for column, letter in enumerate(line):
@@ -278,8 +258,8 @@ def shape_pixels(rows, colors):
 
 
 def place_shapes(grid, free, shapes, spacing, seed, name):
-    """Pone cada forma en un lugar al azar fijo (semilla) dentro de `free`, a no menos de spacing
-    de las otras y con cada par de pixeles sobre un dominó. Devuelve [(x, y, color)]."""
+    """Pone cada forma al azar fijo dentro de `free`, a spacing de las otras y alineada a dominós.
+    Devuelve [(x, y, color)]."""
     order = pattern.hash2(grid.x, grid.y, seed)
     pair = np.zeros(grid.mask.shape, dtype=bool)  # el pixel y el de su derecha son un dominó
     pair[:, :-1] = grid.domino[:, :-1] == grid.domino[:, 1:]
@@ -351,8 +331,7 @@ def noise_material(recipe, prefix):
 
 # ---------------------------------------------------------------------- alfombra
 
-# Alfombra de pared a pared como el piso lila de la referencia: 4 lilas cercanos algo agrupados,
-# sin juntas ni brillo.
+# 4 lilas cercanos algo agrupados, sin juntas ni brillo.
 CARPET = pal.palette(["777a9a", "7d80a0", "8688a4", "8e8fa8"], name="carpet")
 CARPET_RECIPE = Noise((0.24, 0.26, 0.38), 0.55, ((8, 1.0),), 5100)
 
@@ -364,8 +343,7 @@ L = pal.LEAVES
 
 
 def grass_palette(factor, name):
-    """Verdes de la rampa de hojas de STYLE.md (×factor de brillo: 1 el solar, 0.85 afuera). Las
-    manchas oscuras van bien separadas del pasto para que se lean como formas, no como niebla."""
+    """Verdes de la rampa de hojas × factor de brillo (1 el solar, 0.85 afuera)."""
     colors = [
         pal.mix(L[pal.RIGHT], L[pal.LEFT], 0.75),  # mancha oscura
         pal.mix(L[pal.LEFT], L[pal.SOFT], 0.45),   # borde de la mancha
@@ -408,14 +386,10 @@ STROKE_A = shape_pixels(("..dd..",
                          "dd..dd"), BLADE_COLORS)
 STROKE_B = shape_pixels(("dd..dd..",
                          "..dd..dd"), BLADE_COLORS)
-# Manchas más chicas que la casilla (5 y 9 nudos): si fueran del tamaño de la casilla, el borde
-# común las cortaría y se vería la retícula.
+# Manchas más chicas que la casilla (5 y 9 nudos) para que no se vea la retícula.
 GRASS_PERIODS = ((5, 0.6), (9, 0.4))
 GRASS_CLUMP = 1.0  # solo las manchas: bordes nítidos, sin grano suelto
-# Familias de pasto: cada una es un dibujo distinto con sus 4 variantes, y todas comparten el anillo
-# del borde (sale de GRASS_RING), así que cualquier casilla empalma con cualquier otra. El juego
-# elige la familia por zonas (un ruido suave sobre el mapa) y la variante al azar: de lejos se ven
-# claros, manchones y partes tupidas en vez de un mismo dibujo repetido.
+# Familias de pasto: comparten el anillo del borde (GRASS_RING), así cualquier casilla empalma.
 # (nombre, partes de mancha oscura, su borde y pasto (el resto claro), formas, separación, semilla)
 GRASS_BLEND = 6  # franja en que la mancha de cada casilla se funde con el borde común
 GRASS_RING = Noise((0.06, 0.06, 0.70), GRASS_CLUMP, GRASS_PERIODS, 6000)
@@ -426,7 +400,7 @@ GRASS_FAMILIES = (
                                   TUFT_SMALL, TUFT_SMALL, TUFT_SMALL, STROKE_A, STROKE_B, STROKE_A, STROKE_B), 6.5, 6300),
     ("sunny", (0.02, 0.06, 0.52), (TUFT_SMALL, TUFT_SMALL, STROKE_A), 14.0, 6400),
 )
-# Parte del mapa de cada familia en la vista de prueba (el juego hará lo mismo al conectarlo).
+# Parte del mapa de cada familia en la vista de prueba.
 GRASS_FAMILY_SHARES = {"plain": 0.40, "patchy": 0.22, "lush": 0.23, "sunny": 0.15}
 
 
@@ -442,8 +416,7 @@ OUTSIDE_RECIPES = grass_recipes(500)
 
 # ---------------------------------------------------------------------- concreto (sin piso)
 
-# Concreto liso de muy poco contraste: 4 grises cálidos, algún poro (un dominó oscuro) y una
-# grieta fina en 2:1.
+# 4 grises cálidos de poco contraste, algún poro y una grieta fina en 2:1.
 (B_D, B_M, B_B, B_L, B_PORE) = range(5)
 BARE = pal.palette(["807e7a", "868480", "8c8a86", "92908c", "6f6d69"], name="bare")
 PORE = shape_pixels(("pp",), {"p": B_PORE})
@@ -455,9 +428,7 @@ BARE_RECIPE = Noise((0.2, 0.3, 0.32), 0.6, ((4, 0.7), (8, 0.3)), 7000, (CRACK, P
 
 # ---------------------------------------------------------------------- grava (camino)
 
-# Grava de grises cálidos: suelo de grano marcado (poco agrupado) y muchas piedras de 2 a 6 px,
-# cada una con cara clara arriba a la izquierda, lado más oscuro a la derecha y contorno-sombra
-# oscuro abajo, como los objetos de la referencia.
+# Grava de grises cálidos con piedras de 2 a 6 px: cara clara, lado oscuro y contorno-sombra abajo.
 (P_D, P_M, P_B, P_L, P_OUTLINE, P_SIDE, P_STONE, P_TOP) = range(8)
 PATH = pal.palette(["988c76", "a59a84", "afa38c", "bcb19b", "6e6453", "a89d87", "c8bea8", "e0d8c4"],
                    name="path")
@@ -486,9 +457,7 @@ PATH_RECIPE = Noise((0.2, 0.3, 0.3), 0.3, ((6, 1.0),), 7500, PATH_SHAPES, 5.0, P
 
 # ---------------------------------------------------------------------- acera
 
-# Una losa grande por casilla: junta oscura de 1 celda en cada lado (2 px entre dos casillas),
-# bisel claro en los cantos de arriba y oscuro en los de abajo, y adentro un gris claro apenas
-# moteado.
+# Una losa por casilla: junta de 1 celda por lado (2 px entre casillas), bisel y gris claro moteado.
 (S_D, S_M, S_B, S_L, S_JOINT, S_SHADE, S_LIGHT) = range(7)
 SIDEWALK = pal.palette(["9e9d97", "a3a29c", "a8a7a1", "adaca6", "7d7c77", "93928c", "bfbeb8"], name="sidewalk")
 
@@ -506,9 +475,8 @@ SIDEWALK_RECIPE = Noise((0.2, 0.3, 0.32), 0.5, ((4, 1.0),), 8000, (), fixed=side
 
 # ---------------------------------------------------------------------- calle
 
-# Asfalto gris oscuro: granos sueltos (de a dominó) en 3 tonos y alguno claro; la calle con línea
-# lleva una franja amarilla de 4 celdas por el medio a lo largo de un eje (x = u, y = v), con
-# algún pixel gastado.
+# Asfalto de granos sueltos en 3 tonos; la línea es una franja amarilla de 4 celdas a lo largo de
+# un eje (x = u, y = v).
 (R_D, R_M, R_B, R_L, R_LINE, R_WORN) = range(6)
 ROAD = pal.palette(["3f4248", "44474d", "494c52", "55585e", MAP["road_line_color"], "c4b56a"], name="road")
 ROAD_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000)
@@ -572,9 +540,8 @@ def build_material(out_dir, name, tile, colors, material, base_colors):
 
 
 def fill_families(scene, images, prefix, seed, area=None):
-    """Llena casillas con las familias de pasto mezcladas por zonas: un ruido suave sobre el mapa
-    (manchas de unas 4 casillas) decide la familia según GRASS_FAMILY_SHARES y la variante va al
-    azar fijo por casilla. Es lo que hará el juego al conectarlo."""
+    """Llena casillas con familias de pasto por zonas (ruido suave, GRASS_FAMILY_SHARES) y variante
+    al azar fijo por casilla."""
     families = [name for name, _shares, _shapes, _spacing, _seed in GRASS_FAMILIES]
     x0, y0, x1, y1 = area if area is not None else (0, 0, scene.cols, scene.rows)
     cells = [(x, y) for y in range(y0, y1) for x in range(x0, x1)]
@@ -593,9 +560,7 @@ def fill_families(scene, images, prefix, seed, area=None):
 
 
 def review_sheets(out_dir, images):
-    """Vistas para mirar (no son arte del juego), todas en _sheets/: mosaicos de variantes al
-    azar a ×3 y a ×1 de cada material, y la hoja del grupo (todas las casillas a ×2 y un solar de prueba con todos
-    los suelos a ×2)."""
+    """Hojas de revisión en _sheets/: mosaicos de cada material, la hoja del grupo y un solar de prueba."""
     folder = os.path.join(out_dir, "_sheets")
     if not os.path.isdir(folder):
         os.makedirs(folder)
@@ -603,8 +568,7 @@ def review_sheets(out_dir, images):
         short = name.split("_", 1)[1]
         sheet.tile_mosaic(tiles, 5, 5, seed=3, scale=3).save(os.path.join(folder, "floors_%s_x3.png" % short))
         sheet.tile_mosaic(tiles, 12, 12, seed=5, scale=1).save(os.path.join(folder, "floors_%s_x1.png" % short))
-    # Solar de prueba: pasto de afuera alrededor, pasto del solar, el local con los tres pisos y
-    # un rincón sin piso, el camino de grava a la calle, la acera y la calle con su línea (x).
+    # Solar de prueba con todos los suelos.
     lot = sheet.Scene(14, 14, top=16, margin=8)
     fill_families(lot, images, "ground_outside", 10)
     fill_families(lot, images, "ground_grass", 11, area=(1, 1, 13, 9))

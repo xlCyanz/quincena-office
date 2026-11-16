@@ -1,10 +1,9 @@
-# Prueba del hito 27: etapas de la empresa y menú Empresa.
-# Criterio: con 5 empleados y 3 contratos entregados la empresa pasa a Startup con un
-# aviso y llegan contratos medianos sin vendedor; despedir después no la baja de etapa.
+# Etapas y menú Empresa: con 5 empleados y 3 entregas pasa a Startup con aviso y llegan medianos
+# sin vendedor; despedir después no la baja.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=stages
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -22,7 +21,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	EventBus.stage_changed.connect(func(stage: int) -> void: _stages_seen.append(stage))
@@ -51,7 +50,7 @@ func _new_game() -> void:
 	_stages_seen.clear()
 
 
-# Un empleado de mentira (sin sueldo) para contar en los requisitos.
+# Empleado falso sin sueldo para contar en los requisitos.
 func _add_fake_employee(employee_id: int, role: String) -> void:
 	Staff.employees.append({"id": employee_id, "name": "Empleado %d" % employee_id, "role": role, "level": "junior",
 		"salary": 0, "schedule": StaffCatalog.get_role_schedule(role), "energy": 100, "mood": 70,
@@ -79,14 +78,14 @@ func _check_catalog() -> void:
 	var startup: Array[Dictionary] = Company.get_requirements(1)
 	_expect(startup.size() == 2 and startup[0]["key"] == "employees" and startup[0]["needed"] == 5
 		and startup[1]["key"] == "delivered" and startup[1]["needed"] == 3, "Startup pide 5 empleados y 3 entregados: %s" % [startup])
-	# Etapas 4 y 5: piden productos y ejecutivos, que aún no existen.
+	# Mediana y Corporación piden productos y ejecutivos.
 	_expect(not Company.meets(3) and not Company.meets(4), "Mediana y Corporación no se alcanzan aún")
 
 
 func _check_startup() -> void:
 	_new_game()
 	_expect(Projects.get_allowed_sizes() == (["small"] as Array[String]), "en Emprendimiento solo pequeños: %s" % [Projects.get_allowed_sizes()])
-	# El CEO no cuenta: 4 contratados y 3 entregados no alcanzan.
+	# El CEO no cuenta: 4 contratados y 3 entregas no alcanzan.
 	for index: int in range(4):
 		_add_fake_employee(900 + index, "programmer")
 	Projects.delivered_count = 3
@@ -104,13 +103,12 @@ func _check_startup() -> void:
 		and notice.contains("préstamos de hasta $30,000"), "aviso: %s" % notice)
 	_expect(Projects.get_allowed_sizes() == (["small", "medium"] as Array[String]) and Projects.get_salesperson_count() == 0,
 		"llegan medianos sin vendedor: %s" % [Projects.get_allowed_sizes()])
-	# Despedir no baja de etapa.
 	var fired_a: Dictionary = Staff.fire(904)
 	var fired_b: Dictionary = Staff.fire(903)
 	_expect(fired_a["ok"] and fired_b["ok"], "despedir: %s / %s" % [fired_a["message"], fired_b["message"]])
 	_to_next_day()
 	_expect(Company.stage == 1 and Staff.employees.size() == 3, "despedir no baja de etapa")
-	# Llegan ofertas medianas (en 30 días los de mentira renuncian: tampoco baja).
+	# Llegan ofertas medianas (en 30 días los falsos renuncian: tampoco baja).
 	var medium: int = 0
 	for day: int in range(30):
 		for offer: Dictionary in Projects.offers.duplicate():
@@ -173,7 +171,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(Company.stage == 0, "partida nueva en Emprendimiento")
 	_expect(SaveManager.load_game("slot_5") and Company.stage == 1, "la etapa se guarda: %d" % Company.stage)
-	# Una partida de antes del hito 27 calcula su etapa al cargar, sin aviso.
+	# Partida vieja: calcula su etapa al cargar, sin aviso.
 	_notices.clear()
 	Company.stage = 0
 	for index: int in range(5):
@@ -224,7 +222,7 @@ func _check_ui() -> void:
 	EventBus.stage_changed.emit(1)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	# En Startup se ve el requisito más largo (equipos completos): se parte en líneas.
+	# En Startup el requisito más largo (equipos completos) se parte en líneas.
 	var rect: Rect2 = (panel.get("_panel") as Control).get_global_rect()
 	_expect(panel.get_text().contains("Equipos completos") and rect.size.x <= CompanyPanel.PANEL_WIDTH + 1.0, "el panel no se ensancha: %.0f" % rect.size.x)
 	Company.stage = 2

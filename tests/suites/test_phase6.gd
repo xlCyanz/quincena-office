@@ -1,43 +1,33 @@
-# Prueba del hito 59: comprobación de la fase 6. La empresa de test_phase5 (CEO solo →
-# Mediana empresa → bolsa) con todo lo de la fase 6 encendido: rasgos de producción y de
-# conducta, baños con capacidad, almuerzo y pausas en la Sala de descanso, candidatos según
-# la empresa e inversionista (responde los eventos al azar, como en la fase 5). La política
-# de siempre suma:
-#   - desde el primer día, una franja de terreno al sur de la Recepción (x 1 a 2, filas 8 a
-#     17) con dos Baños, y un inodoro más cada vez que la plantilla lo pide (1 cada 10);
-#   - desde Startup, otra franja al otro lado de la entrada (x 4 a 5, filas 8 a 22) con la
-#     Sala de descanso completa: cafetera, nevera, microondas, agua, máquina expendedora, dos
-#     mesas de comedor, dos sofás y ping pong.
-# Criterio: la empresa sigue llegando a la bolsa sin quebrar; armar baños y Sala de descanso
-# compensa su costo; los rasgos se notan sin decidir solos la partida. Las comparaciones
-# salen de la empresa al llegar a Mediana empresa: dos meses tal cual, sin los muebles de los
-# baños y la Sala de descanso, y sin rasgos.
+# Comprobación de la fase 6: la empresa de test_phase5 con rasgos, baños, almuerzo, pausas, candidatos
+# e inversionista. La política suma desde el primer día dos Baños al sur de la Recepción (un inodoro
+# cada 10) y desde Startup la Sala de descanso completa al otro lado de la entrada. Criterio: llega
+# a la bolsa sin quebrar; baños y Sala de descanso pagan su costo; los rasgos se notan sin decidir
+# la partida (comparaciones de 30 días desde Mediana empresa: tal cual, sin esos muebles y sin rasgos).
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=phase6
 extends "res://tests/suites/test_phase5.gd"
 
-## Días de cada comparación desde Mediana empresa.
+## Semilla propia y días de cada comparación desde Mediana empresa.
 const SEED_6: int = 59
 const COMPARE_DAYS: int = 30
 ## Franja de los baños (x 1 a 2, desde la fila 8): Baño A filas 8 a 12, Baño B 13 a 17.
 const BATH_XS: Array[int] = [1, 2]
 const BATH_DEPTH: int = 10
 const SINKS: Array[Vector2i] = [Vector2i(1, 8), Vector2i(1, 13)]
-## Inodoros en orden: la columna de la izquierda (la de la derecha es el paso) y el fondo.
+## Inodoros en orden: la columna de la izquierda (la derecha es el paso) y el fondo.
 const TOILET_CELLS: Array[Vector2i] = [Vector2i(1, 9), Vector2i(1, 10), Vector2i(1, 11), Vector2i(1, 12),
 	Vector2i(1, 14), Vector2i(1, 15), Vector2i(1, 16), Vector2i(1, 17), Vector2i(2, 17)]
 ## Franja de la Sala de descanso (x 4 a 5, filas 8 a 22): la columna 4 es el paso.
 const BREAK_XS: Array[int] = [4, 5]
 const BREAK_DEPTH: int = 15
-## [mueble, casilla, giro]; las mesas y los sofás de 2×1 van de pie (giro 1 y 3).
+## [mueble, casilla, giro]; mesas y sofás de 2×1 van de pie (giro 1 y 3).
 const BREAK_ITEMS: Array = [
 	["coffee_maker", Vector2i(5, 8), 3], ["fridge", Vector2i(5, 9), 3], ["microwave", Vector2i(5, 10), 3],
 	["water_dispenser", Vector2i(5, 11), 3], ["vending_machine", Vector2i(5, 12), 3],
 	["dining_table", Vector2i(5, 13), 3], ["dining_table", Vector2i(5, 15), 3],
 	["sofa", Vector2i(5, 17), 3], ["sofa", Vector2i(5, 19), 3], ["ping_pong", Vector2i(4, 21), 0],
 ]
-## Muebles de los baños y la Sala de descanso (los que se quitan en la comparación).
-## Con baños, Sala de descanso y rasgos la empresa llega antes que en la fase 5 (16 meses
-## en vez de 20): el ánimo alto retiene a la gente y los rasgos suman un poco.
+## Meta de meses hasta la bolsa: ~16 contra ~20 de la fase 5 (el ánimo retiene y los rasgos suman).
+## AMENITIES: los muebles que quita la comparación.
 const TARGET_MONTHS_6: Array[int] = [12, 30]
 const AMENITIES: Array[String] = ["toilet", "sink", "coffee_maker", "fridge", "microwave", "water_dispenser",
 	"vending_machine", "dining_table", "sofa", "ping_pong"]
@@ -46,7 +36,7 @@ var _bath_built: bool = false
 var _break_built: bool = false
 ## Lo que costó armar baños y Sala de descanso (terreno, paredes y muebles).
 var _amenity_cost: int = 0
-## Puntos de trabajo vistos en cada proyecto (para sumar lo producido en una ventana).
+## Puntos vistos en cada proyecto, para sumar lo producido en una ventana.
 var _seen_points: Dictionary[String, float] = {}
 var _investor_accepted: int = 0
 
@@ -70,13 +60,12 @@ func _ready() -> void:
 	finished.emit(_failures, _checks)
 
 
-# Con todos los rasgos (los quitaba test_phase4).
+# Con todos los rasgos (test_phase4 los quitaba).
 func _drop_production_traits(_employee: Dictionary) -> void:
 	pass
 
 
-# El ambicioso se molesta si espera un ascenso que la política no da: la política lo retiene
-# con aumentos, como a los demás.
+# El ambicioso se molesta si espera un ascenso que la política no da: lo retiene con aumentos.
 func _forget_promotion_waits() -> void:
 	pass
 
@@ -106,8 +95,7 @@ func _build_amenities() -> void:
 		_build_break_room()
 
 
-# Franja al sur de la Recepción: la Recepción crece hacia ella y unas paredes la separan en
-# dos Baños con un lavamanos cada uno.
+# Franja al sur de la Recepción: la Recepción crece hacia ella y unas paredes la parten en dos Baños con lavamanos.
 func _build_bathrooms() -> void:
 	var offset: int = BATH_XS[0] - OfficeState.lot_rect.position.x
 	var y: int = GridEdge.AXIS_Y
@@ -160,8 +148,8 @@ func _build_break_room() -> void:
 # --- Comparaciones ----------------------------------------------------------------
 
 
-# Desde la empresa al llegar a Mediana empresa: COMPARE_DAYS días tal cual, sin los muebles
-# de los baños y la Sala de descanso, y sin rasgos. Después vuelve a la empresa guardada.
+# Desde Mediana empresa: COMPARE_DAYS días tal cual, sin baños ni Sala de descanso y sin rasgos;
+# después vuelve a la empresa guardada.
 func _check_amenities_and_traits() -> void:
 	_expect(_bath_built and _break_built, "la política armó baños y Sala de descanso")
 	_expect(not OfficeState.get_working_room(OfficeState.BREAK_ROOM).is_empty() and OfficeState.get_lunch_seats() > 0,
@@ -191,7 +179,7 @@ func _check_amenities_and_traits() -> void:
 	for row: Array in [["tal cual", full], ["sin baños ni Sala de descanso", bare], ["sin rasgos", plain]]:
 		var result: Dictionary = row[1]
 		print("    %s: %d · %s · %.0f · %.0f" % [row[0], roundi(result["points"]), MoneyFormat.format(result["income"]), result["mood"], result["energy"]])
-	# Lo que valen los puntos de más, al precio por punto de la empresa tal cual.
+	# Valor de los puntos de más, al precio por punto de la empresa tal cual.
 	var per_point: float = float(full["income"]) / maxf(1.0, float(full["points"]))
 	var gain: int = roundi((float(full["points"]) - float(bare["points"])) * per_point)
 	print("    baños y Sala de descanso: %+d puntos ≈ %s en %d días contra %s que costaron (los muebles se revenden por %s)" % [
@@ -204,8 +192,7 @@ func _check_amenities_and_traits() -> void:
 	_expect(absf(traits_effect) <= 0.15, "sin decidir solos la partida: %+.1f %%" % (traits_effect * 100.0))
 
 
-# COMPARE_DAYS días con la política de contratos (sin contratar ni construir): puntos de
-# trabajo producidos, ingresos de contratos y productos, y ánimo y energía medios al final.
+# COMPARE_DAYS días sin contratar ni construir: puntos producidos, ingresos y ánimo y energía medios al final.
 func _window() -> Dictionary:
 	Staff.set_seed(SEED_6)
 	Projects.set_seed(SEED_6)
@@ -245,7 +232,7 @@ func _income_of(month: int) -> int:
 	return income
 
 
-# Suma lo que avanzó cada proyecto desde la última vez (fases y errores corregidos a 3 puntos).
+# Lo que avanzó cada proyecto desde la última vez (errores corregidos a 3 puntos).
 func _note_points() -> float:
 	var added: float = 0.0
 	var now: Dictionary[String, float] = {}

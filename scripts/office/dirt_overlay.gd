@@ -1,5 +1,4 @@
-# Manchas de suciedad en el piso de cada habitación (hito 37): más manchas cuanto más
-# sucia está. Va entre el piso y los objetos y se ve siempre. Arte provisional.
+# Manchas de suciedad en el piso de cada habitación, más cuanto más sucia. Arte provisional.
 class_name DirtOverlay
 extends Node2D
 
@@ -16,13 +15,13 @@ func setup(grid: OfficeGrid) -> void:
 	_grid = grid
 
 
-## Habitaciones con su suciedad, tal como las guarda OfficeState.
+## Habitaciones con su suciedad (como en OfficeState).
 func set_rooms(rooms: Array[Dictionary]) -> void:
 	_rooms = rooms.duplicate(true)
 	queue_redraw()
 
 
-## Cuántas manchas se dibujan en una habitación (para las pruebas).
+## Manchas dibujadas en una habitación (para pruebas).
 func get_stain_count(room: Dictionary) -> int:
 	var cells: Array = room["cells"]
 	var ratio: float = OfficeState.get_room_dirt(room) / float(StaffCatalog.get_cleaning("max_dirt"))
@@ -38,7 +37,7 @@ func _draw() -> void:
 			continue
 		var color: Color = DIRTY_COLOR if OfficeState.is_room_dirty(room) else STAIN_COLOR
 		var cells: Array = room["cells"]
-		# Posiciones fijas por casilla (mismo dibujo en cada redibujado).
+		# Posiciones fijas por casilla.
 		for index: int in range(stains):
 			var cell: Vector2i = cells[index % cells.size()]
 			var rng := RandomNumberGenerator.new()

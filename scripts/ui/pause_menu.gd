@@ -1,14 +1,11 @@
-# Menú de pausa (hito 62, diseño 21.2): Esc lo abre cuando no hay ningún panel abierto.
-# Tapa el juego con un velo y ofrece Seguir, Guardar, Cargar, Ajustes y Salir al menú.
-# Guardar, Cargar y Ajustes abren el panel de Ajustes en su pestaña (main.gd lo coordina);
-# Salir al menú pregunta antes, porque lo que no se guardó se pierde. Avisa con señales;
-# quien lo usa pausa y devuelve el tiempo.
+# Menú de pausa (Esc sin paneles abiertos): Seguir, Guardar, Cargar, Ajustes y Salir al menú,
+# que pregunta antes. Solo avisa con señales; main.gd pausa, abre Ajustes y devuelve el tiempo.
 class_name PauseMenu
 extends CanvasLayer
 
 ## Se pulsó Seguir (o Esc): cerrar la pausa.
 signal resume_requested
-## Se pidió el panel de Ajustes en una pestaña (SettingsPanel.TAB_SAVE, TAB_LOAD o TAB_OPTIONS).
+## Se pidió Ajustes en una pestaña (SettingsPanel.TAB_*).
 signal settings_requested(tab: String)
 ## Se pidió volver al menú principal (ya confirmado).
 signal quit_requested
@@ -34,7 +31,7 @@ func _ready() -> void:
 	_cover = ColorRect.new()
 	_cover.color = DIM_COLOR
 	_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
-	# Atrapa los clics: mientras está la pausa no se toca la oficina.
+	# Atrapa los clics para que no se toque la oficina.
 	_cover.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_cover)
 	var center := CenterContainer.new()

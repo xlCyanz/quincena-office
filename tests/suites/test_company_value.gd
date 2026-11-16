@@ -1,7 +1,5 @@
-# Prueba del hito 26: valor de la empresa.
-# Criterio: comprar un mueble baja el valor la mitad de su precio; pedir un préstamo no
-# cambia el valor; comprar terreno tampoco (se cuenta a lo pagado); cada cuota baja el
-# valor solo en su interés.
+# Valor de la empresa: un mueble lo baja la mitad de su precio; préstamo y terreno no lo
+# cambian; cada cuota lo baja solo en su interés.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=company_value
 extends Node
 
@@ -21,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_start()
 	_check_furniture()
@@ -94,7 +92,6 @@ func _check_loan() -> void:
 	_expect(interest == roundi(5000 * Bank.get_monthly_rate()) or interest > 0, "interés de la cuota: %d" % interest)
 	_expect(Company.get_value() == value - maintenance - interest, "la cuota baja solo su interés (y el mantenimiento): %d → %d (interés %d)" % [
 		value, Company.get_value(), interest])
-	# Saldar: el valor baja solo el interés de un mes.
 	value = Company.get_value()
 	var cost: int = Bank.get_prepay_cost(loan)
 	var principal: int = Bank.get_remaining_principal(loan)

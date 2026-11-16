@@ -1,11 +1,9 @@
-# Prueba del hito 65: interfaz escalable.
-# Criterio: a 150 % en 1280×720 ningún panel se sale de la pantalla ni tapa la barra; todos
-# los botones miden al menos 44 px. También 100 y 125 %, la opción (se guarda y se valida) y
-# las descripciones emergentes de los botones sin texto.
+# Interfaz escalable: a 100, 125 y 150 % en 1280×720 ningún panel se sale ni tapa la barra; todo botón
+# mide al menos 44 px y los que no tienen palabras llevan descripción; la opción se guarda y valida.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=ui_scale
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -17,8 +15,7 @@ const EPSILON: float = 0.5
 var _failures: int = 0
 var _checks: int = 0
 var _aspect_before: Window.ContentScaleAspect
-# Botones vistos en cada estado (para medirlos y revisar sus descripciones).
-# Ruta → {"height", "text", "tooltip"}.
+# Botones vistos en cada estado: ruta → {"height", "text", "tooltip"}.
 var _seen_buttons: Dictionary[String, Dictionary] = {}
 
 
@@ -92,7 +89,7 @@ func _check_scale(percent: int) -> void:
 	for corner: Rect2 in hud.get_corner_rects():
 		_fits(percent, "el dinero y el reloj", corner, screen, bar.get_global_rect())
 	_collect(game)
-	# Paneles de la izquierda, y la ficha de un empleado con Personal abierto.
+	# Paneles izquierdos y la ficha con Personal abierto.
 	for panel_name: String in LEFT_PANELS:
 		var panel: CanvasLayer = game.get_node(panel_name)
 		panel.call("set_open", true)
@@ -110,7 +107,6 @@ func _check_scale(percent: int) -> void:
 	_collect(game)
 	card.close()
 	staff_panel.set_open(false)
-	# Evento.
 	Events.trigger("birthday")
 	await _wait()
 	var event_card: EventCard = game.get_node("EventCard")
@@ -140,7 +136,6 @@ func _check_scale(percent: int) -> void:
 	build.select_tool(BuildController.TOOL_WALL)
 	build.set_build_mode(false)
 	await _wait()
-	# Ajustes en cada pestaña, la pausa y la ayuda.
 	var settings: SettingsPanel = game.get_node("SettingsPanel")
 	settings.set_open(true)
 	for tab: String in SettingsPanel.TAB_NAMES:
@@ -161,7 +156,7 @@ func _check_scale(percent: int) -> void:
 		_fits(percent, "la ayuda de %s" % topic, help.get_panel_rect(), screen, Rect2())
 	_collect(game)
 	help.close()
-	# Pantallas de fin y de bolsa (tapan todo; se miran al final).
+	# Pantallas de fin y de bolsa: tapan todo, se miran al final.
 	var stats: Dictionary = Company.get_ipo_stats()
 	for screen_name: String in ["GameOverScreen", "IpoScreen"]:
 		var cover: CanvasLayer = game.get_node(screen_name)
@@ -171,7 +166,6 @@ func _check_scale(percent: int) -> void:
 		_fits(percent, screen_name, box.get_global_rect(), screen, Rect2())
 		_collect(game)
 		(cover.get_child(0) as Control).visible = false
-	# Botones: todos de 44 px, y los que no tienen palabras llevan descripción.
 	var low: Array[String] = []
 	var silent: Array[String] = []
 	var letters := RegEx.create_from_string("[A-Za-zÁÉÍÓÚáéíóúÑñ]")
@@ -188,7 +182,7 @@ func _check_scale(percent: int) -> void:
 	await _wait(2)
 
 
-# El rectángulo entra en la pantalla y no tapa la barra (si se da).
+# Entra en la pantalla y no tapa la barra (si se da).
 func _fits(percent: int, what: String, rect: Rect2, screen: Rect2, bar: Rect2) -> void:
 	_expect(screen.grow(EPSILON).encloses(rect) and rect.has_area(), "%d %%: %s cabe en la pantalla: %s en %s" % [percent, what, rect, screen.size])
 	if bar.has_area():

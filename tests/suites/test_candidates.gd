@@ -1,6 +1,5 @@
-# Prueba del hito 56: candidatos según la empresa.
-# Criterio: con 5 estrellas llegan más candidatos que con 1; ofrecer más sueldo trae mejores
-# habilidades; el ambiente de las Áreas de trabajo también; el premio suma candidatos.
+# Candidatos según la empresa: más estrellas, más sueldo ofrecido, mejor ambiente y el premio
+# traen más o mejores candidatos.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=candidates
 extends Node
 
@@ -144,7 +143,6 @@ func _check_skills() -> void:
 	var middle: int = main_range.x + roundi((main_range.y - main_range.x) * 0.5)
 	_expect(better.min() >= middle and table.min() >= main_range.x and table.max() <= main_range.y
 		and worse.max() <= middle, "dentro del rango del nivel: 120 %% desde %d, 80 %% hasta %d" % [better.min(), worse.max()])
-	# Lo que pide no cambia con la calidad.
 	var asked: Dictionary = Staff._make_candidate({"role": "programmer", "level": "junior", "salary": 3000}, 0)
 	var ratio: Array = StaffCatalog.get_hiring("asked_salary_ratio")
 	_expect(int(asked["asked_salary"]) <= roundi(1200 * float(ratio[1])) + 50, "pide lo de siempre")

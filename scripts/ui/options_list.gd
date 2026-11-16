@@ -1,7 +1,5 @@
-# Controles de las opciones del jugador (hito 60): casillas de sí o no, la velocidad al
-# empezar, el tamaño de la interfaz (hito 65) y «Valores por defecto». Los usan el panel de Ajustes de la partida y el menú
-# principal (hito 61). Cada cambio va directo a Settings; los controles siguen a Settings
-# cuando cambia desde otro lado.
+# Controles de las opciones (Ajustes y menú principal): sí/no, velocidad inicial, escala y
+# «Valores por defecto». Cada cambio va a Settings y los controles siguen sus cambios.
 class_name OptionsList
 extends VBoxContainer
 
@@ -15,7 +13,7 @@ const TOGGLES: Dictionary[String, String] = {
 	"edge_pan": "Mover la cámara con el borde de la pantalla",
 	"console_overlay": "Mostrar la consola de desarrollo sobre el juego",
 }
-## Opciones que solo existen con la consola de desarrollo (no en una exportación).
+## Opciones que solo existen con la consola de desarrollo.
 const DEV_TOGGLES: Array[String] = ["console_overlay"]
 
 var _toggles: Dictionary[String, CheckBox] = {}
@@ -45,7 +43,7 @@ func _init() -> void:
 		_speed_button.add_item("%dx" % roundi(speed))
 	_speed_button.item_selected.connect(func(index: int) -> void: Settings.set_value("start_speed", index))
 	speed_row.add_child(_speed_button)
-	# Escala de la interfaz (hito 65).
+	# Escala de la interfaz.
 	var scale_row := HBoxContainer.new()
 	add_child(scale_row)
 	var scale_label := Label.new()
@@ -66,7 +64,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	# Sin consola de desarrollo (una exportación) su opción no se muestra.
+	# Sin consola (una exportación) su opción no se muestra.
 	var has_console: bool = OS.is_debug_build() and get_tree().root.has_node("Panku")
 	for key: String in DEV_TOGGLES:
 		_toggles[key].visible = has_console
@@ -74,7 +72,7 @@ func _ready() -> void:
 	refresh()
 
 
-## Pone los controles como están las opciones (sin volver a guardarlas).
+## Pone los controles según las opciones, sin guardarlas.
 func refresh() -> void:
 	for key: String in _toggles:
 		_toggles[key].set_pressed_no_signal(bool(Settings.get_value(key)))

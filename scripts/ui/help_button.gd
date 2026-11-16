@@ -1,5 +1,4 @@
-# Botón «?» de ayuda (hito 64): lo usan los paneles izquierdos y el modo construcción.
-# Al pulsarlo pide su tema por EventBus.help_requested; HelpDialog lo muestra.
+# Botón «?» de ayuda: pide su tema por EventBus.help_requested y HelpDialog lo muestra.
 class_name HelpButton
 extends RefCounted
 

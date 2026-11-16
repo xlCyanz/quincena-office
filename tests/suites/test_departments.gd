@@ -1,6 +1,5 @@
-# Prueba del hito 33: departamentos y ejecutivos.
-# Criterio: con 3 departamentos a cargo del CEO cada uno rinde 70 %; con un ejecutivo en
-# Desarrollo ese vuelve al 100 % más su ventaja y los otros dos suben a 85 %.
+# Departamentos y ejecutivos: con 3 departamentos del CEO cada uno rinde 70 %; con un ejecutivo
+# en Desarrollo ese vuelve al 100 % más su ventaja y los otros dos suben a 85 %.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=departments
 extends Node
 
@@ -21,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_stage()
 	_check_departments()
@@ -42,8 +41,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Mediana empresa con un área de trabajo de tres puestos, dos oficinas
-# únicas, dinero de sobra y los objetivos cumplidos.
+# Partida nueva en Mediana empresa con tres puestos, dos oficinas únicas, dinero y objetivos cumplidos.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -91,7 +89,7 @@ func _hire(role: String, level: String) -> Dictionary:
 	var candidate: Dictionary = _candidate(role, level)
 	var result: Dictionary = Staff.make_offer(candidate["id"], candidate["asked_salary"])
 	var employee: Dictionary = Staff.get_employee(candidate["id"])
-	# Sin rasgos (hito 50): esta prueba mide rendimientos exactos.
+	# Sin rasgos: esta prueba mide rendimientos exactos.
 	(employee.get("traits", []) as Array).clear()
 	_expect(not employee.is_empty(), "contratado: %s %s (%s)" % [role, level, result["message"]])
 	return employee
@@ -124,7 +122,7 @@ func _fake(role: String) -> Dictionary:
 func _check_stage() -> void:
 	_new_game()
 	var requirements: Array[Dictionary] = Company.get_requirements(3)
-	# Desde el hito 42 también pide un producto lanzado (lo prueba test_launch).
+	# También pide un producto lanzado (lo prueba test_launch).
 	_expect(requirements.size() == 2 and requirements[0]["key"] == "employees" and int(requirements[0]["needed"]) == 40
 		and requirements[1]["key"] == "products_launched", "Mediana empresa pide 40 empleados y un producto lanzado: %s" % [requirements])
 	Company.stage = 2
@@ -151,11 +149,9 @@ func _check_departments() -> void:
 	for department: String in Staff.get_departments():
 		_expect(is_equal_approx(Staff.get_department_factor(department), 0.7), "3 departamentos: %s rinde 70 %%" % department)
 	_expect(is_equal_approx(float(StaffCatalog.get_departments("ceo_factors")[4]), 0.55), "con 4 rendiría 55 %")
-	# Líderes y gerentes no son de ningún departamento.
 	_fake("team_leader")
 	_fake("manager")
 	_expect(Staff.get_departments().size() == 3, "líderes y gerentes no hacen departamentos")
-	# Antes de Mediana empresa todo rinde 100 %.
 	Company.stage = 2
 	_expect(is_equal_approx(Staff.get_department_factor("development"), 1.0), "en Pequeña empresa, 100 %")
 	Company.stage = 3
@@ -176,22 +172,18 @@ func _check_executives() -> void:
 	_expect(is_equal_approx(Staff.get_department_factor("development"), 1.0 + bonus), "Desarrollo: 100 %% más su ventaja (%.3f)" % Staff.get_department_factor("development"))
 	_expect(is_equal_approx(Staff.get_department_factor("design"), 0.85) and is_equal_approx(Staff.get_department_factor("sales"), 0.85), "los otros dos suben a 85 %")
 	_expect(Staff.has_working_station(executive), "trabaja en su oficina")
-	# Fuera de su horario sigue dirigiendo.
 	while Staff.is_expected_now(Staff.employee_key(executive["id"])):
 		GameClock.fast_forward_hours(1)
 	_expect(is_equal_approx(Staff.get_department_factor("development"), 1.0 + bonus), "dirige aunque no esté")
-	# El segundo toma el siguiente libre; no se repiten.
 	var second: Dictionary = _hire(EXECUTIVE, "senior")
 	_expect(second["department"] == "design", "el segundo dirige Diseño: %s" % second["department"])
 	var taken: Dictionary = Staff.set_executive_department(second["id"], "development")
 	_expect(not taken["ok"] and String(taken["message"]).contains("ya lo dirige"), "uno por departamento: %s" % taken["message"])
 	_expect(Staff.set_executive_department(second["id"], "administration")["ok"], "puede dirigir Administración aunque no exista")
 	_expect(is_equal_approx(Staff.get_department_factor("design"), 0.85), "Diseño vuelve al CEO, que dirige 2: 85 %")
-	# No entran a equipos.
 	var team: Dictionary = Staff.create_team()
 	var refused: Dictionary = Staff.add_to_team(team["id"], executive["id"])
 	_expect(not refused["ok"] and String(refused["message"]).contains("no entra a un equipo"), "un ejecutivo no entra a un equipo: %s" % refused["message"])
-	# Al irse, su departamento vuelve al CEO.
 	Staff.fire(executive["id"])
 	_expect(is_equal_approx(Staff.get_department_factor("development"), 0.7), "sin ejecutivo, Desarrollo vuelve al CEO")
 
@@ -253,16 +245,14 @@ func _check_interviews() -> void:
 	Staff.set_ceo_at_work(false)
 	_expect(not Staff.interview.is_empty(), "si el CEO se va, la del ejecutivo sigue")
 	Staff.set_ceo_at_work(true)
-	GameClock.fast_forward_hours(1)  # Dura media hora.
+	GameClock.fast_forward_hours(1)  # dura media hora
 	_expect(bool(Staff.get_candidate(candidate["id"]).get("interviewed", false)), "termina y queda entrevistado")
-	# De noche el ejecutivo no está.
 	while GameClock.get_hour() != 20:
 		GameClock.fast_forward_hours(1)
 	var other: Dictionary = _candidate("qa", "junior")
 	while GameClock.get_hour() != 20:
 		GameClock.fast_forward_hours(1)
 	_expect(Staff.interview_problem(other["id"], true).contains("tiene que estar en la oficina"), "fuera de su horario no entrevista: %s" % Staff.interview_problem(other["id"], true))
-	# Despedirlo corta su entrevista.
 	while GameClock.get_hour() != 10 or GameClock.get_weekday() >= 5:
 		GameClock.fast_forward_hours(1)
 	var last: Dictionary = _candidate("qa", "junior")

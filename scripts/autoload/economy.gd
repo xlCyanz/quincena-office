@@ -1,13 +1,6 @@
-# Economía: la cuenta empresarial (diseño, 8.1). Hay una sola cuenta con todo el
-# dinero: ahí entran los cobros y de ahí salen las compras y los gastos mensuales.
-# Cada cambio del saldo se avisa con EventBus.balance_changed y queda en el historial
-# de movimientos, que muestra el menú Banco (hito 20). Aparte del historial (que guarda
-# solo los últimos MAX_MOVEMENTS) se llevan los totales por concepto del mes actual y
-# del anterior, para que el resumen del mes no dependa de lo que se recorta.
-#
-# El día 1 de cada mes cobra el mantenimiento del local (13.1) y el de los racks de
-# servidores (13.5, hito 40), los dos con el descuento del contador. La partida empieza el
-# día 1 del mes 1, así que el primer cobro llega el día 1 del mes 2.
+# Economía: la única cuenta de la empresa. Avisa cada cambio con EventBus.balance_changed, guarda
+# los últimos movimientos y los totales por concepto del mes actual y el anterior (el resumen no
+# depende del recorte). El día 1 cobra el mantenimiento del local y de los racks.
 extends Node
 
 ## Concepto de los movimientos de la cuenta.
@@ -19,18 +12,15 @@ const CONCEPT_SALE: String = "Ventas"
 ## Movimientos que se guardan en el historial (los más viejos se descartan).
 const MAX_MOVEMENTS: int = 200
 
-## Saldo de la cuenta empresarial, en dólares enteros. Puede quedar negativo si un
-## gasto obligatorio (como el mantenimiento) llega sin dinero; las compras no.
+## Saldo en dólares enteros. Solo un gasto obligatorio lo deja negativo; las compras no.
 var balance: int = 0
 
-## Historial: cada movimiento es {"day": int, "month": int, "concept": String,
-## "amount": int}; amount es negativo si sale dinero.
+## Historial: {"day", "month", "concept", "amount"} (amount negativo si sale dinero).
 var movements: Array[Dictionary] = []
 
 ## Totales por concepto: mes → {concepto: monto}. Solo el mes actual y el anterior.
 var month_totals: Dictionary[int, Dictionary] = {}
 
-# Fecha actual según los avisos del reloj (EventBus.day_changed).
 var _day: int = 1
 var _month: int = 1
 
@@ -90,7 +80,7 @@ static func get_maintenance(area: int) -> int:
 	return area * GameConstants.MAINTENANCE_PER_M2
 
 
-## Mantenimiento de este local con el descuento del contador (hito 37).
+## Mantenimiento de este local con el descuento del contador.
 func get_monthly_maintenance() -> int:
 	var base: int = get_maintenance(OfficeState.lot.get_area())
 	return roundi(base * (1.0 - Staff.get_maintenance_discount()))
@@ -106,7 +96,6 @@ func _on_day_changed(day: int, month: int) -> void:
 	_month = month
 	_drop_old_months()
 	if day == 1:
-		# Lee el tamaño del local y el descuento del contador (solo lectura).
 		charge(get_monthly_maintenance(), CONCEPT_MAINTENANCE)
 		EventBus.payment_recorded.emit(CONCEPT_MAINTENANCE, balance >= 0)
 		charge(get_monthly_server_cost(), CONCEPT_SERVERS)
@@ -141,7 +130,7 @@ func _set_balance(value: int) -> void:
 	EventBus.balance_changed.emit(balance)
 
 
-## Devuelve el estado de la economía para guardarlo (hito 9).
+## Devuelve el estado de la economía para guardarlo.
 func export_state() -> Dictionary:
 	var totals: Array[Dictionary] = []
 	for month: int in month_totals:
@@ -150,7 +139,7 @@ func export_state() -> Dictionary:
 		"month_totals": totals}
 
 
-## Restaura el estado de la economía desde una partida guardada (hito 9).
+## Restaura el estado de la economía desde una partida guardada.
 func import_state(state: Dictionary) -> void:
 	movements.clear()
 	for movement: Dictionary in state.get("movements", []):
@@ -165,7 +154,7 @@ func import_state(state: Dictionary) -> void:
 			for concept: String in concepts:
 				_add_to_totals(int(saved.get("month", 0)), concept, int(concepts[concept]))
 	else:
-		# Partidas de antes del hito 20: se rearman con el historial.
+		# Sin month_totals: se rearman con el historial.
 		for movement: Dictionary in movements:
 			_add_to_totals(int(movement["month"]), movement["concept"], int(movement["amount"]))
 	_drop_old_months()

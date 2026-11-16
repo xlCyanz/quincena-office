@@ -1,5 +1,4 @@
-# Catálogo de productos propios leído de data/products.json: tamaños, tipos y nombres.
-# Se usa por su nombre de clase; el archivo se lee una sola vez.
+# Catálogo de productos propios (data/products.json): tamaños, tipos y nombres. Se lee una vez.
 class_name ProductCatalog
 extends RefCounted
 
@@ -8,7 +7,7 @@ const PRODUCTS_PATH: String = "res://data/products.json"
 static var _data: Dictionary = {}
 
 
-## Etapa (índice de data/stages.json) desde la que se pueden desarrollar productos.
+## Etapa (índice) desde la que se pueden desarrollar productos.
 static func get_min_stage() -> int:
 	return int(_products().get("min_stage", 0))
 
@@ -57,22 +56,22 @@ static func get_peak_users(size: String) -> int:
 	return int(_products()["sizes"].get(size, {}).get("peak_users", 0))
 
 
-## Valor del ciclo de vida (lifecycle en data/products.json).
+## Valor de products.json, lifecycle.
 static func get_lifecycle(key: String) -> float:
 	return float(_products()["lifecycle"][key])
 
 
-## Valor de la calidad (quality en data/products.json).
+## Valor de products.json, quality.
 static func get_quality(key: String) -> Variant:
 	return _products()["quality"][key]
 
 
-## Cuánto vale para la calidad el diseño hecho por alguien de ese nivel (0 a 1).
+## Aporte a la calidad del diseño hecho por ese nivel (0 a 1).
 static func get_level_value(level: String) -> float:
 	return float(_products()["quality"]["level_values"].get(level, 0.0))
 
 
-## Valor de los errores en producción (production_bugs en data/products.json).
+## Valor de products.json, production_bugs.
 static func get_production_bugs(key: String) -> float:
 	return float(_products()["production_bugs"][key])
 
@@ -90,7 +89,7 @@ static func get_value_days() -> int:
 	return int(_products()["value_days"])
 
 
-## Nombre del producto número index (0 el primero): los de la lista y después numerados.
+## Nombre del producto número index: los de la lista y después numerados.
 static func get_product_name(index: int) -> String:
 	var names: Array = _products().get("names", [])
 	if index < names.size():

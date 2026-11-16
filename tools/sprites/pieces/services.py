@@ -1,4 +1,4 @@
-# Baño, limpieza y servidores, con el estilo de tools/sprites/STYLE.md:
+# Baño, limpieza y servidores (estilo de tools/sprites/STYLE.md):
 #
 #   toilet_r0..r3            inodoro de cerámica blanca: tanque atrás con botón, taza y tapa (frente a −y)
 #   sink_r0..r3              lavamanos de pedestal: columna, lavabo con su hueco, llave de metal
@@ -53,7 +53,7 @@ def tank_front(ctx):
 
 
 def bowl_cap(ctx):
-    """Tapa cerrada: el aro de la tapa un tono más oscuro cerca del borde."""
+    """Tapa cerrada con el aro un tono más oscuro cerca del borde."""
     index = plain(ctx)
     return np.where((ctx.t > 0.78) & (ctx.t < 0.88), CERAMIC_LINE, index)
 
@@ -81,7 +81,7 @@ BASIN_TOP = 36
 
 
 def basin_top(ctx):
-    """Hueco del lavabo: un óvalo hundido con agua clara y el desagüe."""
+    """Hueco del lavabo: óvalo hundido con agua clara y desagüe."""
     a, b, w, h = grid(ctx)
     index = plain(ctx)
     u = (a + 0.5 - w / 2.0) / (w * 0.36)

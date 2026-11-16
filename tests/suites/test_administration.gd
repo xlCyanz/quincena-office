@@ -1,6 +1,5 @@
-# Prueba del hito 37: contador y limpieza.
-# Criterio: con contador el mantenimiento baja 10 % y un préstamo nuevo cuesta 1 punto
-# menos; una habitación sucia baja el ánimo y la limpieza la deja en 0.
+# Contador y limpieza: con contador el mantenimiento baja 10 % y un préstamo nuevo 1 punto;
+# una habitación sucia baja el ánimo y la limpieza la deja en 0.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=administration
 extends Node
 
@@ -30,7 +29,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	_check_catalog()
@@ -52,8 +51,8 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Startup, con dinero de sobra y los objetivos cumplidos, un Área de
-# trabajo con un puesto y, con cleaning_room, el Cuarto de limpieza con su armario.
+# Partida nueva en Startup, con dinero, objetivos cumplidos, un puesto y, con cleaning_room,
+# el Cuarto de limpieza con su armario.
 func _new_game(cleaning_room: bool = false, stage: int = 1) -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -162,12 +161,11 @@ func _check_discounts() -> void:
 	_expect(is_equal_approx(Bank.get_monthly_rate(), 0.035), "y la tasa baja 1 punto: %f" % Bank.get_monthly_rate())
 	var result: Dictionary = Bank.request_loan(5000, 6)
 	_expect(result["ok"] and is_equal_approx(float(Bank.loans[0]["rate"]), 0.035), "el préstamo nuevo sale al 3.5 %%")
-	# El día 1 se cobra el mantenimiento con descuento.
 	_to_day(30)
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 	var charged: int = -Economy.get_month_totals(GameClock.get_month()).get(Economy.CONCEPT_MAINTENANCE, 0)
 	_expect(charged == roundi(base * 0.9), "el día 1 cobra %d de mantenimiento (de %d)" % [charged, base])
-	# Desde Mediana empresa el efecto se multiplica por el rendimiento de Administración.
+	# Desde Mediana empresa el efecto se multiplica por el factor de Administración.
 	Company.stage = 3
 	var factor: float = Staff.get_department_factor("administration")
 	_expect(is_equal_approx(Staff.get_maintenance_discount(), 0.1 * factor), "descuento por el factor de Administración (%.2f)" % factor)
@@ -186,20 +184,18 @@ func _check_warnings() -> void:
 	_notices.clear()
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 	_expect(not _notices.any(func(text: String) -> bool: return text.begins_with("El contador")), "solo avisa una vez")
-	# El día 28 avisa por la nómina del 30 y lo del día 1.
+	# El día 28 avisa por la nómina del 30 y el cobro del día 1.
 	Economy.charge(Economy.balance - 100, "Prueba")
 	_to_day(27)
 	_notices.clear()
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 	warned = _notices.any(func(text: String) -> bool: return text.begins_with("El contador avisa: el día 1 ") and text.contains("mantenimiento"))
 	_expect(warned, "el 28 avisa por el día 1: %s" % [_notices])
-	# Con saldo suficiente no avisa.
 	Economy.earn(100000, "Prueba")
 	_to_day(11)
 	_notices.clear()
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 	_expect(not _notices.any(func(text: String) -> bool: return text.begins_with("El contador")), "con saldo no avisa")
-	# Sin contador nadie avisa.
 	_new_game()
 	_hire("programmer")
 	Economy.charge(Economy.balance - 100, "Prueba")
@@ -225,13 +221,11 @@ func _check_dirt() -> void:
 		"un día de 8 h ensucia 8: %.1f" % OfficeState.get_room_dirt(_work_room()))
 	var office: Dictionary = OfficeState.rooms[OfficeState.get_room_index_at(Vector2i(1, 1))]
 	_expect(OfficeState.get_room_dirt(office) > 0.0, "el CEO ensucia su oficina")
-	# Con zafacón, la mitad.
 	var result: Dictionary = Builder.new().place("trash_can", Vector2i(5, 5), 0)
 	_expect(result["ok"], "zafacón: %s" % result.get("message", ""))
 	_expect(OfficeState.has_trash_can(_work_room()), "el Área tiene zafacón")
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 	_expect(is_equal_approx(OfficeState.get_room_dirt(_work_room()), 12.0), "con zafacón el martes suma 4: %.1f" % OfficeState.get_room_dirt(_work_room()))
-	# Nunca pasa del máximo.
 	OfficeState.add_dirt(index, 500.0)
 	_expect(is_equal_approx(OfficeState.get_room_dirt(_work_room()), 100.0), "tope de 100")
 	# Cambiar paredes no la limpia.
@@ -277,7 +271,7 @@ func _check_cleaner() -> void:
 	var worker: Dictionary = _hire("programmer", "junior")
 	_to_monday()
 	var index: int = OfficeState.get_room_index_at(CHAIR_CELL)
-	# Sin el CEO, que ensucia su oficina: solo el Área de trabajo está sucia.
+	# Sin el CEO (que ensucia su oficina): solo el Área de trabajo se ensucia.
 	Staff.set_ceo_at_work(false)
 	for room: Dictionary in OfficeState.rooms:
 		room["dirt"] = 0.0

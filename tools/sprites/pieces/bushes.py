@@ -1,4 +1,4 @@
-# Arbustos y setos del mapa, con los bultos de hojas de pieces/trees.py (el contorno va solo por la silueta).
+# Arbustos y setos del mapa, con los bultos de hojas de pieces/trees.py.
 #
 #   bush_0               arbusto redondo
 #   bush_1               arbusto chico, más alto que ancho
@@ -10,7 +10,7 @@
 #   <cada uno>_shadow
 #   _sheets/bushes.png
 #
-# Lienzos de mueble (128×128, 192×128 y 256×192) con kind "bush": no llevan caras lisas.
+# Lienzos de mueble (128×128, 192×128 y 256×192) con kind "bush" (sin caras lisas).
 import numpy as np
 
 import iso
@@ -50,9 +50,8 @@ def bush(index, dotted=None):
 # ---------------------------------------------------------------------------- setos
 
 def hedge(c, boxes, seed):
-    """Seto recortado: cajas (x0, x1, y0, y1) de alto HEDGE_TOP con bultos parejos en las caras y la tapa
-    que le ondulan el borde. Se pinta con las manchas de hojas sobre el tono de cada cara: tapa clara,
-    cara a la luz (+y en pantalla) media y la otra oscura."""
+    """Seto recortado: cajas (x0, x1, y0, y1) de alto HEDGE_TOP con bultos en caras y tapa.
+    Tonos: tapa clara, cara a la luz (+y en pantalla) media, la otra oscura."""
     rng = np.random.RandomState(seed)
     field = blotch_field(c, seed, radius=(3.0, 5.5), spacing=18.0)
     tones = {"top": painted(quantize(0.62 + field)), "left": painted(quantize(-0.3 + field)),
@@ -117,7 +116,7 @@ def hedge_corner(rotation):
 # ---------------------------------------------------------------------------- principal
 
 class CleanSaver(Saver):
-    """Como Saver, pero con la limpieza final de pixeles sueltos de los árboles."""
+    """Saver con la limpieza final de pixeles sueltos de los árboles."""
 
     def keep(self, c, name, shapes, **meta):
         c.finish()

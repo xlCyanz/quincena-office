@@ -1,16 +1,10 @@
-# Prueba del hito 29: comprobación de la fase 3. Simula varios meses con
-# una política simple (aceptar lo que se pueda, entregar lo terminado) en tres casos:
-#   1. CEO solo: 3 meses sin préstamos.
-#   2. Primer equipo con préstamo: 2 programadores y 1 diseñador Junior, $5,000 a 12 meses
-#      (lo que presta el banco a una empresa nueva).
-#   3. Una empresa que deja de pagar: préstamo y saldo en 0, sin trabajo.
-# Criterio: la simulación cuadra con la tabla 13.8; un préstamo razonable se paga con el
-# primer equipo; dejar de pagar lleva al embargo en el tercer mes. Imprime un resumen
-# por mes para ajustar data/bank.json y data/stages.json.
+# Comprobación de la fase 3: simula meses con una política simple (aceptar lo que se pueda,
+# entregar lo terminado): CEO solo 3 meses; primer equipo con $5,000 a 12 meses; empresa
+# que deja de pagar (embargo al tercer mes). Imprime un resumen por mes para ajustar los datos.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=phase3
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
@@ -22,7 +16,7 @@ var _late_installments: int = 0
 var _emergencies: int = 0
 var _game_over_day: int = 0
 var _month_rows: Array[String] = []
-# Ingresos de contratos de cada mes cerrado (para comparar con la tabla 13.8).
+# Ingresos de contratos de cada mes cerrado (tabla 13.8).
 var _month_income: Array[int] = []
 
 
@@ -31,7 +25,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.payment_recorded.connect(func(concept: String, on_time: bool) -> void:
 		if concept == Bank.CONCEPT_INSTALLMENT and not on_time:
@@ -58,8 +52,7 @@ func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
 	Projects.set_seed(SEED)
-	# La primera oferta salió antes de fijar la semilla (con el azar que dejó la parte
-	# anterior): se cambia por una sorteada con ella para que la simulación dé siempre lo mismo.
+	# La primera oferta salió antes de fijar la semilla: se cambia por una sorteada con ella para repetir siempre igual.
 	Projects.offers.clear()
 	Projects.create_offer("small")
 	_late_installments = 0
@@ -76,9 +69,8 @@ func _sum(concepts: Array[String], totals: Dictionary[String, int]) -> int:
 	return total
 
 
-# Un día de juego con la política simple: al empezar el día entrega lo terminado y
-# acepta las ofertas que se puedan; el CEO trabaja 8 h (más el almuerzo) y se va a casa a las 17 (tabla
-# 13.8); si cambia el mes anota el resumen del anterior.
+# Cada día entrega lo terminado y acepta lo que pueda; el CEO trabaja de 8 a 17 (tabla 13.8);
+# al cambiar de mes anota el resumen.
 func _play_days(days: int, work: bool = true) -> void:
 	for day: int in range(days):
 		if Bank.game_over:
@@ -94,8 +86,7 @@ func _play_days(days: int, work: bool = true) -> void:
 			_record_month(month)
 
 
-# Avanza un día desde las 8: el CEO trabaja hasta las 17 (8 h y el almuerzo) y se va a casa (vuelve solo a
-# las 8 del próximo día hábil).
+# Un día desde las 8: el CEO trabaja hasta las 17 y se va a casa (vuelve el próximo día hábil).
 func _ceo_workday() -> void:
 	GameClock.fast_forward_hours(9)
 	if Staff.ceo_at_work:
@@ -130,7 +121,7 @@ func _print_report(title: String) -> void:
 		print(row)
 
 
-# Área de trabajo de 3×3 al este de la Oficina Ejecutiva con tres puestos básicos.
+# Área de trabajo 3×3 al este de la Oficina Ejecutiva con tres puestos básicos.
 func _build_team_office() -> void:
 	var builder := Builder.new()
 	var y: int = GridEdge.AXIS_Y
@@ -145,7 +136,7 @@ func _build_team_office() -> void:
 			and builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "puesto en x %d" % x)
 
 
-# Contrata un Junior por lo que pide, por el camino normal.
+# Contrata un Junior por lo que pide.
 func _hire(role: String) -> Dictionary:
 	var vacancy_id: int = Staff.open_vacancy(role, "junior", StaffCatalog.get_salary(role, "junior"), true)["id"]
 	for attempt: int in range(10):
@@ -160,10 +151,10 @@ func _hire(role: String) -> Dictionary:
 
 func _check_ceo_alone() -> void:
 	_new_game()
-	# Tabla 13.8: $240 de mantenimiento al mes por los 48 m² del local inicial.
+	# Tabla 13.8: $240 al mes por los 48 m² del local inicial.
 	_expect(Economy.get_maintenance(OfficeState.lot.get_area()) == 240, "mantenimiento $240")
 	var start: int = Economy.balance
-	# El CEO produce 24 puntos en un día hábil (8 h de 3 puntos, SemiSenior).
+	# El CEO hace 24 puntos por día hábil (8 h de 3 puntos, SemiSenior).
 	while GameClock.get_weekday() > 3:
 		_play_days(1)
 	_manage_contracts()
@@ -175,9 +166,8 @@ func _check_ceo_alone() -> void:
 	_play_days(89)
 	_print_report("CEO solo (3 meses):")
 	_expect(Projects.delivered_count >= 5, "entrega al menos 5 contratos pequeños: %d" % Projects.delivered_count)
-	# Tabla 13.8: un pequeño de 200 puntos paga $1,600; a 24 puntos por día hábil son unos
-	# $3,000–$6,000 al mes en promedio (el primer mes cobra poco: el primero recién termina,
-	# y un mes puede quedar con una sola entrega).
+	# Tabla 13.8: un pequeño de 200 puntos paga $1,600; unos $3,000–$6,000 al mes (el primer
+	# mes cobra poco y un mes puede quedar con una sola entrega).
 	var income: int = 0
 	for month: int in range(1, _month_income.size()):
 		income += _month_income[month]
@@ -208,7 +198,7 @@ func _check_first_team() -> void:
 			Staff.add_to_team(team["id"], employee["id"])
 			salaries += int(employee["salary"])
 	_expect(Staff.employees.size() == 3 and (team["members"] as Array).size() == 3, "equipo de 3")
-	# Tabla 13.8: unos $3,400 de sueldos al mes (piden de 90 % a 120 % del sueldo de su nivel).
+	# Tabla 13.8: unos $3,400 de sueldos (piden del 90 % al 120 % de su nivel).
 	_expect(salaries >= 2800 and salaries <= 4200, "sueldos del equipo: $%d" % salaries)
 	_play_days(180)
 	_print_report("Primer equipo con préstamo de $5,000 a 12 meses (cuota $%d, sueldos $%d):" % [installment, salaries])
@@ -216,11 +206,10 @@ func _check_first_team() -> void:
 	_expect(_emergencies == 0, "sin préstamos de emergencia: %d" % _emergencies)
 	var loan: Dictionary = Bank.get_loan(1)
 	_expect(not loan.is_empty() and int(loan["paid"]) == 6, "6 cuotas pagadas: %s" % loan.get("paid", "saldado"))
-	# Con lo ganado alcanza para saldar lo que falta.
 	_expect(Economy.balance >= Bank.get_seizable_debt(), "el saldo cubre la deuda: %d contra %d" % [Economy.balance, Bank.get_seizable_debt()])
 	_expect(Staff.employees.size() == 3, "el equipo sigue completo: %d" % Staff.employees.size())
-	# Tabla 13.8: el equipo hace unos 1,050 puntos al mes ($8,400) y el CEO suma los suyos;
-	# desde el segundo mes cada mes deja más de lo que cuestan sueldos, local y cuota.
+	# Tabla 13.8: el equipo hace ~1,050 puntos al mes ($8,400) más los del CEO; desde el segundo
+	# mes deja más de lo que cuestan sueldos, local y cuota.
 	var total: int = 0
 	for month: int in range(1, _month_income.size()):
 		total += _month_income[month]
@@ -240,6 +229,6 @@ func _check_default() -> void:
 	_expect(not Bank.game_over, "todavía no embarga")
 	_play_days(30, false)
 	_print_report("Empresa que deja de pagar ($5,000 a 6 meses, saldo en 0):")
-	# El local inicial solo tiene lo del CEO, que no se embarga: termina la partida.
+	# Solo hay lo del CEO, que no se embarga: termina la partida.
 	_expect(Bank.game_over and _game_over_day == 3 * GameConstants.DAYS_PER_MONTH,
 		"embargo y fin el día 1 del mes 4 (tercera cuota): día %d" % _game_over_day)

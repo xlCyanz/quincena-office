@@ -1,6 +1,5 @@
-# Bordes entre casillas, donde van las paredes y las puertas (no ocupan casilla).
-# Un borde es un Vector3i(x, y, eje): eje AXIS_X es el borde entre (x, y) y (x+1, y);
-# eje AXIS_Y, el borde entre (x, y) y (x, y+1). Se usa por su nombre de clase.
+# Bordes entre casillas (paredes y puertas). Vector3i(x, y, eje): AXIS_X separa (x, y) de
+# (x+1, y); AXIS_Y separa (x, y) de (x, y+1).
 class_name GridEdge
 extends RefCounted
 
@@ -19,26 +18,26 @@ static func get_cells(edge: Vector3i) -> Array[Vector2i]:
 	return [a, b]
 
 
-## Borde entre dos casillas vecinas (en las cuatro direcciones).
+## Borde entre dos casillas vecinas.
 static func between(a: Vector2i, b: Vector2i) -> Vector3i:
 	var low := Vector2i(mini(a.x, b.x), mini(a.y, b.y))
 	return make(low, AXIS_X if a.y == b.y else AXIS_Y)
 
 
-## Extremos del borde en coordenadas de cuadrícula con decimales (las esquinas de las casillas).
+## Extremos del borde en la cuadrícula (esquinas de las casillas).
 static func get_endpoints(edge: Vector3i) -> Array[Vector2]:
 	if edge.z == AXIS_X:
 		return [Vector2(edge.x + 0.5, edge.y - 0.5), Vector2(edge.x + 0.5, edge.y + 0.5)]
 	return [Vector2(edge.x - 0.5, edge.y + 0.5), Vector2(edge.x + 0.5, edge.y + 0.5)]
 
 
-## Indica si el borde toca el local (al menos una de sus casillas está dentro).
+## Indica si alguna de sus casillas es del local.
 static func touches_lot(edge: Vector3i, lot: Lot) -> bool:
 	var cells: Array[Vector2i] = get_cells(edge)
 	return lot.has_point(cells[0]) or lot.has_point(cells[1])
 
 
-## Indica si el borde está en el contorno del local (una casilla dentro y otra fuera).
+## Indica si está en el contorno del local (una casilla dentro y otra fuera).
 static func is_exterior(edge: Vector3i, lot: Lot) -> bool:
 	var cells: Array[Vector2i] = get_cells(edge)
 	return lot.has_point(cells[0]) != lot.has_point(cells[1])
@@ -64,13 +63,13 @@ static func nearest(grid_position: Vector2) -> Vector3i:
 	return make(cell, AXIS_Y)
 
 
-## Distancia (en casillas) de un punto de la cuadrícula a la línea de un borde.
+## Distancia (en casillas) de un punto a la línea de un borde.
 static func distance_to(edge: Vector3i, grid_position: Vector2) -> float:
 	var ends: Array[Vector2] = get_endpoints(edge)
 	return Geometry2D.get_closest_point_to_segment(grid_position, ends[0], ends[1]).distance_to(grid_position)
 
 
-## Convierte a [x, y, "x"|"y"] para guardarlo en JSON.
+## Convierte a [x, y, "x"|"y"] para JSON.
 static func to_data(edge: Vector3i) -> Array:
 	return [edge.x, edge.y, "x" if edge.z == AXIS_X else "y"]
 

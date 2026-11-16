@@ -1,10 +1,9 @@
-# Prueba del hito 15: equipos y turnos.
-# Criterio: un empleado solo está en un equipo; cambiar el turno de un equipo cambia la
-# hora a la que llegan sus miembros.
+# Equipos y turnos: un empleado está en un solo equipo; cambiar el turno del equipo cambia la
+# llegada de sus miembros.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=teams
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -21,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_schedules()
 	_check_teams()
@@ -46,7 +45,7 @@ func _new_game() -> void:
 	Projects.set_seed(SEED)
 
 
-# Un empleado de mentira (sin sueldo ni puesto) para probar la lógica de equipos.
+# Empleado falso sin sueldo ni puesto.
 func _add_fake(employee_id: int, role: String) -> Dictionary:
 	var skills: Dictionary = {}
 	for skill: String in StaffCatalog.get_skill_ids():
@@ -111,14 +110,12 @@ func _check_teams() -> void:
 	_expect(Staff.is_at_lunch(key) == false, "no almuerza ahora")
 	_expect(not Staff.set_team_shift(second["id"], 8, _days([0, 1, 2, 3, 4, 5, 6]))["ok"]
 		and WorkSchedule.from_dict(second["schedule"]).start_hour == 10, "un turno sin descanso no se guarda")
-	# Fuera del equipo vuelve al horario de su cargo.
 	_expect(Staff.remove_from_team(901) and Staff.get_team_of(901).is_empty() and Staff.is_expected(key, 0, 8)
 		and not Staff.remove_from_team(901), "sacar del equipo")
 	var loose: Array[Dictionary] = Staff.get_employees_without_team()
 	_expect(loose.size() == 1 and loose[0]["id"] == 901, "Ana queda sin equipo")
 	_expect(Staff.get_active_team_count() == 1, "solo cuenta el equipo con miembros")
 	_expect(Staff.delete_team(first["id"]) and Staff.get_team_of(902).is_empty() and Staff.teams.size() == 1, "borrar un equipo")
-	# Despedir saca del equipo.
 	Staff.add_to_team(second["id"], 902)
 	_expect(Staff.fire(902)["ok"] and (second["members"] as Array).is_empty(), "despedir saca del equipo")
 	_expect(ana["id"] == 901 and beto["id"] == 902, "datos")
@@ -155,7 +152,6 @@ func _check_contracts() -> void:
 	if Projects.offers.is_empty():
 		Projects.create_offer("small")
 	_expect(not Projects.accept(Projects.offers[0]["id"])["ok"], "tope de 2")
-	# Un equipo lleva un contrato a la vez.
 	_expect(Projects.assign(first_offer, team["id"])["ok"], "darle el primero al equipo")
 	_expect(first["team_id"] == team["id"] and second["team_id"] == Projects.NO_TEAM and Projects.get_contract_of(Projects.CEO_TEAM).is_empty(),
 		"el contrato anterior del equipo queda sin equipo")
@@ -163,7 +159,6 @@ func _check_contracts() -> void:
 	_expect(Projects.assign(second_offer, Projects.CEO_TEAM)["ok"] and Projects.get_contract_of(Projects.CEO_TEAM)["id"] == second_offer,
 		"el CEO toma el segundo")
 	_expect(not Projects.assign(second_offer, 999)["ok"], "no se asigna a un equipo que no existe")
-	# Borrar el equipo deja su contrato sin equipo.
 	Staff.delete_team(team["id"])
 	_expect(first["team_id"] == Projects.NO_TEAM, "borrar el equipo libera su contrato")
 	_expect(Projects.get_contract_limit() == 1, "vuelve el tope de 1")
@@ -186,7 +181,7 @@ func _check_save() -> void:
 		"equipos y contratos vuelven igual")
 	_expect(Staff.is_expected(Staff.employee_key(901), 1, 3), "el turno de noche vuelve")
 	_expect(Staff.create_team()["name"] == "Equipo 2", "la numeración sigue")
-	# Partida vieja sin equipos ni team_id: sin equipos y el contrato es del CEO.
+	# Partida vieja sin equipos ni team_id: el contrato es del CEO.
 	var old_staff: Dictionary = Staff.export_state()
 	old_staff.erase("teams")
 	old_staff.erase("next_team_id")
@@ -195,7 +190,7 @@ func _check_save() -> void:
 	(old_projects["contracts"][0] as Dictionary).erase("team_id")
 	Projects.import_state(old_projects)
 	_expect(Staff.teams.is_empty() and Projects.contracts[0]["team_id"] == Projects.CEO_TEAM, "partida vieja")
-	# Una partida con un empleado en dos equipos lo deja solo en el primero.
+	# Un empleado en dos equipos queda solo en el primero.
 	var broken: Dictionary = Staff.export_state()
 	broken["teams"] = [{"id": 1, "name": "A", "members": [901, 777], "schedule": team["schedule"]},
 		{"id": 2, "name": "B", "members": [901]}]
@@ -205,8 +200,7 @@ func _check_save() -> void:
 		and WorkSchedule.from_dict(Staff.teams[1]["schedule"]).start_hour == 8, "datos rotos se corrigen")
 
 
-# Con la escena: el miembro de un equipo con entrada a las 10 llega a las 10 y el
-# programador sin equipo, a las 8 (el horario de su cargo).
+# Con la escena: el miembro con entrada a las 10 llega a las 10; el programador sin equipo, a las 8.
 func _check_arrivals() -> void:
 	_new_game()
 	var game: Node = GAME_SCENE.instantiate()
@@ -233,7 +227,6 @@ func _check_arrivals() -> void:
 	if GameClock.get_hour() < 10:
 		_expect(member.activity == OfficeCharacter.Activity.WALKING_OUT or member.activity == OfficeCharacter.Activity.AWAY,
 			"antes de su entrada se va")
-	# Hasta el próximo día hábil a las 7.
 	var hours: int = posmod(7 - GameClock.get_hour(), GameConstants.HOURS_PER_DAY)
 	GameClock.fast_forward_hours(hours if hours > 0 else GameConstants.HOURS_PER_DAY)
 	while GameClock.get_weekday() > 4:
@@ -247,7 +240,6 @@ func _check_arrivals() -> void:
 	GameClock.fast_forward_hours(1)
 	_expect(member.activity == OfficeCharacter.Activity.WALKING_TO_DESK, "a las 10 llega el del equipo")
 	_expect(game.describe_employee_activity(in_team["id"]) != "fuera de su horario", "estado al llegar")
-	# La ficha muestra el equipo y el turno.
 	var card: EmployeeCard = game.get_node("EmployeeCard")
 	card.open_employee(in_team["id"])
 	_expect(card.get_text().contains("Equipo: %s" % team["name"]) and card.get_text().contains("lun–vie 10:00–19:00")
@@ -336,7 +328,7 @@ func _check_panel() -> void:
 
 
 func _click(control: Control) -> void:
-	# Si está dentro de una lista con desplazamiento, la mueve hasta verlo.
+	# En una lista con desplazamiento, la mueve hasta verlo.
 	var parent: Node = control.get_parent()
 	while parent != null and not parent is ScrollContainer:
 		parent = parent.get_parent()

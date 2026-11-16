@@ -1,24 +1,16 @@
-# Muebles de la Recepción que faltaban, con el estilo de tools/sprites/STYLE.md (contorno oscuro del
-# material, colores saturados, brillo de 1 px):
+# Muebles de la Recepción (estilo de tools/sprites/STYLE.md):
 #
-#   reception_counter_r0..r3      2×1: mostrador. Del lado de la recepcionista (el frente, que mira a −y
-#                                 con rotación 0) una mesa de trabajo con tablero de madera naranja y dos
-#                                 cajoneras de metal gris; del lado del cliente un panel alto de madera
-#                                 con perfiles de aluminio en las puntas y arriba un mesón crema con timbre
-#   waiting_sofa_r0..r3           2×1: sofá de espera rojo alto y mullido: faldón, tres cojines de
-#                                 asiento, respaldo de tres cojines con botón y brazos gruesos enrollados
-#                                 (se sienta mirando al frente, −y con rotación 0)
-#   water_dispenser_r0..r3        mueble chico: gabinete blanco con panel oscuro (llaves roja y azul) y
-#                                 rejillas, y un bidón grande celeste casi transparente con tres aros y
-#                                 brillos (dibujado como si ocupara la casilla; el juego lo achica al 60 %)
-#   water_dispenser_q_r0..r3      el mismo ya a su tamaño final (60 %)
-#   trash_can, trash_can_q        zafacón gris oscuro que se angosta abajo, aro claro y bolsa negra
-#                                 doblada sobre el borde (simétrico: una sola imagen; _q al 60 %)
+#   reception_counter_r0..r3      2×1: mostrador; mesa de trabajo del lado de la recepcionista (frente, −y
+#                                 con rotación 0) y panel alto con mesón crema y timbre del lado del cliente
+#   waiting_sofa_r0..r3           2×1: sofá de espera rojo mullido (se sienta mirando a −y con rotación 0)
+#   water_dispenser_r0..r3        mueble chico: gabinete blanco y bidón celeste (a tamaño de casilla;
+#                                 el juego lo achica al 60 %)
+#   water_dispenser_q_r0..r3      el mismo ya al 60 %
+#   trash_can, trash_can_q        zafacón gris con bolsa negra (simétrico; _q al 60 %)
 #   <cada uno>_shadow             sombra en el piso, aparte
-#   _sheets/reception.png         hoja de contacto (no es arte del juego)
+#   _sheets/reception.png         hoja de contacto
 #
-# Datos de data/furniture.json: reception_counter (2×1, height 24), waiting_sofa (2×1, height 12),
-# water_dispenser (small, height 34) y trash_can (small, height 10).
+# En data/furniture.json: reception_counter (height 24), waiting_sofa (12), water_dispenser (34), trash_can (10).
 import os
 
 import numpy as np
@@ -65,7 +57,7 @@ TRIM = pal.style_ramp("b9bfc2", outline="2f3437", name="counter_trim")  # perfil
 
 
 def g(v):
-    """A la rejilla de 1/64 de casilla (las cajas la necesitan para que sus aristas salgan 2:1)."""
+    """Redondea a la rejilla de 1/64 de casilla (aristas 2:1)."""
     return round(v * 64.0) / 64.0
 
 
@@ -84,7 +76,7 @@ COUNTER_H = 48  # el `height` del juego (24) × 2
 
 
 def panel_back(ctx):
-    """Panel del lado del cliente: madera lisa, una ranura bajo el mesón y zócalo oscuro."""
+    """Panel del cliente: madera lisa, ranura bajo el mesón y zócalo oscuro."""
     b = np.floor(ctx.b)
     h = np.floor(ctx.h)
     index = plain(ctx)
@@ -99,7 +91,7 @@ def panel_side(ctx):
 
 
 def ledge_top(ctx):
-    """El mesón de arriba: un filo claro en el canto de adentro."""
+    """Mesón con un filo claro en el canto de adentro."""
     b = np.floor(ctx.b)
     index = plain(ctx)
     return np.where(b < 1, pal.LIGHT, index)
@@ -111,7 +103,7 @@ TRIM_W = 3 / 64.0  # postes de aluminio en las esquinas del panel
 
 
 def pedestal_front(ctx):
-    """Cajonera de metal gris: tres cajones con su tirador claro."""
+    """Cajonera de metal gris de tres cajones."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     w = np.floor(ctx.w)
@@ -129,17 +121,17 @@ def reception_counter(rotation):
     w, d = COUNTER_ITEM["size"]
     c = iso.Canvas.furniture((w, d), COUNTER_ITEM["height"], rotation)
     y0, y1 = 3 / 64.0, DESK_Y[1]
-    # Mesa de trabajo: dos cajoneras de metal y un tablero de madera encima, con el hueco libre.
+    # Mesa de trabajo: dos cajoneras y tablero de madera.
     ped = None
     for x0 in (4 / 64.0, w - 4 / 64.0 - PED_W):
         pid = c.box(x0, x0 + PED_W, y0 + 2 / 64.0, y1, 0, DESK_TOP - DESK_SLAB, PEDESTAL,
                     tex={iso.FRONT: pedestal_front}, name="pedestals" if ped is None else None, part=ped, flat=False)
         ped = pid if ped is None else ped
     c.box(2 / 64.0, w - 2 / 64.0, y0, y1, DESK_TOP - DESK_SLAB, DESK_TOP, WOOD, name="desk_top")
-    # Panel alto del lado del cliente: madera lisa con perfiles de aluminio en las puntas.
+    # Panel alto del lado del cliente.
     c.box(1 / 64.0, w - 1 / 64.0, PANEL_Y[0] + 1 / 64.0, PANEL_Y[1] - 1 / 64.0, 0, PANEL_TOP, WOOD,
           tex={iso.BACK: panel_back, "sides": panel_side}, name="panel", flat=False)
-    # Postes finos de aluminio en las cuatro esquinas del panel, un px afuera de la madera.
+    # Postes de aluminio en las esquinas, 1 px afuera de la madera.
     trims = None
     for x0 in (0.0, w - TRIM_W):
         for yy in (PANEL_Y[0], PANEL_Y[1] - TRIM_W):
@@ -148,7 +140,7 @@ def reception_counter(rotation):
             trims = pid if trims is None else trims
     c.box(0, w, LEDGE[0], LEDGE[1], PANEL_TOP, COUNTER_H, COUNTER_TOP, tex={"top": ledge_top},
           name="ledge", flat=False)
-    # Timbre del lado del cliente, cerca de un extremo.
+    # Timbre cerca de un extremo.
     c.cylinder(1.62, 0.84, 0.05, COUNTER_H, COUNTER_H + 1, PLASTIC, name="bell_base")
     c.cylinder(1.62, 0.84, 0.04, COUNTER_H + 1, COUNTER_H + 4, BELL, radius_top=0.015, name="bell")
     return c
@@ -160,8 +152,6 @@ def counter_shadow_shapes():
 
 # ---------------------------------------------------------------------------- sofá de espera
 
-# Como el de la referencia: alto y mullido, brazos gruesos enrollados, respaldo de tres cojines
-# separados con botones y tres cojines de asiento sobre un faldón que llega casi al piso.
 SOFA_LEG = 2  # patitas negras bajo el faldón
 SOFA_BASE = 12  # faldón
 SEAT_TOP = 19  # cojines del asiento
@@ -193,7 +183,7 @@ def waiting_sofa(rotation):
         x1 = g(inner[0] + (k + 1) * step) - 1 / 64.0
         c.soft_box(x0, x1, 6 / 64.0, BACK_Y[0] + 2 / 64.0, SOFA_BASE - 1, SEAT_TOP, 4, SOFA, name="seat_%d" % k)
         c.soft_box(x0, x1, BACK_Y[0], BACK_Y[1], SEAT_TOP - 3, BACK_TOP, 5, SOFA, name="back_%d" % k)
-        # Botón en el medio del cojín del respaldo, en la cara de adelante.
+        # Botón en el medio del cojín del respaldo.
         mid = (x0 + x1) / 2.0
         c.box(g(mid) - 1 / 64.0, g(mid) + 1 / 64.0, BACK_Y[0] - 1 / 64.0, BACK_Y[0], BACK_TOP - 9, BACK_TOP - 7,
               SOFA_FRAME, name="button_%d" % k, outline=False)
@@ -212,9 +202,6 @@ def sofa_shadow_shapes():
 
 # ---------------------------------------------------------------------------- dispensador de agua
 
-# Como el de la referencia: gabinete blanco puro de frente con un panel oscuro arriba (la llave roja
-# y la azul) y rejillas abajo; encima un bidón grande, tan ancho como el gabinete, celeste casi
-# transparente, con tres aros marcados, el agua más azul abajo, muchos brillos y el cuello arriba.
 CAB_TOP = 34  # gabinete
 BOTTLE_TOP = 68  # el `height` del juego (34) × 2
 CAB_HALF = 12 / 64.0
@@ -227,7 +214,7 @@ def cabinet_front(ctx, s):
     w = np.floor(ctx.w)
     h = np.floor(ctx.h)
     index = plain(ctx)
-    # Panel oscuro arriba, con un filo claro, la llave roja y la azul y una ranura de rejilla.
+    # Panel oscuro con la llave roja y la azul.
     p0, p1 = np.floor(h * 0.62), np.floor(h * 0.9)
     panel = (b >= p0) & (b < p1) & (a >= 2) & (a < w - 2)
     index = np.where(panel, PANEL, index)
@@ -235,7 +222,7 @@ def cabinet_front(ctx, s):
     tap = max(1.0, round(2 * s))
     for x0, color in ((np.floor(w * 0.22), TAP_RED), (np.floor(w * 0.22) + tap + 1, TAP_BLUE)):
         index = np.where((a >= x0) & (a < x0 + tap) & (b >= p0) & (b < p0 + max(2, round(3 * s))), color, index)
-    # Rejillas abajo: rayas cortas cada 2 px.
+    # Rejillas: rayas cortas cada 2 px.
     grille = (b >= np.floor(h * 0.12)) & (b < np.floor(h * 0.45)) & (a >= w * 0.25) & (a < w * 0.75) & \
              (np.mod(b, 2) == 0)
     index = np.where(grille, SLIT, index)
@@ -252,7 +239,7 @@ def bottle_side(ctx):
         r0 = np.floor(h * f)
         ring = (b >= r0) & (b < r0 + 2)
         index = np.where(ring, np.where(b == r0, BOTTLE_RING_DARK, BOTTLE_RING), index)
-    # Brillos: una franja vertical del lado de la luz y manchitas sueltas.
+    # Brillos: franja del lado de la luz y manchitas.
     shine = (ctx.t > -0.68) & (ctx.t < -0.56) & (b > 2) & (b < h - 3) & (np.mod(b, 9) != 4)
     index = np.where(shine, BOTTLE_SHINE, index)
     dots = (np.mod(np.floor(ctx.a) * 7 + b * 5, 41) == 0) & (ctx.t < 0.3) & (b > h * 0.35)
@@ -260,7 +247,7 @@ def bottle_side(ctx):
 
 
 def bottle_cap(ctx):
-    """Arriba: el cuello del bidón (un aro oscuro) y un brillo."""
+    """Tapa: cuello del bidón y un brillo."""
     index = plain(ctx)
     index = np.where((ctx.t > 0.32) & (ctx.t < 0.5), BOTTLE_RING, index)
     index = np.where(ctx.t <= 0.18, BOTTLE_RING_DARK, index)
@@ -285,11 +272,11 @@ def water_shadow_shapes(scale=1.0):
 
 # ---------------------------------------------------------------------------- zafacón
 
-BIN_TOP = 26  # más que el `height` del juego (10 → 20 px): alto y angosto como un cubo de oficina
+BIN_TOP = 26  # más que el `height` del juego (10 → 20 px) para que se lea como cubo
 
 
 def bin_side(ctx):
-    """Costado de metal gris oscuro con una banda más oscura abajo y el aro claro arriba."""
+    """Costado de metal con banda oscura abajo y aro claro arriba."""
     b = np.floor(ctx.b)
     h = np.floor(ctx.h) if np.ndim(ctx.h) else ctx.h
     index = plain(ctx)
@@ -298,13 +285,13 @@ def bin_side(ctx):
 
 
 def trash_can(scale=1.0):
-    """Cubo que se angosta hacia abajo, aro claro y la bolsa negra doblada sobre el borde."""
+    """Cubo que se angosta abajo, con la bolsa doblada sobre el borde."""
     s = scale
     c = iso.Canvas.furniture((1, 1), TRASH_ITEM["height"])
     top = round(BIN_TOP * s)
     c.cylinder(0.5, 0.5, 0.115 * s, 0, top, BIN, radius_top=0.15 * s, open_top=True, tex={"side": bin_side},
                name="bin")
-    # La bolsa: el fondo negro adentro y el doblez que asoma sobre el aro.
+    # Bolsa: fondo adentro y doblez sobre el aro.
     c.cylinder(0.5, 0.5, 0.135 * s, top - max(3, round(5 * s)), top - 1, BAG, name="bag")
     c.cylinder(0.5, 0.5, 0.155 * s, top - 1, top + 1, BAG, open_top=True, name="bag_fold")
     return c

@@ -1,6 +1,5 @@
-# Prueba del hito 17: errores y pruebas.
-# Criterio: sin QA los errores llegan a la entrega; con QA bajan; con la misma semilla se
-# generan siempre los mismos errores.
+# Errores y pruebas: sin QA los errores llegan a la entrega, con QA bajan; la misma semilla
+# da los mismos errores.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=bugs
 extends Node
 
@@ -21,9 +20,9 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
-	# La oficina se mantiene limpia: la suciedad (hito 37) bajaría el ánimo y el ritmo.
+	# Oficina limpia: la suciedad bajaría el ánimo y el ritmo.
 	EventBus.hour_changed.connect(func(_hour: int) -> void:
 		for room: Dictionary in OfficeState.rooms:
 			room["dirt"] = 0.0)
@@ -59,7 +58,7 @@ func _check_chances() -> void:
 		"un error cada 20, 30, 45 o 70 puntos según el nivel")
 	_expect(_near(Projects.get_bug_chance("junior", 40.0), 2.0 / 30.0) and _near(Projects.get_bug_chance("junior", 50.0), 1.0 / 30.0),
 		"cansado, el doble")
-	# Hito 19: estresado también el doble, sin sumarse al cansancio.
+	# Estresado también el doble, sin sumarse al cansancio.
 	_expect(_near(Projects.get_bug_chance("junior", 100.0, 70.0), 2.0 / 30.0) and _near(Projects.get_bug_chance("junior", 100.0, 69.0), 1.0 / 30.0)
 		and _near(Projects.get_bug_chance("junior", 40.0, 90.0), 2.0 / 30.0), "estresado, el doble (no se acumula)")
 
@@ -79,7 +78,6 @@ func _check_fix() -> void:
 		and _near(contract["progress"]["programming"], 10.0), "dos corregidos con 6 puntos")
 	Production.apply(contract, programmer)
 	_expect(_near(contract["progress"]["programming"], 12.0), "después vuelve a programar")
-	# Un diseñador no corrige; el CEO sí.
 	contract["bugs_found"] = 1
 	var designer: Array[Dictionary] = [{"phase": "design", "rate": 2.0}]
 	Production.apply(contract, designer)
@@ -87,7 +85,6 @@ func _check_fix() -> void:
 	var ceo: Array[Dictionary] = [{"phase": "", "rate": 3.0}]
 	Production.apply(contract, ceo)
 	_expect(contract["bugs_found"] == 0, "el CEO corrige")
-	# Con las pruebas completas, QA revisa.
 	contract["progress"] = {"design": 100.0, "programming": 100.0, "testing": 100.0}
 	var qa: Array[Dictionary] = [{"phase": "testing", "rate": 2.0}]
 	done = Production.apply(contract, qa)
@@ -127,9 +124,8 @@ func _add_staff(roles: Array[String]) -> Array[int]:
 		ids.append(employee_id)
 	for employee_id: int in ids:
 		_expect(Staff.has_working_station(Staff.get_employee(employee_id)), "puesto que funciona para %d" % employee_id)
-	# 3 escritorios en 9 m² amontonan (caben 2: ambiente −15, hito 45): cuatro cuadros y un
-	# reloj en las paredes (14 puntos × 10 / 9 = 15.6) lo dejan casi neutro (+1), como era la
-	# prueba antes del ambiente.
+	# 3 escritorios en 9 m² amontonan (−15); cuatro cuadros y un reloj (14 × 10 / 9) lo dejan en +1,
+	# casi neutro.
 	for wall_spot: Array in [[Vector2i(3, 0), 2], [Vector2i(4, 0), 2], [Vector2i(5, 0), 2], [Vector2i(5, 1), 3]]:
 		_expect(builder.place("painting", wall_spot[0], wall_spot[1])["ok"], "cuadro en %s" % wall_spot[0])
 	_expect(builder.place("wall_clock", Vector2i(3, 1), 1)["ok"], "reloj")
@@ -155,7 +151,7 @@ func _run(roles: Array[String], seed_value: int, extra_days: int) -> Dictionary:
 	var contract: Dictionary = Projects.contracts[0]
 	contract["points"] = {"design": 200, "programming": 600, "testing": 200}
 	contract["total_points"] = 1000
-	# Plazo largo: que el cliente no lo cancele por atraso (hito 18).
+	# Plazo largo: que el cliente no lo cancele por atraso.
 	contract["deadline_day"] = GameClock.get_day_count() + 1000
 	var finished_at: int = -1
 	for hour: int in range(GameConstants.HOURS_PER_DAY * 120):

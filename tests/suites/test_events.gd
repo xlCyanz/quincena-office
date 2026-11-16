@@ -1,6 +1,5 @@
-# Prueba del hito 43: sistema de eventos.
-# Criterio: no salen en pausa ni en construcción; sin elegir se toma una opción al azar a
-# los 2 minutos a cualquier velocidad; la frecuencia sube con la empresa.
+# Eventos: no salen en pausa ni construyendo; sin elegir se toma una opción al azar a los
+# 2 minutos reales a cualquier velocidad; la frecuencia sube con la empresa.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=events
 extends Node
 
@@ -118,8 +117,8 @@ func _check_countdown() -> void:
 	Events.advance_countdown(2.0)
 	_expect(Events.card.is_empty() and _notices.size() == 1 and _notices[0].begins_with("Se acabó el tiempo. Cumpleaños"),
 		"a los 2 minutos elige al azar: %s" % [_notices])
-	# La cuenta corre en segundos reales con el reloj andando, sin importar la velocidad, y
-	# se detiene en pausa (el modo construcción pausa).
+	# La cuenta va en segundos reales con el reloj andando, a cualquier velocidad, y se detiene
+	# en pausa (construir pausa).
 	Events.trigger("coffee")
 	GameClock.start()
 	GameClock.set_speed_index(GameConstants.CLOCK_SPEEDS.size() - 1)
@@ -140,7 +139,7 @@ func _count_events(hours: int) -> int:
 	_started = 0
 	GameClock.start()
 	for hour: int in range(hours):
-		# El empleado de mentira (sin sueldo ni puesto) termina renunciando: vuelve otro.
+		# El empleado de mentira termina renunciando: vuelve otro.
 		if Staff.employees.is_empty():
 			_add_employee(900 + hour, "Ana")
 		GameClock.fast_forward_hours(1)
@@ -153,10 +152,10 @@ func _count_events(hours: int) -> int:
 func _check_rolls() -> void:
 	_new_game()
 	_add_employee(901, "Ana")
-	# Con el reloj de la partida detenido (las pruebas adelantan así) no llega ninguno.
+	# Con el reloj de la partida detenido (como adelantan las pruebas) no llega ninguno.
 	GameClock.fast_forward_hours(24 * 60)
 	_expect(Events.card.is_empty(), "con el reloj detenido no salen")
-	# En pausa tampoco (el modo construcción pausa el reloj).
+	# En pausa tampoco (construir pausa el reloj).
 	GameClock.start()
 	GameClock.set_paused(true)
 	_started = 0
@@ -215,7 +214,6 @@ func _check_ui() -> void:
 	card.get_option_buttons()[1].pressed.emit()
 	await get_tree().process_frame
 	_expect(Events.card.is_empty() and not card.is_showing(), "elegir cierra la tarjeta")
-	# Un evento corta el salto de horas (la oficina vacía salta hasta la próxima llegada).
 	var opener: Callable = func(hour: int) -> void:
 		if hour == 3:
 			Events.trigger("coffee")

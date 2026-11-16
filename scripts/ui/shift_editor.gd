@@ -1,6 +1,5 @@
-# Controles para elegir un turno (hito 34): hora de entrada con −/+, horas extra con
-# −/+ y un botón por día de la semana. No cambia nada por sí solo: avisa con changed y
-# quien lo usa (menú Equipos o la ficha) le pide el cambio a Staff.
+# Controles de un turno: entrada y horas extra con −/+ y un botón por día.
+# Solo avisa con changed; quien lo usa le pide el cambio a Staff.
 class_name ShiftEditor
 extends VBoxContainer
 
@@ -16,7 +15,7 @@ var _start_label: Label
 var _overtime_label: Label
 
 
-## Con split las horas extra van en su propia fila (para paneles angostos como la ficha).
+## Con split las horas extra van en otra fila (paneles angostos como la ficha).
 func _init(day_button_width: float = 44.0, split: bool = false) -> void:
 	add_theme_constant_override("separation", 4)
 	var row := HBoxContainer.new()
@@ -77,7 +76,7 @@ func get_control(control: String) -> Control:
 	return _controls.get(control)
 
 
-## Todos los controles por nombre (para quien los expone a las pruebas).
+## Todos los controles por nombre (para las pruebas).
 func get_controls() -> Dictionary[String, Control]:
 	return _controls
 

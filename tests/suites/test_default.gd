@@ -1,7 +1,5 @@
-# Prueba del hito 23: mora y embargo.
-# Criterio: una cuota sin pagar cobra 5 % de recargo y baja la letra; a los 2 meses el banco
-# no presta; a los 3, con muebles suficientes, se salda la deuda y los puestos quedan; sin
-# muebles suficientes sale la pantalla de fin y se borra el autoguardado.
+# Mora y embargo: una cuota sin pagar cobra 5 % y baja la letra; a los 2 meses no presta; a los
+# 3 embarga (los puestos quedan si alcanza; si no, fin de partida y se borra el autoguardado).
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=default
 extends Node
 
@@ -23,7 +21,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	_check_late_fee()
@@ -112,8 +110,8 @@ func _check_warning() -> void:
 	_expect(not result["ok"] and String(result["message"]).contains("no presta"), "el banco no presta: %s" % result)
 
 
-# Arma un Área de trabajo con dos puestos (escritorio + computadora + silla), plantas y
-# escritorios con computadora fuera del área (decoración: no forman un puesto).
+# Área de trabajo con dos puestos, plantas y escritorios con computadora fuera del área
+# (decoración: no forman puesto).
 func _build_office() -> Dictionary:
 	var builder := Builder.new()
 	var y: int = GridEdge.AXIS_Y
@@ -143,14 +141,13 @@ func _count(id: String) -> int:
 	return total
 
 
-# El orden del embargo con funciones puras: decoración, puestos libres, puestos ocupados.
+# Orden del embargo (funciones puras): decoración, puestos libres, puestos ocupados.
 func _check_plan() -> void:
 	_new_game()
 	_build_office()
 	var furniture: Array[Dictionary] = []
 	for item: Dictionary in OfficeState.furniture:
 		furniture.append(item.duplicate())
-	# Se ocupa el puesto de x = 5.
 	var occupied_chair: int = OfficeState.find_furniture_at(Vector2i(5, 1))
 	furniture[occupied_chair]["assigned_to"] = "employee_99"
 	var protected: Dictionary[int, bool] = Embargo.get_protected(furniture)
@@ -197,7 +194,6 @@ func _check_seizure() -> void:
 	_expect(_count("small_plant") == 2 and _count("simple_desk") == desks - 4, "se lleva los 4 escritorios sueltos: %d" % _count("simple_desk"))
 	_expect(_count("executive_desk") == 1 and OfficeState.find_furniture_at(Vector2i(1, 1)) >= 0, "el escritorio y la silla del CEO quedan")
 	_expect(_sum(Bank.CONCEPT_SURPLUS) > 0, "el sobrante vuelve a la cuenta: %d" % _sum(Bank.CONCEPT_SURPLUS))
-	# Con todo saldado el banco vuelve a prestar.
 	_expect(not Bank.loan_problem(1000, 3).contains("no presta"), "vuelve a prestar")
 
 
@@ -267,7 +263,6 @@ func _check_game_over() -> void:
 		"estadísticas: %s" % text)
 	# Queda solo la silla de visita del CEO: el embargo no se lleva nada si no alcanza.
 	_expect(int(stats[0]["assets"]) == Embargo.get_value({"id": "basic_chair"}) and int(stats[0]["debt"]) > 0 if not stats.is_empty() else false, "deuda y bienes: %s" % [stats])
-	# Después del fin no se autoguarda más ni se cobran cuotas.
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * GameConstants.DAYS_PER_MONTH)
 	_expect(not SaveManager.has_save(SaveManager.AUTOSAVE), "no vuelve a autoguardar")
 	game.queue_free()

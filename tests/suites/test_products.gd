@@ -1,11 +1,9 @@
-# Prueba del hito 41: desarrollo de productos.
-# Criterio: desde Pequeña empresa y con una Sala de servidores que funcione se empieza un
-# producto; comparte el tope de proyectos con los contratos; un equipo lleva uno a la
-# vez; avanza con fases y errores como un contrato; se abandona; se guarda.
+# Productos: desde Pequeña empresa con Sala de servidores se empieza uno; comparte el tope con
+# los contratos; un equipo lleva uno a la vez; avanza como un contrato; se abandona y se guarda.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=products
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -42,7 +40,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Pequeña empresa, con dinero, objetivos cumplidos y las paredes de la sala.
+# Pequeña empresa, dinero, objetivos cumplidos y las paredes de la sala.
 func _new_game(server_room: bool = true) -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -67,7 +65,7 @@ func _build_server_room() -> void:
 	_builder.place("server_rack", RACK_CELL, 0)
 
 
-# Un equipo de un diseñador con su puesto en un Área de trabajo. Devuelve el equipo.
+# Equipo de un diseñador con puesto en un Área de trabajo.
 func _make_team() -> Dictionary:
 	_builder.mark_room(Workstations.WORK_AREA, Vector2i(3, 4))
 	_builder.place("simple_desk", Vector2i(1, 5), 2)
@@ -151,7 +149,7 @@ func _check_production() -> void:
 	_new_game()
 	var product: Dictionary = Products.get_product(Products.start("mobile_app", "small")["id"])
 	_notices.clear()
-	# El CEO trabaja en días hábiles; avanzar hasta que termine.
+	# El CEO trabaja en días hábiles: avanzar hasta que termine.
 	var hours: int = 0
 	while not Production.is_finished(product) and hours < 24 * 200:
 		GameClock.fast_forward_hours(1)
@@ -189,7 +187,7 @@ func _check_save() -> void:
 	_expect(not loaded.is_empty() and is_equal_approx(float(loaded["progress"]["design"]), 100.5) and loaded["bugs_hidden"] == 3
 		and loaded["name"] == product["name"] and int(loaded["team_id"]) == Projects.CEO_TEAM, "el producto se guarda: %s" % [loaded])
 	_expect(Products.start("saas", "small")["ok"] == false, "el tope sigue contando lo cargado")
-	# Una partida de antes del hito 41 no tiene "products".
+	# Partida vieja: sin "products".
 	Products.import_state({})
 	_expect(Products.products.is_empty() and Products.start_problem().is_empty(), "partida vieja: sin productos")
 
@@ -235,7 +233,6 @@ func _check_ui() -> void:
 	panel.set_tab(ProjectsPanel.TAB_CONTRACTS)
 	await get_tree().process_frame
 	_expect(panel.get_list_text().contains("En curso (0 de 1)"), "Contratos como antes")
-	# Horarios ofrece el producto en la lista del CEO.
 	Products.start("saas", "small")
 	await get_tree().process_frame
 	var teams_panel: TeamsPanel = game.get_node("TeamsPanel")

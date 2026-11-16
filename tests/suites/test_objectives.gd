@@ -1,11 +1,9 @@
-# Prueba del hito 28: objetivos guiados.
-# Criterio: al contratar al primer programador el objetivo se marca, cobra su recompensa
-# una sola vez y aparece el siguiente; una partida de la fase 2 carga con sus objetivos
-# ya cumplidos marcados.
+# Objetivos guiados: contratar al primer programador lo marca, paga una sola vez y muestra el
+# siguiente; una partida sin objetivos guardados marca al cargar los ya cumplidos.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=objectives
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -24,7 +22,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	EventBus.objective_completed.connect(func(objective_id: String) -> void: _completed.append(objective_id))
@@ -67,8 +65,7 @@ func _visible_ids() -> Array[String]:
 	return ids
 
 
-# Área de trabajo de 3×3 al este de la Oficina Ejecutiva con tres puestos (escritorio
-# con computadora y silla delante). Cumple el objetivo «Arma un Área de trabajo».
+# Área de trabajo 3×3 al este de la Oficina Ejecutiva con tres puestos: cumple «Arma un Área de trabajo».
 func _prepare_office() -> void:
 	_build_work_area()
 	_build_stations()
@@ -93,7 +90,7 @@ func _build_stations() -> void:
 			and builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "puesto en x %d" % x)
 
 
-# Contrata un programador por el camino normal: vacante, candidato y oferta.
+# Contrata por el camino normal: vacante, candidato y oferta.
 func _hire(role: String) -> Dictionary:
 	var vacancy_id: int = Staff.open_vacancy(role, "junior", 1000, true)["id"]
 	GameClock.fast_forward_hours(1)
@@ -128,7 +125,6 @@ func _check_first_programmer() -> void:
 		if text.begins_with("Objetivo cumplido"):
 			notice = text
 	_expect(notice == "Objetivo cumplido: Contrata a tu primer programador. Recompensa: $500.", "aviso: %s" % notice)
-	# Una sola vez: otros avisos y otro programador no lo vuelven a pagar.
 	EventBus.staff_changed.emit()
 	_hire("programmer")
 	_expect(_sum(CONCEPT) == 800 and Staff.employees.size() == 2, "se cobra una sola vez: %d" % _sum(CONCEPT))
@@ -148,7 +144,6 @@ func _check_rewards() -> void:
 	var notice: String = _notices[-1] if not _notices.is_empty() else ""
 	_expect(_notices.has("Objetivo cumplido: Entrega tu primer contrato. Recompensa: $500 y +0.1 ★."), "aviso con estrellas: %s" % [_notices])
 	_expect(_visible_ids() == (["work_area", "first_programmer", "first_qa"] as Array[String]), "siguen en orden: %s" % [_visible_ids()])
-	# Terreno: una condición que no cuenta.
 	Builder.new().buy_land(Builder.SIDE_EAST, 1, 1, 0)
 	_expect(not Company.is_objective_done("buy_land"), "un objetivo que aún no se ve no se cumple")
 	_expect(notice != "", "hubo avisos")
@@ -163,8 +158,7 @@ func _check_save() -> void:
 	_expect(Company.objectives_done.is_empty(), "partida nueva sin objetivos cumplidos")
 	_expect(SaveManager.load_game("slot_5") and Company.objectives_done == (["work_area", "first_programmer"] as Array[String]), "se guardan: %s" % [Company.objectives_done])
 	_expect(_sum(CONCEPT) == 800, "cargar no vuelve a pagar: %d" % _sum(CONCEPT))
-	# Partida de la fase 2: sin objetivos guardados. Tiene un programador, un QA y un
-	# contrato entregado; al cargar quedan marcados sin recompensa.
+	# Partida vieja sin objetivos, con programador, QA y un contrato entregado: se marcan sin recompensa.
 	_new_game()
 	_prepare_office()
 	_hire("programmer")
@@ -215,8 +209,7 @@ func _check_ui() -> void:
 	_expect(panel.is_shown() and not panel.is_expanded(), "si la plegó él, sigue plegada")
 	panel.get_header_button().pressed.emit()
 	_build_work_area()
-	# La recompensa se paga mientras se avisa el gasto de las paredes: el Hud no puede
-	# quedarse con el saldo o el valor de antes de cobrarla.
+	# La recompensa se paga mientras se avisa el gasto de las paredes: el Hud no debe quedarse con lo de antes.
 	var hud: Hud = game.get_node("Hud")
 	_expect(hud.get_balance_text() == MoneyFormat.format(Economy.balance), "Hud: saldo al día: %s" % hud.get_balance_text())
 	_expect(hud.get_value_text() == "Valor %s" % MoneyFormat.format(Company.get_value()), "Hud: valor al día: %s" % hud.get_value_text())

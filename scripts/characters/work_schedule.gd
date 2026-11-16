@@ -1,15 +1,6 @@
-# Horario de trabajo: qué días de la semana y entre qué horas se trabaja.
-# Los días van de 0 (lunes) a 6 (domingo) y son los días en que empieza cada jornada; se
-# trabaja desde start_hour hasta end_hour, sin incluir end_hour (8 a 17 = de 8:00 a
-# 16:59). Si end_hour no pasa de start_hour la jornada cruza la medianoche (22 a 7 =
-# de 22:00 hasta las 6:59 del día siguiente).
-#
-# El almuerzo es una hora dentro de la jornada: la que cae lunch_offset horas después de
-# la entrada (data/staff.json, workday). Durante esa hora el empleado sale.
-#
-# Horas extra (hito 34): overtime son las últimas horas de la jornada que pasan de la
-# normal; un turno las suma al final. Las horas de noche son las trabajadas entre
-# overtime.night_start y overtime.night_end (data/staff.json).
+# Horario: días (0 lunes … 6 domingo, en que empieza la jornada) y horas [start_hour, end_hour).
+# Si end_hour ≤ start_hour cruza la medianoche. El almuerzo es la hora lunch_offset tras la
+# entrada; overtime son las últimas horas de la jornada (staff.json: workday y overtime).
 class_name WorkSchedule
 extends RefCounted
 
@@ -18,12 +9,11 @@ const DAY_NAMES: Array[String] = ["lun", "mar", "mié", "jue", "vie", "sáb", "d
 var days: Array[int] = []
 var start_hour: int = 0
 var end_hour: int = 0
-## Horas extra al final de cada jornada (ya incluidas entre start_hour y end_hour).
+## Horas extra al final de la jornada (incluidas entre start_hour y end_hour).
 var overtime: int = 0
 
 
-## Crea un horario desde un diccionario {"days", "start_hour", "end_hour", "overtime"}
-## (como en data/; sin overtime no tiene horas extra).
+## Crea un horario desde {"days", "start_hour", "end_hour", "overtime"} (overtime opcional).
 static func from_dict(data: Dictionary) -> WorkSchedule:
 	var schedule := WorkSchedule.new()
 	for day: Variant in data.get("days", []):
@@ -36,8 +26,7 @@ static func from_dict(data: Dictionary) -> WorkSchedule:
 	return schedule
 
 
-## Horario de un turno: entra a start_hour esos días y la salida la marca la duración
-## de la jornada (data/staff.json, teams.shift_hours) más las horas extra.
+## Turno: entra a start_hour esos días; dura teams.shift_hours más las horas extra.
 static func make_shift(start: int, shift_days: Array[int], extra_hours: int = 0) -> WorkSchedule:
 	var duration: int = int(StaffCatalog.get_teams("shift_hours")) + extra_hours
 	return from_dict({"days": shift_days, "start_hour": start,
@@ -48,7 +37,7 @@ func to_dict() -> Dictionary:
 	return {"days": days.duplicate(), "start_hour": start_hour, "end_hour": end_hour, "overtime": overtime}
 
 
-## Horas que dura cada jornada, contando el almuerzo.
+## Horas de cada jornada, con el almuerzo.
 func get_duration() -> int:
 	if days.is_empty():
 		return 0
@@ -61,13 +50,12 @@ func get_lunch_hour() -> int:
 	return posmod(start_hour + get_lunch_offset(), GameConstants.HOURS_PER_DAY)
 
 
-## Horas desde la entrada hasta el almuerzo (data/staff.json, workday.lunch_offset).
+## Horas desde la entrada hasta el almuerzo (workday.lunch_offset).
 static func get_lunch_offset() -> int:
 	return int(StaffCatalog.get_workday("lunch_offset"))
 
 
-## Cuántas horas lleva la jornada que está en curso a esa hora (0 = la de entrada), o
-## -1 si a esa hora no hay jornada.
+## Horas que lleva la jornada en curso a esa hora (0 = la de entrada), o -1 si no hay.
 func get_shift_hour(weekday: int, hour: int) -> int:
 	var hours_per_week: int = GameConstants.DAYS_PER_WEEK * GameConstants.HOURS_PER_DAY
 	var now: int = weekday * GameConstants.HOURS_PER_DAY + hour
@@ -79,19 +67,19 @@ func get_shift_hour(weekday: int, hour: int) -> int:
 	return -1
 
 
-## Indica si esa hora de la jornada (contada como get_shift_hour) es hora extra.
+## Indica si esa hora de la jornada (como get_shift_hour) es extra.
 func is_overtime_hour(shift_hour: int) -> bool:
 	return overtime > 0 and shift_hour >= get_duration() - overtime
 
 
-## Indica si una hora del día es de noche (data/staff.json, overtime.night_start y night_end).
+## Indica si una hora del día es de noche (overtime.night_start/night_end).
 static func is_night_hour(hour: int) -> bool:
 	var night_start: int = int(StaffCatalog.get_overtime("night_start"))
 	var night_end: int = int(StaffCatalog.get_overtime("night_end"))
 	return hour >= night_start or hour < night_end
 
 
-## Horas de trabajo de cada jornada (sin el almuerzo) que caen de noche.
+## Horas de trabajo por jornada (sin almuerzo) que caen de noche.
 func get_night_hours() -> int:
 	if days.is_empty():
 		return 0
@@ -102,7 +90,7 @@ func get_night_hours() -> int:
 	return count
 
 
-## Indica si a esa hora de ese día de la semana hay jornada (la hora del almuerzo cuenta).
+## Indica si a esa hora y día hay jornada (el almuerzo cuenta).
 func is_working(weekday: int, hour: int) -> bool:
 	return get_shift_hour(weekday, hour) >= 0
 
@@ -112,8 +100,7 @@ func is_lunch(weekday: int, hour: int) -> bool:
 	return get_shift_hour(weekday, hour) == get_lunch_offset()
 
 
-## Horas enteras que faltan, contando desde el inicio de la hora actual, hasta la
-## próxima hora en que toca trabajar. Devuelve -1 si el horario no tiene ninguna.
+## Horas enteras desde el inicio de la actual hasta la próxima de trabajo; -1 si no hay.
 func hours_until_next_work(weekday: int, hour: int) -> int:
 	var hours_per_week: int = GameConstants.DAYS_PER_WEEK * GameConstants.HOURS_PER_DAY
 	for offset: int in range(1, hours_per_week + 1):

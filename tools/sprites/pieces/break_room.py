@@ -1,4 +1,4 @@
-# Muebles de la Sala de descanso, con el estilo de tools/sprites/STYLE.md:
+# Muebles de la Sala de descanso (estilo de tools/sprites/STYLE.md):
 #
 #   sofa_r0..r3              2×1: sofá lila de dos cojines, brazos rectos y patas de madera (frente a −y)
 #   fridge_r0..r3            nevera blanca de dos puertas (congelador arriba) con tiradores
@@ -156,7 +156,7 @@ MICRO_TOP = WORK_TOP + 14
 
 
 def micro_front(ctx):
-    """Ventana oscura con reflejo a la izquierda y panel de botones con números verdes a la derecha."""
+    """Ventana oscura con reflejo a la izquierda y panel de botones a la derecha."""
     a, b, w, h = grid(ctx)
     index = plain(ctx)
     pw = np.floor(w * 0.3)
@@ -180,7 +180,7 @@ def microwave(rotation):
 # ---------------------------------------------------------------------------- cafetera
 
 def coffee_maker(rotation):
-    """Cuerpo negro en forma de C: base, columna atrás y cabezal; la jarra de vidrio en el hueco."""
+    """Cuerpo negro en C (base, columna y cabezal) con la jarra en el hueco."""
     c = iso.Canvas.furniture(COFFEE_ITEM["size"], COFFEE_ITEM["height"], rotation)
     kitchen_cabinet(c)
     x0, x1 = g(0.36), g(0.64)
@@ -251,7 +251,7 @@ PONG_Y = (0.45, 1.55)
 
 
 def pong_top(ctx):
-    """Líneas blancas: borde y la del medio a lo largo."""
+    """Líneas blancas del borde y del medio."""
     a, b, w, h = grid(ctx)
     index = plain(ctx)
     edge = (a < 2) | (a >= w - 2) | (b < 1) | (b >= h - 1)
@@ -269,10 +269,10 @@ def ping_pong(rotation):
             legs = pid if legs is None else legs
     c.box(g(PONG_X[0]), g(PONG_X[1]), g(PONG_Y[0]), g(PONG_Y[1]), PONG_TOP - 2, PONG_TOP, TABLE_GREEN,
           tex={"top": pong_top}, name="table", flat=False)
-    # Red de lado a lado, en el medio a lo largo de x.
+    # Red al medio a lo largo de x.
     c.box(1.0 - 1 / 64.0, 1.0 + 1 / 64.0, g(PONG_Y[0] - 0.03), g(PONG_Y[1] + 0.03), PONG_TOP, PONG_TOP + 6, NET,
           name="net")
-    # Dos paletas sobre la mesa, una en cada mitad.
+    # Una paleta en cada mitad.
     c.cylinder(0.55, 0.8, 0.07, PONG_TOP, PONG_TOP + 1, PADDLE, name="paddle_a")
     c.cylinder(1.5, 1.25, 0.07, PONG_TOP, PONG_TOP + 1, PADDLE, name="paddle_b")
     return c

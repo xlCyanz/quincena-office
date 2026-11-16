@@ -1,10 +1,7 @@
 #!/bin/sh
-# Exportación de escritorio de prueba (hito 66): exporta los presets de lanzamiento de
-# export_presets.cfg a build/ y revisa cada paquete con tests/export_check.gd (sin
-# herramientas de desarrollo, con los datos y llegando al menú principal). En macOS también
-# arranca la aplicación exportada sin ventana unos segundos y busca errores en su salida.
+# Exporta los presets de export_presets.cfg a build/, revisa cada paquete con tests/export_check.gd
+# y en macOS arranca la app sin ventana buscando errores. Necesita las plantillas de exportación.
 # Uso: tests/export_desktop.sh [ruta de Godot]
-# Necesita las plantillas de exportación de la misma versión de Godot.
 set -u
 GODOT="${1:-/Applications/Godot.app/Contents/MacOS/Godot}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,8 +34,7 @@ check_pack() {
 		FAILED=1
 		return
 	fi
-	# Desde una carpeta vacía: con --main-pack, lo que no está en el paquete se busca en la
-	# carpeta actual, y desde el proyecto se verían sus archivos.
+	# Desde una carpeta vacía: --main-pack busca en la carpeta actual lo que falta en el paquete.
 	EMPTY="$ROOT/build/check_run"
 	rm -rf "$EMPTY" && mkdir -p "$EMPTY"
 	OUT="$(cd "$EMPTY" && "$GODOT" --headless --main-pack "$ROOT/$2" -s "$CHECK" 2>&1)"
@@ -63,7 +59,7 @@ if [ -f "build/macos/Quincena Office.zip" ]; then
 	APP="build/macos/Quincena Office.app"
 	check_pack "macOS" "$APP/Contents/Resources/Quincena Office.pck"
 	if [ "$(uname)" = "Darwin" ]; then
-		# La aplicación de lanzamiento arranca de verdad (sin ventana) y no da errores.
+		# Arranca sin ventana y no da errores.
 		RUN="$("$APP/Contents/MacOS/Quincena Office" --headless --quit-after 120 2>&1)"
 		CODE=$?
 		if [ $CODE -ne 0 ] || echo "$RUN" | grep -q "ERROR"; then

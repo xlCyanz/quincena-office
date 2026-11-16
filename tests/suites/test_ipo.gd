@@ -1,6 +1,5 @@
-# Prueba del hito 48: Corporación y salir a bolsa.
-# Criterio: con 4 ejecutivos y 3 productos activos se llega a Corporación; con valor >
-# $5,000,000 se puede salir a bolsa y la partida sigue.
+# Corporación y bolsa: 4 ejecutivos y 3 productos activos llevan a Corporación; con valor
+# > $5,000,000 se sale a bolsa y la partida sigue.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=ipo
 extends Node
 
@@ -75,7 +74,7 @@ func _three_products() -> void:
 		_expect(result["ok"], "lanzar el producto %d: %s" % [index + 1, result["message"]])
 
 
-# Ejecutivos de mentira (solo para contar el requisito; no pasa el tiempo con ellos).
+# Ejecutivos de mentira: solo cuentan para el requisito (no pasa el tiempo con ellos).
 func _add_fake_executive(index: int) -> void:
 	Staff.employees.append({"id": FAKE_ID + index, "name": "Ejecutivo %d" % index, "role": StaffCatalog.get_executive_role(),
 		"level": "", "salary": 0, "department": "", "skills": {"leadership": 50}})
@@ -165,7 +164,6 @@ func _check_free_mode() -> void:
 	Company.stage = 4
 	_set_value(6000000)
 	Company.go_public()
-	# La partida sigue: pasa el tiempo, llegan ofertas y se paga lo de siempre.
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY * 3)
 	_expect(Company.is_public() and not Projects.offers.is_empty(), "modo libre: el juego sigue y llegan ofertas")
 	_expect(Company.stage == 4, "sigue en Corporación")
@@ -181,7 +179,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(not Company.is_public(), "partida nueva: no cotiza")
 	_expect(SaveManager.load_game("slot_5") and Company.is_public() and Company.public_day == day, "se guarda que cotiza")
-	# Antes del hito 48 no estaba la clave.
+	# Partida vieja: sin la clave.
 	var state: Dictionary = Company.export_state()
 	state.erase("public_day")
 	state.erase("ipo_announced")

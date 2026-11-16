@@ -1,6 +1,5 @@
-# Prueba del hito 14: ofertas de contratos.
-# Criterio: los puntos, plazos y pagos de cada oferta caen en los rangos de la tabla
-# 13.4; aceptar un contrato con anticipo suma el 30% al saldo.
+# Ofertas de contratos: puntos, plazos y pagos caen en los rangos de la tabla 13.4; aceptar
+# con anticipo suma el 30 % al saldo.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=contracts
 extends Node
 
@@ -20,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_catalog()
 	_check_new_game()
@@ -43,7 +42,7 @@ func _expect(condition: bool, message: String) -> void:
 
 func _new_game() -> void:
 	SaveManager.new_game()
-	# Sin objetivos guiados (hito 28): sus recompensas cambiarían el saldo y la reputación.
+	# Sin objetivos guiados: sus recompensas cambiarían el saldo y la reputación.
 	for objective: Dictionary in Company.get_objectives():
 		Company.objectives_done.append(String(objective["id"]))
 	Projects.set_seed(SEED)
@@ -90,7 +89,7 @@ func _check_new_game() -> void:
 func _check_ranges() -> void:
 	_new_game()
 	Projects.reputation = 5.0
-	Company.stage = 4  # Corporación: llegan grandes y de élite (hito 47).
+	Company.stage = 4  # Corporación: llegan grandes y de élite.
 	var seen: Dictionary[int, bool] = {}
 	var sizes_seen: Dictionary[String, int] = {}
 	var with_advance: int = 0
@@ -166,7 +165,7 @@ func _check_expiry() -> void:
 	_new_game()
 	var first: Dictionary = Projects.offers[0]
 	_expect(Projects.offer_days_left(first) == 5, "la primera oferta caduca en 5 días")
-	# La partida empieza a las 8:00: la primera llamada llega a las 9:00 del día 1.
+	# La partida empieza a las 8:00: la primera oferta llega a las 9:00 del día 1.
 	for day: int in range(5):
 		_to_next_arrival()
 	_expect(not Projects.get_offer(first["id"]).is_empty() and Projects.offer_days_left(first) == 1, "el día 5 sigue")
@@ -177,7 +176,7 @@ func _check_expiry() -> void:
 func _check_accept() -> void:
 	_new_game()
 	Projects.reputation = 5.0
-	Company.stage = 1  # Startup: llegan medianos sin vendedor (hito 27).
+	Company.stage = 1  # Startup: llegan medianos sin vendedor.
 	# Busca una oferta con anticipo y otra sin anticipo.
 	var with_advance: Dictionary = {}
 	var without: Dictionary = {}
@@ -210,10 +209,9 @@ func _check_accept() -> void:
 	_expect(problem.contains("tope es 1"), "no se acepta un segundo contrato: %s" % problem)
 	before = Economy.balance
 	_expect(not Projects.accept(without["id"])["ok"] and Economy.balance == before, "el segundo no cobra nada")
-	# Sin anticipo no entra dinero.
 	Projects.contracts.clear()
 	_expect(Projects.accept(without["id"])["ok"] and Economy.balance == before, "aceptar sin anticipo no cobra")
-	# Los grandes exigen Sala de reuniones (y llegan desde Mediana empresa, hito 47).
+	# Los grandes exigen Sala de reuniones (y llegan desde Mediana empresa).
 	Projects.contracts.clear()
 	Company.stage = 3
 	var large: Dictionary = {}
@@ -226,7 +224,6 @@ func _check_accept() -> void:
 		_to_next_arrival()
 	_expect(not large.is_empty(), "llegó una oferta grande")
 	_expect(Projects.accept_problem(large["id"]).contains("Sala de reuniones"), "un grande exige Sala de reuniones: %s" % Projects.accept_problem(large["id"]))
-	# Rechazar la quita.
 	var count: int = Projects.offers.size()
 	_expect(Projects.reject(large["id"]) and Projects.offers.size() == count - 1 and not Projects.reject(large["id"]), "rechazar")
 

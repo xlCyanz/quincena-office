@@ -1,10 +1,9 @@
-# Prueba del hito 57: iconos de estado y avisos con destino.
-# Criterio: un empleado cansado muestra su icono y deja de mostrarlo al recuperarse; un clic
-# en el aviso de renuncia abre su ficha.
+# Iconos de estado y avisos con destino: el cansado muestra su icono y lo pierde al recuperarse;
+# un clic en el aviso de renuncia abre su ficha.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=status_icons
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -32,7 +31,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un Área de trabajo de tres puestos al norte (como en test_breaks).
+# Área de trabajo de tres puestos al norte (como en test_breaks).
 func _new_game() -> void:
 	GameClock.stop()
 	SaveManager.new_game()
@@ -66,7 +65,7 @@ func _hire(role: String = "programmer") -> Dictionary:
 	return employee
 
 
-# Le da al CEO un contrato pequeño: el programador sin equipo lo lleva con él.
+# Contrato pequeño del CEO: el programador sin equipo lo lleva con él.
 func _give_work(employee: Dictionary) -> void:
 	var team: Dictionary = Staff.create_team()
 	Staff.add_to_team(team["id"], employee["id"])
@@ -103,7 +102,6 @@ func _check_icons() -> void:
 	employee["stress"] = 70
 	_expect(Staff.get_status_icon(employee) == "stressed", "estrés 70: estresado")
 	employee["stress"] = 20
-	# Sin silla: se la quita del puesto.
 	var seat: Dictionary = OfficeState.find_furniture_assigned_to(Staff.employee_key(employee["id"]))
 	seat["assigned_to"] = ""
 	_expect(Staff.get_status_icon(employee) == "no_station", "sin silla: sin puesto")
@@ -170,7 +168,6 @@ func _check_notices() -> void:
 	_expect(hud.get_notice_text() == "Aviso común." and hud.get_notice_target().is_empty(), "un aviso común no lleva a nada")
 	hud.click_notice()
 	_expect(hud.get_notice_text() == "Aviso común.", "el clic no lo cierra")
-	# El aviso de renuncia lleva a la ficha.
 	employee["mood"] = 0
 	employee["bad_days"] = int(StaffCatalog.get_morale("quit_bad_days"))
 	Staff._update_morale()
@@ -181,12 +178,10 @@ func _check_notices() -> void:
 	_expect(card.is_open() and card.get_employee_id() == int(employee["id"]), "el clic abre su ficha")
 	_expect(hud.get_notice_text().is_empty(), "y cierra el aviso")
 	card.close()
-	# Un menú.
 	var bank: BankPanel = game.get_node("BankPanel")
 	EventBus.send_notice(EventBus.target_menu("bank"), "La calificación sube.")
 	hud.click_notice()
 	_expect(bank.is_open(), "un aviso del banco abre el Banco")
-	# Un contrato y un producto abren Proyectos en su pestaña.
 	var projects: ProjectsPanel = game.get_node("ProjectsPanel")
 	EventBus.send_notice(EventBus.target_product(1), "Producto.")
 	hud.click_notice()
@@ -195,13 +190,11 @@ func _check_notices() -> void:
 	EventBus.send_notice(EventBus.target_contract(int(Projects.contracts[0]["id"])), "Contrato.")
 	hud.click_notice()
 	_expect(projects.get_tab() == ProjectsPanel.TAB_CONTRACTS, "un contrato, en Contratos")
-	# Una habitación mueve la cámara.
 	var camera: OfficeCamera = game.get_node("OfficeCamera")
 	var grid: OfficeGrid = game.get_node("OfficeGrid")
 	EventBus.send_notice(EventBus.target_room(Vector2i(5, 6)), "Sucia.")
 	hud.click_notice()
 	_expect(camera.position.distance_to(grid.grid_to_world(Vector2(5, 6))) < 1.0, "una habitación centra la cámara")
-	# Los sistemas mandan sus avisos con destino.
 	Projects.contracts[0]["deadline_day"] = GameClock.get_day_count() - 1
 	Projects._check_late_contracts(GameClock.get_day_count())
 	_expect(hud.get_notice_target() == EventBus.target_contract(int(Projects.contracts[0]["id"])), "el atraso lleva al contrato")

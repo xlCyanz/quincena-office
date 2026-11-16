@@ -1,6 +1,5 @@
-# Prueba del hito 46: calidades de muebles.
-# Criterio: una computadora pro rinde más que la básica; con silla ergonómica la energía
-# baja más lento; mejorar cobra la diferencia.
+# Calidades de muebles: la computadora pro rinde más que la básica, la silla ergonómica gasta
+# menos energía y mejorar cobra la diferencia.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=furniture_quality
 extends Node
 
@@ -123,7 +122,6 @@ func _check_upgrade() -> void:
 	_expect(String(result["message"]).contains("Computadora pro") and String(result["message"]).contains("$2000"), result["message"])
 	result = _builder.quote_upgrade(DESK_A)
 	_expect(not result["ok"] and String(result["message"]).contains("la mejor"), "la pro no se mejora: %s" % result["message"])
-	# La silla básica pasa a ergonómica sin dejar de ser de quien la usa.
 	balance = Economy.balance
 	result = _builder.upgrade(CHAIR_A)
 	_expect(result["ok"] and Economy.balance == balance - 190, "silla básica → ergonómica cobra $190: %s" % result["message"])
@@ -131,19 +129,16 @@ func _check_upgrade() -> void:
 		and Staff.has_working_station(employee), "sigue sentado en su puesto")
 	result = _builder.quote_upgrade(CHAIR_A)
 	_expect(not result["ok"] and String(result["message"]).contains("no se puede mejorar"), "la ergonómica no se mejora: %s" % result["message"])
-	# Lo que no se mejora.
 	_expect(not _builder.quote_upgrade(Vector2i(5, 6))["ok"], "en el piso vacío no hay nada que mejorar")
 	_builder.place("simple_desk", FREE_DESK, 2)
 	result = _builder.quote_upgrade(FREE_DESK)
 	_expect(not result["ok"] and String(result["message"]).contains("no tiene computadora"), "escritorio sin computadora: %s" % result["message"])
 	_builder.place("small_plant", Vector2i(5, 6), 0)
 	_expect(not _builder.quote_upgrade(Vector2i(5, 6))["ok"], "una planta no se mejora")
-	# Sin dinero no se mejora.
 	_builder.install_computer("basic_computer", FREE_DESK)
 	Economy.charge(Economy.balance - 100, "Prueba")
 	result = _builder.quote_upgrade(FREE_DESK)
 	_expect(not result["ok"] and String(result["message"]).contains("No alcanza"), "sin dinero: %s" % result["message"])
-	# La silla del CEO también se mejora.
 	Economy.earn(10000, "Prueba")
 	_expect(_builder.upgrade(Vector2i(1, 1))["ok"] and _item_at(Vector2i(1, 1))["assigned_to"] == "ceo", "la silla del CEO se mejora")
 	_expect(RoomRules.function_problems(OfficeState.find_room("executive_office"), OfficeState.furniture).is_empty(),
@@ -153,7 +148,6 @@ func _check_upgrade() -> void:
 func _check_monitor() -> void:
 	_new_game()
 	_builder.mark_room(Workstations.WORK_AREA, OPEN_CELL)
-	# En un escritorio sencillo no cabe.
 	_builder.place("simple_desk", Vector2i(5, 3), 2)
 	_builder.install_computer("pro_computer", Vector2i(5, 3))
 	var result: Dictionary = _builder.quote_install_monitor("second_monitor", Vector2i(5, 3))
@@ -202,7 +196,7 @@ func _check_production() -> void:
 	var team: Dictionary = Staff.create_team()
 	Staff.add_to_team(team["id"], employee["id"])
 	var project: Dictionary = {"team_id": team["id"]}
-	# Una hora en que trabaja (está en su horario y no almuerza).
+	# Una hora en que trabaja (en su horario y fuera del almuerzo).
 	var at: int = Staff.get_absolute_hour()
 	while not Staff.is_expected(key, Staff.get_weekday_at(at), posmod(at, GameConstants.HOURS_PER_DAY)):
 		at += 1
@@ -241,13 +235,12 @@ func _check_energy() -> void:
 		"con silla ergonómica la energía baja más lento: −%d contra −%d" % [lost_basic, lost_ergonomic])
 	_expect(lost_basic == 18 or lost_basic == 8, "la básica −6 por hora: −%d" % lost_basic)
 	_expect(lost_ergonomic == 12 or lost_ergonomic == 4, "la ergonómica −4 por hora: −%d" % lost_ergonomic)
-	# Mejorar la silla en su lugar cambia el ritmo.
 	_builder.upgrade(CHAIR_A)
 	_expect(Staff.get_work_energy(basic_key) == -4, "silla mejorada: −4/h")
 
 
-# El escritorio amplio se quitó: una partida vieja que lo tiene lo carga como sencillo, en la
-# casilla que tiene la silla delante, y el puesto sigue funcionando.
+# El escritorio amplio ya no existe: una partida vieja lo carga como sencillo en la casilla
+# con la silla delante, y el puesto sigue funcionando.
 func _check_wide_desk() -> void:
 	_new_game()
 	var employee: Dictionary = _station_a()
@@ -282,7 +275,7 @@ func _check_save() -> void:
 	_expect(_item_at(DESK_A)["computer"] == "pro_computer" and _item_at(DESK_A)["monitor"] == "second_monitor"
 		and FurnitureCatalog.get_monitor_count(_item_at(DESK_A)) == 2
 		and _item_at(CHAIR_A)["id"] == "ergonomic_chair", "se guardan computadora, pantallas y silla")
-	# Una partida de antes del hito 46 no tiene monitor.
+	# Una partida vieja no tiene monitor.
 	var state: Dictionary = OfficeState.export_state()
 	for item: Dictionary in state["furniture"]:
 		item.erase("monitor")
@@ -290,7 +283,7 @@ func _check_save() -> void:
 	OfficeState.import_state(state)
 	_expect(String(_item_at(DESK_A)["monitor"]).is_empty() and _near(Workstations.get_desk_bonus(_item_at(DESK_A)), 0.3),
 		"sin monitor guardado queda vacío")
-	# Una partida de antes de la fase 8: computadora media y un monitor sobre un escritorio sencillo.
+	# Partida vieja: computadora media y un monitor sobre un escritorio sencillo.
 	_new_game()
 	_builder.place("simple_desk", FREE_DESK, 2)
 	_builder.install_computer("basic_computer", FREE_DESK)
@@ -329,7 +322,6 @@ func _check_ui() -> void:
 	_expect(texts.has("PC pro $2500") and texts.has("Pantalla $300") and texts.has("Silla ergo. $250") and texts.has("Esc. largo $350")
 		and not texts.has("Esc. amplio $350") and not texts.has("PC media $1200"),
 		"y los muebles nuevos con su precio")
-	# La herramienta Mejorar muestra el costo en la vista previa.
 	var controller: BuildController = null
 	for node: Node in game.find_children("*", "", true, false):
 		if node is BuildController:

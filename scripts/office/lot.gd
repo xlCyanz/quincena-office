@@ -1,7 +1,5 @@
-# El local: el conjunto de casillas que la empresa tiene (hito 25). Empieza como un
-# rectángulo y crece al comprar terreno, así que puede quedar con forma de L o de T.
-# Tiene has_point como Rect2i para que los sistemas pregunten igual si una casilla es
-# del local.
+# El local: conjunto de casillas de la empresa; crece con terreno (puede quedar en L o T).
+# has_point como Rect2i.
 class_name Lot
 extends RefCounted
 
@@ -59,14 +57,14 @@ func get_cells() -> Array[Vector2i]:
 	return cells
 
 
-## Una copia con más casillas.
+## Copia con más casillas.
 func with_cells(cells: Array[Vector2i]) -> Lot:
 	var copy := Lot.from_cells(get_cells())
 	copy.add_cells(cells)
 	return copy
 
 
-## Bordes del contorno: los que tienen una casilla dentro del local y otra fuera.
+## Bordes del contorno (una casilla dentro y otra fuera).
 func get_outline() -> Array[Vector3i]:
 	var edges: Array[Vector3i] = []
 	for cell: Vector2i in get_cells():

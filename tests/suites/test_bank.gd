@@ -1,6 +1,5 @@
-# Prueba del hito 20: menú Banco.
-# Criterio: tras comprar un mueble y cobrar un contrato, ambos movimientos aparecen con
-# su fecha y los totales del mes cuadran con Economy.
+# Menú Banco: una compra y el cobro de un contrato aparecen con su fecha y los totales del
+# mes cuadran con Economy.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=bank
 extends Node
 
@@ -20,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_totals()
 	_check_months()
@@ -52,7 +51,7 @@ func _buy_plant() -> int:
 	return price
 
 
-# Acepta un contrato, lo termina y lo entrega. Devuelve lo cobrado en la entrega.
+# Acepta, termina y entrega un contrato; devuelve lo cobrado.
 func _deliver_contract() -> Dictionary:
 	if Projects.offers.is_empty():
 		Projects.offers.append(Projects._make_offer(GameClock.get_day_count(), "small"))
@@ -104,7 +103,7 @@ func _check_totals() -> void:
 func _check_months() -> void:
 	_new_game()
 	_buy_plant()
-	# Al día 1 del mes 2: el mantenimiento cuenta en el mes nuevo y el anterior se guarda.
+	# Día 1 del mes 2: el mantenimiento va al mes nuevo y el anterior se guarda.
 	GameClock.fast_forward_hours((GameConstants.DAYS_PER_MONTH - GameClock.get_day_count()) * GameConstants.HOURS_PER_DAY - GameClock.get_hour())
 	_expect(GameClock.get_month() == 2 and Economy.get_current_month() == 2, "llegar al mes 2")
 	var maintenance: int = Economy.get_maintenance(OfficeState.lot_rect.get_area())
@@ -132,7 +131,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_5"), "cargar")
 	_expect(JSON.stringify(Economy.export_state()) == before, "la cuenta vuelve igual")
-	# Una partida de antes del hito 20 rearma los totales con el historial.
+	# Una partida vieja rearma los totales con el historial.
 	var old: Dictionary = Economy.export_state()
 	old.erase("month_totals")
 	var expected: Dictionary[String, int] = Economy.get_month_totals(1)
@@ -148,7 +147,6 @@ func _check_panel() -> void:
 	GameClock.stop()
 	var bank: BankPanel = game.get_node("BankPanel")
 	var projects: ProjectsPanel = game.get_node("ProjectsPanel")
-	# Todos los botones de la barra entran en la pantalla.
 	await get_tree().process_frame
 	var view: Rect2 = get_viewport().get_visible_rect()
 	for button: Node in bank.get_open_button().get_parent().get_children():
@@ -174,7 +172,6 @@ func _check_panel() -> void:
 	_expect(rows.size() == Economy.movements.size(), "un renglón por movimiento")
 	_expect(rows[0].begins_with("Día 1 · Mes 1 | %s" % Economy.movements[-1]["concept"]), "el más nuevo arriba: %s" % rows[0])
 	_expect(rows.any(func(row: String) -> bool: return row.contains("Muebles | −%s" % MoneyFormat.format(price))), "la compra está en el historial")
-	# El selector solo va del mes anterior al actual.
 	_expect(bank.get_previous_button().disabled and bank.get_next_button().disabled, "en el mes 1 no hay otro mes")
 	GameClock.fast_forward_hours((GameConstants.DAYS_PER_MONTH - GameClock.get_day_count()) * GameConstants.HOURS_PER_DAY - GameClock.get_hour())
 	await get_tree().process_frame

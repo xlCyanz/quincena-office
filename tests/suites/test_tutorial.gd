@@ -1,11 +1,9 @@
-# Prueba del hito 63: tutorial, primeros pasos.
-# Criterio: una partida nueva muestra el primer paso; al cumplir la condición pasa al
-# siguiente; saltarlo lo cierra y se guarda. También: resalta con un marco lo que pide,
-# no tapa los paneles, se retoma desde Ajustes y una partida sin tutorial carga sin él.
+# Tutorial: una partida nueva muestra el primer paso y avanza al cumplir cada condición; resalta lo
+# que pide sin tapar los paneles; saltarlo lo cierra y se guarda; se retoma desde Ajustes.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=tutorial
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -71,7 +69,7 @@ func _click(control: Control) -> void:
 		await _push(event)
 
 
-# Arrastra la oficina con el botón izquierdo desde un punto libre de la pantalla.
+# Arrastra con el botón izquierdo desde un punto libre de la pantalla.
 func _drag(from: Vector2, to: Vector2) -> void:
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
@@ -182,7 +180,7 @@ func _check_walkthrough() -> void:
 	staff_panel.select_role_and_level("programmer", "junior")
 	await _click(staff_panel.get_publish_button())
 	_expect(Staff.vacancies.size() == 1 and _step_id() == "hire", "publicar la vacante pasa a contratar")
-	# 6. Contratar: siguen los pasos del negocio (hito 64, test_help los recorre hasta el final).
+	# 6. Contratar: siguen los pasos del negocio (test_help los recorre).
 	_expect(not Staff.hire_directly("programmer", "junior").is_empty(), "contratar un programador")
 	_expect(Tutorial.active and _step_id() == "contract" and panel.is_showing(), "con el primer empleado pasa al contrato")
 	await _close_game(game)
@@ -201,7 +199,6 @@ func _check_skip_and_resume() -> void:
 	_expect(not Tutorial.active and not panel.is_showing() and bool(Settings.get_value("tutorial_seen")),
 		"Saltar cierra el tutorial y lo recuerda")
 	_expect(_notices.size() == 1 and _notices[0].contains("Ajustes"), "y avisa cómo retomarlo: %s" % [_notices])
-	# Se guarda saltado.
 	SaveManager.save_game("slot_1")
 	var settings: SettingsPanel = game.get_node("SettingsPanel")
 	settings.set_open(true)
@@ -215,12 +212,11 @@ func _check_skip_and_resume() -> void:
 	_expect(settings.get_tutorial_button().disabled and settings.get_tutorial_button().text == "El tutorial está en curso",
 		"con el tutorial en curso el botón no se usa")
 	await _close_game(game)
-	# La partida guardada lo tiene saltado.
 	_expect(SaveManager.load_game("slot_1") and not Tutorial.active and _step_id() == "" and Tutorial.step_index == 1,
 		"al cargar sigue saltado, en el paso 2")
 	Tutorial.resume()
 	_expect(_step_id() == "build", "y retomarlo vuelve al paso 2")
-	# Terminado, se vuelve a empezar desde el principio.
+	# Terminado, vuelve a empezar desde el principio.
 	Tutorial.import_state({"finished": true, "step": "hire"})
 	Tutorial.resume()
 	_expect(Tutorial.active and Tutorial.step_index == 0, "volver a empezar arranca en el paso 1")
@@ -237,7 +233,7 @@ func _check_save_and_load() -> void:
 	SaveManager.new_game()
 	_expect(_step_id() == "camera", "una partida nueva vuelve al principio")
 	_expect(SaveManager.load_game("slot_2") and Tutorial.active and _step_id() == "work_area", "cargar vuelve al paso 3")
-	# Partida sin tutorial (de antes del hito 63): carga sin él.
+	# Partida sin tutorial: carga sin él.
 	var file := FileAccess.open(TEST_SAVE_DIR.path_join("slot_2.json"), FileAccess.READ)
 	var data: Dictionary = JSON.parse_string(file.get_as_text())
 	file.close()

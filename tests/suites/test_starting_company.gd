@@ -1,10 +1,9 @@
-# Parte de test_all: la empresa con la que empieza la partida (data/starting_company.json).
-# Criterio: una partida nueva arranca en Mediana empresa con 40 empleados, todos con su
-# puesto, equipos con líder, gerentes, ejecutivos, personal de apoyo y contratos en curso
-# que avanzan.
+# Empresa de prueba (data/starting_company.json): arranca en Mediana empresa con 40 empleados con puesto,
+# equipos con líder, dirección, apoyo y contratos en curso que avanzan.
+# Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=starting_company
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 var _failures: int = 0

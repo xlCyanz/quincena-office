@@ -1,6 +1,5 @@
-# Prueba del hito 52: baños con capacidad.
-# Criterio: con 25 personas y 2 inodoros baja el ánimo y la producción; con 3 no; el
-# evento de baño dañado quita uno hasta repararlo.
+# Baños con capacidad: con 25 personas y 2 inodoros bajan ánimo y producción, con 3 no; el
+# baño dañado quita uno hasta repararlo.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=bathrooms
 extends Node
 
@@ -44,7 +43,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un puesto de trabajo y dinero de sobra; los objetivos ya cumplidos.
+# Partida nueva con un puesto, dinero y los objetivos cumplidos.
 func _new_game() -> void:
 	GameClock.stop()
 	SaveManager.new_game()
@@ -86,8 +85,7 @@ func _add_toilets(count: int) -> void:
 			count -= 1
 
 
-# Un empleado de verdad (con puesto) y, si se pide, copias de él sin puesto hasta llegar
-# a esa cantidad de empleados: todas trabajan de 8 a 17.
+# Un empleado con puesto y, si se pide, copias sin puesto hasta esa cantidad; todos de 8 a 17.
 func _hire_staff(total: int) -> Dictionary:
 	_expect(_builder.mark_room(Workstations.WORK_AREA, WORK_CELL)["ok"], "marcar el Área de trabajo")
 	_expect(_builder.place("simple_desk", DESK_CELL, 2)["ok"] and _builder.place("basic_chair", CHAIR_CELL, 0)["ok"]
@@ -171,7 +169,6 @@ func _check_capacity() -> void:
 	_add_toilets(1)
 	_expect(Staff.get_toilet_capacity() == 3 and Staff.get_bathroom_shortage(at) == 0, "con 3 alcanzan")
 	_expect(is_equal_approx(short_rate, _ceo_rate(contract, at) * 0.95), "con 2 todos rinden 95 %")
-	# Un empleado también rinde menos.
 	var team: Dictionary = Staff.create_team()
 	var worker: Dictionary = Staff.employees[0]
 	Staff.add_to_team(team["id"], worker["id"])
@@ -273,13 +270,11 @@ func _check_ui() -> void:
 	_expect(Staff.broken_toilets == 0 and panel.get_repair_button() == null and not panel.get_text().contains("Faltan inodoros"),
 		"reparado, alcanza y el botón se va")
 	Staff.broken_toilets = 1
-	# Los que están sentados salen a buscar un baño y vuelven.
 	var characters: Array[OfficeCharacter] = game.get_characters()
 	for character: OfficeCharacter in characters:
 		character.import_state({"activity": OfficeCharacter.Activity.SEATED,
 			"cell": [character.get_seat_cell().x, character.get_seat_cell().y]})
-	# Cada uno sale una vez cada trip_every_hours (6) horas, repartidos: por hora como mucho
-	# los que no caben (6 personas) ÷ 6 = 1, y en 12 horas nadie sale más de dos veces.
+	# Por hora salen como mucho los que no caben (6) ÷ 6 = 1: en 12 horas nadie sale más de dos veces.
 	var every: int = int(StaffCatalog.get_bathrooms("trip_every_hours"))
 	_expect(every == 6, "una salida cada 6 horas")
 	var hour: int = Staff.get_absolute_hour()

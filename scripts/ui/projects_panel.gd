@@ -1,14 +1,5 @@
-# Menú Proyectos (diseño, 12.3): la reputación, los contratos en curso con su plazo, quién
-# los lleva y sus tres barras de avance (diseño, programación y pruebas), y la bandeja de
-# ofertas con cliente, tipo, tamaño, trabajo, plazo, pago, anticipo y penalidad, para
-# aceptarlas o rechazarlas.
-#
-# No pausa el tiempo. Ocupa el lado izquierdo, como Personal (abrir uno cierra el otro;
-# lo hace la escena de juego). Se construye en código; su botón va en la barra de menús
-# y muestra cuántas ofertas hay. Desde el hito 36 lista los clientes que esperan en la
-# Recepción y hasta qué hora. Desde el hito 41 tiene dos pestañas: Contratos (lo de
-# antes) y Productos (empezar uno, los que están en desarrollo, quién los lleva y
-# abandonarlos). Contratos y productos comparten el tope de proyectos en curso.
+# Menú Proyectos (lado izquierdo, no pausa): pestañas Contratos (reputación, contratos en curso,
+# visitas en la Recepción y ofertas) y Productos; los dos comparten el tope de proyectos en curso.
 class_name ProjectsPanel
 extends CanvasLayer
 
@@ -29,7 +20,7 @@ const BAR_HEIGHT: float = 14.0
 const TAB_CONTRACTS: String = "contracts"
 const TAB_PRODUCTS: String = "products"
 
-# Botón «?» de ayuda (hito 64).
+# Botón «?» de ayuda.
 var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
@@ -81,7 +72,7 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
-	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	# Ancho y alto según la pantalla y la barra de menús.
 	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
 	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
@@ -184,7 +175,7 @@ func get_start_button() -> Button:
 	return _start_button
 
 
-## Elige el tipo y el tamaño del próximo producto (como las listas de la pestaña).
+## Elige el tipo y el tamaño del próximo producto como en las listas de la pestaña.
 func choose_new_product(type_id: String, size: String) -> void:
 	_new_type = type_id
 	_new_size = size
@@ -278,8 +269,7 @@ static func describe_reputation(value: float) -> String:
 	return "%s %s" % [stars(value), String.num(value, 1) if not is_equal_approx(value, roundf(value)) else str(roundi(value))]
 
 
-## "★☆☆☆☆" para una reputación de 1 a 5: solo las estrellas completas (con 1.9 se ve
-## una, porque los requisitos de las ofertas piden estrellas enteras).
+## "★☆☆☆☆" de 1 a 5: solo estrellas completas (1.9 = una), porque las ofertas piden estrellas enteras.
 static func stars(value: float) -> String:
 	var full: int = clampi(floori(value + 0.0001), 0, STARS)
 	return "★".repeat(full) + "☆".repeat(STARS - full)
@@ -554,8 +544,7 @@ func _add_launched(product: Dictionary) -> void:
 	_list.add_child(HSeparator.new())
 
 
-# Quién lleva un proyecto de producto (desarrollo o actualización), su avance, su estado y
-# el botón Abandonar con su confirmación.
+# Quién lleva un producto (desarrollo o actualización), avance, estado y Abandonar con confirmación.
 func _add_project_work(product_id: int, project: Dictionary) -> void:
 	var owner_row := HBoxContainer.new()
 	_list.add_child(owner_row)
@@ -564,7 +553,7 @@ func _add_project_work(product_id: int, project: Dictionary) -> void:
 	owner_row.add_child(owner_label)
 	var choice := OptionButton.new()
 	choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# El id de cada opción va en su metadata: add_item con id −1 (NO_TEAM) pondría uno automático.
+	# El id va en la metadata: add_item con id −1 (NO_TEAM) pondría uno automático.
 	var owners: Array[int] = [Projects.NO_TEAM, Projects.CEO_TEAM]
 	choice.add_item("Nadie")
 	choice.add_item("El CEO")
@@ -626,7 +615,7 @@ func _add_project_work(product_id: int, project: Dictionary) -> void:
 
 func _add_delivery_actions(contract: Dictionary) -> void:
 	var contract_id: int = contract["id"]
-	# Solo con los errores conocidos: los ocultos también descontarán, pero no se ven.
+	# Solo los errores conocidos: los ocultos también descuentan, pero no se ven.
 	var preview: Dictionary = Projects.preview_delivery(contract, true)
 	var change: float = float(preview["reputation_change"])
 	var penalties: Array[String] = []

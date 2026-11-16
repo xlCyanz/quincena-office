@@ -1,9 +1,5 @@
-# Interfaz superpuesta mínima (diseño, 12.2): arriba a la izquierda el dinero y arriba
-# a la derecha el reloj, con la fecha, la cuenta atrás de la próxima nómina (o lo que
-# se debe de ella), la pausa y las velocidades. Arriba al centro aparecen unos segundos
-# los avisos de EventBus.notice, sin tapar el dinero ni el reloj (un texto largo se parte
-# en líneas). El botón Construir está en BuildPanel, abajo al centro. Se construye
-# en código; los botones avisan con señales y la escena de juego decide qué hacer.
+# Interfaz superpuesta: dinero arriba a la izquierda, reloj (fecha, nómina, pausa y velocidades)
+# arriba a la derecha y avisos arriba al centro. Los botones avisan con señales.
 class_name Hud
 extends CanvasLayer
 
@@ -11,7 +7,7 @@ extends CanvasLayer
 signal pause_pressed
 ## Se eligió una velocidad (índice en GameConstants.CLOCK_SPEEDS).
 signal speed_pressed(index: int)
-## Se hizo clic en un aviso que lleva a algo (hito 57): el destino de EventBus.send_notice.
+## Clic en un aviso con destino (el de EventBus.send_notice).
 signal notice_clicked(target: Dictionary)
 
 const MARGIN: float = 12.0
@@ -70,14 +66,14 @@ func _ready() -> void:
 	_balance_label = Label.new()
 	_balance_label.add_theme_font_size_override("font_size", MONEY_FONT_SIZE)
 	money_row.add_child(_balance_label)
-	# Reputación (diseño 12.2: estado de la empresa arriba a la izquierda).
+	# Reputación.
 	_reputation_label = Label.new()
 	_reputation_label.add_theme_font_size_override("font_size", MONEY_FONT_SIZE)
 	_reputation_label.add_theme_color_override("font_color", REPUTATION_COLOR)
 	_reputation_label.tooltip_text = "Reputación de la empresa"
 	_reputation_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	money_row.add_child(_reputation_label)
-	# Valor de la empresa (hito 26), en una segunda línea para no ensanchar la esquina.
+	# Valor de la empresa, en otra línea para no ensanchar la esquina.
 	_value_label = Label.new()
 	_value_label.tooltip_text = "Valor de la empresa: dinero + reventa de los muebles + terreno − deuda con el banco"
 	_value_label.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -105,14 +101,14 @@ func _ready() -> void:
 	_pause_button.pressed.connect(func() -> void: pause_pressed.emit())
 	for index: int in range(GameConstants.CLOCK_SPEEDS.size()):
 		var button: Button = _add_toggle(speed_row, "%dx" % int(GameConstants.CLOCK_SPEEDS[index]))
-		# Cinco velocidades: más angostos que Pausa, para que el reloj no le quite lugar a lo de al lado.
+		# Más angostos que Pausa para que el reloj no le quite lugar a lo de al lado.
 		button.custom_minimum_size.x = SPEED_BUTTON_WIDTH
 		button.pressed.connect(func() -> void: speed_pressed.emit(index))
 		_speed_buttons.append(button)
 	clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	clock_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_clock_panel = clock_panel
-	# Lo que ocupan arriba el dinero y el reloj, para los paneles que no deben taparlos (hito 65).
+	# Lo que ocupan arriba el dinero y el reloj, para que los paneles no los tapen.
 	for corner: Control in [_money_panel, _clock_panel]:
 		corner.resized.connect(_update_top_space)
 
@@ -146,12 +142,11 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# El reloj no avisa de cada minuto ni de los cambios de velocidad: se lee cada fotograma.
+	# El reloj se lee cada fotograma en vez de escuchar señales.
 	_update_clock()
 
 
-## Activa o desactiva la pausa y las velocidades (en modo construcción el tiempo queda
-## en pausa).
+## Activa o desactiva la pausa y las velocidades (en construcción el tiempo queda en pausa).
 func set_controls_enabled(enabled: bool) -> void:
 	_controls_enabled = enabled
 	_update_clock()
@@ -175,8 +170,8 @@ func get_value_text() -> String:
 	return _value_label.text
 
 
-# Se lee el valor actual y no el de la señal: una recompensa pagada mientras se avisaba
-# un cambio (hito 28) emite otro aviso adentro, y el de afuera llega después con el viejo.
+# Se lee el valor actual y no el de la señal: una recompensa pagada durante un aviso emite otro
+# adentro, y el de afuera llega después con el valor viejo.
 func _update_value(_value: int = 0) -> void:
 	var value: int = Company.get_value()
 	_value_label.text = "Valor %s" % MoneyFormat.format(value)
@@ -191,8 +186,8 @@ func get_balance_text() -> String:
 	return _balance_label.text
 
 
-## Muestra un aviso arriba al centro durante NOTICE_SECONDS (reemplaza al anterior).
-## Con target (EventBus.target_*) el aviso se ve como enlace y un clic avisa notice_clicked.
+## Muestra un aviso arriba al centro durante NOTICE_SECONDS (reemplaza al anterior);
+## con target (EventBus.target_*) se ve como enlace y un clic emite notice_clicked.
 func show_notice(text: String, target: Dictionary = {}) -> void:
 	_notice_target = target.duplicate()
 	_notice_label.text = text + (LINK_SUFFIX if not target.is_empty() else "")
@@ -211,7 +206,7 @@ func get_notice_target() -> Dictionary:
 	return _notice_target if _notice_panel.visible else {}
 
 
-## Hace lo mismo que un clic en el aviso: si lleva a algo, lo cierra y avisa notice_clicked.
+## Como un clic en el aviso: si lleva a algo, lo cierra y emite notice_clicked.
 func click_notice() -> void:
 	if not _notice_panel.visible or _notice_target.is_empty():
 		return
@@ -238,8 +233,8 @@ func get_corner_rects() -> Array[Rect2]:
 	return [_money_panel.get_global_rect(), _clock_panel.get_global_rect()]
 
 
-# Ubica el aviso entre el dinero y el reloj, partiendo el texto en líneas si hace falta.
-# (Con stretch "expand" el ancho lógico nunca baja de 1280, así que siempre hay lugar.)
+# Ubica el aviso entre el dinero y el reloj, partiéndolo en líneas si hace falta
+# (con stretch "expand" el ancho lógico nunca baja de 1280).
 func _fit_notice() -> void:
 	if _notice_panel == null or not _notice_panel.visible:
 		return
@@ -255,8 +250,8 @@ func _fit_notice() -> void:
 	_place_notice()
 
 
-# Achica el aviso a lo justo y lo centra. Con ajuste de línea el alto se conoce recién
-# cuando el texto se acomoda al ancho, así que se repite al cambiar el mínimo del panel.
+# Achica el aviso a lo justo y lo centra; con ajuste de línea el alto se conoce recién tras
+# acomodar el texto, así que se repite al cambiar el mínimo del panel.
 func _place_notice() -> void:
 	if not _notice_panel.visible:
 		return
@@ -305,8 +300,7 @@ func _update_clock() -> void:
 		_speed_buttons[index].disabled = not _controls_enabled
 
 
-## Panel semitransparente con margen interior y esquinas redondeadas (lo usan también
-## otros paneles de la interfaz).
+## Panel semitransparente con margen y esquinas redondeadas (lo usan otros paneles).
 static func make_panel() -> PanelContainer:
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANEL_COLOR
@@ -327,7 +321,7 @@ func _add_toggle(parent: Container, text: String) -> Button:
 	return button
 
 
-# Como _update_value: se lee el saldo actual, no el de la señal (puede llegar viejo).
+# Se lee el saldo actual, no el de la señal (puede llegar viejo).
 func _on_balance_changed(_balance: int = 0) -> void:
 	var balance: int = Economy.balance
 	_balance_label.text = MoneyFormat.format(balance)

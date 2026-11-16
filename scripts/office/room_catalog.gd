@@ -1,5 +1,4 @@
-# Tipos de habitación leídos de data/rooms.json una sola vez. Se usa por su nombre de
-# clase, por ejemplo RoomCatalog.get_display_name("reception").
+# Tipos de habitación (data/rooms.json), leídos una vez.
 class_name RoomCatalog
 extends RefCounted
 
@@ -15,7 +14,7 @@ static func get_type_ids() -> Array[String]:
 	return ids
 
 
-## Datos de un tipo (ver el comentario de data/rooms.json), o vacío si no existe.
+## Datos de un tipo (ver data/rooms.json), o vacío.
 static func get_type(type_id: String) -> Dictionary:
 	return _catalog().get(type_id, {})
 
@@ -32,18 +31,17 @@ static func is_unique(type_id: String) -> bool:
 	return bool(get_type(type_id).get("unique", false))
 
 
-## Cuántas habitaciones de este tipo tiene que tener la oficina (0 si es opcional).
+## Cuántas habitaciones de este tipo son obligatorias (0 si es opcional).
 static func get_mandatory_count(type_id: String) -> int:
 	return int(get_type(type_id).get("mandatory_count", 0))
 
 
-## Si una habitación de este tipo no se puede quitar ni deshacer.
-## Indica si solo se puede marcar desde que llegó la primera oferta que la exige (la
-## Sala de reuniones, hito 47).
+## Indica si solo se marca desde la primera oferta que la exige (Sala de reuniones).
 static func is_unlocked_by_offer(type_id: String) -> bool:
 	return bool(get_type(type_id).get("unlocked_by_offer", false))
 
 
+## Indica si una habitación de este tipo no se puede quitar ni deshacer.
 static func is_locked(type_id: String) -> bool:
 	return bool(get_type(type_id).get("locked", false))
 
@@ -56,8 +54,7 @@ static func needs_entrance(type_id: String) -> bool:
 	return bool(get_type(type_id).get("needs_entrance", false))
 
 
-## Muebles que necesita: lista de {"name": String, "items": Array, "count"?: int} (vale
-## cualquiera de items; count, cuántos hacen falta, por defecto uno).
+## Muebles que necesita: [{"name", "items", "count"?}] (vale cualquiera de items; count por defecto 1).
 static func get_requirements(type_id: String) -> Array[Dictionary]:
 	var requirements: Array[Dictionary] = []
 	requirements.assign(get_type(type_id).get("required", []))

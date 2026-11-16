@@ -1,41 +1,6 @@
-# Proyectos (diseño, 7.1 y 13.4): la bandeja de ofertas de contratos y los contratos
-# aceptados. La producción (hito 16), los errores (17) y la entrega (18) llegan después.
-#
-# Cada día, a la hora de llegada (data/contracts.json, offers.arrival_hour), primero
-# caducan las ofertas viejas y después pueden llegar nuevas: con probabilidad chance,
-# más chance_per_salesperson por cada vendedor. Qué tamaños llegan depende de la
-# reputación (y de tener vendedores). La primera partida empieza con una oferta pequeña.
-# Todo el azar sale de _rng, cuyo estado se guarda con la partida.
-#
-# Una oferta es {"id", "client", "type", "size", "points": {"design", "programming",
-# "testing"}, "total_points", "days", "pay", "advance", "arrived_day", "expires_day"}.
-# advance es el anticipo (0 si no tiene) y los días se cuentan con GameClock.get_day_count.
-#
-# Visitas (hito 36, data/contracts.json, visits): desde Startup, con una Recepción que
-# funciona, una oferta nueva puede llegar como un cliente que espera en la Recepción
-# ({"id", "offer", "arrived_at", "leaves_at"} en visits, horas contadas como
-# Staff.get_absolute_hour). Al terminar cada hora, si en ella había un recepcionista en su
-# puesto, la oferta entra en la bandeja; si llega leaves_at sin que lo atiendan, se va.
-# Un contrato es la oferta aceptada más "accepted_day", "deadline_day" y "progress"
-# (puntos hechos de cada fase) y "team_id": quién lo lleva (el id de un equipo de Staff,
-# CEO_TEAM si lo lleva el CEO o NO_TEAM si nadie). Cada equipo con miembros y el CEO
-# llevan un contrato a la vez, así que el tope de contratos en curso es equipos + 1.
-#
-# Producción (hito 16): al terminar cada hora, quienes llevan un contrato y trabajaron
-# esa hora suman puntos a sus fases (ver Production). progress guarda puntos con
-# decimales.
-# "worked_by" anota a los empleados que sumaron puntos; al entregar se avisa con
-# EventBus.contract_delivered para que Staff les cuente el contrato (hito 30).
-#
-# Errores (hito 17): al programar se generan errores ocultos ("bugs_hidden", el jugador
-# no los ve); en la fase de pruebas se encuentran ("bugs_found") y los programadores los
-# corrigen ("bugs_fixed"; "fix_progress" son los puntos gastados en el que están
-# corrigiendo). Con las pruebas completas, QA sigue revisando hasta la entrega.
-#
-# Entrega (hito 18): el jugador entrega cuando quiere (ver preview_delivery) o cancela
-# (devuelve el anticipo). Al atrasarse un contrato se sortea "cancel_day": ese día, a la
-# hora de llegada de las ofertas, el cliente lo cancela sin pagar nada más. history
-# guarda las últimas entregas y cancelaciones.
+# Proyectos: la bandeja de ofertas, las visitas de clientes y los contratos en curso, con su
+# producción por hora, errores, entrega o cancelación y la reputación. Un equipo (o el CEO) lleva
+# un proyecto a la vez; el tope es equipos + 1. Todo el azar sale de _rng (se guarda).
 extends Node
 
 const CONCEPT_ADVANCE: String = "Anticipo de contrato"
@@ -54,18 +19,17 @@ var offers: Array[Dictionary] = []
 ## Clientes esperando en la Recepción con su oferta.
 var visits: Array[Dictionary] = []
 var contracts: Array[Dictionary] = []
-## Reputación de la empresa, de 1 a 5 estrellas (se mueve con las entregas, hito 18).
+## Reputación de la empresa, de 1 a 5 estrellas.
 var reputation: float = 1.0
 ## Últimas entregas y cancelaciones: {"title", "result", "paid", "reputation_change", "day"}.
 var history: Array[Dictionary] = []
 ## Contratos entregados en toda la partida.
 var delivered_count: int = 0
-## Contratos aceptados en toda la partida (hito 28, para los objetivos).
+## Contratos aceptados en toda la partida (para los objetivos).
 var accepted_count: int = 0
 ## La mejor reputación que tuvo la empresa (para la pantalla de fin).
 var best_reputation: float = 1.0
-## Ya llegó una oferta que exige Sala de reuniones: desde entonces se puede construir
-## (hito 47; RoomCatalog.is_unlocked_by_offer).
+## Ya llegó una oferta que exige Sala de reuniones: desde entonces se puede construir.
 var meeting_room_unlocked: bool = false
 
 var _next_id: int = 1
@@ -77,8 +41,7 @@ func _ready() -> void:
 	EventBus.staff_changed.connect(_drop_missing_teams)
 
 
-## Prepara los proyectos de una partida nueva: sin contratos, con la reputación inicial
-## y una primera oferta pequeña para no empezar sin trabajo.
+## Prepara una partida nueva: sin contratos, reputación inicial y una oferta pequeña.
 func new_game() -> void:
 	offers.clear()
 	visits.clear()
@@ -96,7 +59,7 @@ func new_game() -> void:
 	EventBus.rooms_unlocked.emit()
 
 
-# Para partidas de antes del hito 47: algo ya usa la Sala de reuniones.
+# Partidas viejas: algo ya usa la Sala de reuniones.
 func _meeting_room_in_use() -> bool:
 	for room: Dictionary in OfficeState.rooms:
 		if RoomCatalog.is_unlocked_by_offer(room["type"]):
@@ -107,13 +70,12 @@ func _meeting_room_in_use() -> bool:
 	return false
 
 
-## Fija la semilla del azar (las pruebas la usan para tener resultados repetibles).
+## Fija la semilla del azar (pruebas).
 func set_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
 
 
-## Cuántos proyectos (contratos y productos en desarrollo, hito 41) se pueden tener en
-## curso: uno por equipo con miembros y uno del CEO.
+## Tope de proyectos en curso (contratos y productos): uno por equipo con miembros y uno del CEO.
 func get_contract_limit() -> int:
 	return get_team_count() + 1
 
@@ -174,8 +136,7 @@ func accept_problem(offer_id: int) -> String:
 	return ""
 
 
-## Acepta una oferta: pasa a contratos en curso con su plazo y cobra el anticipo si
-## tiene. Devuelve {"ok": bool, "message": String}.
+## Acepta una oferta y cobra el anticipo si tiene. Devuelve {"ok", "message"}.
 func accept(offer_id: int) -> Dictionary:
 	var problem: String = accept_problem(offer_id)
 	if not problem.is_empty():
@@ -236,11 +197,9 @@ func get_days_late(contract: Dictionary) -> int:
 	return maxi(0, -contract_days_left(contract))
 
 
-## Qué pasaría si se entrega hoy: {"done", "late_days", "bugs", "late_penalty",
-## "bug_penalty", "gross", "paid", "reputation_change", "result"}. gross es el pago con
-## penalidades; paid lo que se cobra ahora (gross menos el anticipo, nunca menos de 0).
-## Con known_only cuenta solo los errores encontrados sin corregir (lo que sabe el
-## jugador); la entrega de verdad cuenta también los ocultos.
+## Qué pasaría si se entrega hoy: {"done", "late_days", "bugs", "late_penalty", "bug_penalty",
+## "gross", "paid", "reputation_change", "result"}; paid = gross − anticipo (mín. 0).
+## known_only cuenta solo los errores que conoce el jugador; la entrega real suma los ocultos.
 func preview_delivery(contract: Dictionary, known_only: bool = false) -> Dictionary:
 	var done: float = get_done_ratio(contract)
 	var late_days: int = get_days_late(contract)
@@ -271,8 +230,7 @@ func preview_delivery(contract: Dictionary, known_only: bool = false) -> Diction
 		"gross": gross, "paid": maxi(0, gross - int(contract["advance"])), "reputation_change": change, "result": result}
 
 
-## Entrega un contrato: cobra lo que falta del pago con sus penalidades y mueve la
-## reputación. Devuelve {"ok", "message"}.
+## Entrega un contrato: cobra lo que falta con penalidades y mueve la reputación.
 func deliver(contract_id: int) -> Dictionary:
 	var contract: Dictionary = get_contract(contract_id)
 	if contract.is_empty():
@@ -289,8 +247,7 @@ func deliver(contract_id: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-## Cancela un contrato: se devuelve el anticipo (aunque el saldo quede negativo) y cae la
-## reputación. Devuelve {"ok", "message"}.
+## Cancela un contrato: devuelve el anticipo (aunque deje saldo negativo) y baja la reputación.
 func cancel(contract_id: int) -> Dictionary:
 	var contract: Dictionary = get_contract(contract_id)
 	if contract.is_empty():
@@ -307,8 +264,8 @@ func cancel(contract_id: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-## Le da un contrato a un equipo (o al CEO, o a nadie con NO_TEAM). Un equipo lleva un
-## contrato a la vez: si ya tenía otro, ese queda sin equipo. Devuelve {"ok", "message"}.
+## Le da un contrato a un equipo, al CEO o a nadie (NO_TEAM); lo que llevaba ese equipo queda
+## sin equipo. Devuelve {"ok", "message"}.
 func assign(contract_id: int, team_id: int) -> Dictionary:
 	var contract: Dictionary = get_contract(contract_id)
 	if contract.is_empty():
@@ -319,7 +276,7 @@ func assign(contract_id: int, team_id: int) -> Dictionary:
 		var previous: Dictionary = get_contract_of(team_id)
 		if not previous.is_empty() and previous["id"] != contract_id:
 			previous["team_id"] = NO_TEAM
-		# Un equipo lleva un proyecto a la vez: si llevaba un producto, lo suelta.
+		# Un equipo lleva un proyecto a la vez.
 		Products.release_team(team_id)
 	contract["team_id"] = team_id
 	EventBus.projects_changed.emit()
@@ -359,7 +316,7 @@ func get_contract(contract_id: int) -> Dictionary:
 	return {}
 
 
-## Días que le quedan a una oferta en la bandeja (se va a la hora de llegada de ese día).
+## Días que le quedan a una oferta (se va a la hora de llegada de ese día).
 func offer_days_left(offer: Dictionary) -> int:
 	return maxi(int(offer["expires_day"]) - GameClock.get_day_count(), 0)
 
@@ -428,8 +385,7 @@ func _process_arrivals(today: int) -> void:
 		EventBus.visits_changed.emit()
 
 
-## Indica si los clientes pueden venir a la oficina: desde visits.min_stage y con una
-## Recepción que funciona.
+## Indica si pueden venir clientes: desde visits.min_stage y con una Recepción que funciona.
 func visits_enabled() -> bool:
 	return Company.stage >= int(ContractCatalog.get_visits("min_stage")) and _has_working_room(Workstations.RECEPTION)
 
@@ -439,7 +395,7 @@ func get_visit_wait_hours() -> int:
 	return int(ContractCatalog.get_visits("sofa_wait_hours" if not get_waiting_seats().is_empty() else "wait_hours"))
 
 
-## Casillas de los asientos de espera (sofás) dentro de una Recepción que funciona.
+## Casillas de los sofás de espera de una Recepción que funciona.
 func get_waiting_seats() -> Array[Vector2i]:
 	var seats: Array[Vector2i] = []
 	var room_cells: Array = _reception_cells()
@@ -452,8 +408,7 @@ func get_waiting_seats() -> Array[Vector2i]:
 	return seats
 
 
-## Dónde esperan los clientes, en orden: los asientos de espera y después las casillas
-## libres de la Recepción (sin muebles, sin la entrada). Vacío si no hay Recepción.
+## Dónde esperan los clientes: sofás primero y después casillas libres de la Recepción.
 func get_waiting_spots() -> Array[Vector2i]:
 	var spots: Array[Vector2i] = get_waiting_seats()
 	var used: Array[Vector2i] = OfficeState.get_blocking_cells()
@@ -478,8 +433,8 @@ func _add_visit(offer: Dictionary) -> void:
 		posmod(now + wait, GameConstants.HOURS_PER_DAY)])
 
 
-# Al terminar cada hora: si en ella había un recepcionista en su puesto, cada cliente deja
-# su oferta en la bandeja; si no, los que ya esperaron todo su tiempo se van.
+# Al terminar cada hora: con recepcionista en su puesto las visitas dejan su oferta; sin él,
+# las que ya esperaron todo su tiempo se van.
 func _update_visits() -> void:
 	if visits.is_empty():
 		return
@@ -505,16 +460,14 @@ func _update_visits() -> void:
 	EventBus.visits_changed.emit()
 
 
-## Ofertas que llegan por día en promedio: la base más lo de cada vendedor, que depende
-## de cómo rinde Ventas (hito 33).
+## Ofertas por día en promedio: la base más lo de cada vendedor según cómo rinde Ventas.
 func get_offer_chance() -> float:
 	return float(ContractCatalog.get_offers("chance")) \
 		+ float(ContractCatalog.get_offers("chance_per_salesperson")) * get_salesperson_count() \
 		* Staff.get_department_factor(StaffCatalog.get_role_department(Staff.SALES_ROLE))
 
 
-# Cuántas ofertas llegan hoy: la parte entera de la probabilidad es segura y la
-# decimal es una tirada.
+# Cuántas ofertas llegan hoy: la parte entera es segura y la decimal, una tirada.
 func _roll_arrivals() -> int:
 	var chance: float = get_offer_chance()
 	var count: int = floori(chance)
@@ -523,15 +476,12 @@ func _roll_arrivals() -> int:
 	return count
 
 
-## Agrega a la bandeja una oferta nueva de ese tamaño (la usa la empresa con la que
-## empieza la partida) y la devuelve.
 ## Indica si cabe una oferta más en la bandeja (las visitas también cuentan).
 func has_offer_room() -> bool:
 	return offers.size() + visits.size() < int(ContractCatalog.get_offers("max_offers"))
 
 
-## Una oferta de un tamaño sorteado como siempre, con el pago por pay_factor (un cliente que
-## recomienda la empresa, hito 43). Vacía si la bandeja está llena.
+## Una oferta de tamaño sorteado con el pago × pay_factor (eventos). Vacía si la bandeja está llena.
 func create_bonus_offer(pay_factor: float) -> Dictionary:
 	if not has_offer_room():
 		return {}
@@ -562,7 +512,7 @@ func _make_offer(today: int, forced_size: String = "") -> Dictionary:
 	var design: int = roundi(total * split[0] / 100.0)
 	var programming: int = roundi(total * split[1] / 100.0)
 	var days: Vector2i = ContractCatalog.get_days_range(size, total)
-	# El pago crece con el trabajo dentro de su rango, con un poco de azar.
+	# El pago crece con el trabajo dentro de su rango, con algo de azar.
 	var pay_range: Vector2i = ContractCatalog.get_size_range(size, "pay")
 	var ratio: float = float(total - points_range.x) / maxf(1.0, points_range.y - points_range.x)
 	var variation: float = float(ContractCatalog.get_offers("pay_variation"))
@@ -591,8 +541,7 @@ func _pick_size() -> String:
 	for size: String in sizes:
 		total += get_size_weight(size)
 		whole = whole and is_equal_approx(get_size_weight(size), roundf(get_size_weight(size)))
-	# Con pesos enteros (sin pantalla) se sortea un entero, como antes del hito 47, para
-	# que el azar de las partidas y las simulaciones no cambie.
+	# Con pesos enteros se sortea un entero para no cambiar el azar de partidas y simulaciones.
 	var roll: float = (_rng.randi_range(1, roundi(total)) - 0.5) if whole else _rng.randf() * total
 	for size: String in sizes:
 		roll -= get_size_weight(size)
@@ -601,8 +550,7 @@ func _pick_size() -> String:
 	return sizes[sizes.size() - 1]
 
 
-## Peso de un tamaño entre las ofertas: el de data/contracts.json y, para los que exigen
-## Sala de reuniones, más con una pantalla de presentaciones en una que funcione (hito 47).
+## Peso de un tamaño entre las ofertas: × pantalla de presentaciones si exige Sala de reuniones.
 func get_size_weight(size: String) -> float:
 	var weight: float = float(ContractCatalog.get_size(size)["weight"])
 	var room: String = ContractCatalog.get_required_room(size)
@@ -611,8 +559,8 @@ func get_size_weight(size: String) -> float:
 	return weight
 
 
-# Plazo de una oferta: con pizarra en la Sala de reuniones (hito 55), los tamaños que la
-# exigen traen 10 % más, hacia arriba.
+# Plazo de una oferta: con pizarra en la Sala de reuniones, los tamaños que la exigen traen
+# 10 % más, hacia arriba.
 func _offer_days(size: String, days: int) -> int:
 	var room: String = ContractCatalog.get_required_room(size)
 	if room.is_empty() or not has_room_item(room, "meeting_board"):
@@ -620,8 +568,7 @@ func _offer_days(size: String, days: int) -> int:
 	return ceili(days * float(ContractCatalog.get_meetings("board_days_factor")))
 
 
-## Indica si una habitación de ese tipo que funciona tiene un mueble con ese valor
-## (por ejemplo "meeting_board", la pizarra).
+## Indica si una habitación de ese tipo que funciona tiene un mueble con ese campo (p. ej. "meeting_board").
 func has_room_item(room_type: String, field: String) -> bool:
 	for room: Dictionary in OfficeState.rooms:
 		if room["type"] != room_type or not RoomRules.function_problems(room, OfficeState.furniture).is_empty():
@@ -648,13 +595,12 @@ func _unlock_room_for(size: String) -> void:
 	EventBus.rooms_unlocked.emit()
 
 
-## Indica si hay una habitación de ese tipo que funciona (lo usan los eventos, hito 44).
+## Indica si hay una habitación de ese tipo que funciona.
 func has_working_room(room_type: String) -> bool:
 	return _has_working_room(room_type)
 
 
-## Puntos por hora que suma un proyecto (contrato o producto) con todo su equipo presente,
-## descansado y de buen ánimo; los eventos lo usan para quitar horas de trabajo.
+## Puntos por hora de un proyecto con todo su equipo presente y en forma (eventos que quitan horas).
 func get_nominal_rate(project: Dictionary) -> float:
 	var team_id: int = int(project.get("team_id", NO_TEAM))
 	if team_id == CEO_TEAM:
@@ -673,8 +619,7 @@ func get_nominal_rate(project: Dictionary) -> float:
 	return total
 
 
-## Quita puntos ya hechos de un proyecto (contrato o producto), de la última fase hacia la
-## primera, sin bajar de 0. Devuelve los puntos quitados.
+## Quita puntos hechos de un proyecto, de la última fase hacia atrás, sin bajar de 0. Devuelve lo quitado.
 static func remove_work(project: Dictionary, points: float) -> float:
 	var left: float = points
 	var phases: Array[String] = ContractCatalog.PHASES.duplicate()
@@ -686,8 +631,7 @@ static func remove_work(project: Dictionary, points: float) -> float:
 	return points - left
 
 
-## Cambia el trabajo, el pago y el plazo de un contrato en curso (un cliente cambia los
-## requisitos, hito 44).
+## Cambia el trabajo, el pago y el plazo de un contrato en curso (evento).
 func change_scope(contract_id: int, points_factor: float, pay_factor: float, extra_days: int) -> void:
 	var contract: Dictionary = get_contract(contract_id)
 	if contract.is_empty():
@@ -716,8 +660,7 @@ func _take_id() -> int:
 	return _next_id - 1
 
 
-## Devuelve el estado de los proyectos para guardarlo. El estado del azar va como texto
-## (JSON guarda los números como decimales y perdería precisión).
+## Estado para guardar. El azar va como texto: JSON perdería precisión.
 func export_state() -> Dictionary:
 	return {"offers": offers.duplicate(true), "contracts": contracts.duplicate(true), "reputation": reputation,
 		"history": history.duplicate(true), "delivered_count": delivered_count, "accepted_count": accepted_count, "best_reputation": best_reputation,
@@ -725,13 +668,12 @@ func export_state() -> Dictionary:
 		"meeting_room_unlocked": meeting_room_unlocked}
 
 
-## Restaura los proyectos desde una partida guardada. Sin datos (partidas anteriores al
-## hito 14) queda sin ofertas ni contratos y con la reputación inicial.
+## Restaura los proyectos de una partida guardada; sin datos queda sin ofertas ni contratos.
 func import_state(state: Dictionary) -> void:
 	offers.clear()
 	for saved: Dictionary in state.get("offers", []):
 		offers.append(_import_offer(saved))
-	# Antes del hito 36 no había visitas.
+	# Partidas viejas sin visitas.
 	visits.clear()
 	for saved: Dictionary in state.get("visits", []):
 		if not saved.has("offer"):
@@ -752,12 +694,12 @@ func import_state(state: Dictionary) -> void:
 			contract[key] = int(saved.get(key, 0))
 		contract["fix_progress"] = float(saved.get("fix_progress", 0.0))
 		contract["cancel_day"] = int(saved.get("cancel_day", NO_CANCEL_DAY))
-		# Antes del hito 30 no se anotaba quién trabajó.
+		# Partidas viejas sin quién trabajó.
 		var worked_by: Array = []
 		for key: Variant in saved.get("worked_by", []):
 			worked_by.append(String(key))
 		contract["worked_by"] = worked_by
-		# Las partidas del hito 14 tenían un solo contrato, el del CEO.
+		# Partidas viejas: un solo contrato, el del CEO.
 		var team_id: int = int(saved.get("team_id", CEO_TEAM))
 		contract["team_id"] = team_id if team_id <= CEO_TEAM or not Staff.get_team(team_id).is_empty() else NO_TEAM
 		contracts.append(contract)
@@ -769,10 +711,9 @@ func import_state(state: Dictionary) -> void:
 			"paid": int(saved.get("paid", 0)), "reputation_change": float(saved.get("reputation_change", 0.0)),
 			"day": int(saved.get("day", 0))})
 	delivered_count = int(state.get("delivered_count", 0))
-	# Antes del hito 28 no se contaban: al menos los que están en curso o en el historial.
+	# Partidas viejas: al menos los que están en curso o en el historial.
 	accepted_count = int(state.get("accepted_count", contracts.size() + history.size()))
-	# Antes del hito 47: se habilita si ya hay una Sala de reuniones o una oferta o contrato
-	# que la exige.
+	# Partidas viejas: se habilita si ya hay una Sala de reuniones o algo que la exige.
 	meeting_room_unlocked = bool(state.get("meeting_room_unlocked", false)) or _meeting_room_in_use()
 	EventBus.rooms_unlocked.emit()
 	_next_id = int(state.get("next_id", 1))
@@ -785,25 +726,23 @@ func import_state(state: Dictionary) -> void:
 	EventBus.visits_changed.emit()
 
 
-## Quienes trabajan en un contrato en una hora (contada como Staff.get_absolute_hour):
-## una lista de {"key", "phase", "level", "rate", "bug_chance"} (key como en Staff.is_expected; phase = "" si
-## es generalista) y, para los empleados, "find_factor" (rasgos que encuentran más errores). shared sirve para pedir varios contratos en la misma hora: guarda ahí
-## lo que es igual para todos (puestos, bonos y factores de departamento) y no lo vuelve a
-## calcular; vacío = calcular todo.
+## Quienes trabajan en un contrato en una hora absoluta: {"key", "phase" ("" generalista), "level",
+## "rate", "bug_chance"} y "find_factor" en empleados. shared guarda lo común a todos los contratos
+## de esa hora para no recalcularlo; vacío = calcular todo.
 func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Array[Dictionary]:
 	var weekday: int = Staff.get_weekday_at(at)
 	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
 	var workers: Array[Dictionary] = []
 	var team_id: int = int(contract["team_id"])
-	# Baños (hito 52): por cada inodoro que falta la producción de todos baja.
+	# Por cada inodoro que falta baja la producción de todos.
 	if not shared.has("bathroom"):
 		shared["bathroom"] = Staff.get_bathroom_factor(Staff.get_bathroom_shortage(at))
 	var bathroom: float = shared["bathroom"]
-	# Almuerzo dentro (hito 53): quien almuerza en la Sala de descanso trabaja media hora.
+	# Quien almuerza en la Sala de descanso trabaja media hora.
 	if not shared.has("lunch"):
 		shared["lunch"] = Staff.get_lunch_inside(at)
 	var lunch: Dictionary[String, bool] = shared["lunch"]
-	# Pausas y ping pong (hito 54): quien descansa no suma; el ping pong distrae a todos.
+	# Quien descansa no suma; el ping pong distrae a todos.
 	if not shared.has("breaks"):
 		shared["breaks"] = Staff.get_breaks(at)
 		shared["distraction"] = OfficeState.get_break_room_effect("distraction")
@@ -815,7 +754,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		if Staff.is_ceo_producing(at) or ceo_lunch:
 			var ceo_bonus: float = Workstations.bonus_of(OfficeState.furniture, "ceo")
 			var ceo_level: String = String(StaffCatalog.get_production("ceo_level"))
-			# Una entrevista de media hora le quita media hora de trabajo.
+			# La entrevista le quita media hora.
 			var interview_factor: float = 1.0 if ceo_lunch else Staff.get_ceo_interview_factor(at)
 			workers.append({"key": "ceo", "phase": "", "level": ceo_level, "rate": (lunch_factor if ceo_lunch else interview_factor) * bathroom * Production.get_rate(ceo_level, 100.0,
 				ceo_bonus), "bug_chance": get_bug_chance(ceo_level, 100.0)})
@@ -823,7 +762,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 	var team: Dictionary = Staff.get_team(team_id)
 	if team.is_empty():
 		return workers
-	# Desde Startup, sin su líder presente el equipo rinde menos (Staff.get_team_factor).
+	# Desde Startup, sin su líder presente el equipo rinde menos.
 	var factor: float = Staff.get_team_factor(team, at)
 	if not shared.has("stations"):
 		shared["stations"] = Staff.get_working_station_keys()
@@ -845,7 +784,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 		if not departments.has(department_id):
 			departments[department_id] = Staff.get_department_factor(department_id)
 		var department: float = departments[department_id]
-		# Rasgos (hito 50): puntos según la hora, mentor del equipo, errores al programar y al probar.
+		# Rasgos: puntos según la hora, mentor, errores al programar y al probar.
 		var traits: float = Staff.get_trait_points_factor(employee, hour, bool(shared["coffee"])) * mentored.get(int(member), 1.0)
 		workers.append({"key": key, "phase": phase, "level": employee["level"], "rate": factor * department * traits * bathroom * focus * (lunch_factor if eating else 1.0)
 			* Production.get_rate(employee["level"], float(employee["energy"]), bonuses.get(key, 0.0), float(employee["mood"])),
@@ -854,8 +793,7 @@ func get_workers(contract: Dictionary, at: int, shared: Dictionary = {}) -> Arra
 	return workers
 
 
-## Errores por punto de programación de alguien de ese nivel con esa energía y estrés:
-## el doble cansado o estresado (no se acumula).
+## Errores por punto de programación: el doble cansado o estresado (no se acumula).
 static func get_bug_chance(level: String, energy: float, stress: float = 0.0) -> float:
 	var chance: float = 1.0 / ContractCatalog.get_points_per_bug(level)
 	if energy < float(ContractCatalog.get_bugs("tired_below")) or stress >= float(ContractCatalog.get_bugs("stressed_from")):
@@ -872,8 +810,7 @@ static func describe_bugs(contract: Dictionary) -> String:
 	return "Errores: %d encontrados · %d por corregir · %d corregidos" % [found + fixed, found, fixed]
 
 
-## Puntos por hora que suma ahora un contrato con quienes deberían estar trabajando
-## (sin contar los topes de las fases).
+## Puntos por hora de un contrato ahora, con quienes deberían trabajar (sin topes de fase).
 func get_hourly_rate(contract: Dictionary) -> float:
 	var total: float = 0.0
 	for worker: Dictionary in get_workers(contract, Staff.get_absolute_hour()):
@@ -902,8 +839,8 @@ func _produce() -> void:
 		EventBus.projects_changed.emit()
 
 
-# A la hora de llegada: a cada contrato que se acaba de atrasar se le sortea cuántos días
-# de atraso aguanta el cliente; el día que llega a ese atraso, el cliente lo cancela.
+# A la hora de llegada: a cada contrato recién atrasado se le sortea cuántos días aguanta el
+# cliente; al llegar a ellos, lo cancela.
 func _check_late_contracts(today: int) -> void:
 	var limits: Array = ContractCatalog.get_delivery("client_cancel_days")
 	for contract: Dictionary in contracts.duplicate():
@@ -917,8 +854,7 @@ func _check_late_contracts(today: int) -> void:
 	EventBus.projects_changed.emit()
 
 
-# El cliente se cansó de esperar: se lleva el contrato y no paga nada más (el anticipo
-# queda en la empresa).
+# El cliente cancela: se lleva el contrato sin pagar más (el anticipo queda).
 func _client_cancel(contract: Dictionary) -> void:
 	contracts.erase(contract)
 	var change: float = float(ContractCatalog.get_delivery("cancel_reputation"))
@@ -927,8 +863,7 @@ func _client_cancel(contract: Dictionary) -> void:
 	_finish(contract, "Cancelado por el cliente", 0, change, message)
 
 
-## Suma (o resta) reputación desde otro sistema, como la recompensa de un objetivo
-## (hito 28). Devuelve el texto del cambio, como «Reputación +0.1.».
+## Suma (o resta) reputación desde otro sistema; devuelve el texto, como «Reputación +0.1.».
 func add_reputation(change: float) -> String:
 	var text: String = _change_reputation(change)
 	EventBus.projects_changed.emit()
@@ -955,8 +890,7 @@ func _finish(contract: Dictionary, result: String, paid: int, change: float, mes
 	EventBus.send_notice(EventBus.target_menu("projects"), message)
 
 
-## Quién lleva un proyecto nuevo: el primer equipo con miembros que no lleva ninguno
-## (contrato ni producto); si no hay, el CEO si está libre; si no, nadie.
+## Quién lleva un proyecto nuevo: el primer equipo con miembros libre, si no el CEO libre, si no nadie.
 func first_free_team() -> int:
 	for team: Dictionary in Staff.teams:
 		if not (team["members"] as Array).is_empty() and is_team_free(team["id"]):
@@ -969,8 +903,7 @@ func is_team_free(team_id: int) -> bool:
 	return get_contract_of(team_id).is_empty() and Products.get_product_of(team_id).is_empty()
 
 
-## Suelta el contrato que lleva un equipo (queda sin equipo); lo usa Products al darle
-## un producto a ese equipo.
+## Suelta el contrato que lleva un equipo (Products lo llama al darle un producto).
 func release_team(team_id: int) -> void:
 	var contract: Dictionary = get_contract_of(team_id)
 	if not contract.is_empty():

@@ -1,6 +1,5 @@
-# Prueba del hito 21: calificación de crédito.
-# Criterio: una empresa nueva está en C con límite de $5,000; con ingresos y pagos
-# puntuales sube; un atraso la baja una letra.
+# Calificación de crédito: una empresa nueva está en C con límite de $5,000; ingresos y pagos
+# puntuales la suben; un atraso la baja una letra.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=credit
 extends Node
 
@@ -21,10 +20,10 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
-	# Estas pruebas son de la nómina sin préstamo de emergencia (hito 24): se rechaza.
+	# Nómina sin préstamo de emergencia: se rechaza.
 	EventBus.emergency_loan_offered.connect(func(_offer: Dictionary) -> void: Bank.reject_emergency())
 	_check_new_company()
 	_check_rise()
@@ -109,7 +108,6 @@ func _check_late() -> void:
 	_expect(Bank.score == score + _config("late_points"), "un atraso resta %d: %d → %d" % [-_config("late_points"), score, Bank.score])
 	_expect(Bank.rating == "C", "un atraso baja una letra: %s" % Bank.rating)
 	_expect(_notices.has("La calificación de crédito baja a C."), "aviso: %s" % [_notices])
-	# Un pago a tiempo no sube la nota hasta el día 1.
 	EventBus.payment_recorded.emit(Staff.CONCEPT_PAYROLL, true)
 	_expect(Bank.score == score + _config("late_points"), "el pago a tiempo espera al día 1")
 	# El mantenimiento que deja el saldo negativo también es un atraso.
@@ -152,7 +150,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_5"), "cargar")
 	_expect(JSON.stringify(Bank.export_state()) == before, "el banco vuelve igual")
-	# Una partida de antes del hito 21 se calcula con lo que hay.
+	# Una partida vieja se calcula con lo que hay.
 	Bank.import_state({})
 	_expect(Bank.rating == Bank.letter_for(Bank.compute_score()) and Bank.late_payments == 0, "partida vieja: %s" % [Bank.export_state()])
 

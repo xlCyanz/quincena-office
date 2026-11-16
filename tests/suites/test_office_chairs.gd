@@ -1,9 +1,9 @@
-# Prueba de la silla de visita (pedido después del hito 69): la Oficina Ejecutiva y la
-# Oficina única solo funcionan con dos sillas, la de quien trabaja ahí y una de visita.
+# Silla de visita: la Oficina Ejecutiva y la Oficina única solo funcionan con dos sillas,
+# la de quien trabaja ahí y una de visita.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=office_chairs
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 var _failures: int = 0
@@ -51,7 +51,6 @@ func _check() -> void:
 	_expect(RoomRules.function_problems(room, _furniture(1)).is_empty(), "sin la regla, una silla alcanza")
 	RoomRules.counts_enabled = true
 
-	# La oficina del CEO de una partida nueva trae la silla de visita.
 	var office: Dictionary = OfficeState.find_room("executive_office")
 	_expect(RoomRules.function_problems(office, OfficeState.furniture).is_empty(), "la Oficina Ejecutiva inicial funciona")
 	var guest: Dictionary = {}
@@ -68,7 +67,6 @@ func _check() -> void:
 	_expect(builder.place("basic_chair", cell, 3)["ok"], "se vuelve a poner")
 	_expect(RoomRules.function_problems(OfficeState.find_room("executive_office"), OfficeState.furniture).is_empty()
 		and Staff.get_guest_chair("ceo").get("cell", Vector2i.ZERO) == cell, "y funciona con su silla de visita")
-	# La empresa de prueba también la trae en todas sus oficinas.
 	SaveManager.start_with_demo = true
 	SaveManager.new_game()
 	var working: bool = true

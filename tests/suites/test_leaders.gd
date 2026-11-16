@@ -1,10 +1,9 @@
-# Prueba del hito 31: líderes de equipo.
-# Criterio: en Startup, un equipo sin líder presente rinde 75 % y con líder 100 %; en
-# Emprendimiento rinde 100 %; un líder fuera de turno no cuenta.
+# Líderes de equipo: en Startup un equipo sin líder presente rinde 75 % y con él 100 %;
+# en Emprendimiento siempre 100 %; un líder fuera de turno no cuenta.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=leaders
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -21,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_unlock()
 	_check_promotion()
@@ -41,8 +40,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un área de trabajo de tres puestos, dinero de sobra y los
-# objetivos ya cumplidos.
+# Tres puestos, dinero de sobra y los objetivos ya cumplidos.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -65,7 +63,7 @@ func _new_game() -> void:
 		_expect(builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "computadora en %d" % x)
 
 
-# Contrata a alguien de ese cargo y nivel en la próxima llegada de candidatos.
+# Contrata a alguien de ese cargo y nivel en la próxima tanda de candidatos.
 func _hire(role: String, level: String) -> Dictionary:
 	var opened: Dictionary = Staff.open_vacancy(role, level, StaffCatalog.get_salary(role, level), true)
 	_expect(opened["ok"], "publicar %s: %s" % [role, opened["message"]])
@@ -75,13 +73,13 @@ func _hire(role: String, level: String) -> Dictionary:
 	var candidate: Dictionary = Staff.get_vacancy(opened["id"])["candidates"][0]
 	Staff.make_offer(candidate["id"], candidate["asked_salary"])
 	var employee: Dictionary = Staff.get_employee(candidate["id"])
-	# Sin rasgos (hito 50): esta prueba mide rendimientos exactos.
+	# Sin rasgos: se miden rendimientos exactos.
 	(employee.get("traits", []) as Array).clear()
 	_expect(not employee.is_empty(), "contratado: %s %s" % [role, level])
 	return employee
 
 
-# Una hora (absoluta) del próximo día hábil, dentro del turno de 8 a 17 y fuera del almuerzo.
+# Hora absoluta del próximo día hábil, en el turno de 8 a 17 y fuera del almuerzo.
 func _work_hour() -> int:
 	var at: int = Staff.get_absolute_hour() + 1
 	while Staff.get_weekday_at(at) >= 5 or posmod(at, 24) != 10:
@@ -122,11 +120,10 @@ func _check_promotion() -> void:
 	_expect(int(team["leader_id"]) == senior["id"] and not (team["members"] as Array).has(senior["id"]), "lidera su equipo y deja de ser miembro")
 	_expect(Staff.get_team_of(senior["id"]) == team, "su equipo sigue siendo ese (sigue el turno)")
 	_expect(Staff.describe_employee(senior) == "Líder de equipo · %s al mes" % MoneyFormat.format(4200), "sin nivel: %s" % Staff.describe_employee(senior))
-	# Un líder asciende a gerente desde Pequeña empresa (hito 32).
 	_expect(Staff.get_promotion_progress(senior)["next_role"] == "manager" and not bool(Staff.get_promotion_progress(senior)["ready"]), "un líder no asciende a gerente en Startup")
 	_expect(Staff.get_market_salary(senior) == 4200, "su sueldo de mercado es el del cargo")
 	_expect(not Staff.is_idle(senior), "un líder no queda ocioso por no producir")
-	# No suma puntos: el contrato solo lo trabaja el diseñador.
+	# El líder no suma puntos: solo trabaja el diseñador.
 	Projects.offers.append(Projects._make_offer(GameClock.get_day_count(), "small"))
 	Projects.accept(Projects.offers[-1]["id"])
 	var contract: Dictionary = Projects.contracts[-1]
@@ -155,29 +152,24 @@ func _check_factor() -> void:
 	Projects.assign(contract["id"], team["id"])
 	var at: int = _work_hour()
 	var full: float = Production.get_rate("junior", 100.0, 0.0, 100.0)
-	# Emprendimiento: sin líder rinde 100 %.
 	_expect(is_equal_approx(Staff.get_team_factor(team, at), 1.0), "Emprendimiento sin líder: 100 %")
 	_expect(is_equal_approx(float(Projects.get_workers(contract, at)[0]["rate"]), full), "rinde completo")
-	# Startup: sin líder, 75 %.
 	Company.stage = 1
 	_expect(is_equal_approx(Staff.get_team_factor(team, at), 0.75), "Startup sin líder: 75 %")
 	_expect(is_equal_approx(float(Projects.get_workers(contract, at)[0]["rate"]), full * 0.75), "rinde 75 %%: %s" % Projects.get_workers(contract, at)[0]["rate"])
-	# Con su líder presente, 100 %.
 	Staff.promote(leader["id"], 4200)
 	_expect(Staff.add_to_team(team["id"], leader["id"])["ok"], "nombrar líder")
 	_expect(Staff.is_leader_present(team, at), "el líder está en su turno")
 	_expect(is_equal_approx(float(Projects.get_workers(contract, at)[0]["rate"]), full), "con líder presente rinde 100 %")
-	# Fuera del turno del líder no cuenta.
 	var night: int = at - 10 + 22
 	_expect(not Staff.is_leader_present(team, night), "a las 22 el líder no está")
 	_expect(is_equal_approx(Staff.get_team_factor(team, night), 0.75), "fuera de turno no cuenta")
-	# El equipo sigue rindiendo 100 % en la producción real de una hora.
+	# Producción real de una hora con el líder.
 	var before: float = float(contract["progress"]["design"]) + float(contract["progress"]["programming"]) + float(contract["progress"]["testing"])
 	while Staff.get_absolute_hour() != at + 1:
 		GameClock.fast_forward_hours(1)
 	var after: float = float(contract["progress"]["design"]) + float(contract["progress"]["programming"]) + float(contract["progress"]["testing"])
 	_expect(after - before > full * 0.75 + 0.01, "la hora producida rinde completo: %.2f" % (after - before))
-	# Despedirlo deja al equipo sin líder.
 	Staff.fire(leader["id"])
 	_expect(int(team["leader_id"]) == 0, "despedido, el equipo queda sin líder")
 	_expect(is_equal_approx(Staff.get_team_factor(team, at), 0.75), "y vuelve a 75 %")
@@ -196,16 +188,13 @@ func _check_team_rules() -> void:
 	_expect(int(team["leader_id"]) == a["id"] and (team["members"] as Array).is_empty(), "no como miembro")
 	var second: Dictionary = Staff.add_to_team(team["id"], b["id"])
 	_expect(not second["ok"] and String(second["message"]).contains("ya tiene líder"), "un equipo tiene un solo líder: %s" % second["message"])
-	# Un líder cambia de equipo: el anterior queda sin líder.
 	_expect(Staff.add_to_team(other_team["id"], a["id"])["ok"], "mover al líder")
 	_expect(int(team["leader_id"]) == 0 and int(other_team["leader_id"]) == a["id"], "cambió de equipo")
-	# Quitarlo: sigue siendo líder, sin equipo.
 	_expect(Staff.remove_from_team(a["id"]), "quitar al líder")
 	_expect(int(other_team["leader_id"]) == 0 and a["role"] == LEADER and Staff.get_team_of(a["id"]).is_empty(), "sigue siendo líder, sin equipo")
-	# Un equipo sin miembros no cuenta como equipo activo aunque tenga líder.
+	# Un equipo sin miembros no cuenta como activo aunque tenga líder.
 	Staff.add_to_team(team["id"], a["id"])
 	_expect(Staff.get_active_team_count() == 0, "un líder solo no hace un equipo activo")
-	# Hasta 10 miembros.
 	var template: Dictionary = Staff.employees[0]
 	for i: int in range(10):
 		var fake: Dictionary = template.duplicate(true)
@@ -245,13 +234,12 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_4"), "cargar")
 	_expect(JSON.stringify(Staff.export_state()) == before, "el líder vuelve igual")
-	# Partida de antes del hito 31: equipos sin líder.
+	# Partida vieja: equipos sin líder.
 	var old: Dictionary = Staff.export_state()
 	for saved: Dictionary in old["teams"]:
 		saved.erase("leader_id")
 	Staff.import_state(old)
 	_expect(int(Staff.teams[0]["leader_id"]) == 0, "partida vieja: sin líder")
-	# Un líder que no es líder de equipo se descarta.
 	old = Staff.export_state()
 	old["teams"][0]["leader_id"] = worker["id"]
 	Staff.import_state(old)
@@ -269,7 +257,6 @@ func _check_ui() -> void:
 	var card: EmployeeCard = game.get_node("EmployeeCard")
 	var staff_panel: StaffPanel = game.get_node("StaffPanel")
 	var teams_panel: TeamsPanel = game.get_node("TeamsPanel")
-	# Emprendimiento: el cargo de líder está en gris en las vacantes.
 	staff_panel.set_open(true)
 	await get_tree().process_frame
 	var roles: Array[String] = StaffCatalog.get_role_ids()
@@ -280,7 +267,6 @@ func _check_ui() -> void:
 	await get_tree().process_frame
 	_expect(card.get_text().contains("Ascenso a Líder de equipo: desde Startup"), "la ficha dice cuándo: %s" % card.get_text())
 	_expect(not card.is_promote_visible(), "sin fila Ascender")
-	# Startup: se habilita.
 	Company.stage = 1
 	EventBus.staff_changed.emit()
 	await get_tree().process_frame
@@ -305,7 +291,6 @@ func _check_ui() -> void:
 	var character: Employee = game.get("employees")[senior["id"]]
 	_expect(character.shirt_color == StaffCatalog.get_shirt_color(LEADER), "su camisa cambia al color de líder")
 	_expect(card.get_text().contains("Líder de equipo · $4,200"), "la ficha muestra el cargo: %s" % card.get_text())
-	# Nombrarlo líder desde Equipos.
 	var choice: OptionButton = teams_panel.get_team_control(team["id"], "add_choice")
 	for index: int in range(choice.item_count):
 		if choice.get_item_id(index) == senior["id"]:

@@ -1,51 +1,39 @@
-# Cámara de la oficina: se arrastra con el ratón (con inercia al soltar), se mueve con
-# WASD o las flechas y con el ratón en el borde de la ventana, y hace zoom en niveles fijos
-# con la rueda, con una animación corta que mantiene fijo el punto bajo el ratón. Se mueve
-# libre por todo el mapa (el solar) y se detiene en su borde: el centro de la vista no
-# puede salir del rombo del solar. fit_rect() encuadra un rectángulo, por ejemplo la
-# oficina completa.
-#
-# El estado lógico es position (centro de la vista) y zoom_index (nivel de destino); lo
-# que se ve (zoom) llega al nivel de destino con la animación. Sin animación (opción
-# «Cámara suave» apagada o smoothing_enabled en false) todo cambia al instante.
+# Cámara de la oficina: arrastre con inercia, WASD/flechas, borde de la ventana y zoom por niveles
+# con animación que deja fijo el punto bajo el ratón. Su centro no sale del rombo del solar.
+# Estado lógico: position y zoom_index; sin cámara suave todo cambia al instante.
 class_name OfficeCamera
 extends Camera2D
 
-## Píxeles que hay que mover el ratón con el botón izquierdo pulsado para que cuente
-## como arrastre y no como clic (así el clic queda libre para construir o inspeccionar).
+## Píxeles que debe moverse el ratón con el botón izquierdo para que sea arrastre y no clic.
 const DRAG_THRESHOLD_PX: float = 6.0
 
-## Cuánto hay que girar la rueda (o deslizar en el trackpad) para cambiar un nivel.
+## Giro de rueda (o deslizamiento en el trackpad) para cambiar un nivel.
 const WHEEL_STEP: float = 1.0
 
-## Cuánto hay que pellizcar en el trackpad para cambiar un nivel.
+## Pellizco en el trackpad para cambiar un nivel.
 const PINCH_STEP: float = 0.25
 
-## Teclas que mueven la cámara (por su lugar en el teclado, así WASD sirve en cualquier
-## distribución) y su dirección en la pantalla.
+## Teclas que mueven la cámara (por posición física, así WASD sirve en toda distribución) y su dirección.
 const PAN_KEYS: Dictionary[Key, Vector2] = {
 	KEY_W: Vector2.UP, KEY_A: Vector2.LEFT, KEY_S: Vector2.DOWN, KEY_D: Vector2.RIGHT,
 	KEY_UP: Vector2.UP, KEY_LEFT: Vector2.LEFT, KEY_DOWN: Vector2.DOWN, KEY_RIGHT: Vector2.RIGHT,
 }
 
-## Solo para pruebas: false hace que zoom, encuadre e inercia sean instantáneos aunque la
-## opción esté encendida (test_all lo apaga en las partes anteriores a camera_view).
+## Solo para pruebas: false hace instantáneos zoom, encuadre e inercia aunque la opción esté encendida.
 static var smoothing_enabled: bool = true
 
 var zoom_index: int = GameConstants.CAMERA_START_ZOOM_INDEX
 
-## Si el botón izquierdo arrastra la cámara. En modo construcción se apaga, porque el
-## botón izquierdo construye; el central y el derecho siguen moviéndola.
+## Si el botón izquierdo arrastra la cámara (en construcción no; central y derecho siempre).
 var left_drag_enabled: bool = true
 
-## Si devuelve true (un menú encima: pausa, fin de partida), el teclado y el borde de la
-## pantalla no mueven la cámara. Lo pone la escena de juego.
+## Si devuelve true (un menú encima), teclado y borde no mueven la cámara.
 var pan_blocker: Callable = Callable()
 
-# Ya se avisó EventBus.ui_action de este arrastre (o de este movimiento con teclas).
+# Ya se avisó EventBus.ui_action de este arrastre o movimiento con teclas.
 var _drag_reported: bool = false
 var _pan_reported: bool = false
-# Rombo del mapa (ver OfficeGrid.get_site_world_area); sin mapa no hay límites.
+# Rombo del mapa (OfficeGrid.get_site_world_area); sin mapa no hay límites.
 var _area := Transform2D()
 var _has_area: bool = false
 var _drag_button: MouseButton = MOUSE_BUTTON_NONE
@@ -55,14 +43,14 @@ var _wheel_accumulator: float = 0.0
 var _pinch_accumulator: float = 0.0
 # Zoom que se ve ahora (llega a get_zoom_level() con la animación).
 var _shown_zoom: float = GameConstants.CAMERA_ZOOM_LEVELS[GameConstants.CAMERA_START_ZOOM_INDEX]
-# Zoom con la rueda: el punto del mundo que tiene que quedar bajo el ratón.
+# Zoom con la rueda: punto del mundo que queda bajo el ratón.
 var _anchored: bool = false
 var _anchor_world := Vector2.ZERO
 var _anchor_offset := Vector2.ZERO  # desde el centro de la pantalla
 # Encuadre animado: el centro va hacia _glide_target.
 var _gliding: bool = false
 var _glide_target := Vector2.ZERO
-# Inercia: velocidad en píxeles de pantalla por segundo (hacia donde se arrastró).
+# Inercia: velocidad en px de pantalla por segundo.
 var _inertia := Vector2.ZERO
 var _drag_velocity := Vector2.ZERO
 var _last_motion_usec: int = 0
@@ -73,15 +61,14 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_clamp_position)
 
 
-## Fija el rombo del mapa (en píxeles del mundo) por el que se puede mover la cámara.
+## Fija el rombo del mapa (px del mundo) por el que se mueve la cámara.
 func set_map_area(area: Transform2D) -> void:
 	_area = area
 	_has_area = true
 	_clamp_position()
 
 
-## Centra la vista en un punto del mundo (dentro del mapa). Con animate y la cámara
-## suave, llega deslizándose.
+## Centra la vista en un punto del mundo (dentro del mapa); con animate y cámara suave, se desliza.
 func center_on(world_position: Vector2, animate: bool = false) -> void:
 	_stop_motion()
 	if animate and is_smooth():
@@ -92,9 +79,8 @@ func center_on(world_position: Vector2, animate: bool = false) -> void:
 	_clamp_position()
 
 
-## Encuadra un rectángulo del mundo: elige el zoom más cercano en que cabe entero
-## (con un margen para los paneles) y lo centra. Con animate y la cámara suave, llega
-## con una animación.
+## Encuadra un rectángulo del mundo con el zoom más cercano en que cabe (con margen para paneles).
+## Con animate y cámara suave, animado.
 func fit_rect(target: Rect2, animate: bool = false) -> void:
 	var available: Vector2 = get_viewport_rect().size * (1.0 - 2.0 * GameConstants.CAMERA_FIT_MARGIN)
 	var best: int = 0
@@ -114,7 +100,7 @@ func get_zoom_level() -> float:
 	return GameConstants.CAMERA_ZOOM_LEVELS[zoom_index]
 
 
-## Zoom que se ve ahora (distinto de get_zoom_level() mientras dura la animación).
+## Zoom que se ve ahora (distinto de get_zoom_level() durante la animación).
 func get_shown_zoom() -> float:
 	return _shown_zoom
 
@@ -129,7 +115,7 @@ func is_moving() -> bool:
 	return _anchored or _gliding or _inertia != Vector2.ZERO or not is_equal_approx(_shown_zoom, get_zoom_level())
 
 
-## Termina al instante la animación o la inercia en curso (la vista queda donde iba).
+## Termina al instante la animación o la inercia (la vista queda donde iba).
 func finish_motion() -> void:
 	position = _final_position()
 	_stop_motion()
@@ -138,8 +124,7 @@ func finish_motion() -> void:
 	_clamp_position()
 
 
-## Cambia al nivel de zoom indicado manteniendo fijo el punto de pantalla dado,
-## para que la casilla bajo el ratón no se escape al acercar o alejar.
+## Cambia de nivel de zoom dejando fijo el punto de pantalla dado.
 func set_zoom_index(new_index: int, anchor_screen: Vector2) -> void:
 	new_index = clampi(new_index, 0, GameConstants.CAMERA_ZOOM_LEVELS.size() - 1)
 	if new_index == zoom_index:
@@ -161,15 +146,13 @@ func set_zoom_index(new_index: int, anchor_screen: Vector2) -> void:
 	_clamp_position()
 
 
-## Devuelve el estado de la cámara para guardarlo (hito 9): el nivel de zoom y el centro
-## donde termina la animación en curso.
+## Estado para guardar: nivel de zoom y centro final de la animación en curso.
 func export_state() -> Dictionary:
 	var final: Vector2 = _final_position()
 	return {"zoom": get_zoom_level(), "x": final.x, "y": final.y}
 
 
-## Restaura el estado de la cámara desde una partida guardada (hito 9). Las partidas de
-## antes del cambio de niveles guardan solo zoom_index en la lista vieja.
+## Restaura el estado; las partidas viejas guardan solo zoom_index en la lista vieja.
 func import_state(state: Dictionary) -> void:
 	var level: float = get_zoom_level()
 	if state.has("zoom"):
@@ -193,8 +176,7 @@ func _process(delta: float) -> void:
 	_step_glide(delta)
 
 
-# _unhandled_input recibe solo lo que la interfaz no consumió: así, en hitos
-# posteriores, arrastrar sobre un panel no moverá la oficina.
+# _unhandled_input solo recibe lo que la interfaz no consumió (arrastrar un panel no mueve la oficina).
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		_handle_mouse_button(event as InputEventMouseButton)
@@ -236,12 +218,12 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 		if event.position.distance_to(_drag_start) < DRAG_THRESHOLD_PX:
 			return
 		_is_dragging = true
-		# Recupera lo que se movió el ratón antes de superar el umbral.
+		# Recupera lo movido antes de superar el umbral.
 		_move_by(-(event.position - event.relative - _drag_start) / _shown_zoom)
 		_last_motion_usec = Time.get_ticks_usec()
 	_move_by(-event.relative / _shown_zoom)
 	_note_drag_velocity(event.relative)
-	# El tutorial (hito 63) se entera una vez por arrastre.
+	# El tutorial se entera una vez por arrastre.
 	if not _drag_reported:
 		_drag_reported = true
 		EventBus.ui_action.emit("camera_moved")
@@ -249,8 +231,7 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 
 
 func _handle_wheel(event: InputEventMouseButton) -> void:
-	# Con ratón cada clic de rueda vale 1; el trackpad manda muchos eventos pequeños,
-	# por eso se acumulan hasta completar un paso.
+	# Con ratón cada clic de rueda vale 1; el trackpad manda eventos pequeños que se acumulan.
 	var amount: float = event.factor if event.factor > 0.0 else 1.0
 	var direction: float = 1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0
 	if signf(_wheel_accumulator) != direction:
@@ -273,8 +254,7 @@ func _handle_pinch(event: InputEventMagnifyGesture) -> void:
 	get_viewport().set_input_as_handled()
 
 
-## Dirección (en la pantalla) en que las teclas piden mover la cámara; cero si ninguna o
-## si se está escribiendo en un campo de texto.
+## Dirección en pantalla que piden las teclas; cero si ninguna o si se escribe en un campo de texto.
 func get_key_pan_direction() -> Vector2:
 	var focus: Control = get_viewport().gui_get_focus_owner()
 	if focus is LineEdit or focus is TextEdit:
@@ -290,9 +270,8 @@ func get_key_pan_direction() -> Vector2:
 	return direction.normalized() if direction != Vector2.ZERO else Vector2.ZERO
 
 
-## Dirección en que mueve la cámara el ratón en el borde de la ventana (opción «Mover la
-## cámara con el borde de la pantalla»). window_point es el ratón en píxeles de la ventana;
-## sobre un botón o un panel no se mueve.
+## Dirección por el ratón en el borde de la ventana (opción). window_point en px de la ventana;
+## sobre la interfaz no se mueve.
 func get_edge_pan_direction(window_point: Vector2, window_size: Vector2) -> Vector2:
 	if not bool(Settings.get_value("edge_pan")):
 		return Vector2.ZERO
@@ -313,8 +292,7 @@ func get_edge_pan_direction(window_point: Vector2, window_size: Vector2) -> Vect
 	return direction.normalized() if direction != Vector2.ZERO else Vector2.ZERO
 
 
-# Teclado y borde de la ventana. El borde solo con ventana real y con foco: sin ventana
-# el ratón no existe y fuera de la ventana el último punto quedaría pegado al borde.
+# Teclado y borde. El borde solo con ventana real y foco (si no, el ratón quedaría pegado al borde).
 func _pan(delta: float) -> void:
 	var velocity: Vector2 = get_key_pan_direction() * GameConstants.CAMERA_KEY_PAN_SPEED
 	if velocity == Vector2.ZERO and DisplayServer.get_name() != "headless" and get_window().has_focus():
@@ -332,8 +310,7 @@ func _pan(delta: float) -> void:
 		EventBus.ui_action.emit("camera_moved")
 
 
-# Mueve el centro de la vista (en píxeles del mundo) sin salir del mapa. Devuelve cuánto
-# se movió de verdad. Si hay un zoom con ancla en curso, el ancla se mueve igual.
+# Mueve el centro (px del mundo) sin salir del mapa y devuelve lo movido de verdad. El ancla del zoom se mueve igual.
 func _move_by(world_delta: Vector2) -> Vector2:
 	var before: Vector2 = position
 	position += world_delta
@@ -385,7 +362,7 @@ func _step_zoom(delta: float) -> void:
 		if not is_smooth():
 			_shown_zoom = target
 		else:
-			# En escala logarítmica, así acercar y alejar se sienten igual de rápidos.
+			# En escala logarítmica, así acercar y alejar se sienten igual.
 			var weight: float = 1.0 - exp(-GameConstants.CAMERA_SMOOTH_SPEED * delta)
 			_shown_zoom = exp(lerpf(log(_shown_zoom), log(target), weight))
 			if absf(_shown_zoom - target) < target * 0.002:
@@ -413,7 +390,7 @@ func _step_glide(delta: float) -> void:
 	_clamp_position()
 
 
-# Centro de la vista cuando termine la animación en curso.
+# Centro de la vista al terminar la animación.
 func _final_position() -> Vector2:
 	if _gliding:
 		return _glide_target
@@ -440,13 +417,12 @@ func _apply_zoom() -> void:
 	zoom = Vector2.ONE * _shown_zoom
 
 
-# Mantiene el centro de la vista dentro del rombo del mapa.
+# Mantiene el centro dentro del rombo del mapa.
 func _clamp_position() -> void:
 	position = _clamped(position)
 
 
-# Pasa el punto a coordenadas del rombo (0 a 1 en cada lado), lo recorta y lo devuelve al
-# mundo. Dentro del mapa no se toca (la ida y vuelta redondearía decimales).
+# Pasa el punto al rombo (0 a 1 por lado), lo recorta y vuelve al mundo. Dentro no se toca (redondeo).
 func _clamped(point: Vector2) -> Vector2:
 	if not _has_area:
 		return point

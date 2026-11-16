@@ -1,6 +1,5 @@
-# Ayuda de un menú (hito 64): un cuadro centrado con el título y el texto de data/help.json
-# que abren los botones «?» (HelpButton, EventBus.help_requested). No pausa ni tapa el
-# resto: se cierra con «Entendido» o con Esc.
+# Cuadro de ayuda con título y texto de data/help.json (lo abren los botones «?»).
+# No pausa; se cierra con «Entendido» o Esc.
 class_name HelpDialog
 extends CanvasLayer
 
@@ -46,7 +45,7 @@ func _ready() -> void:
 	EventBus.help_requested.connect(show_topic)
 
 
-## Muestra la ayuda de un tema (clave de data/help.json); un tema desconocido no hace nada.
+## Muestra la ayuda de un tema; un tema desconocido no hace nada.
 func show_topic(topic: String) -> void:
 	var entry: Dictionary = get_topics().get(topic, {})
 	if entry.is_empty():

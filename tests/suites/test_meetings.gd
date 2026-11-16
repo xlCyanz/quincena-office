@@ -1,10 +1,9 @@
-# Prueba del hito 47: contratos grandes y Sala de reuniones.
-# Criterio: la primera oferta grande habilita la Sala de reuniones; sin sala no se acepta;
-# los de élite solo llegan en Corporación.
+# Contratos grandes y Sala de reuniones: la primera oferta grande habilita la sala; sin ella
+# no se aceptan; los de élite solo llegan en Corporación.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=meetings
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -12,7 +11,7 @@ const SEED: int = 20261147
 ## Zona abierta del local inicial (39 m², fuera de la Oficina Ejecutiva).
 const OPEN_CELL := Vector2i(3, 3)
 const TABLE_CELL := Vector2i(3, 4)
-## Casilla de la pared norte de la zona abierta; con rotación 2 la pared queda detrás.
+## Pared norte de la zona abierta; con rotación 2 queda detrás.
 const SCREEN_CELL := Vector2i(4, 0)
 
 var _failures: int = 0
@@ -53,12 +52,11 @@ func _new_game() -> void:
 	Projects.offers.clear()
 
 
-# Avanza hasta la próxima llegada de ofertas (las 9:00 del día siguiente).
+# Hasta la próxima llegada de ofertas (9:00 del día siguiente).
 func _to_next_arrival() -> void:
 	GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 
 
-# Sala de reuniones en la zona abierta con su mesa.
 func _meeting_room() -> void:
 	_expect(_builder.mark_room("meeting_room", OPEN_CELL)["ok"], "marcar la Sala de reuniones")
 	_expect(_builder.place("meeting_table", TABLE_CELL, 0)["ok"], "mesa de reuniones")
@@ -137,12 +135,10 @@ func _check_unlock() -> void:
 	_notices.clear()
 	Projects.create_offer("large")
 	_expect(not _notices.any(func(text: String) -> bool: return text.contains("ya puedes construir")), "avisa una sola vez")
-	# Queda habilitada aunque la oferta se vaya.
 	Projects.reject(offer["id"])
 	Projects.offers.clear()
 	_expect(Company.is_room_unlocked("meeting_room") and _builder.quote_mark_room("meeting_room", OPEN_CELL)["ok"],
 		"sigue habilitada sin la oferta")
-	# Sin mesa no funciona.
 	_builder.mark_room("meeting_room", OPEN_CELL)
 	var room: Dictionary = OfficeState.find_room("meeting_room")
 	_expect(RoomRules.function_problems(room, OfficeState.furniture).has("falta mesa de reuniones"), "sin mesa no funciona")
@@ -205,11 +201,10 @@ func _check_screen() -> void:
 	_expect(Projects.has_presentation_screen("meeting_room"), "la sala tiene pantalla")
 	_expect(is_equal_approx(Projects.get_size_weight("large"), 1.25) and is_equal_approx(Projects.get_size_weight("elite"), 1.25)
 		and is_equal_approx(Projects.get_size_weight("small"), 6.0), "con pantalla llegan más grandes y de élite: %.2f" % Projects.get_size_weight("large"))
-	# Sin mesa la sala no funciona y la pantalla no cuenta.
 	var table: int = OfficeState.find_furniture_at(TABLE_CELL)
 	OfficeState.furniture.remove_at(table)
 	_expect(is_equal_approx(Projects.get_size_weight("large"), 1.0), "en una sala que no funciona no cuenta")
-	# Más grandes entre los tamaños sorteados con pantalla (20,000 sorteos).
+	# 20,000 sorteos con pantalla.
 	OfficeState.furniture.append({"id": "meeting_table", "cell": TABLE_CELL, "rotation": 0, "assigned_to": "", "computer": ""})
 	Projects.reputation = 4.0
 	Company.stage = 3
@@ -237,7 +232,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(not Projects.meeting_room_unlocked, "partida nueva: bloqueada")
 	_expect(SaveManager.load_game("slot_5") and Projects.meeting_room_unlocked, "se guarda habilitada")
-	# Partidas de antes del hito 47: sin la clave.
+	# Partida vieja: sin la clave.
 	var state: Dictionary = Projects.export_state()
 	state.erase("meeting_room_unlocked")
 	state["offers"] = []

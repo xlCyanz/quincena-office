@@ -1,6 +1,5 @@
-# Prueba del hito 58: inversionista.
-# Criterio: aceptar da el efectivo y cobra el porcentaje cada día 1 hasta terminar; el valor
-# descuenta lo que falta por pagar; rechazar no cambia nada.
+# Inversionista: aceptar da el efectivo y cobra su parte cada día 1 hasta terminar; el valor
+# descuenta lo que falta; rechazar no cambia nada.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=investor
 extends Node
 
@@ -140,7 +139,6 @@ func _check_payments() -> void:
 	var paid: int = -Economy.get_month_totals(month + 1).get(Bank.CONCEPT_INVESTOR, 0)
 	_expect(paid == roundi(12000 * share), "el día 1 cobra el %d %% de contratos y productos: %d" % [roundi(share * 100), paid])
 	_expect(int(Bank.investor["paid_months"]) == 1 and Bank.get_investor_months_left() == 1, "queda 1 mes")
-	# Segundo mes: todo lo del mes cuenta.
 	Economy.earn(8000, Projects.CONCEPT_DELIVERY)
 	_to_next_month()
 	paid = -Economy.get_month_totals(month + 2).get(Bank.CONCEPT_INVESTOR, 0)
@@ -155,7 +153,6 @@ func _check_payments() -> void:
 	_to_next_month()
 	_expect(Economy.get_month_totals(Economy.get_current_month()).get(Bank.CONCEPT_INVESTOR, 0) == 0
 		and int(Bank.investor["paid_months"]) == 1, "sin ingresos, pago 0")
-	# Se cobra aunque no alcance el saldo.
 	Economy.earn(20000, Projects.CONCEPT_DELIVERY)
 	Economy.charge(Economy.balance + 100, "Prueba")
 	_to_next_month()

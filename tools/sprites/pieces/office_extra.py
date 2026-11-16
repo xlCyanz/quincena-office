@@ -1,4 +1,4 @@
-# Muebles de trabajo que faltaban, con el estilo de tools/sprites/STYLE.md:
+# Muebles de oficina extra (estilo de tools/sprites/STYLE.md):
 #
 #   executive_desk_r0..r3      2×1: escritorio ejecutivo de nogal: dos cajoneras enteras, panel con
 #                              tableros hundidos del lado de la visita y tablero grueso con filo dorado
@@ -9,8 +9,7 @@
 #   <cada uno>_shadow          sombra en el piso, aparte
 #   _sheets/office_extra.png   hoja de contacto
 #
-# El escritorio tiene la superficie en z = 44 (iso.DESK_TOP) para que las computadoras se
-# apoyen igual que en el sencillo, aunque tenga `height` 26 en data/furniture.json.
+# El escritorio tiene la superficie en z = 44 (iso.DESK_TOP), como el sencillo, aunque su `height` sea 26.
 import numpy as np
 
 import iso
@@ -64,7 +63,7 @@ EXEC_Y = (4 * U, 28 * U)
 
 
 def exec_top_side(ctx):
-    """Canto del tablero: filo dorado de 1 px a media altura."""
+    """Canto del tablero con filo dorado de 1 px a media altura."""
     a, b, w, h = grid(ctx)
     index = plain(ctx)
     return np.where(b == np.floor(h / 2.0), BRASS, index)
@@ -99,7 +98,7 @@ def executive_desk(rotation):
                          iso.BACK: exec_side},
                     name="pedestals" if peds is None else None, part=peds, flat=False)
         peds = pid if peds is None else peds
-    # Panel de la visita (atrás, +y) entre las dos cajoneras.
+    # Panel de la visita (atrás, +y).
     c.box(EXEC_PED[0][1], EXEC_PED[1][0], 24 * U, 27 * U, 4, under, WALNUT, tex={iso.BACK: exec_panel},
           shade={iso.FRONT: -1}, name="modesty", flat=False)
     c.box(1 * U, 63 * U, 2 * U, 30 * U, under, TOP, WALNUT, tex={"sides": exec_top_side}, name="top", flat=False)
@@ -118,7 +117,7 @@ LID_TOP = 34
 
 
 def stand_front(ctx):
-    """Mueble bajo: una puerta con tirador."""
+    """Mueble bajo con una puerta y tirador."""
     a, b, w, h = grid(ctx)
     index = sunken(plain(ctx), a, b, 2, w - 2, 2, h - 2, STAND_LINE, pal.LIGHT)
     index = np.where(inside(a, b, w - 6, w - 4, np.floor(h / 2.0) - 2, np.floor(h / 2.0) + 3), STAND_HANDLE, index)
@@ -236,7 +235,7 @@ TABLE_R = 0.8
 
 
 def table_cap(ctx):
-    """Tapa de madera: un aro un tono más oscuro cerca del canto, como una moldura."""
+    """Tapa de madera con un aro más oscuro cerca del canto."""
     index = plain(ctx)
     return np.where((ctx.t > 0.86) & (ctx.t < 0.9), TABLE_EDGE, index)
 

@@ -1,5 +1,5 @@
-# Reloj del juego: hora de 24 horas, fecha (día, mes de 30 días y día de la semana),
-# pausa y velocidades 1x, 2x y 4x. Avisa de cada hora y cada día por EventBus.
+# Reloj del juego: hora, fecha (meses de 30 días, semana), pausa y velocidades. Avisa de cada
+# hora y cada día por EventBus.
 extends Node
 
 const MINUTES_PER_HOUR: int = 60
@@ -7,13 +7,11 @@ const MINUTES_PER_HOUR: int = 60
 ## Índice de la velocidad actual dentro de GameConstants.CLOCK_SPEEDS (0 = 1x).
 var speed_index: int = 0
 
-## Si está en pausa no avanza nada. Al quitar la pausa se recupera la velocidad que había.
+## En pausa no avanza nada; al quitarla vuelve la velocidad que había.
 var is_paused: bool = false
 # Un salto de horas en curso debe cortarse (ver interrupt).
 var _interrupted: bool = false
-## true mientras los sistemas reaccionan al cambio de hora: OfficeState y Staff solo usan
-## sus cachés por hora entonces (fuera, por ejemplo en las pruebas que cambian cosas a mano,
-## calculan de nuevo).
+## true mientras los sistemas reaccionan al cambio de hora: solo entonces OfficeState y Staff usan sus cachés por hora.
 var in_hour_tick: bool = false
 
 # Días completos desde el inicio de la partida (0 = día 1 del mes 1).
@@ -21,13 +19,12 @@ var _day_count: int = 0
 var _hour: int = GameConstants.START_HOUR
 # Segundos reales acumulados dentro de la hora actual, ya multiplicados por la velocidad.
 var _seconds_into_hour: float = 0.0
-# El primer fotograma después de start() trae en su delta lo que tardó en cargar la
-# escena; ese tiempo no es de juego y se descarta.
+# El primer fotograma tras start() trae el tiempo de carga de la escena: se descarta.
 var _skip_next_frame: bool = false
 
 
 func _ready() -> void:
-	# Fuera de una partida (por ejemplo, en el menú) el reloj no corre.
+	# Fuera de una partida (el menú) el reloj no corre.
 	set_process(false)
 
 
@@ -44,13 +41,12 @@ func start() -> void:
 	set_process(true)
 
 
-## Detiene el reloj (no es una pausa del jugador: lo usa la escena al cerrarse).
+## Detiene el reloj al cerrar la escena (no es la pausa del jugador).
 func stop() -> void:
 	set_process(false)
 
 
-## Avanza el reloj según los segundos reales transcurridos, aplicando pausa y velocidad.
-## Si en un solo paso pasan varias horas, avisa de cada una en orden.
+## Avanza según los segundos reales con pausa y velocidad; avisa de cada hora que pase, en orden.
 func advance(real_seconds: float) -> void:
 	_seconds_into_hour += real_seconds * get_time_scale()
 	while _seconds_into_hour >= GameConstants.SECONDS_PER_GAME_HOUR:
@@ -58,11 +54,8 @@ func advance(real_seconds: float) -> void:
 		_next_hour()
 
 
-## Salta hasta el inicio de la hora que está `hours` horas por delante de la actual
-## (1 = el inicio de la próxima hora). Avisa de cada hora y cada día intermedios, para
-## que nada que dependa de ellos (por ejemplo, la nómina) se pierda. Se usa cuando la
-## oficina queda vacía, para saltar hasta la próxima hora de entrada.
-## Se corta si algo llama a interrupt() en medio (por ejemplo, una ventana que pausa).
+## Salta al inicio de la hora que está `hours` por delante (1 = la próxima), avisando de cada hora y
+## día intermedios (la nómina no se pierde). Lo corta interrupt().
 func fast_forward_hours(hours: int) -> void:
 	_seconds_into_hour = 0.0
 	_interrupted = false
@@ -73,8 +66,7 @@ func fast_forward_hours(hours: int) -> void:
 	_interrupted = false
 
 
-## Adelanta el reloj dentro de la hora actual hasta ese minuto (sin pasar de hora); no
-## retrocede. Lo usa el salto de la oficina vacía para llegar a la primera entrada.
+## Adelanta el reloj hasta ese minuto de la hora actual, sin pasar de hora ni retroceder.
 func skip_to_minute(minute: int) -> void:
 	var seconds: float = clampi(minute, 0, 59) * GameConstants.SECONDS_PER_GAME_HOUR / 60.0
 	_seconds_into_hour = maxf(_seconds_into_hour, seconds)
@@ -96,13 +88,12 @@ func _next_hour() -> void:
 	in_hour_tick = false
 
 
-## Multiplicador del tiempo: 0 en pausa; si no, la velocidad actual. Los sistemas que
-## se mueven con el tiempo (por ejemplo, los personajes) lo usan para ir al mismo ritmo.
+## Multiplicador del tiempo: 0 en pausa; si no, la velocidad actual.
 func get_time_scale() -> float:
 	return 0.0 if is_paused else get_speed()
 
 
-## Velocidad seleccionada (1, 2 o 4), aunque esté en pausa.
+## Velocidad seleccionada, aunque esté en pausa.
 func get_speed() -> float:
 	return GameConstants.CLOCK_SPEEDS[speed_index]
 
@@ -155,18 +146,16 @@ func get_day_count() -> int:
 	return _day_count
 
 
-## Prepara el reloj de una partida nueva: día 1, mes 1, a la hora de entrada, a la velocidad
-## inicial de las opciones.
+## Prepara el reloj de una partida nueva: día 1, mes 1, a la hora de entrada y la velocidad inicial de las opciones.
 func new_game() -> void:
 	_day_count = 0
 	_hour = GameConstants.START_HOUR
 	_seconds_into_hour = 0.0
-	# La velocidad con que empieza una partida nueva es una opción del jugador (hito 60).
 	speed_index = clampi(int(Settings.get_value("start_speed")), 0, GameConstants.CLOCK_SPEEDS.size() - 1)
 	is_paused = false
 
 
-## Devuelve el estado del reloj para guardarlo (hito 9).
+## Devuelve el estado del reloj para guardarlo.
 func export_state() -> Dictionary:
 	return {
 		"day_count": _day_count,
@@ -177,7 +166,7 @@ func export_state() -> Dictionary:
 	}
 
 
-## Restaura el estado del reloj desde una partida guardada (hito 9).
+## Restaura el estado del reloj desde una partida guardada.
 func import_state(state: Dictionary) -> void:
 	_day_count = maxi(int(state.get("day_count", 0)), 0)
 	_hour = clampi(int(state.get("hour", GameConstants.START_HOUR)), 0, GameConstants.HOURS_PER_DAY - 1)

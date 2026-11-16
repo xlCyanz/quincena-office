@@ -5,8 +5,8 @@
 #   dirt_2           migas y papeles: migas de 2×1 px y dos papelitos arrugados
 #   _sheets/dirt.png
 #
-# Lienzo 128×128 con el rombo abajo (como un piso); solo dentro del rombo, alfa 0/255 (sección 10 de
-# docs/sprites_128.md). Se dibuja en coordenadas del piso (u, v de 0 a 1), así todo sale plano y 2:1.
+# Lienzo 128×128 con el rombo abajo, como un piso; alfa 0/255 solo dentro del rombo.
+# Se dibuja en coordenadas del piso (u, v de 0 a 1): todo sale plano y 2:1.
 import os
 
 import numpy as np
@@ -46,8 +46,7 @@ def value_noise(u, v, cells, seed):
 
 
 def blob(u, v, cu, cv, ru, rv, wobble, seed):
-    """Mancha de borde irregular: elipse en el piso deformada por ruido. Devuelve la distancia
-    normalizada (< 1 adentro)."""
+    """Elipse en el piso deformada por ruido; devuelve la distancia normalizada (< 1 adentro)."""
     d = np.sqrt(((u - cu) / ru) ** 2 + ((v - cv) / rv) ** 2)
     return d - wobble * (value_noise(u, v, 6, seed) - 0.5)
 

@@ -1,6 +1,5 @@
-# Prueba de las herramientas de desarrollo (monitores del depurador y comandos de Panku).
-# Criterio: los monitores del grupo Quincena quedan registrados y devuelven los valores de
-# los sistemas; los comandos de la consola cambian el dinero, el reloj y las barras.
+# Herramientas de desarrollo: los monitores Quincena devuelven los valores de los sistemas y
+# los comandos de la consola cambian dinero, reloj y barras.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=dev_tools
 extends Node
 

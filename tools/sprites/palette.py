@@ -1,11 +1,7 @@
 # Colores y rampas de los sprites (docs/sprites_128.md, sección 4).
-#
-# Una rampa son 8 tonos de un mismo material, del más oscuro al más claro. Los tres de las
-# caras planas son EXACTOS (lo mismo que Color.darkened de Godot):
-#   BASE  = color base de data/*.json (cara de arriba)
-#   LEFT  = base −25 % (cara izquierda)
-#   RIGHT = base −40 % (cara derecha)
-# El corrimiento de tono solo va en los demás (contorno, sombra profunda, brillos).
+# Una rampa son 8 tonos de un material, de oscuro a claro. Las caras planas son exactas (Color.darkened
+# de Godot): BASE = color de data/*.json (arriba), LEFT = −25 % (izquierda), RIGHT = −40 % (derecha).
+# El corrimiento de tono solo va en los demás tonos.
 import colorsys
 
 import numpy as np
@@ -56,10 +52,7 @@ def _round_channel(value):
 
 
 def darken(color, amount):
-    """Oscurece EXACTO como Color.darkened(amount) de Godot: canal × (1 − amount), redondeado.
-
-    darken("c9b48a", 0.25) es la cara izquierda; darken(..., 0.40) la derecha.
-    """
+    """Oscurece como Color.darkened(amount) de Godot: canal × (1 − amount), redondeado."""
     r, g, b = hex_to_rgb(color)
     factor = 1.0 - float(amount)
     return (_round_channel(r * factor), _round_channel(g * factor), _round_channel(b * factor))
@@ -87,10 +80,8 @@ def luminance(color):
 
 
 def adjust(color, value=1.0, saturation=1.0, hue_toward=None, hue_amount=0.0, tint=0.0):
-    """Cambia un color en HSV: brillo × value, saturación × saturation y el tono corrido
-    hue_amount (0–1 del camino más corto) hacia hue_toward (0–1). tint es la saturación mínima
-    que se le da a un gris para que el corrimiento se note (0 = dejarlo gris).
-    """
+    """Cambia un color en HSV: brillo × value, saturación × saturation y tono corrido hue_amount hacia
+    hue_toward (0–1); tint = saturación mínima que se le da a un gris para que el tono se note."""
     r, g, b = [c / 255.0 for c in hex_to_rgb(color)]
     h, s, v = colorsys.rgb_to_hsv(r, g, b)
     if hue_toward is not None:
@@ -127,19 +118,14 @@ def lighter(index, steps=1):
 
 
 class Ramp(object):
-    """Lista de colores de un material. Los 8 primeros son los pasos OUTLINE…SHINE; con add()
-    se suman tonos propios (índices 8, 9…), que darker()/lighter() dejan igual.
-
-    ramp[i] da el color (r, g, b); ramp.base_hex el hex de origen; len(ramp) cuántos tiene.
-    """
+    """Colores de un material: los 8 pasos OUTLINE…SHINE y los tonos propios de add() (índices 8, 9…)."""
 
     def __init__(self, colors, base_hex=None, name=None):
         self.colors = [hex_to_rgb(c) for c in colors]
         self.base_hex = base_hex
         self.name = name or base_hex or "ramp"
         self.names = {}
-        # True si LEFT / RIGHT no son el −25 % / −40 % calculado sino tonos declarados a mano
-        # (rampas de STYLE.md): el manifiesto los anota y check.py los acepta (ver style_ramp).
+        # True si LEFT / RIGHT son tonos a mano (STYLE.md) y no el −25 % / −40 %: check.py los acepta.
         self.declared = False
 
     def __len__(self):
@@ -152,7 +138,7 @@ class Ramp(object):
         return iter(self.colors)
 
     def add(self, color, name=None):
-        """Suma un tono propio (hex o terna) y devuelve su índice. Repetir un color devuelve el que ya estaba."""
+        """Suma un tono propio y devuelve su índice (el que ya estaba si se repite)."""
         rgb = hex_to_rgb(color)
         if rgb in self.colors[STEP_COUNT:]:
             index = STEP_COUNT + self.colors[STEP_COUNT:].index(rgb)
@@ -170,7 +156,7 @@ class Ramp(object):
         return STEP_NAMES.index(name)
 
     def replace(self, index, color):
-        """Cambia un tono en el lugar (por ejemplo un contorno a mano). Devuelve la misma rampa."""
+        """Cambia un tono en el lugar; devuelve la misma rampa."""
         self.colors[index] = hex_to_rgb(color)
         return self
 
@@ -188,12 +174,8 @@ class Ramp(object):
 
 
 def ramp(base, outline=None, deep=None, soft=None, light=None, shine=None, name=None, shift=1.0):
-    """Rampa de 8 tonos a partir del color base (hex de data/*.json).
-
-    RIGHT, LEFT y BASE salen exactos (−40 %, −25 %, base). Los demás se calculan con un
-    corrimiento de tono leve (shift lo escala; 0 = sin corrimiento) y se pueden fijar a mano
-    pasando un hex en outline, deep, soft, light o shine.
-    """
+    """Rampa de 8 tonos desde el hex base: RIGHT, LEFT y BASE exactos; los demás con un leve
+    corrimiento de tono (shift, 0 = nada) o fijados a mano con outline, deep, soft, light o shine."""
     base_rgb = hex_to_rgb(base)
     colors = [None] * STEP_COUNT
     colors[BASE] = base_rgb
@@ -213,16 +195,13 @@ def ramp(base, outline=None, deep=None, soft=None, light=None, shine=None, name=
     else:
         colors[SHINE] = adjust(lighten(base_rgb, 0.48), 1.0, 1.0 - 0.25 * shift, WARM_HUE, 0.12 * shift, 0.04 * shift)
     if max(colors[OUTLINE]) < MIN_OUTLINE_VALUE:
-        # La guía pide un contorno «más oscuro del mismo color (no negro puro)»: con una base
-        # casi negra se deja un mínimo azulado.
+        # Contorno nunca negro puro: con una base casi negra queda un mínimo azulado.
         colors[OUTLINE] = (MIN_OUTLINE_VALUE - 4, MIN_OUTLINE_VALUE - 4, MIN_OUTLINE_VALUE)
     return Ramp(colors, base_hex=rgb_to_hex(base_rgb), name=name)
 
 
 def tones(base, factors, name=None):
-    """Paleta libre para pisos: un color por factor de brillo (1.0 = base exacto, 0.9 = −10 %,
-    1.08 = aclarado 8 % hacia el blanco). Devuelve una Ramp sin pasos con nombre: se usa por índice.
-    """
+    """Paleta libre de pisos: un color por factor de brillo (1.0 = base, 0.9 = −10 %, 1.08 = +8 % hacia blanco)."""
     colors = []
     for factor in factors:
         if factor <= 1.0:
@@ -254,18 +233,9 @@ def mean_luminance(indices, ramp_or_colors, mask=None):
 
 
 # ---------------------------------------------------------------------- estilo «Isometric Interiors»
-#
-# Rampas de tools/sprites/STYLE.md (hex sacados de las capturas de referencia). Cada fila de la
-# tabla da contorno, sombra, lado, base (arriba) y brillo; cuando la sombra trae dos tonos, el
-# más claro es la cara derecha (RIGHT) y el más oscuro la sombra profunda (DEEP, también la línea
-# de las aristas interiores del acabado 'salvaje'). Los lados de la tabla NO son el −25 % / −40 %
-# calculado: estas rampas salen con `declared = True` y check.py acepta esas caras tal cual, con
-# la condición de que la luz siga arriba a la izquierda (brillo arriba > izquierda ≥ derecha).
-#
-# Dos cambios a la tabla, por la guía (docs/sprites_128.md manda): un contorno negro puro
-# (plástico negro 000000, cerámica azul 020202) sube a MIN_OUTLINE_VALUE por canal (0c0c0c).
-# El brillo del tapizado rojo (bc3f41) es casi igual a su base: queda así (es lo que se mide en
-# la referencia); para un reflejo que se note usar SHINE.
+# Rampas de tools/sprites/STYLE.md: contorno, sombra, lado, base y brillo. Con dos sombras, la clara es
+# RIGHT y la oscura DEEP. Los lados no son el −25 % / −40 %: salen con `declared = True` y check.py solo
+# pide que la luz siga arriba a la izquierda. Un contorno negro puro sube a MIN_OUTLINE_VALUE.
 
 STYLE_TABLE = {
     # nombre: (contorno, sombra(s), lado, base(s), brillo)   — None = se calcula
@@ -299,17 +269,11 @@ def _no_pure_black(color):
 
 def style_ramp(base, side=None, shadow=None, outline=None, deep=None, soft=None, light=None, shine=None,
                name=None):
-    """Rampa de 8 tonos con el criterio de STYLE.md a partir de un hex base SATURADO (cara de arriba).
+    """Rampa de 8 tonos con el criterio de STYLE.md desde un hex base saturado (cara de arriba).
 
-    Por defecto las caras siguen la guía: LEFT = base −25 % y RIGHT = base −40 % exactos. Pasar
-    side= (cara izquierda) y/o shadow= (cara derecha) usa esos tonos en su lugar: la rampa queda
-    con `declared = True`, el manifiesto anota las caras y check.py las exige tal cual (en vez del
-    −25 / −40 calculado). Lo demás, si no se pasa:
-      outline  casi negro del mismo tono (base × 0.25, más saturado; nunca negro puro)
-      deep     entre el contorno y la cara derecha (sombra profunda y línea de aristas interiores)
-      soft     mitad de camino entre la base y el lado (vetas, costuras sobre la cara de arriba)
-      light    base aclarada 30 % (brillo de arista)
-      shine    el brillo aclarado otro 45 % (reflejos de metal, vidrio, pantallas)
+    LEFT / RIGHT salen −25 % / −40 % salvo que se pase side= / shadow= (queda `declared = True`). Por
+    defecto outline es casi negro del mismo tono, deep va entre él y RIGHT, soft a mitad entre base y
+    lado, light es la base +30 % y shine el brillo +45 %.
     """
     base_rgb = hex_to_rgb(base)
     colors = [None] * STEP_COUNT
@@ -334,10 +298,8 @@ def style_ramp(base, side=None, shadow=None, outline=None, deep=None, soft=None,
 
 
 def style(key, declared=True, name=None):
-    """Rampa NUEVA de una fila de STYLE_TABLE ('wood_orange', 'leaves'…). declared=True usa el lado
-    y la sombra de la tabla (lo de las constantes WOOD_ORANGE…); declared=False deja las caras de
-    la guía (−25 % / −40 % de la base) y toma de la tabla el resto (contorno, sombra profunda, brillo).
-    Una segunda base de la tabla (piso de tablones) queda como tono propio con nombre 'base2'."""
+    """Rampa nueva de una fila de STYLE_TABLE. declared=True usa el lado y la sombra de la tabla;
+    False deja las caras −25 % / −40 %. Una segunda base queda como tono propio 'base2'."""
     outline, shadows, side, bases, light = STYLE_TABLE[key]
     ordered = sorted(shadows, key=luminance, reverse=True)
     right = ordered[0]

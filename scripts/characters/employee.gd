@@ -1,14 +1,12 @@
-# Un empleado: personaje de la oficina con la camisa del color de su cargo. Sigue su
-# horario (Staff.is_expected) hasta la silla de su puesto.
+# Un empleado: sigue su horario (Staff.is_expected) hasta la silla de su puesto.
 class_name Employee
 extends OfficeCharacter
 
-# Tonos de piel y pelo provisionales; cada empleado toma uno según su id.
+# Tonos de piel y pelo provisionales; cada uno toma uno según su id.
 const SKIN_TONES: Array[Color] = [Color("f1c7a1"), Color("d9a47a"), Color("b07a52"), Color("7a4e32")]
 const HAIR_TONES: Array[Color] = [Color("3b2a20"), Color("1e1a18"), Color("8a5a2b"), Color("c9a45c"), Color("6b3a2a")]
 
-## Cargos que visten traje y cargos que visten de oficina; los demás, de oficina uno de cada
-## tres y el resto casual.
+## Cargos de traje y de oficina; los demás, de oficina uno de cada tres y si no casual.
 const EXECUTIVE_ROLES: Array[String] = ["manager", "executive"]
 const OFFICE_ROLES: Array[String] = ["team_leader", "salesperson", "accountant", "receptionist"]
 
@@ -27,7 +25,7 @@ func configure(employee: Dictionary) -> void:
 	queue_redraw()
 
 
-## Cambia la camisa al color de su cargo (al ascender de cargo cambia).
+## Pone la camisa del color de su cargo (cambia al ascender).
 func update_role(employee: Dictionary) -> void:
 	look = _look_for(employee)
 	var color: Color = StaffCatalog.get_shirt_color(employee["role"])
@@ -36,7 +34,7 @@ func update_role(employee: Dictionary) -> void:
 		queue_redraw()
 
 
-# Aspecto del empleado: la ropa según su cargo y la paleta según su id.
+# Ropa según su cargo y paleta según su id.
 func _look_for(employee: Dictionary) -> String:
 	var role: String = String(employee["role"])
 	var outfit: String = "casual"

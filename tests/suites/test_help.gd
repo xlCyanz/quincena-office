@@ -1,6 +1,5 @@
-# Prueba del hito 64: tutorial del negocio y ayuda en los menús.
-# Criterio: el tutorial llega hasta la primera entrega; cada menú abre su ayuda; una partida
-# vieja carga sin tutorial (eso último lo mira también test_tutorial).
+# Tutorial del negocio y ayuda: el tutorial llega hasta la primera entrega, cada menú abre su
+# ayuda y una partida vieja carga sin tutorial.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=help
 extends Node
 
@@ -81,7 +80,7 @@ func _step_id() -> String:
 	return String(Tutorial.get_current_step().get("id", ""))
 
 
-# El jugador ya contrató (pasos del hito 63): sigue con contratos, nómina, Banco y entrega.
+# El jugador ya contrató: sigue con contrato, nómina, Banco y entrega.
 func _check_business_steps() -> void:
 	SaveManager.new_game()
 	Tutorial.import_state({"active": true, "finished": false, "step": "contract",
@@ -140,7 +139,6 @@ func _check_business_steps() -> void:
 	SaveManager.new_game()
 	_expect(not Tutorial.active and not Tutorial.is_showing(), "después de terminarlo, una partida nueva no lo muestra")
 	Settings.reset_to_defaults()
-	# Con la tecla de velocidad también cuenta.
 	SaveManager.new_game()
 	game = await _open_game()
 	Tutorial.import_state({"active": true, "finished": false, "step": "payroll"})
@@ -183,13 +181,11 @@ func _check_help() -> void:
 		await _click(dialog.get_close_button())
 		_expect(not dialog.is_open() and bool(panel.call("is_open")), "Entendido cierra la ayuda y deja %s" % panel_name)
 		panel.call("set_open", false)
-	# Construir.
 	var build: BuildPanel = game.get_node("BuildPanel")
 	build.set_build_mode(true)
 	await get_tree().process_frame
 	await _click(build.get_help_button())
 	_expect(dialog.is_open() and dialog.get_topic() == "build", "el «?» de Construir abre su ayuda")
-	# Esc cierra primero la ayuda y después lo demás.
 	await _escape()
 	_expect(not dialog.is_open() and build.is_build_mode(), "Esc cierra la ayuda y deja Construir")
 	await _escape()
@@ -199,7 +195,7 @@ func _check_help() -> void:
 	await _close_game(game)
 
 
-# Una partida de la fase 6 (sin tutorial guardado) carga sin él.
+# Una partida vieja (sin tutorial guardado) carga sin él.
 func _check_old_save() -> void:
 	Settings.reset_to_defaults()
 	SaveManager.new_game()

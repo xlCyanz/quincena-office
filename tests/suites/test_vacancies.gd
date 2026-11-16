@@ -1,10 +1,9 @@
-# Prueba del hito 10: vacantes y candidatos.
-# Criterio: al publicar una vacante llegan candidatos en los días siguientes; con
-# publicidad llegan más; un candidato desaparece al caducar.
+# Vacantes y candidatos: al publicar llegan candidatos en los días siguientes, más con publicidad;
+# un candidato desaparece al caducar.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=vacancies
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -20,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_catalog()
 	_check_publish()
@@ -45,7 +44,7 @@ func _new_game() -> void:
 	Staff.set_seed(SEED)
 
 
-# Avanza el reloj hasta la próxima hora de llegada de candidatos.
+# Hasta la próxima llegada de candidatos.
 func _to_next_arrival() -> void:
 	var arrival: int = int(StaffCatalog.get_hiring("arrival_hour"))
 	var hours: int = posmod(arrival - GameClock.get_hour(), GameConstants.HOURS_PER_DAY)
@@ -60,7 +59,7 @@ func _ids(vacancy_id: int) -> Array[int]:
 
 
 func _check_catalog() -> void:
-	# El líder de equipo, el gerente, el ejecutivo, el recepcionista, el contador y la limpieza llegan en los hitos 31–33, 36 y 37 (sin niveles, sueldo fijo).
+	# Líder, gerente, ejecutivo, recepcionista, contador y limpieza: sin niveles, sueldo fijo.
 	var roles: Array[String] = ["programmer", "designer", "qa", "salesperson", "team_leader", "manager", "receptionist", "accountant", "cleaner", "executive"]
 	var levels: Array[String] = ["intern", "junior", "semi_senior", "senior"]
 	_expect(StaffCatalog.get_role_ids() == roles, "cargos: %s" % [StaffCatalog.get_role_ids()])
@@ -82,10 +81,9 @@ func _check_publish() -> void:
 	_expect(result["ok"] and Economy.balance == 19900, "la publicidad cuesta $100: saldo %d" % Economy.balance)
 	var last: Dictionary = Economy.movements.back()
 	_expect(last["concept"] == Staff.CONCEPT_PUBLICITY and last["amount"] == -100, "movimiento de publicidad: %s" % last)
-	# Son las 08:00: los primeros candidatos llegan hoy a las 09:00 y la publicidad dura 7 llegadas.
+	# Son las 08:00: los primeros llegan hoy a las 09:00 y la publicidad dura 7 llegadas.
 	_expect(Staff.publicity_days_left(Staff.get_vacancy(result["id"])) == 7, "días de publicidad")
 	_expect(not Staff.open_vacancy("tester", "junior", 900, false)["ok"], "un cargo que no existe no se publica")
-	# Sin dinero para la publicidad no se publica nada.
 	Economy.import_state({"balance": 50})
 	var before: int = Staff.vacancies.size()
 	result = Staff.open_vacancy("qa", "junior", 900, true)
@@ -121,10 +119,8 @@ func _check_arrivals() -> void:
 					arrived += 1
 					seen[candidate["id"]] = today
 					_check_candidate(candidate, vacancy, today)
-				# Nadie se queda más días de los que espera.
 				_expect(today < int(candidate["arrived_day"]) + waiting_days,
 					"día %d: %s sigue después de caducar" % [today, candidate["name"]])
-			# Quien llegó hace menos días de los que espera sigue ahí.
 			for id: int in before:
 				if today < seen[id] + waiting_days:
 					_expect(_ids(vacancy_id).has(id), "día %d: el candidato %d se fue antes de tiempo" % [today, id])
@@ -184,7 +180,7 @@ func _check_candidate(candidate: Dictionary, vacancy: Dictionary, today: int) ->
 
 func _check_high_offer() -> void:
 	_new_game()
-	# Ofrecer 20% más que la tabla atrae a veces a uno más (hasta 2 por día sin publicidad).
+	# 20 % más que la tabla atrae a veces a uno más (hasta 2 por día sin publicidad).
 	var vacancy_id: int = Staff.open_vacancy("qa", "junior", 1100, false)["id"]
 	var most: int = 0
 	for day: int in range(30):
@@ -211,7 +207,7 @@ func _check_close_and_discard() -> void:
 	_expect(not Staff.close_vacancy(vacancy_id), "no se cierra dos veces")
 
 
-# Misma semilla, mismos candidatos; y guardar y cargar no cambia lo que viene.
+# Misma semilla, mismos candidatos; guardar y cargar no cambia lo que viene.
 func _check_determinism_and_save() -> void:
 	var runs: Array[String] = []
 	for run: int in range(2):
@@ -234,7 +230,6 @@ func _check_determinism_and_save() -> void:
 		_to_next_arrival()
 	_expect(JSON.stringify(Staff.export_state()) == continued, "tras cargar llegan los mismos candidatos que sin cargar")
 
-	# Con SaveManager: la vacante y sus candidatos vuelven al cargar.
 	_expect(SaveManager.save_game("slot_1"), "guardar la partida")
 	var saved: String = JSON.stringify(Staff.export_state())
 	_new_game()
@@ -242,7 +237,7 @@ func _check_determinism_and_save() -> void:
 	_expect(SaveManager.load_game("slot_1") and JSON.stringify(Staff.export_state()) == saved,
 		"cargar la partida recupera las vacantes y los candidatos")
 	SaveManager.take_scene_state()
-	# Una partida de la fase 1 (sin personal) carga sin vacantes.
+	# Partida vieja sin personal: carga sin vacantes.
 	var path: String = SaveManager.save_dir.path_join("slot_2.json")
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SaveManager.save_dir.path_join("slot_1.json")))
 	data.erase("staff")
@@ -301,7 +296,6 @@ func _check_panel() -> void:
 	await _click(panel.get_vacancy_close_button(vacancy["id"]))
 	_expect(Staff.vacancies.is_empty(), "cerrar la vacante desde el panel")
 
-	# Al entrar en modo construcción el panel se cierra.
 	await _click(build_panel.get_open_button())
 	_expect(not panel.is_open(), "el modo construcción cierra Personal")
 	build_panel.set_build_mode(false)

@@ -1,10 +1,9 @@
-# Prueba del hito 50: rasgos de producción.
-# Criterio: un noctámbulo rinde más de noche; un perfeccionista hace menos errores y menos
-# puntos; un mentor acelera a los juniors de su equipo; los rasgos se descubren a los 15 días.
+# Rasgos de producción: el noctámbulo rinde más de noche; el perfeccionista hace menos errores y
+# menos puntos; el mentor acelera a los juniors de su equipo; se descubren a los 15 días.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=traits
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -39,8 +38,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un área de trabajo de tres puestos, dinero de sobra y los objetivos
-# ya cumplidos.
+# Tres puestos, dinero de sobra y objetivos cumplidos.
 func _new_game() -> void:
 	GameClock.stop()
 	SaveManager.new_game()
@@ -64,7 +62,7 @@ func _new_game() -> void:
 		_expect(builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "computadora en %d" % x)
 
 
-# Contrata a alguien de ese cargo y nivel, sin rasgos (cada prueba pone los suyos).
+# Sin rasgos: cada prueba pone los suyos.
 func _hire(role: String, level: String) -> Dictionary:
 	var opened: Dictionary = Staff.open_vacancy(role, level, StaffCatalog.get_salary(role, level), true)
 	_expect(opened["ok"], "publicar %s: %s" % [role, opened["message"]])
@@ -83,7 +81,7 @@ func _set_traits(person: Dictionary, traits: Array) -> void:
 	(person["traits"] as Array).assign(traits)
 
 
-# Una hora (absoluta) del próximo día hábil a esa hora del reloj.
+# Hora absoluta del próximo día hábil a esa hora del reloj.
 func _hour_at(clock_hour: int) -> int:
 	var at: int = Staff.get_absolute_hour() + 1
 	while Staff.get_weekday_at(at) >= 5 or posmod(at, 24) != clock_hour:
@@ -91,7 +89,7 @@ func _hour_at(clock_hour: int) -> int:
 	return at
 
 
-# El trabajador de un empleado en el contrato a esa hora, o vacío.
+# Trabajador del empleado en el contrato a esa hora, o vacío.
 func _worker(contract: Dictionary, employee: Dictionary, at: int) -> Dictionary:
 	for worker: Dictionary in Projects.get_workers(contract, at):
 		if worker["key"] == Staff.employee_key(employee["id"]):
@@ -99,7 +97,6 @@ func _worker(contract: Dictionary, employee: Dictionary, at: int) -> Dictionary:
 	return {}
 
 
-# Un contrato pequeño aceptado y asignado al equipo.
 func _contract_for(team: Dictionary) -> Dictionary:
 	Projects.offers.append(Projects._make_offer(GameClock.get_day_count(), "small"))
 	Projects.accept(Projects.offers[-1]["id"])
@@ -125,7 +122,6 @@ func _check_points() -> void:
 	_expect(is_equal_approx(Staff.get_trait_points_factor({"traits": ["sociable"]}, DAY_HOUR), 0.95), "sociable −5 %")
 	_expect(is_equal_approx(Staff.get_trait_points_factor({"traits": ["night_owl", "perfectionist"]}, NIGHT_HOUR), 1.2 * 0.85), "se multiplican")
 	_expect(is_equal_approx(Staff.get_trait_points_factor({"traits": ["loyal", "ambitious"]}, DAY_HOUR), 1.0), "los demás no cambian los puntos")
-	# En un contrato real.
 	_new_game()
 	var programmer: Dictionary = _hire("programmer", "junior")
 	var team: Dictionary = Staff.create_team()
@@ -156,7 +152,7 @@ func _check_bugs() -> void:
 	var perfect: Dictionary = _worker(contract, programmer, at)
 	_expect(is_equal_approx(float(perfect["bug_chance"]), float(plain["bug_chance"]) * 0.6), "perfeccionista: 60 % de los errores")
 	_expect(is_equal_approx(float(plain["find_factor"]), 1.0) and is_equal_approx(float(perfect["find_factor"]), 1.25), "y encuentra 25 % más")
-	# Encontrar: con muchos errores ocultos, la proporción se nota.
+	# Con muchos errores ocultos la proporción encontrada se nota.
 	var found: Array[int] = []
 	for factor: float in [1.0, 1.25]:
 		var project: Dictionary = {"points": {"testing": 1000.0}, "bugs_hidden": 10000, "bugs_found": 0}
@@ -188,14 +184,12 @@ func _check_mentor() -> void:
 	_expect(is_equal_approx(float(_worker(contract, senior, at)["rate"]), senior_rate), "a un senior no lo cambia")
 	_expect(int(Staff.get_promotion_progress(junior)["projects_needed"]) == needed - 1, "el junior asciende con un contrato menos: %d → %d" % [
 		needed, int(Staff.get_promotion_progress(junior)["projects_needed"])])
-	# Fuera del turno del mentor no ayuda: el mentor con horario propio de tarde.
+	# Fuera del turno del mentor no ayuda (mentor con horario propio de tarde).
 	Staff.set_own_schedule(mentor["id"], 16, [0, 1, 2, 3, 4] as Array[int])
 	_expect(is_equal_approx(float(_worker(contract, junior, at)["rate"]), junior_rate), "sin el mentor presente rinde lo normal")
 	Staff.clear_own_schedule(mentor["id"])
-	# Dos mentores no suman.
 	_set_traits(senior, ["mentor"])
 	_expect(is_equal_approx(float(_worker(contract, junior, at)["rate"]), junior_rate * 1.15), "dos mentores ayudan una vez")
-	# Un mentor no se ayuda a sí mismo ni a otros equipos.
 	_set_traits(junior, ["mentor"])
 	_set_traits(senior, [])
 	_set_traits(mentor, [])

@@ -1,109 +1,6 @@
-# Personal (diseño, 5.2): vacantes abiertas, los candidatos que llegan a cada una, la
-# entrevista y la contratación, y los empleados contratados.
-#
-# Cada día, a la hora de llegada (data/staff.json, hiring.arrival_hour), primero se van
-# los candidatos que ya esperaron sus días y después llegan los nuevos de cada vacante.
-# Todo el azar sale de _rng, cuyo estado se guarda con la partida: con la misma semilla
-# llegan siempre los mismos candidatos.
-#
-# Una vacante es {"id", "role", "level", "salary", "publicity_until", "candidates"}.
-# publicity_until es el primer día (contado con GameClock.get_day_count) en que la
-# publicidad ya no cuenta; 0 si no tiene. Un candidato es {"id", "name", "sex", "age",
-# "role", "level", "asked_salary", "skills", "skill_low", "traits", "arrived_day"}:
-# skills son los valores reales (ocultos), skill_low el inicio del rango que se muestra
-# y traits los rasgos (ocultos). Además interviewed (si ya lo entrevistó el CEO),
-# known_traits (los rasgos que se conocen) y counter_offer (el sueldo de su contraoferta,
-# 0 si no hizo ninguna).
-#
-# Contratar (hito 11) exige un puesto de trabajo libre (Workstations): el empleado queda
-# asignado a su silla con assigned_to = employee_key(id) y la vacante se cierra. Un
-# empleado guarda los datos del candidato más "salary" (lo acordado) y "hired_day".
-#
-# La entrevista ocupa interview_minutes minutos de juego desde que empieza; solo hay
-# una a la vez. interview es {"candidate_id", "starts_at", "ends_at"} (en minutos desde el inicio
-# de la partida, ver _absolute_hour) o vacío.
-#
-# Jornada (hito 12): cada empleado tiene un horario ("schedule", el de su cargo por
-# defecto) y las barras "energy", "mood" y "stress" (0–100). Todos salen a almorzar a
-# la hora de almuerzo. La energía baja por cada hora de su horario y sube por cada hora
-# fuera. El CEO no tiene horario: llega
-# solo a su hora en días hábiles y se queda hasta que el jugador lo manda a casa
-# (ceo_at_work). is_expected dice quién tiene que estar en la oficina a cada hora; los
-# personajes de la escena solo lo siguen.
-#
-# Nómina y despidos (hito 13): cada empleado gana sueldo / 30 por día. "paid_until" es
-# el último día (GameClock.get_day_count) que ya tiene pagado o anotado como deuda, y
-# "owed" lo que se le debe de nóminas que no alcanzaron. Los días de nómina se paga a
-# todos lo ganado más lo debido, todo o nada; si no alcanza, queda como deuda, baja el
-# ánimo de todos y se paga solo apenas alcance el saldo. Despedir cobra lo ganado y lo
-# debido (aunque el saldo quede negativo) y baja el ánimo de los compañeros.
-#
-# Ánimo y renuncias (hito 19): cada día el ánimo y el estrés se acercan a una meta que
-# depende del sueldo comparado con su nivel, de tener contrato, de la nómina debida, del
-# atraso y del cansancio (data/staff.json, morale). Con ánimo bajo o estrés alto varios
-# días seguidos el empleado avisa ("quit_day": el día en que se va; -1 si no avisó); un
-# aumento suficiente lo retiene. A veces alguien pide aumento ("raise_request": {"amount",
-# "until_day"} o vacío). "bad_days" son los días seguidos mal, "min_energy" la energía más
-# baja del día, "last_raise_day" el día del último aumento (o de la contratación) y
-# "carry" lo ganado con un sueldo anterior que todavía no se pagó.
-#
-# Equipos (hito 15): un equipo es {"id", "name", "members", "schedule"}; members son ids
-# de empleados y cada empleado está como mucho en un equipo. El turno del equipo
-# (schedule) reemplaza el horario de su cargo para todos sus miembros; quien no está en
-# ningún equipo sigue con el de su cargo. Cada turno dura teams.shift_hours horas desde
-# la entrada y deja al menos teams.min_rest_days de descanso por semana. El proyecto de
-# cada equipo lo guarda el contrato (Projects).
-#
-# Ascensos (hito 30): "projects_worked" cuenta los contratos entregados en los que el
-# empleado sumó puntos (EventBus.contract_delivered); los vendedores cuentan en cambio
-# los contratos aceptados mientras estaban (EventBus.contract_accepted). Con eso y los
-# días en la empresa (data/staff.json, promotion) el jugador puede ascenderlo al nivel
-# siguiente con un sueldo mayor (promote); el ascenso cuenta como aumento.
-#
-# Líderes de equipo (hito 31): desde Startup un Senior puede ascender a líder de equipo
-# (cargo sin niveles, sueldo fijo) o se contrata con su vacante. Un equipo guarda su
-# líder en "leader_id" (0 si no tiene); el líder no es miembro, no suma puntos y sigue el
-# turno del equipo. Desde esa etapa un equipo sin su líder presente rinde
-# teams.no_leader_factor (get_team_factor). Un líder sin equipo sigue siendo líder.
-#
-# Gerentes (hito 32): desde Pequeña empresa un líder asciende a gerente o se contrata con
-# su vacante; trabaja en una Oficina única (StaffCatalog.get_workplace). Cada líder guarda
-# "manager_id": su gerente, o 0 si lo dirige el CEO. El jugador lo elige (set_manager):
-# un gerente dirige hasta management.max_leaders_per_manager líderes y el CEO hasta
-# max_leaders_for_ceo líderes con equipo. Con el gerente presente sus equipos rinden
-# manager_bonus más, y la meta de estrés de sus miembros baja.
-#
-# Departamentos y ejecutivos (hito 33): cada cargo es de un departamento
-# (StaffCatalog.get_role_department). Desde departments.from_stage (Mediana empresa) los
-# que no tienen ejecutivo los dirige el CEO y rinden menos cuantos más dirige
-# (get_department_factor). Un ejecutivo trabaja en una Oficina única y guarda en
-# "department" el que dirige (uno por departamento). El de Administración puede hacer las
-# entrevistas en lugar del CEO (interview["by"]).
-#
-# Horas extra y turno de noche (hito 34): un turno o un horario propio
-# ("own_schedule" con "schedule") puede sumar horas extra. Cada hora del horario que
-# termina suma a "overtime_pay" y "night_pay" (dinero con decimales); la nómina las pasa a
-# "owed" y guarda qué parte es de cada concepto en "owed_overtime" y "owed_night", que se
-# cobran como «Horas extra» y «Recargo nocturno» (data/staff.json, overtime).
-#
-# Plantillas y agenda (hito 35): una plantilla de turno es {"id", "name", "schedule"}
-# (shift_templates). Un equipo con "template_id" sigue su plantilla: cambiarla cambia el
-# turno de todos sus equipos; con NO_TEMPLATE tiene turno propio. El "schedule" del
-# equipo siempre es su turno vigente. get_agenda da quién trabaja cada hora de un día y
-# marca los huecos (AGENDA_GAP: un equipo trabajando sin su líder presente o, desde el
-# hito 36, nadie en la Recepción mientras puede haber un cliente esperando).
-#
-# Contador y limpieza (hito 37, data/staff.json accounting y cleaning): con un contador
-# en la empresa el mantenimiento y la tasa de los préstamos nuevos bajan (por el factor de
-# Administración) y, unos días antes de cada nómina o día 1, avisa si el saldo de hoy no
-# alcanza. Cada hora que termina, quien trabajó en su puesto ensucia la habitación de su
-# puesto (OfficeState.add_dirt) y cada persona de limpieza en su turno limpia la más sucia.
-# Una habitación sucia baja la meta de ánimo de quienes trabajan en ella.
-#
-# Competencia (hito 38, data/staff.json competition): cada día otra empresa puede hacerle
-# una oferta a un empleado SemiSenior o Senior (o de dirección): "outside_offer" =
-# {"salary", "until_day"}. Un aumento que la iguale lo retiene; si no, se va a su
-# "until_day" o cuando el jugador lo deja ir (let_go).
+# Personal: vacantes, candidatos, entrevistas y citas, contratación, empleados (jornada, nómina,
+# ánimo, ascensos, rasgos), equipos, plantillas de turno, agenda y dirección (líderes, gerentes,
+# ejecutivos). Valores en data/staff.json; todo el azar sale de _rng (se guarda con la partida).
 extends Node
 
 const CONCEPT_PUBLICITY: String = "Publicidad de vacantes"
@@ -115,9 +12,9 @@ const NO_TEAM_KEY: int = -1
 const NO_COFFEE_OUT: int = -1
 const CONCEPT_REPAIR: String = "Reparación del baño"
 const CONCEPT_VENDING: String = "Máquina expendedora"
-## bathroom_short_day si nunca faltaron inodoros (lejos de cualquier día de juego).
+## bathroom_short_day si nunca faltaron inodoros.
 const NO_SHORT_DAY: int = -1000
-## Habitación cuya cafetera necesitan los adictos al café (hito 51).
+## Habitación cuya cafetera necesitan los adictos al café.
 const BREAK_ROOM: String = "break_room"
 ## Sin llegadas tarde ni ausencias (ver missing_from).
 const NOT_MISSING: int = -1
@@ -144,16 +41,15 @@ const NO_FIRING: int = -1000
 const NO_STATION_MESSAGE: String = "No hay ningún puesto de trabajo libre: hace falta un escritorio con computadora y una silla delante, dentro de un Área de trabajo que funcione."
 const NO_OFFICE_MESSAGE: String = "No hay ninguna Oficina única libre: hace falta una que funcione, con un escritorio y una silla delante."
 const NO_RECEPTION_MESSAGE: String = "No hay ningún mostrador libre: hace falta una Recepción que funcione, con un mostrador y una silla delante."
-## Cargo que atiende a los clientes que visitan la Recepción (hito 36).
+## Cargo que atiende a los clientes que visitan la Recepción.
 const RECEPTIONIST_ROLE: String = "receptionist"
 const NO_CLOSET_MESSAGE: String = "No hay ningún armario de limpieza libre: hace falta un Cuarto de limpieza que funcione, con un armario."
 
 var vacancies: Array[Dictionary] = []
 var employees: Array[Dictionary] = []
 var interview: Dictionary = {}
-## Entrevistas citadas (pedido después del hito 69): {"candidate_id", "by", "at"} con at en
-## minutos absolutos (get_absolute_minute), ordenadas por hora. El candidato llega antes,
-## espera y a esa hora empieza la entrevista si quien la hace está en la oficina.
+## Entrevistas citadas: {"candidate_id", "by", "at"} con at en minutos absolutos, ordenadas.
+## A esa hora empieza si quien entrevista está en la oficina.
 var appointments: Array[Dictionary] = []
 ## starts_at y ends_at de una entrevista llamada cuyo candidato todavía camina a la silla.
 const INTERVIEW_NOT_STARTED: int = -1
@@ -166,54 +62,47 @@ var teams: Array[Dictionary] = []
 var shift_templates: Array[Dictionary] = []
 ## Empleados contratados en toda la partida (para la pantalla de fin).
 var hired_count: int = 0
-## La nómina de hoy no alcanzó y espera la respuesta al préstamo de emergencia (hito 24):
-## todavía no baja el ánimo ni cuenta como atraso.
+## La nómina de hoy espera la respuesta al préstamo de emergencia: aún no baja el ánimo
+## ni cuenta como atraso.
 var payroll_held: bool = false
-## Día en que se acabó el café por un evento (hito 51): ese día los adictos rinden como
-## sin cafetera. NO_COFFEE_OUT si no.
+## Día en que se acabó el café (evento): los adictos rinden como sin cafetera.
 var coffee_out_day: int = NO_COFFEE_OUT
-## Inodoros dañados por el evento «Baño dañado» (hito 52): no cuentan hasta repararlos.
+## Inodoros dañados por el evento «Baño dañado»: no cuentan hasta repararlos.
 var broken_toilets: int = 0
-## Último día en que faltaron inodoros alguna hora (hito 52); NO_SHORT_DAY si nunca.
+## Último día en que faltaron inodoros alguna hora.
 var bathroom_short_day: int = NO_SHORT_DAY
-## Solo para pruebas: false hace como si siempre alcanzaran los inodoros (las pruebas de
-## los hitos anteriores al 52 miden oficinas sin baño). No se guarda.
+## Solo para pruebas: false hace como si siempre alcanzaran los inodoros. No se guarda.
 var bathrooms_enabled: bool = true
-## Solo para pruebas: false deja los candidatos como antes del hito 56 (sin primera tanda,
-## sin calidad por sueldo y ambiente ni candidato extra del premio). No se guarda.
+## Solo para pruebas: false quita la primera tanda, la calidad por sueldo y ambiente y el
+## candidato extra del premio. No se guarda.
 var company_hiring_enabled: bool = true
-## Solo para pruebas: false hace que todos entren a la hora en punto, como antes de las
-## llegadas escalonadas (las pruebas de la jornada miden quién entra a cada hora). No se guarda.
+## Solo para pruebas: false hace que todos entren a la hora en punto. No se guarda.
 var arrival_spread_enabled: bool = true
 ## Hasta qué día (sin incluirlo) el «Premio de la industria» suma un candidato por vacante.
 var award_until: int = 0
-## Pausas (hito 54): hora absoluta → claves de quienes descansan esa hora (la actual y la
-## anterior, que la producción y la energía cobran al terminar).
+## Pausas: hora absoluta → claves de quienes descansan (la actual y la anterior, que se
+## cobra al terminar).
 var breaks: Dictionary[int, Array] = {}
-## Quiénes estuvieron hoy en la oficina (para la máquina expendedora, hito 54).
+## Quiénes estuvieron hoy en la oficina (máquina expendedora).
 var present_today: Dictionary[String, bool] = {}
 
 var _next_id: int = 1
 var _next_team_id: int = 1
 var _next_template_id: int = 1
-# Hora (como _absolute_hour) en que terminó la última entrevista; no se guarda.
 # Entrevistas del CEO ya terminadas: (inicio, fin) en minutos absolutos, las últimas.
 var _interview_spans: Array[Vector2i] = []
 var _rng := RandomNumberGenerator.new()
 # Ambiente por habitación y muebles (ver _ambiance_detail).
 var _ambiance_cache: Dictionary[int, Dictionary] = {}
-# Mientras _update_morale recorre a todos: puestos, escritorios y hash de los muebles
-# buscados una sola vez (ver _seat_lookup). Vacío el resto del tiempo.
+# Puestos, escritorios y hash de muebles buscados una vez mientras _update_morale recorre
+# a todos; vacío el resto del tiempo.
 var _seat_lookup_cache: Dictionary = {}
 # Horarios ya leídos por el hash de su diccionario (ver _cached_schedule).
 var _schedule_cache: Dictionary[int, WorkSchedule] = {}
-# id → posición en employees (get_employee); se comprueba al usarla y se rehace si no coincide.
+# id → posición en employees; se rehace si no coincide.
 var _employee_index: Dictionary[int, int] = {}
-# Quiénes están presentes y quiénes almuerzan dentro por hora absoluta: se piden dos o tres
-# veces por hora (baños, máquina expendedora, energía y producción). Solo se usan mientras el
-# reloj procesa una hora (GameClock.in_hour_tick); se borran al cambiar la hora, el personal
-# (también la llegada del CEO) o la oficina; la presencia, también después de sortear las
-# tardanzas.
+# Presentes y quienes almuerzan dentro por hora absoluta. Solo se usan con
+# GameClock.in_hour_tick; se borran al cambiar la hora, el personal o la oficina.
 var _present_cache: Dictionary[int, Dictionary] = {}
 var _lunch_cache: Dictionary[int, Dictionary] = {}
 
@@ -234,7 +123,7 @@ func _clear_hour_caches() -> void:
 	_lunch_cache.clear()
 
 
-## Prepara el personal de una partida nueva: sin vacantes y con una semilla al azar.
+## Prepara una partida nueva: sin vacantes y con una semilla al azar.
 func new_game() -> void:
 	vacancies.clear()
 	employees.clear()
@@ -259,13 +148,12 @@ func new_game() -> void:
 	EventBus.staff_changed.emit()
 
 
-## Fija la semilla del azar (las pruebas la usan para tener resultados repetibles).
+## Fija la semilla del azar (pruebas).
 func set_seed(seed_value: int) -> void:
 	_rng.seed = seed_value
 
 
-## Publica una vacante. Con publicidad cobra su precio y falla si no alcanza el dinero.
-## Devuelve {"ok": bool, "message": String, "id": int}.
+## Publica una vacante; con publicidad la cobra y falla sin dinero. Devuelve {"ok", "message", "id"}.
 func open_vacancy(role: String, level: String, salary: int, publicity: bool) -> Dictionary:
 	if not StaffCatalog.get_role_ids().has(role) or not StaffCatalog.get_level_ids().has(level):
 		return {"ok": false, "message": "Ese cargo no existe.", "id": 0}
@@ -317,11 +205,9 @@ func discard_candidate(candidate_id: int) -> bool:
 	return false
 
 
-## Ofrece un sueldo a un candidato. Si iguala o supera lo que pide, acepta y queda
-## contratado; desde counter_offer_ratio de lo que pide, hace una contraoferta (pide lo
-## suyo, ver accept_counter_offer); por debajo rechaza y se va. Sin puesto de trabajo
-## libre no se puede ofrecer. Devuelve {"ok": bool, "result": String, "message": String}
-## con result "hired", "counter", "rejected" o "" si no se pudo ofrecer.
+## Ofrece un sueldo: desde lo pedido lo contrata, desde counter_offer_ratio contraoferta y debajo
+## rechaza y se va. Pide un puesto libre. Devuelve {"ok", "result", "message"}, result "hired",
+## "counter", "rejected" o "".
 func make_offer(candidate_id: int, offer: int) -> Dictionary:
 	var candidate: Dictionary = get_candidate(candidate_id)
 	if candidate.is_empty():
@@ -351,8 +237,7 @@ func accept_counter_offer(candidate_id: int) -> Dictionary:
 	return make_offer(candidate_id, candidate["counter_offer"])
 
 
-## Empieza la entrevista de un candidato con el CEO o, con by_executive, con el
-## ejecutivo de Administración. Devuelve {"ok", "message"}.
+## Empieza ya la entrevista con el CEO o, con by_executive, el ejecutivo de Administración.
 func start_interview(candidate_id: int, by_executive: bool = false) -> Dictionary:
 	var problem: String = interview_problem(candidate_id, by_executive)
 	if not problem.is_empty():
@@ -363,9 +248,8 @@ func start_interview(candidate_id: int, by_executive: bool = false) -> Dictionar
 		get_candidate(candidate_id)["name"], format_clock_minute(int(interview["ends_at"]))]}
 
 
-## Cita la entrevista de un candidato para el próximo día en que trabaja quien la hace (el
-## CEO o, con by_executive, el ejecutivo de Administración), a su hora de entrada; si ese
-## día ya hay citas, en el siguiente hueco de interview_minutes. Devuelve {"ok", "message"}.
+## Cita la entrevista para el próximo día en que trabaja quien la hace, a su entrada o en el
+## siguiente hueco libre. Devuelve {"ok", "message"}.
 func schedule_interview(candidate_id: int, by_executive: bool = false) -> Dictionary:
 	var problem: String = appointment_problem(candidate_id, by_executive)
 	if not problem.is_empty():
@@ -409,8 +293,7 @@ func get_appointment(candidate_id: int) -> Dictionary:
 	return {}
 
 
-## Minuto absoluto en que el candidato de una cita llega a la oficina: entre
-## appointment_early_max y appointment_early_min minutos antes, fijo por candidato.
+## Minuto absoluto en que llega el citado: entre appointment_early_max y _min antes, fijo por candidato.
 func get_appointment_arrival(appointment: Dictionary) -> int:
 	var earliest: int = int(StaffCatalog.get_hiring("appointment_early_max"))
 	var latest: int = int(StaffCatalog.get_hiring("appointment_early_min"))
@@ -434,10 +317,8 @@ func _interviewer_key(by_executive: bool) -> String:
 	return "" if interviewer.is_empty() else employee_key(interviewer["id"])
 
 
-# Primer hueco libre para una entrevista de quien la hace, desde mañana: su hora de entrada
-# del primer día que trabaja (el CEO, su hora de llegada) o los siguientes huecos de
-# interview_minutes de esa jornada sin cruzar el almuerzo ni pisar otra cita. -1 si no hay
-# en appointment_max_days días.
+# Primer hueco para una entrevista desde mañana: la entrada de quien la hace o los huecos
+# siguientes antes del almuerzo sin pisar otra cita. -1 si no hay en appointment_max_days.
 func _next_appointment_slot(by: String) -> int:
 	var minutes: int = int(StaffCatalog.get_hiring("interview_minutes"))
 	var hours_per_day: int = GameConstants.HOURS_PER_DAY
@@ -461,7 +342,7 @@ func _next_appointment_slot(by: String) -> int:
 			start_hour = schedule.start_hour
 		var day_start: int = today_start + offset * hours_per_day * 60
 		var slot: int = day_start + start_hour * 60
-		# Hasta el almuerzo de esa jornada (la mitad de arriba de la jornada no hace falta).
+		# Hasta el almuerzo de esa jornada.
 		var lunch: int = day_start + (start_hour + WorkSchedule.get_lunch_offset()) * 60
 		while slot + minutes <= lunch:
 			if not _slot_taken(slot, minutes):
@@ -478,8 +359,8 @@ func _slot_taken(slot: int, minutes: int) -> bool:
 	return false
 
 
-# A la hora de cada cita empieza la entrevista si quien la hace está en la oficina y no
-# hay otra en curso; si pasan appointment_grace_minutes sin que esté, se cancela con aviso.
+# A la hora de cada cita llama al candidato si quien entrevista está y no hay otra; tras
+# appointment_grace_minutes sin él se cancela con aviso.
 func _check_appointments() -> void:
 	if appointments.is_empty():
 		return
@@ -508,9 +389,8 @@ func _check_appointments() -> void:
 		EventBus.staff_changed.emit()
 
 
-# A la hora citada se llama al candidato: camina a la silla de visita y la entrevista
-# empieza cuando se sienta (start_called_interview, lo llama la escena de juego) o, sin
-# nadie que lo dibuje, a los interview_walk_max_minutes.
+# Llama al candidato: la entrevista empieza al sentarse (start_called_interview) o, sin
+# escena que lo dibuje, a los interview_walk_max_minutes.
 func _call_interview(candidate_id: int, by: String) -> void:
 	interview = {"candidate_id": candidate_id, "called_at": get_absolute_minute(),
 		"starts_at": INTERVIEW_NOT_STARTED, "ends_at": INTERVIEW_NOT_STARTED, "by": by}
@@ -539,7 +419,7 @@ func _begin_interview(candidate_id: int, by: String) -> void:
 	EventBus.staff_changed.emit()
 
 
-## Minutos desde el inicio de la partida (hora absoluta × 60 + minuto del reloj).
+## Minutos desde el inicio de la partida.
 func get_absolute_minute() -> int:
 	return _absolute_hour() * 60 + GameClock.get_minute()
 
@@ -550,8 +430,8 @@ static func format_clock_minute(minute: int) -> String:
 	return "%02d:%02d" % [posmod(minute / 60, GameConstants.HOURS_PER_DAY), posmod(minute, 60)]
 
 
-## Termina la entrevista si ya pasó su hora de fin. Lo llama _process cada cuadro y la
-## revisión de cada hora (los saltos de horas no pasan por los cuadros).
+## Termina la entrevista si ya pasó su fin. Se llama cada cuadro y cada hora (los saltos no
+## pasan por los cuadros).
 func check_interview() -> void:
 	if interview.is_empty():
 		return
@@ -570,8 +450,7 @@ func _process(_delta: float) -> void:
 		_check_appointments()
 
 
-## Silla de visita de la oficina de alguien ("ceo" o clave): una silla sin dueño en la
-## habitación de su puesto, donde se sienta el candidato. Vacío si no hay.
+## Silla de visita de la oficina de alguien ("ceo" o clave): una silla sin dueño de su habitación.
 func get_guest_chair(by: String) -> Dictionary:
 	var room: Dictionary = get_workplace_room(by)
 	if room.is_empty():
@@ -584,7 +463,7 @@ func get_guest_chair(by: String) -> Dictionary:
 	return {}
 
 
-## Ejecutivo que puede hacer entrevistas (el de departments.interviews_department), o vacío.
+## Ejecutivo que puede entrevistar (el de departments.interviews_department), o vacío.
 func get_interviewer() -> Dictionary:
 	return get_executive_of(String(StaffCatalog.get_departments("interviews_department")))
 
@@ -614,7 +493,7 @@ func interview_problem(candidate_id: int, by_executive: bool = false) -> String:
 	var minutes: int = int(StaffCatalog.get_hiring("interview_minutes"))
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()
-	# Horas que toca la entrevista desde ahora: quien la hace tiene que estar en todas.
+	# Quien entrevista tiene que estar en todas las horas que toca.
 	@warning_ignore("integer_division")
 	var hours: int = (GameClock.get_minute() + minutes - 1) / 60 + 1
 	for offset: int in range(hours):
@@ -626,7 +505,7 @@ func interview_problem(candidate_id: int, by_executive: bool = false) -> String:
 	return ""
 
 
-## Manda al CEO a casa (false) o a la oficina (true). Si se va, su entrevista se corta.
+## Manda al CEO a casa (false) o a la oficina (true); al irse corta su entrevista.
 func set_ceo_at_work(value: bool) -> void:
 	if value == ceo_at_work:
 		return
@@ -637,8 +516,8 @@ func set_ceo_at_work(value: bool) -> void:
 	EventBus.staff_changed.emit()
 
 
-## Indica si alguien ("ceo" o employee_key(id)) tiene que estar en la oficina en esa
-## hora de ese día de la semana. Para el CEO se toma ceo_at_work tal como está ahora.
+## Indica si alguien ("ceo" o clave) debe estar en la oficina a esa hora. Para el CEO usa
+## ceo_at_work tal como está.
 func is_expected(key: String, weekday: int, hour: int) -> bool:
 	if key == "ceo":
 		return ceo_at_work and hour != get_ceo_lunch_hour()
@@ -648,16 +527,14 @@ func is_expected(key: String, weekday: int, hour: int) -> bool:
 	return _is_working_at(employee, weekday, hour)
 
 
-# Lo mismo que is_expected para un empleado que ya se tiene a mano (y su equipo, si se
-# buscaron todos con _get_team_map).
+# is_expected para un empleado ya a mano (y su equipo, de _get_team_map).
 func _is_working_at(employee: Dictionary, weekday: int, hour: int, team_map: Dictionary[int, Dictionary] = {}) -> bool:
 	var schedule: WorkSchedule = _cached_schedule(employee) if team_map.is_empty() \
 		else _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
 	return schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour) and not is_missing(employee, weekday, hour)
 
 
-## Indica si alguien falta a esa hora de la semana por llegar tarde o faltar el día
-## (hito 51). La hora se toma como la más cercana a ahora con ese día y esa hora.
+## Indica si alguien falta a esa hora por tardanza o ausencia (la hora absoluta más cercana).
 func is_missing(employee: Dictionary, weekday: int, hour: int) -> bool:
 	var from: int = int(employee.get("missing_from", NOT_MISSING))
 	if from == NOT_MISSING:
@@ -690,9 +567,8 @@ func is_at_lunch(key: String) -> bool:
 	return not employee.is_empty() and get_schedule(employee).is_lunch(GameClock.get_weekday(), hour)
 
 
-## Indica si el CEO produce en esa hora (contada como get_absolute_hour): está
-## trabajando, no almuerza, no se quedó dormido (desde sleep_hour hasta su hora de
-## llegada) y no pasó la hora entera en entrevistas.
+## Indica si el CEO produce a esa hora absoluta: trabajando, sin almorzar, despierto y no
+## toda la hora en entrevistas.
 func is_ceo_producing(at: int) -> bool:
 	var hour: int = posmod(at, GameConstants.HOURS_PER_DAY)
 	if not is_expected("ceo", get_weekday_at(at), hour) or is_ceo_asleep(hour):
@@ -700,8 +576,7 @@ func is_ceo_producing(at: int) -> bool:
 	return get_ceo_interview_factor(at) > 0.0
 
 
-## Parte de la hora at (absoluta) en que el CEO no estuvo en una entrevista: 1 sin
-## entrevistas, 0.5 con una de media hora dentro de esa hora.
+## Parte de la hora absoluta at que el CEO no pasó entrevistando (0.5 con media hora).
 func get_ceo_interview_factor(at: int) -> float:
 	var spans: Array[Vector2i] = _interview_spans.duplicate()
 	if is_interview_started() and String(interview.get("by", "ceo")) == "ceo":
@@ -712,18 +587,17 @@ func get_ceo_interview_factor(at: int) -> float:
 	return clampf(1.0 - busy / 60.0, 0.0, 1.0)
 
 
-## Indica si a esa hora el CEO, si sigue en la oficina, está dormido.
+## Indica si a esa hora el CEO estaría dormido.
 func is_ceo_asleep(hour: int) -> bool:
 	return hour >= StaffCatalog.get_ceo_sleep_hour() or hour < StaffCatalog.get_ceo_arrival_hour()
 
 
-## Hora en que almuerza el CEO: la misma distancia desde su llegada que los demás.
+## Hora de almuerzo del CEO: a la misma distancia de su llegada que los demás.
 func get_ceo_lunch_hour() -> int:
 	return posmod(StaffCatalog.get_ceo_arrival_hour() + WorkSchedule.get_lunch_offset(), GameConstants.HOURS_PER_DAY)
 
 
-## Horas enteras desde ahora hasta la primera en que alguien tiene que estar en la
-## oficina (contando que el CEO llega solo a su hora). -1 si nadie va a venir.
+## Horas hasta la primera en que alguien debe estar en la oficina; -1 si nadie va a venir.
 func hours_until_anyone_expected() -> int:
 	var hours_per_day: int = GameConstants.HOURS_PER_DAY
 	var at_work: bool = ceo_at_work
@@ -746,14 +620,13 @@ func hours_until_anyone_expected() -> int:
 	return -1
 
 
-## Lo que un empleado ganó desde su último pago, hasta hoy incluido (sin la deuda).
+## Lo ganado desde el último pago hasta hoy incluido (sin la deuda).
 func get_earned(employee: Dictionary) -> int:
 	var days: int = GameClock.get_day_count() - int(employee["paid_until"])
 	return int(employee.get("carry", 0)) + maxi(0, roundi(int(employee["salary"]) * days / float(GameConstants.DAYS_PER_MONTH)))
 
 
-## Lo que cuesta despedir a un empleado hoy: lo ganado (con horas extra y recargo
-## nocturno) más lo que se le debe.
+## Lo que cuesta despedir hoy: lo ganado (con extras) más lo debido.
 func get_firing_cost(employee: Dictionary) -> int:
 	return get_earned(employee) + get_extra_earned(employee) + int(employee["owed"])
 
@@ -763,12 +636,12 @@ func get_extra_earned(employee: Dictionary) -> int:
 	return roundi(float(employee.get("overtime_pay", 0.0))) + roundi(float(employee.get("night_pay", 0.0)))
 
 
-## Lo que vale una hora normal de un empleado: sueldo / 30 / overtime.base_hours.
+## Valor de una hora normal: sueldo / 30 / overtime.base_hours.
 static func get_hour_pay(employee: Dictionary) -> float:
 	return float(employee["salary"]) / GameConstants.DAYS_PER_MONTH / float(StaffCatalog.get_overtime("base_hours"))
 
 
-## Lo que se debe de nóminas sin pagar, sumando a todos.
+## Deuda total de nóminas sin pagar.
 func get_total_owed() -> int:
 	var total: int = 0
 	for employee: Dictionary in employees:
@@ -776,8 +649,8 @@ func get_total_owed() -> int:
 	return total
 
 
-## Despide a un empleado: cobra lo ganado y lo debido, libera su puesto y baja el
-## ánimo de los demás (más si hubo otro despido hace poco). Devuelve {"ok", "message"}.
+## Despide: cobra lo ganado y lo debido, libera el puesto y baja el ánimo de los demás (más con
+## otro despido reciente). Devuelve {"ok", "message"}.
 func fire(employee_id: int) -> Dictionary:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty():
@@ -796,9 +669,8 @@ func fire(employee_id: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-## Sube el sueldo de un empleado. Lo ganado hasta hoy queda con el sueldo anterior.
-## Un aumento de al menos retain_raise_ratio retiene a quien avisó que renuncia, y uno
-## que cubre lo que pidió acepta su pedido. Devuelve {"ok", "message"}.
+## Sube el sueldo (lo ganado hasta hoy queda con el anterior). Desde retain_raise_ratio retiene
+## a quien avisó que renuncia; si cubre lo pedido, acepta el pedido. Devuelve {"ok", "message"}.
 func give_raise(employee_id: int, new_salary: int) -> Dictionary:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty():
@@ -814,8 +686,7 @@ func give_raise(employee_id: int, new_salary: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-# Cambia el sueldo (lo ganado hasta hoy queda con el anterior) y resuelve el pedido de
-# aumento y el aviso de renuncia. Devuelve lo que pasó con ellos, para el aviso.
+# Cambia el sueldo y resuelve pedido de aumento y aviso de renuncia; devuelve los textos del aviso.
 func _apply_raise(employee: Dictionary, new_salary: int) -> Array[String]:
 	var salary: int = employee["salary"]
 	var today: int = GameClock.get_day_count()
@@ -849,7 +720,7 @@ func _apply_raise(employee: Dictionary, new_salary: int) -> Array[String]:
 	return messages
 
 
-## Por qué todavía no existe un cargo en esta etapa, o "" si existe.
+## Por qué un cargo aún no existe en esta etapa, o "".
 func role_problem(role: String) -> String:
 	var min_stage: int = StaffCatalog.get_role_min_stage(role)
 	if Company.stage < min_stage:
@@ -857,10 +728,8 @@ func role_problem(role: String) -> String:
 	return ""
 
 
-## Cómo va un empleado hacia el nivel siguiente: {"next_level", "next_role", "projects",
-## "projects_needed", "days", "days_needed", "ready"}. next_level es "" si ya es Senior
-## o su cargo no tiene niveles. Un Senior puede ascender a líder de equipo (next_role)
-## desde la etapa de ese cargo; ready dice si ya puede.
+## Progreso al nivel siguiente: {"next_level", "next_role", "projects", "projects_needed", "days",
+## "days_needed", "ready"}. next_level "" sin niveles o Senior; next_role, ascenso a otro cargo.
 func get_promotion_progress(employee: Dictionary) -> Dictionary:
 	var role: String = employee["role"]
 	var next_level: String = StaffCatalog.get_next_level(employee["level"]) if StaffCatalog.has_levels(role) else ""
@@ -874,8 +743,7 @@ func get_promotion_progress(employee: Dictionary) -> Dictionary:
 	progress["ready"] = not needs.is_empty() and projects >= int(progress["projects_needed"]) \
 		and days >= int(progress["days_needed"])
 	progress["next_role"] = next_role
-	# Para ascender de cargo: blocker "stage" si el cargo aún no existe, "station" si no
-	# hay dónde trabaje (una Oficina única libre para un gerente) o "".
+	# blocker: "stage" si el cargo aún no existe, "station" si no hay dónde trabaje, o "".
 	progress["blocker"] = ""
 	if not next_role.is_empty():
 		if not role_problem(next_role).is_empty():
@@ -887,7 +755,7 @@ func get_promotion_progress(employee: Dictionary) -> Dictionary:
 	return progress
 
 
-## Por qué no se puede ascender a un empleado con ese sueldo, o "" si se puede.
+## Por qué no se puede ascender con ese sueldo, o "".
 func promote_problem(employee_id: int, new_salary: int) -> String:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty():
@@ -906,15 +774,14 @@ func promote_problem(employee_id: int, new_salary: int) -> String:
 	return ""
 
 
-## Asciende a un empleado al nivel siguiente con un sueldo mayor que el actual: rinde y
-## comete errores como su nivel nuevo y su habilidad principal sube al menos al mínimo
-## del nivel. Cuenta como aumento (retiene y acepta pedidos). Devuelve {"ok", "message"}.
+## Asciende al nivel o cargo siguiente con un sueldo mayor; la habilidad principal sube al
+## mínimo del nivel y cuenta como aumento. Devuelve {"ok", "message"}.
 func promote(employee_id: int, new_salary: int) -> Dictionary:
 	var problem: String = promote_problem(employee_id, new_salary)
 	if not problem.is_empty():
 		return {"ok": false, "message": problem}
 	var employee: Dictionary = get_employee(employee_id)
-	# Ascendido: la espera del ambicioso vuelve a contar desde que pueda otra vez.
+	# La espera del ambicioso vuelve a contar desde que pueda otra vez.
 	employee["promotion_ready_day"] = NOT_MISSING
 	var next_role: String = get_promotion_progress(employee)["next_role"]
 	if not next_role.is_empty():
@@ -935,24 +802,24 @@ func promote(employee_id: int, new_salary: int) -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-# Asciende a otro cargo (un Senior a líder de equipo). Si era miembro de un equipo sin
-# líder, pasa a liderarlo; si el equipo ya tenía líder, queda sin equipo.
+# Asciende a otro cargo. Un miembro de un equipo sin líder pasa a liderarlo; si tenía líder,
+# queda sin equipo.
 func _promote_to_role(employee: Dictionary, role: String, new_salary: int) -> Dictionary:
 	var team: Dictionary = get_team_of(employee["id"])
 	_leave_team(employee["id"])
 	var key: String = employee_key(employee["id"])
 	if StaffCatalog.get_workplace(role) != StaffCatalog.get_workplace(employee["role"]):
-		# Cambia de puesto: deja su silla y toma una libre de su nuevo lugar de trabajo.
+		# Deja su silla y toma una libre de su nuevo lugar de trabajo.
 		for item: Dictionary in OfficeState.furniture:
 			if item["assigned_to"] == key:
 				item["assigned_to"] = ""
 		OfficeState.furniture[get_free_workstations(role)[0]["chair"]]["assigned_to"] = key
 		EventBus.office_changed.emit()
 	if employee["role"] == StaffCatalog.get_leader_role():
-		# Un líder que deja de serlo ya no tiene gerente, y un gerente nuevo no dirige a nadie.
+		# Un ex líder no tiene gerente y un gerente nuevo no dirige a nadie.
 		employee.erase("manager_id")
 	if is_manager(employee):
-		# Un gerente que asciende deja a sus líderes a cargo del CEO.
+		# Sus líderes pasan al CEO.
 		for leader: Dictionary in get_leaders_of(employee["id"]):
 			leader["manager_id"] = 0
 	employee["role"] = role
@@ -1019,7 +886,7 @@ func get_department_size(department: String) -> int:
 
 ## Departamentos que existen y dirige el CEO (sin ejecutivo).
 func get_ceo_departments() -> Array[String]:
-	# Una sola pasada por los empleados: se pide cada hora por cada equipo.
+	# Una sola pasada: se pide cada hora por equipo.
 	var present: Dictionary[String, bool] = {}
 	var led: Dictionary[String, bool] = {}
 	for employee: Dictionary in employees:
@@ -1038,8 +905,8 @@ func departments_apply() -> bool:
 	return Company.stage >= int(StaffCatalog.get_departments("from_stage"))
 
 
-## Cuánto rinde un departamento: con ejecutivo, 1 más su ventaja por liderazgo; sin él,
-## desde Mediana empresa, según cuántos dirige el CEO; si no, 1.
+## Factor de un departamento: con ejecutivo 1 + su liderazgo; sin él, desde Mediana empresa,
+## según cuántos dirige el CEO; si no, 1.
 func get_department_factor(department: String) -> float:
 	var executive: Dictionary = get_executive_of(department)
 	if not executive.is_empty():
@@ -1050,8 +917,7 @@ func get_department_factor(department: String) -> float:
 	return float(factors[mini(get_ceo_departments().size(), factors.size() - 1)])
 
 
-## Pone a un ejecutivo a dirigir un departamento (uno por departamento). Devuelve
-## {"ok", "message"}.
+## Pone a un ejecutivo a dirigir un departamento (uno por departamento). Devuelve {"ok", "message"}.
 func set_executive_department(executive_id: int, department: String) -> Dictionary:
 	var executive: Dictionary = get_employee(executive_id)
 	if executive.is_empty() or not is_executive(executive):
@@ -1078,7 +944,7 @@ func _describe_direction(executive: Dictionary) -> String:
 	return "Dirige %s." % StaffCatalog.get_department_name(department)
 
 
-# El primer departamento sin ejecutivo, prefiriendo los que existen; "" si todos tienen.
+# Primer departamento sin ejecutivo, prefiriendo los que existen; "" si todos tienen.
 func _free_department() -> String:
 	for department: String in get_departments() + StaffCatalog.get_department_ids():
 		if get_executive_of(department).is_empty():
@@ -1107,7 +973,7 @@ func _on_contract_accepted() -> void:
 		EventBus.staff_changed.emit()
 
 
-## Niega el aumento que pidió un empleado (le baja el ánimo).
+## Niega el aumento pedido (baja el ánimo).
 func deny_raise(employee_id: int) -> bool:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty() or (employee["raise_request"] as Dictionary).is_empty():
@@ -1118,8 +984,7 @@ func deny_raise(employee_id: int) -> bool:
 	return true
 
 
-## Probabilidad diaria de que otra empresa le haga una oferta (0 si no es SemiSenior,
-## Senior ni de dirección).
+## Probabilidad diaria de una oferta de otra empresa (0 si no es SemiSenior, Senior ni dirección).
 func get_offer_chance(employee: Dictionary) -> float:
 	var level: String = employee["level"]
 	if not StaffCatalog.has_levels(employee["role"]):
@@ -1177,12 +1042,12 @@ func _maybe_get_offer(employee: Dictionary, today: int) -> void:
 		employee["name"], MoneyFormat.format(int(employee["salary"]) + amount), days])
 
 
-## Sueldo de su nivel en la tabla 13.2 (con el que se compara el suyo).
+## Sueldo de su nivel en la tabla, con el que se compara el suyo.
 func get_market_salary(employee: Dictionary) -> int:
 	return StaffCatalog.get_salary(employee["role"], employee["level"])
 
 
-## Meta del ánimo de un empleado hoy (ver data/staff.json, morale).
+## Meta del ánimo de un empleado hoy (data/staff.json, morale).
 func get_mood_target(employee: Dictionary) -> int:
 	var target: float = StaffCatalog.get_morale("mood_base")
 	var ratio: float = float(employee["salary"]) / maxf(1.0, float(get_market_salary(employee)))
@@ -1215,17 +1080,15 @@ func get_mood_target(employee: Dictionary) -> int:
 	return clampi(roundi(target), 0, 100)
 
 
-## Indica si alguien tiene un rasgo (los tenga descubiertos o no: todos hacen efecto).
+## Indica si alguien tiene un rasgo (conocido o no: todos hacen efecto).
 static func has_trait(person: Dictionary, trait_id: String) -> bool:
 	return (person.get("traits", []) as Array).has(trait_id)
 
 
-# Efectos sumados de una lista de rasgos, guardados por lista (se piden por persona cada
-# hora): "points", "night_points", "day_points" (factores), "bug_factor", "find_factor",
-# "team_mood", "mentor_points", "mentor_projects" (el mayor) y "night_mood_free".
+# Efectos sumados de una lista de rasgos, por lista (se piden por persona cada hora).
 static var _trait_summaries: Dictionary[int, Dictionary] = {}
-## Efectos que se multiplican como (1 + valor) y los que se multiplican tal cual; los demás
-## números cuentan el más fuerte y los true/false, cualquiera.
+## Efectos que se multiplican como (1 + valor) y los que van tal cual; de los demás cuenta el
+## más fuerte y de los booleanos, cualquiera.
 const PLUS_ONE_EFFECTS: Array[String] = ["points", "night_points", "day_points", "no_coffee_points"]
 const TIMES_EFFECTS: Array[String] = ["bug_factor", "find_factor", "quit_days_factor"]
 
@@ -1249,7 +1112,7 @@ static func _trait_summary(person: Dictionary) -> Dictionary:
 			elif value is bool:
 				summary[effect_key] = bool(summary.get(effect_key, false)) or bool(value)
 			elif value is float or value is int:
-				# De varios rasgos con el mismo efecto cuenta el más fuerte.
+				# Con el mismo efecto cuenta el más fuerte.
 				if absf(float(value)) > absf(float(summary.get(effect_key, 0.0))):
 					summary[effect_key] = float(value)
 	_trait_summaries[key] = summary
@@ -1266,9 +1129,8 @@ static func _trait_product(person: Dictionary, key: String) -> float:
 	return float(_trait_summary(person).get(key, 1.0))
 
 
-## Cuánto rinden los puntos de alguien a esa hora por sus rasgos (hito 50): el
-## perfeccionista y el sociable menos, el noctámbulo más de noche y menos de día y, sin
-## café (coffee false, ver has_coffee), el adicto al café menos (hito 51).
+## Factor de puntos por rasgos a esa hora: perfeccionista y sociable menos, noctámbulo más de
+## noche y menos de día, adicto al café menos sin café.
 static func get_trait_points_factor(person: Dictionary, hour: int, coffee: bool = true) -> float:
 	var factor: float = _trait_product(person, "points")
 	if not coffee:
@@ -1276,13 +1138,12 @@ static func get_trait_points_factor(person: Dictionary, hour: int, coffee: bool 
 	return factor * _trait_product(person, "night_points" if WorkSchedule.is_night_hour(hour) else "day_points")
 
 
-## Indica si hay café hoy: una Sala de descanso que funciona (con su cafetera) y sin el
-## evento de que se acabó.
+## Indica si hay café hoy: Sala de descanso que funciona y sin el evento de que se acabó.
 func has_coffee() -> bool:
 	return coffee_out_day != GameClock.get_day_count() and Projects.has_working_room(BREAK_ROOM)
 
 
-## Quiénes toman una pausa a esa hora absoluta (hito 54); vacío si nadie.
+## Quiénes toman una pausa a esa hora absoluta.
 func get_breaks(at: int) -> Array[String]:
 	var keys: Array[String] = []
 	keys.assign(breaks.get(at, []))
@@ -1294,8 +1155,8 @@ func is_on_break(key: String) -> bool:
 	return get_breaks(_absolute_hour()).has(key)
 
 
-# Al empezar la hora: los que trabajan en un cargo que produce con energía baja toman una
-# pausa mientras haya lugares en los sofás, primero los más cansados.
+# Al empezar la hora, quienes producen con energía baja toman una pausa mientras haya lugar
+# en los sofás, los más cansados primero.
 func _decide_breaks() -> void:
 	var now: int = _absolute_hour()
 	for hour: int in breaks.keys():
@@ -1322,14 +1183,14 @@ func _decide_breaks() -> void:
 	breaks[now] = keys
 
 
-# Anota quién estuvo hoy en la oficina para la máquina expendedora.
+# Anota quién estuvo hoy (máquina expendedora).
 func _note_presence() -> void:
 	if OfficeState.get_break_room_effect("vending_income") <= 0.0:
 		return
 	present_today.merge(get_present_keys(_absolute_hour()))
 
 
-# La máquina expendedora cobra lo de las personas que estuvieron ayer.
+# La máquina expendedora cobra por las personas que estuvieron ayer.
 func _collect_vending() -> void:
 	var income: int = roundi(OfficeState.get_break_room_effect("vending_income") * present_today.size())
 	present_today.clear()
@@ -1344,9 +1205,8 @@ func _export_breaks() -> Array[Dictionary]:
 	return saved
 
 
-## Quiénes almuerzan dentro a esa hora absoluta (hito 53): los que están en su hora de
-## almuerzo mientras haya asientos en una Sala de descanso armada para almorzar (nevera,
-## microondas y mesas), primero el CEO y después por antigüedad. Claves como is_expected.
+## Quiénes almuerzan dentro a esa hora absoluta: el CEO y después por antigüedad, mientras haya
+## asientos en una Sala de descanso con nevera, microondas y mesas.
 func get_lunch_inside(at: int) -> Dictionary[String, bool]:
 	if not GameClock.in_hour_tick:
 		return _find_lunch_inside(at)
@@ -1379,18 +1239,18 @@ func is_lunching_inside(key: String) -> bool:
 	return get_lunch_inside(_absolute_hour()).has(key)
 
 
-## Inodoros que cuentan: los de los Baños que funcionan menos los dañados (hito 52).
+## Inodoros que cuentan: los de Baños que funcionan menos los dañados.
 func get_toilet_capacity() -> int:
 	return maxi(0, OfficeState.count_working_toilets() - broken_toilets)
 
 
-## Personas en la oficina a esa hora absoluta: quienes trabajan (sin almuerzo, tardanza
-## ni ausencia) y el CEO.
+## Personas en la oficina a esa hora absoluta: quienes trabajan (sin almuerzo, tardanza ni
+## ausencia) y el CEO.
 func count_present(at: int) -> int:
 	return get_present_keys(at).size()
 
 
-## Claves de quienes están en la oficina a esa hora absoluta (como count_present).
+## Claves de quienes están en la oficina a esa hora absoluta.
 func get_present_keys(at: int) -> Dictionary[String, bool]:
 	if GameClock.in_hour_tick and _present_cache.has(at):
 		return _present_cache[at]
@@ -1420,13 +1280,12 @@ func get_bathroom_shortage(at: int) -> int:
 	return maxi(0, get_toilets_needed(count_present(at)) - get_toilet_capacity())
 
 
-## Por cuánto se multiplica la producción con esa falta de inodoros: −5 % por cada uno
-## que falta por las colas, hasta −20 %.
+## Factor de producción por falta de inodoros: −5 % por cada uno, hasta −20 %.
 static func get_bathroom_factor(shortage: int) -> float:
 	return 1.0 - minf(StaffCatalog.get_bathrooms("max_points_loss"), shortage * StaffCatalog.get_bathrooms("points_per_missing"))
 
 
-## Indica si faltaron inodoros hoy o ayer (baja la meta de ánimo de todos).
+## Indica si faltaron inodoros hoy o ayer (baja la meta de ánimo).
 func is_bathroom_short_recently() -> bool:
 	return GameClock.get_day_count() - bathroom_short_day <= 1
 
@@ -1437,8 +1296,7 @@ func _check_bathrooms() -> void:
 		bathroom_short_day = GameClock.get_day_count()
 
 
-## Evento «Baño dañado»: un inodoro deja de contar hasta repararlo. Devuelve false si no
-## había ninguno que dañar.
+## Evento «Baño dañado»: un inodoro deja de contar. false si no había ninguno.
 func break_toilet() -> bool:
 	if broken_toilets >= OfficeState.count_working_toilets():
 		return false
@@ -1466,9 +1324,8 @@ func run_out_of_coffee() -> void:
 	coffee_out_day = GameClock.get_day_count()
 
 
-# Al empezar cada hora: quien entra a trabajar llega a tiempo, tarde (pierde esa hora) o
-# falta (pierde la jornada) según sus rasgos. El sorteo depende solo de la semilla, el
-# empleado y la hora: no gasta el azar de las vacantes.
+# Al empezar cada hora, quien entra llega a tiempo, tarde (pierde la hora) o falta (la jornada)
+# según sus rasgos. Sorteo fijo por semilla, empleado y hora: no gasta _rng.
 func _check_arrivals() -> void:
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()
@@ -1494,8 +1351,8 @@ func _check_arrivals() -> void:
 			employee["on_time_count"] = int(employee.get("on_time_count", 0)) + 1
 
 
-# Sorteo de tardanza o ausencia al empezar el turno en la hora absoluta at (fijo por
-# persona y hora; 1.0 si no es impuntual). Se puede pedir antes para saber si llegará.
+# Sorteo de tardanza al empezar el turno en at (fijo por persona y hora; 1.0 si no es
+# impuntual). Se puede pedir antes.
 func _lateness_roll(employee: Dictionary, at: int) -> float:
 	if _trait_value(employee, "late_chance") <= 0.0 and _trait_value(employee, "absent_chance") <= 0.0:
 		return 1.0
@@ -1504,9 +1361,8 @@ func _lateness_roll(employee: Dictionary, at: int) -> float:
 	return rng.randf()
 
 
-## Minutos respecto de la hora en punto en que alguien entra si su llegada es en la hora
-## absoluta at (data/staff.json, arrivals): negativo = antes. Fijo por persona y hora.
-## Solo cambia cuándo se le ve entrar; la producción sigue contando por hora.
+## Minutos respecto de la hora en punto en que entra alguien cuya llegada es en at (negativo =
+## antes); fijo por persona y hora. Solo es visual.
 func get_arrival_offset(employee: Dictionary, at: int) -> int:
 	if not arrival_spread_enabled:
 		return 0
@@ -1520,8 +1376,7 @@ func get_arrival_offset(employee: Dictionary, at: int) -> int:
 	return rng.randi_range(earliest, 0)
 
 
-## Minutos de la hora actual que tarda en entrar alguien cuya jornada empieza (o que
-## vuelve tras llegar una hora tarde) ahora; 0 si llega en punto o no es su llegada.
+## Minutos de la hora actual que tarda en entrar quien empieza (o vuelve de llegar tarde) ahora; 0 si no.
 func get_late_minutes(key: String) -> int:
 	var employee: Dictionary = get_employee_by_key(key)
 	if employee.is_empty() or not is_expected_now(key):
@@ -1535,8 +1390,7 @@ func get_late_minutes(key: String) -> int:
 	return maxi(get_arrival_offset(employee, _absolute_hour()), 0)
 
 
-## Minutos antes de la hora siguiente en que entra alguien cuyo turno empieza en ella y
-## que llegará a tiempo (sin tardanza ni ausencia sorteada); 0 si no.
+## Minutos antes de la hora siguiente en que entra quien empieza en ella a tiempo; 0 si no.
 func get_early_minutes(key: String) -> int:
 	var employee: Dictionary = get_employee_by_key(key)
 	if employee.is_empty() or is_expected_now(key):
@@ -1554,9 +1408,8 @@ func get_early_minutes(key: String) -> int:
 	return maxi(-get_arrival_offset(employee, next), 0)
 
 
-## Minutos de la hora actual que alguien se queda después de terminar su jornada ahora
-## (no al salir a almorzar), entre leave_earliest y leave_latest (data/staff.json,
-## arrivals); fijo por persona y hora. 0 si no termina su jornada ahora.
+## Minutos de la hora actual que alguien se queda al terminar su jornada (no al almorzar),
+## fijo por persona y hora; 0 si no termina ahora.
 func get_leave_minutes(key: String) -> int:
 	var employee: Dictionary = get_employee_by_key(key)
 	if employee.is_empty() or not arrival_spread_enabled or is_expected_now(key):
@@ -1572,9 +1425,8 @@ func get_leave_minutes(key: String) -> int:
 	return rng.randi_range(int(StaffCatalog.get_arrivals("leave_earliest")), int(StaffCatalog.get_arrivals("leave_latest")))
 
 
-## Minutos antes de la hora siguiente en que llega el CEO a abrir la oficina: siempre
-## open_minutes antes de su hora de llegada (data/staff.json, ceo), si no está ya en el
-## trabajo; 0 si la hora siguiente no es su llegada. Hasta su hora no rinde.
+## Minutos antes de la hora siguiente en que llega el CEO a abrir (open_minutes) si esa es su
+## llegada y no está ya; 0 si no. Hasta su hora no rinde.
 func get_ceo_early_minutes() -> int:
 	if ceo_at_work:
 		return 0
@@ -1587,8 +1439,7 @@ func get_ceo_early_minutes() -> int:
 	return StaffCatalog.get_ceo_open_minutes() if arrival_spread_enabled else 0
 
 
-## Anota los errores ocultos que generó cada empleado en la hora (lo que devuelve
-## Production.apply después de Production.handle_bugs).
+## Anota los errores ocultos que generó cada uno en la hora (resultado de Production.apply).
 func note_bugs_caused(done: Array[Dictionary]) -> void:
 	for item: Dictionary in done:
 		var bugs: int = int(item.get("bugs", 0))
@@ -1599,7 +1450,7 @@ func note_bugs_caused(done: Array[Dictionary]) -> void:
 			employee["bugs_caused"] = int(employee.get("bugs_caused", 0)) + bugs
 
 
-## Porcentaje de jornadas en que llegó a tiempo, o -1 si todavía no empezó ninguna.
+## Porcentaje de jornadas en que llegó a tiempo; -1 sin datos.
 static func get_punctuality(employee: Dictionary) -> int:
 	var on_time: int = int(employee.get("on_time_count", 0))
 	var total: int = on_time + int(employee.get("late_count", 0)) + int(employee.get("absent_count", 0))
@@ -1620,8 +1471,7 @@ static func describe_history(employee: Dictionary) -> String:
 	return "Historial: " + " · ".join(parts)
 
 
-# Cada día: desde cuándo puede ascender cada ambicioso (se borra al ascenderlo o si deja de
-# poder).
+# Cada día: desde cuándo puede ascender cada ambicioso.
 func _update_promotion_waits() -> void:
 	for employee: Dictionary in employees:
 		if _trait_value(employee, "promotion_wait_days") <= 0.0:
@@ -1633,19 +1483,19 @@ func _update_promotion_waits() -> void:
 			employee["promotion_ready_day"] = GameClock.get_day_count()
 
 
-## Indica si un ambicioso lleva tanto tiempo sin que lo asciendan que se molesta.
+## Indica si un ambicioso lleva tanto sin ascenso que se molesta.
 func is_waiting_promotion(employee: Dictionary) -> bool:
 	var since: int = int(employee.get("promotion_ready_day", NOT_MISSING))
 	var wait: float = _trait_value(employee, "promotion_wait_days")
 	return wait > 0.0 and since != NOT_MISSING and GameClock.get_day_count() - since >= int(wait)
 
 
-## Por cuánto se multiplican los errores que genera alguien al programar (perfeccionista).
+## Factor de los errores que genera alguien al programar (perfeccionista).
 static func get_trait_bug_factor(person: Dictionary) -> float:
 	return _trait_product(person, "bug_factor")
 
 
-## Por cuánto se multiplican los errores que encuentra alguien al probar (perfeccionista).
+## Factor de los errores que encuentra alguien al probar (perfeccionista).
 static func get_trait_find_factor(person: Dictionary) -> float:
 	return _trait_product(person, "find_factor")
 
@@ -1666,8 +1516,7 @@ func _team_people(employee: Dictionary) -> Array[Dictionary]:
 	return people
 
 
-## Lo que suma a la meta de ánimo de alguien tener un compañero sociable en su equipo
-## (él mismo incluido; una vez aunque haya varios).
+## Lo que suma a la meta de ánimo un sociable en su equipo (él incluido; una vez aunque haya varios).
 func get_team_trait_mood(employee: Dictionary) -> float:
 	var best: float = 0.0
 	for person: Dictionary in _team_people(employee):
@@ -1675,7 +1524,7 @@ func get_team_trait_mood(employee: Dictionary) -> float:
 	return best
 
 
-# El mayor valor de un efecto numérico entre los rasgos de alguien (0 si ninguno lo tiene).
+# Mayor valor de un efecto numérico entre los rasgos de alguien (0 si ninguno).
 static func _trait_value(person: Dictionary, key: String) -> float:
 	return float(_trait_summary(person).get(key, 0.0))
 
@@ -1689,7 +1538,7 @@ func _mentors_of(employee: Dictionary) -> Array[Dictionary]:
 	return mentors
 
 
-# Indica si un nivel es de los que ayuda un mentor.
+# Indica si un empleado es de un nivel que ayuda ese mentor.
 static func _is_mentee(employee: Dictionary, mentor: Dictionary) -> bool:
 	for trait_id: Variant in mentor.get("traits", []):
 		if (StaffCatalog.get_trait_effect(String(trait_id), "mentor_levels", []) as Array).has(employee.get("level", "")):
@@ -1697,14 +1546,12 @@ static func _is_mentee(employee: Dictionary, mentor: Dictionary) -> bool:
 	return false
 
 
-## Cuánto más rinde alguien por un mentor de su equipo presente a esa hora (1 si no hay;
-## una vez aunque haya varios).
+## Factor por un mentor presente en su equipo (1 si no hay; una vez aunque haya varios).
 func get_mentor_factor(employee: Dictionary, weekday: int, hour: int) -> float:
 	return float(get_team_mentor_factors(get_team_of(employee["id"]), weekday, hour).get(int(employee["id"]), 1.0))
 
 
-## get_mentor_factor de todos los de un equipo de una vez (id → factor; sin mentores
-## presentes, vacío): Projects.get_workers lo pide por cada contrato cada hora.
+## get_mentor_factor de todo un equipo (id → factor; vacío sin mentores presentes).
 func get_team_mentor_factors(team: Dictionary, weekday: int, hour: int) -> Dictionary[int, float]:
 	var factors: Dictionary[int, float] = {}
 	if team.is_empty():
@@ -1733,7 +1580,7 @@ func get_team_mentor_factors(team: Dictionary, weekday: int, hour: int) -> Dicti
 	return factors
 
 
-## Cuántos contratos menos necesita alguien para ascender por tener un mentor en su equipo.
+## Contratos menos que necesita alguien para ascender por un mentor en su equipo.
 func get_mentor_projects(employee: Dictionary) -> int:
 	var best: int = 0
 	for mentor: Dictionary in _mentors_of(employee):
@@ -1742,7 +1589,7 @@ func get_mentor_projects(employee: Dictionary) -> int:
 	return best
 
 
-# Cada discover_days días en la empresa se descubre el siguiente rasgo de cada empleado.
+# Cada discover_days días en la empresa se descubre otro rasgo.
 func _discover_traits() -> void:
 	var every: int = StaffCatalog.get_trait_discover_days()
 	var today: int = GameClock.get_day_count()
@@ -1767,7 +1614,7 @@ func get_stress_target(employee: Dictionary) -> int:
 		target += StaffCatalog.get_morale("late_stress")
 	if int(employee.get("min_energy", 100)) < int(StaffCatalog.get_morale("tired_below")):
 		target += StaffCatalog.get_morale("tired_stress")
-	# Los equipos de un líder con gerente se estresan menos.
+	# Con gerente, los equipos se estresan menos.
 	var team: Dictionary = get_team_of(employee["id"])
 	if not team.is_empty() and not get_manager_of(get_team_leader(team)).is_empty():
 		target += float(StaffCatalog.get_management("manager_stress"))
@@ -1778,8 +1625,7 @@ func get_stress_target(employee: Dictionary) -> int:
 	return clampi(roundi(target), 0, 100)
 
 
-## Suma (o resta) a todos los empleados en "mood", "energy" o "stress" (de 0 a 100); lo
-## usan los eventos (hito 43). Con ids, solo a esos empleados.
+## Suma a "mood", "energy" o "stress" (0–100) de todos o de los ids dados (eventos).
 func change_all(key: String, amount: int, ids: Array[int] = []) -> void:
 	for employee: Dictionary in employees:
 		if not ids.is_empty() and not ids.has(int(employee["id"])):
@@ -1791,14 +1637,12 @@ func change_all(key: String, amount: int, ids: Array[int] = []) -> void:
 	EventBus.staff_changed.emit()
 
 
-## Indica si un empleado no tiene trabajo: su equipo no lleva contrato (los vendedores
-## no lo necesitan).
+## Indica si un empleado no tiene trabajo: su equipo no lleva proyecto (salvo vendedores).
 func is_idle(employee: Dictionary) -> bool:
 	return not Production.get_role_phase(employee["role"]).is_empty() and _contract_of(employee).is_empty()
 
 
-## Icono de estado de un empleado (hito 57): el primero de status_icons.order que se
-## cumple ("no_station", "tired", "upset", "stressed" o "idle"), o "" si ninguno.
+## Icono de estado: el primero de status_icons.order que se cumple, o "".
 func get_status_icon(employee: Dictionary) -> String:
 	for icon: Variant in StaffCatalog.get_status_icons("order"):
 		if _has_status(employee, String(icon)):
@@ -1829,8 +1673,7 @@ func quit_days_left(employee: Dictionary) -> int:
 	return maxi(0, int(employee["quit_day"]) - GameClock.get_day_count())
 
 
-# Contrato que lleva el equipo de un empleado, o vacío. Un producto en desarrollo (hito 41)
-# también es trabajo: devuelve el producto (no tiene plazo ni atraso).
+# Proyecto que lleva el equipo de un empleado (contrato o producto en desarrollo), o vacío.
 func _contract_of(employee: Dictionary) -> Dictionary:
 	var team: Dictionary = get_team_of(employee["id"])
 	if team.is_empty():
@@ -1839,14 +1682,14 @@ func _contract_of(employee: Dictionary) -> Dictionary:
 	return contract if not contract.is_empty() else Products.get_product_of(team["id"])
 
 
-# Saca a un empleado de la empresa: cobra lo ganado y lo debido con ese concepto y
-# libera su puesto y su equipo. Devuelve lo cobrado.
+# Saca a un empleado: cobra lo ganado y lo debido con ese concepto y libera puesto y equipo.
+# Devuelve lo cobrado.
 func _remove_employee(employee: Dictionary, concept: String) -> int:
 	var cost: int = get_firing_cost(employee)
-	# Primero deja de ser empleado: así su deuda no se cuenta en la nómina pendiente.
+	# Primero deja de ser empleado, así su deuda no cuenta en la nómina pendiente.
 	employees.erase(employee)
 	_leave_team(employee["id"])
-	# Los líderes de un gerente que se va vuelven a estar a cargo del CEO.
+	# Sus líderes pasan al CEO.
 	for leader: Dictionary in get_leaders_of(employee["id"]):
 		leader["manager_id"] = 0
 	# Si hacía una entrevista, se corta.
@@ -1863,8 +1706,8 @@ func _remove_employee(employee: Dictionary, concept: String) -> int:
 	return cost
 
 
-# Cada día: ánimo y estrés se acercan a su meta, vencen los pedidos de aumento, se van
-# los que avisaron y avisan los que llevan varios días mal; a veces alguien pide aumento.
+# Cada día: ánimo y estrés hacia su meta, vencen pedidos, se van los que avisaron, avisan los
+# que llevan días mal y a veces alguien pide aumento.
 func _update_morale() -> void:
 	var today: int = GameClock.get_day_count()
 	var mood_step: int = int(StaffCatalog.get_morale("mood_step"))
@@ -1933,8 +1776,7 @@ static func _approach(value: int, target: int, step: int) -> int:
 	return maxi(value - step, target)
 
 
-## Horario de un empleado: el propio si tiene, si no el turno de su equipo y, sin
-## equipo, el de su cargo.
+## Horario de un empleado: el propio, si no el de su equipo y, sin equipo, el de su cargo.
 func get_schedule(employee: Dictionary) -> WorkSchedule:
 	if bool(employee.get("own_schedule", false)):
 		return WorkSchedule.from_dict(employee["schedule"])
@@ -1942,13 +1784,13 @@ func get_schedule(employee: Dictionary) -> WorkSchedule:
 	return WorkSchedule.from_dict(team["schedule"] if not team.is_empty() else employee["schedule"])
 
 
-# Lo mismo que get_schedule, solo para leer: se guarda un WorkSchedule por cada horario
-# distinto (el hash de su diccionario) porque se pide por cada empleado cada hora.
+# get_schedule de solo lectura: un WorkSchedule por horario distinto (por hash), porque se pide
+# por empleado cada hora.
 func _cached_schedule(employee: Dictionary) -> WorkSchedule:
 	return _cached_schedule_in(employee, {} if bool(employee.get("own_schedule", false)) else get_team_of(employee["id"]))
 
 
-# Lo mismo que _cached_schedule con su equipo ya buscado (ver _get_team_map).
+# _cached_schedule con su equipo ya buscado.
 func _cached_schedule_in(employee: Dictionary, team: Dictionary) -> WorkSchedule:
 	var data: Dictionary = employee["schedule"]
 	if not bool(employee.get("own_schedule", false)) and not team.is_empty():
@@ -1961,8 +1803,7 @@ func _cached_schedule_in(employee: Dictionary, team: Dictionary) -> WorkSchedule
 	return _schedule_cache[key]
 
 
-## Le da a un empleado un horario propio (reemplaza el de su equipo o su cargo):
-## hora de entrada, días y horas extra. Devuelve {"ok", "message"}.
+## Le da a un empleado un horario propio (entrada, días y horas extra). Devuelve {"ok", "message"}.
 func set_own_schedule(employee_id: int, start_hour: int, days: Array[int], overtime: int = 0) -> Dictionary:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty():
@@ -1977,7 +1818,7 @@ func set_own_schedule(employee_id: int, start_hour: int, days: Array[int], overt
 	return {"ok": true, "message": "Horario de %s: %s." % [employee["name"], schedule.describe()]}
 
 
-## Quita el horario propio: vuelve al turno de su equipo o al horario de su cargo.
+## Quita el horario propio: vuelve al de su equipo o su cargo.
 func clear_own_schedule(employee_id: int) -> Dictionary:
 	var employee: Dictionary = get_employee(employee_id)
 	if employee.is_empty():
@@ -2024,9 +1865,8 @@ func delete_team(team_id: int) -> bool:
 	return true
 
 
-## Pone a un empleado en un equipo (si estaba en otro, sale de aquel). Un líder de
-## equipo entra como su líder, si el equipo no tiene; los demás, como miembros, hasta
-## teams.max_members. Devuelve {"ok", "message"}.
+## Pone a un empleado en un equipo (sale del anterior): un líder entra como líder si falta;
+## los demás como miembros, hasta teams.max_members. Devuelve {"ok", "message"}.
 func add_to_team(team_id: int, employee_id: int) -> Dictionary:
 	var team: Dictionary = get_team(team_id)
 	var employee: Dictionary = get_employee(employee_id)
@@ -2081,7 +1921,7 @@ func get_leaders() -> Array[Dictionary]:
 	return result
 
 
-## Líderes que dirige un gerente (todos los que lo tienen como gerente).
+## Líderes que dirige un gerente.
 func get_leaders_of(manager_id: int) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for leader: Dictionary in get_leaders():
@@ -2109,8 +1949,7 @@ func get_manager_of(leader: Dictionary) -> Dictionary:
 	return get_employee(int(leader.get("manager_id", 0)))
 
 
-## Pone a un líder a cargo de un gerente (o del CEO con manager_id 0), si le queda
-## lugar. Devuelve {"ok", "message"}.
+## Pone a un líder a cargo de un gerente (o del CEO con 0), si le queda lugar. Devuelve {"ok", "message"}.
 func set_manager(leader_id: int, manager_id: int) -> Dictionary:
 	var leader: Dictionary = get_employee(leader_id)
 	if leader.is_empty() or not is_leader(leader):
@@ -2135,7 +1974,7 @@ func _boss_name(manager_id: int) -> String:
 	return "el CEO" if manager_id == 0 else String(get_employee(manager_id).get("name", "?"))
 
 
-## Indica si el gerente que dirige al líder de un equipo está trabajando a esa hora.
+## Indica si el gerente del líder de un equipo trabaja a esa hora.
 func is_manager_present(team: Dictionary, at: int) -> bool:
 	var manager: Dictionary = get_manager_of(get_team_leader(team))
 	return not manager.is_empty() and is_expected(employee_key(manager["id"]), get_weekday_at(at),
@@ -2152,8 +1991,7 @@ func get_team_leader(team: Dictionary) -> Dictionary:
 	return get_employee(int(team.get("leader_id", 0)))
 
 
-## Indica si el líder de un equipo está trabajando a esa hora (contada como
-## get_absolute_hour).
+## Indica si el líder de un equipo trabaja a esa hora absoluta.
 func is_leader_present(team: Dictionary, at: int) -> bool:
 	var leader: Dictionary = get_team_leader(team)
 	return not leader.is_empty() and is_expected(employee_key(leader["id"]), get_weekday_at(at),
@@ -2165,8 +2003,7 @@ func leaders_required() -> bool:
 	return Company.stage >= StaffCatalog.get_role_min_stage(StaffCatalog.get_leader_role())
 
 
-## Cuánto rinde un equipo a esa hora: 1, o teams.no_leader_factor si desde la etapa de
-## los líderes no tiene a su líder presente.
+## Factor de un equipo a esa hora: no_leader_factor sin su líder (desde la etapa de líderes), si no 1.
 func get_team_factor(team: Dictionary, at: int) -> float:
 	var factor: float = 1.0
 	if leaders_required() and not is_leader_present(team, at):
@@ -2184,8 +2021,8 @@ func remove_from_team(employee_id: int) -> bool:
 	return true
 
 
-## Cambia el turno de un equipo: hora de entrada, días (con al menos un día de
-## descanso) y horas extra. Devuelve {"ok", "message"}.
+## Cambia el turno de un equipo (entrada, días con al menos uno libre, horas extra). Devuelve
+## {"ok", "message"}.
 func set_team_shift(team_id: int, start_hour: int, days: Array[int], overtime: int = 0) -> Dictionary:
 	var team: Dictionary = get_team(team_id)
 	if team.is_empty():
@@ -2251,7 +2088,7 @@ func rename_template(template_id: int, new_name: String) -> Dictionary:
 	return {"ok": true, "message": "La plantilla se llama ahora %s." % clean}
 
 
-## Borra una plantilla: sus equipos se quedan con el turno que tenían, como turno propio.
+## Borra una plantilla; sus equipos se quedan con su turno como propio.
 func delete_template(template_id: int) -> Dictionary:
 	var template: Dictionary = get_template(template_id)
 	if template.is_empty():
@@ -2284,8 +2121,8 @@ func set_template_shift(template_id: int, start_hour: int, days: Array[int], ove
 	return {"ok": true, "message": "%s: %s.%s" % [template["name"], schedule.describe(), count]}
 
 
-## Hace que un equipo siga una plantilla, o NO_TEMPLATE para que se quede con su turno
-## como propio. Devuelve {"ok", "message"}.
+## Hace que un equipo siga una plantilla, o NO_TEMPLATE para quedarse con su turno. Devuelve
+## {"ok", "message"}.
 func set_team_template(team_id: int, template_id: int) -> Dictionary:
 	var team: Dictionary = get_team(team_id)
 	if team.is_empty():
@@ -2304,9 +2141,8 @@ func set_team_template(team_id: int, template_id: int) -> Dictionary:
 		WorkSchedule.from_dict(team["schedule"]).describe()]}
 
 
-## Agenda de un día de la semana: una fila por equipo y por persona con horario propio,
-## {"kind" ("team" o "employee"), "id", "label", "cells"}, con cells = 24 estados
-## (AGENDA_OFF, AGENDA_WORK, AGENDA_LUNCH o AGENDA_GAP) de las horas que empiezan ese día.
+## Agenda de un día: una fila por equipo y por persona con horario propio, {"kind", "id",
+## "label", "cells"}; cells son 24 estados AGENDA_* de las horas que empiezan ese día.
 func get_agenda(weekday: int) -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	for team: Dictionary in teams:
@@ -2318,7 +2154,7 @@ func get_agenda(weekday: int) -> Array[Dictionary]:
 				state = AGENDA_GAP
 			cells.append(state)
 		rows.append({"kind": "team", "id": team["id"], "label": team["name"], "cells": cells})
-	# Recepción (hito 36): las horas en que un cliente puede estar esperando.
+	# Recepción: las horas en que un cliente puede estar esperando.
 	if Projects.visits_enabled():
 		var cells: Array[String] = []
 		var arrival: int = int(ContractCatalog.get_offers("arrival_hour"))
@@ -2366,7 +2202,7 @@ func _agenda_state(schedule: WorkSchedule, weekday: int, hour: int) -> String:
 	return AGENDA_WORK if schedule.is_working(weekday, hour) else AGENDA_OFF
 
 
-# Hueco: desde la etapa de los líderes, un equipo con miembros trabaja sin su líder.
+# Hueco: desde la etapa de líderes, un equipo con miembros trabaja sin su líder.
 func _is_leader_gap(team: Dictionary, weekday: int, hour: int) -> bool:
 	if not leaders_required() or (team["members"] as Array).is_empty():
 		return false
@@ -2419,8 +2255,8 @@ func get_team_of(employee_id: int) -> Dictionary:
 	return {}
 
 
-# Equipo de cada empleado que está en uno (como get_team_of), para revisar a todos de una
-# vez sin recorrer los equipos por cada uno. Lleva la clave NO_TEAM_KEY para no quedar vacío.
+# Equipo de cada empleado que está en uno, para revisar a todos de una vez. Lleva la clave
+# NO_TEAM_KEY para no quedar vacío.
 func _get_team_map() -> Dictionary[int, Dictionary]:
 	var result: Dictionary[int, Dictionary] = {NO_TEAM_KEY: {}}
 	for team: Dictionary in teams:
@@ -2462,7 +2298,7 @@ func _leave_team(employee_id: int) -> bool:
 	return true
 
 
-# Cambió quién trabaja a qué hora: los personajes revisan si tienen que llegar o irse.
+# Cambió quién trabaja a qué hora: los personajes revisan si llegan o se van.
 func _schedules_changed() -> void:
 	EventBus.staff_changed.emit()
 	EventBus.presence_changed.emit()
@@ -2470,8 +2306,7 @@ func _schedules_changed() -> void:
 
 ## Empleado con ese id, o vacío.
 func get_employee(employee_id: int) -> Dictionary:
-	# Se pide muchas veces por hora: se busca en el índice y, si no coincide (alguien
-	# entró o salió), se rehace.
+	# Se pide mucho: se busca en el índice y se rehace si no coincide.
 	var index: int = _employee_index.get(employee_id, -1)
 	if index >= 0 and index < employees.size() and employees[index]["id"] == employee_id:
 		return employees[index]
@@ -2494,8 +2329,7 @@ func get_interviewed_now() -> Dictionary:
 	return {} if interview.is_empty() else get_candidate(interview["candidate_id"])
 
 
-## Puestos de trabajo que nadie ocupa (ver Workstations.find_all), donde trabaja ese
-## cargo (un Área de trabajo si no se dice).
+## Puestos libres donde trabaja ese cargo (un Área de trabajo si no se dice).
 func get_free_workstations(role: String = "") -> Array[Dictionary]:
 	var room_type: String = Workstations.WORK_AREA if role.is_empty() else StaffCatalog.get_workplace(role)
 	return Workstations.find_free(OfficeState.furniture, OfficeState.rooms, room_type)
@@ -2515,8 +2349,7 @@ func get_station_problem(role: String) -> String:
 	return NO_STATION_MESSAGE
 
 
-## Indica si a esa hora de ese día de la semana hay un recepcionista trabajando en su
-## mostrador.
+## Indica si a esa hora hay un recepcionista trabajando en su mostrador.
 func is_reception_attended(weekday: int, hour: int) -> bool:
 	for employee: Dictionary in employees:
 		if employee["role"] == RECEPTIONIST_ROLE and has_working_station(employee) \
@@ -2540,14 +2373,12 @@ func get_person_name(key: String) -> String:
 	return "otra persona"
 
 
-## Indica si el puesto de un empleado sigue funcionando (por ejemplo, si nadie deshizo
-## su Área de trabajo).
+## Indica si el puesto de un empleado sigue funcionando.
 func has_working_station(employee: Dictionary) -> bool:
 	return Workstations.is_working_station(OfficeState.furniture, OfficeState.rooms, employee_key(employee["id"]))
 
 
-## Claves (assigned_to) de quienes tienen un puesto que funciona. Para revisar a muchos de
-## una vez sin buscar los puestos por cada uno.
+## Claves de quienes tienen un puesto que funciona (para revisar a muchos de una vez).
 func get_working_station_keys() -> Dictionary[String, bool]:
 	var keys: Dictionary[String, bool] = {}
 	for station: Dictionary in Workstations.find_all(OfficeState.furniture, OfficeState.rooms):
@@ -2582,8 +2413,7 @@ func get_waiting_count() -> int:
 	return count
 
 
-## Primer día (GameClock.get_day_count) en que pueden llegar candidatos: hoy si aún no
-## es la hora de llegada, si no mañana.
+## Primer día en que pueden llegar candidatos: hoy si aún no es la hora de llegada, si no mañana.
 func next_arrival_day() -> int:
 	var today: int = GameClock.get_day_count()
 	return today if GameClock.get_hour() < int(StaffCatalog.get_hiring("arrival_hour")) else today + 1
@@ -2594,8 +2424,7 @@ func publicity_days_left(vacancy: Dictionary) -> int:
 	return maxi(int(vacancy["publicity_until"]) - next_arrival_day(), 0)
 
 
-## Días que le quedan a un candidato antes de irse con otra empresa (se va a la hora
-## de llegada de ese día): 0 = hoy, 1 = mañana.
+## Días que le quedan a un candidato (se va a la hora de llegada de ese día): 0 = hoy.
 func candidate_days_left(candidate: Dictionary) -> int:
 	var leaves_on: int = int(candidate["arrived_day"]) + int(StaffCatalog.get_hiring("candidate_days"))
 	return maxi(leaves_on - GameClock.get_day_count(), 0)
@@ -2607,8 +2436,7 @@ static func describe_vacancy(vacancy: Dictionary) -> String:
 		MoneyFormat.format(vacancy["salary"])]
 
 
-## Habilidades de un candidato o empleado: en rangos ("Programación 40–60 · …") o, si
-## ya se entrevistó, los valores reales ("Programación 47 · …").
+## Habilidades: en rangos («Programación 40–60») o, ya entrevistado, los valores reales.
 static func describe_skills(candidate: Dictionary) -> String:
 	var parts: Array[String] = []
 	var width: int = StaffCatalog.get_skill_range_width()
@@ -2621,9 +2449,7 @@ static func describe_skills(candidate: Dictionary) -> String:
 	return " · ".join(parts)
 
 
-## Rasgos que se conocen: "Rasgos: Perfeccionista" o "" si no se conoce ninguno.
-## Qué hace un rasgo, armado con sus efectos de data/staff.json (y la competencia);
-## "" si todavía no hace nada.
+## Qué hace un rasgo según sus efectos de data/staff.json; "" si todavía no hace nada.
 static func describe_trait(trait_id: String) -> String:
 	var parts: Array[String] = []
 	var percent: Callable = func(value: float) -> String:
@@ -2725,7 +2551,7 @@ func _on_day_changed(day: int, _month: int) -> void:
 	_accountant_warning(day)
 
 
-## Indica si la empresa tiene al menos un contador (hito 37).
+## Indica si la empresa tiene al menos un contador.
 func has_accountant() -> bool:
 	var role: String = String(StaffCatalog.get_accounting("role"))
 	for employee: Dictionary in employees:
@@ -2734,23 +2560,22 @@ func has_accountant() -> bool:
 	return false
 
 
-## Cuánto baja el mantenimiento (0.1 = 10 %): el descuento del contador por el factor
-## de Administración, o 0 sin contador.
+## Descuento del mantenimiento (0.1 = 10 %): el del contador por el factor de Administración, o 0.
 func get_maintenance_discount() -> float:
 	if not has_accountant():
 		return 0.0
 	return float(StaffCatalog.get_accounting("maintenance_discount")) * get_department_factor("administration") * get_printer_factor()
 
 
-## Cuánto baja la tasa mensual de un préstamo nuevo (0.01 = 1 punto), o 0 sin contador.
+## Descuento de la tasa mensual de un préstamo nuevo (0.01 = 1 punto), o 0 sin contador.
 func get_loan_rate_discount() -> float:
 	if not has_accountant():
 		return 0.0
 	return float(StaffCatalog.get_accounting("loan_rate_discount")) * get_department_factor("administration") * get_printer_factor()
 
 
-## Cuánto valen los efectos del contador (hito 55): accountant_boost de la impresora si
-## hay una en el Área de trabajo donde está la silla de algún contador; si no, 1.
+## Factor de los efectos del contador: accountant_boost con impresora en el Área de trabajo de
+## algún contador; si no, 1.
 func get_printer_factor() -> float:
 	var role: String = String(StaffCatalog.get_accounting("role"))
 	var best: float = 1.0
@@ -2767,8 +2592,7 @@ func get_printer_factor() -> float:
 	return best
 
 
-## Lo que costaría la nómina del día de pago que está a days_ahead días: lo ganado hasta
-## hoy, lo de esos días, horas extra y lo que ya se debe.
+## Costo de la nómina que llega en days_ahead días: lo ganado, esos días, extras y lo debido.
 func estimate_payroll(days_ahead: int) -> int:
 	var total: int = 0
 	for employee: Dictionary in employees:
@@ -2776,8 +2600,7 @@ func estimate_payroll(days_ahead: int) -> int:
 	return total
 
 
-# El contador avisa warning_days días antes de cada nómina y de cada día 1 si con el
-# saldo de hoy no alcanza para todo lo que se paga hasta ese día.
+# El contador avisa warning_days días antes de cada nómina y día 1 si el saldo de hoy no alcanza.
 func _accountant_warning(day: int) -> void:
 	if not has_accountant():
 		return
@@ -2804,8 +2627,7 @@ func _accountant_warning(day: int) -> void:
 		target, " ni ".join(what), MoneyFormat.format(due - Economy.balance)])
 
 
-# Cada hora que termina: quien trabajó en su puesto ensucia su habitación y el personal
-# de limpieza en su turno limpia la más sucia.
+# Cada hora: quien trabajó ensucia su habitación y limpieza en su turno limpia la más sucia.
 func _update_dirt() -> void:
 	var ended: int = _absolute_hour() - 1
 	var weekday: int = get_weekday_at(ended)
@@ -2827,7 +2649,7 @@ func _update_dirt() -> void:
 	var was_dirty: Array[bool] = []
 	for room: Dictionary in OfficeState.rooms:
 		was_dirty.append(OfficeState.is_room_dirty(room))
-	# Personas-hora por habitación: se suman y se ensucia cada habitación una vez.
+	# Se suman las personas-hora por habitación y se ensucia cada una una vez.
 	var room_map: Dictionary[Vector2i, int] = OfficeState.get_room_index_map()
 	var people: Dictionary[int, int] = {}
 	var seat: Dictionary = seats.get("ceo", {})
@@ -2861,15 +2683,13 @@ func _update_dirt() -> void:
 	EventBus.dirt_changed.emit()
 
 
-## Habitación donde está limpiando ahora alguien de limpieza (la más sucia), o -1 si no
-## está en su turno o todo está limpio.
+## Habitación que limpia ahora alguien de limpieza (la más sucia), o -1.
 func get_cleaning_room(employee: Dictionary) -> int:
 	if employee["role"] != String(StaffCatalog.get_cleaning("role")) or not is_expected_now(employee_key(employee["id"])):
 		return -1
 	return OfficeState.get_dirtiest_room()
 
 
-## Indica si la habitación del puesto de alguien está sucia.
 ## Habitación donde está la silla de alguien, o vacío.
 func get_workplace_room(key: String) -> Dictionary:
 	var seat: Dictionary = _seat_of(key)
@@ -2879,14 +2699,13 @@ func get_workplace_room(key: String) -> Dictionary:
 	return OfficeState.rooms[room_index] if room_index >= 0 else {}
 
 
-## Ambiente de la habitación donde trabaja alguien (0 sin puesto; hito 45).
+## Ambiente de la habitación donde trabaja alguien (0 sin puesto).
 func get_ambiance(key: String) -> int:
 	var room: Dictionary = get_workplace_room(key)
 	return 0 if room.is_empty() else int(_ambiance_detail(room)["value"])
 
 
-# Ambiance.get_detail de una habitación con los muebles de ahora, guardado mientras la
-# habitación y los muebles no cambien (las metas de ánimo y estrés lo piden por persona).
+# Ambiance.get_detail de una habitación, guardado mientras ni ella ni los muebles cambien.
 func _ambiance_detail(room: Dictionary) -> Dictionary:
 	var furniture_hash: int = int(_seat_lookup_cache["furniture_hash"]) if not _seat_lookup_cache.is_empty() \
 		else OfficeState.furniture.hash()
@@ -2900,17 +2719,15 @@ func _ambiance_detail(room: Dictionary) -> Dictionary:
 	return _ambiance_cache[key]
 
 
-# El mueble asignado a alguien (OfficeState.find_furniture_assigned_to), del recorrido de
-# _update_morale si está en curso.
+# Mueble asignado a alguien, de _seat_lookup_cache si _update_morale está en curso.
 func _seat_of(key: String) -> Dictionary:
 	if _seat_lookup_cache.is_empty():
 		return OfficeState.find_furniture_assigned_to(key)
 	return _seat_lookup_cache["seats"].get(key, {})
 
 
-# Arma _seat_lookup_cache: el primer mueble asignado a cada uno, el escritorio de cada
-# puesto ocupado y el hash de los muebles. Lo que cambia mientras se recorre (alguien que
-# se va libera su silla) no lo usa nadie más: el ambiente no mira quién ocupa qué.
+# Arma _seat_lookup_cache: primer mueble asignado a cada uno, escritorio de cada puesto y hash
+# de los muebles. Los cambios durante el recorrido no afectan al ambiente.
 func _build_seat_lookup() -> void:
 	var furniture: Array[Dictionary] = OfficeState.furniture
 	var seats: Dictionary[String, Dictionary] = {}
@@ -2927,28 +2744,26 @@ func _build_seat_lookup() -> void:
 		"room_map": OfficeState.get_room_index_map(), "break_mood": OfficeState.get_break_room_effect("break_mood")}
 
 
-# OfficeState.get_room_index_map, del recorrido de _update_morale si está en curso.
+# OfficeState.get_room_index_map, de la caché si _update_morale está en curso.
 func _room_map() -> Dictionary:
 	return _seat_lookup_cache["room_map"] if not _seat_lookup_cache.is_empty() else OfficeState.get_room_index_map()
 
 
-## Lo que suman a la meta de ánimo de todos el dispensador, el ping pong y la máquina
-## expendedora de la Sala de descanso (hito 54; uno de cada uno).
+## Lo que suman a la meta de ánimo de todos los muebles de la Sala de descanso (uno de cada uno).
 func get_break_mood() -> float:
 	if not _seat_lookup_cache.is_empty():
 		return float(_seat_lookup_cache["break_mood"])
 	return OfficeState.get_break_room_effect("break_mood")
 
 
-## Lo que suma a la meta de ánimo el escritorio del puesto de alguien (el amplio, hito 46).
+## Lo que suma a la meta de ánimo el escritorio del puesto de alguien.
 func get_desk_mood(key: String) -> int:
 	var desk: Dictionary = _seat_lookup_cache["desks"].get(key, {}) if not _seat_lookup_cache.is_empty() \
 		else Workstations.station_desk_of(OfficeState.furniture, OfficeState.rooms, key)
 	return 0 if desk.is_empty() else FurnitureCatalog.get_mood_bonus(desk["id"])
 
 
-## Energía que pierde alguien por hora trabajada: la de su silla si tiene una propia (la
-## ergonómica, hito 46) o la de data/staff.json.
+## Energía que pierde alguien por hora trabajada: la de su silla si tiene, si no la de data/staff.json.
 func get_work_energy(key: String) -> int:
 	var seat: Dictionary = OfficeState.find_furniture_assigned_to(key)
 	return _work_energy_of(seat)
@@ -2967,8 +2782,7 @@ func works_in_dirty_room(key: String) -> bool:
 	return room_index >= 0 and OfficeState.is_room_dirty(OfficeState.rooms[room_index])
 
 
-# Anota lo ganado por cada uno hasta hoy como deuda y trata de pagarla toda. Si no
-# alcanza, la deuda queda y baja el ánimo de todos.
+# Anota lo ganado como deuda y trata de pagarla; si no alcanza, queda y baja el ánimo de todos.
 func _run_payroll() -> void:
 	if employees.is_empty():
 		return
@@ -2987,8 +2801,8 @@ func _run_payroll() -> void:
 	if _pay_debt_if_possible():
 		EventBus.payment_recorded.emit(CONCEPT_PAYROLL, true)
 		return
-	# Antes de castigar se pregunta si alguien la cubre (el préstamo de emergencia).
-	# Se marca antes de preguntar: la respuesta puede llegar dentro de la misma señal.
+	# Antes de castigar se ofrece el préstamo de emergencia; se marca antes porque la
+	# respuesta puede llegar dentro de la misma señal.
 	var response: Dictionary = {"held": false}
 	payroll_held = true
 	EventBus.payroll_short.emit(total - Economy.balance, response)
@@ -3007,8 +2821,7 @@ func _payroll_unpaid(total: int) -> void:
 	EventBus.send_notice(EventBus.target_menu("bank"), "No alcanza el dinero para la nómina: se deben %s. Se pagará apenas alcance." % MoneyFormat.format(total))
 
 
-# Respuesta al préstamo de emergencia: aceptado, la nómina ya se pagó con él y cuenta a
-# tiempo; rechazado, queda debida como cualquier nómina que no alcanza.
+# Préstamo de emergencia: aceptado, la nómina ya se pagó y cuenta a tiempo; rechazado, queda debida.
 func _on_emergency_loan_resolved(_accepted: bool) -> void:
 	if not payroll_held:
 		return
@@ -3048,8 +2861,7 @@ func _change_mood(employee: Dictionary, change: int) -> void:
 	employee["mood"] = clampi(int(employee["mood"]) + change, 0, 100)
 
 
-# La energía de cada empleado cambia según si la hora que acaba de terminar era de
-# trabajo o de descanso; si era de trabajo, suma sus horas extra y recargo nocturno.
+# Cambia la energía según la hora que terminó (trabajo o descanso) y suma horas extra y recargo.
 func _update_energy() -> void:
 	if employees.is_empty():
 		return
@@ -3073,8 +2885,7 @@ func _update_energy() -> void:
 	var on_break: Array[String] = get_breaks(ended)
 	var break_rest: int = int(StaffCatalog.get_breaks("energy")) + coffee_rest
 	for employee: Dictionary in employees:
-		# Lo mismo que is_expected, con el horario a mano para las horas extra (que se
-		# pagan aunque llegue tarde o falte).
+		# El horario a mano: las horas extra se pagan aunque llegue tarde o falte.
 		var schedule: WorkSchedule = _cached_schedule_in(employee, team_map.get(int(employee["id"]), {}))
 		var working: bool = schedule.is_working(weekday, hour) and not schedule.is_lunch(weekday, hour)
 		if working:
@@ -3086,10 +2897,10 @@ func _update_energy() -> void:
 		var present: bool = working and not is_missing(employee, weekday, hour)
 		var change: int = rest
 		if lunch_inside.has(employee_key(employee["id"])):
-			# Almorzó dentro (hito 53): descansa el doble, y con café un poco más (hito 54).
+			# Almorzó dentro: descansa el doble, y con café algo más.
 			change = lunch_rest
 		elif on_break.has(employee_key(employee["id"])):
-			# Pausa en la Sala de descanso (hito 54).
+			# Pausa en la Sala de descanso.
 			change = break_rest
 		elif present:
 			change = _work_energy_of(seats.get(employee_key(employee["id"]), {}))
@@ -3106,7 +2917,7 @@ static func get_weekday_at(at: int) -> int:
 	return (at / GameConstants.HOURS_PER_DAY) % GameConstants.DAYS_PER_WEEK
 
 
-## Horas enteras desde el inicio de la partida (la hora actual).
+## Hora absoluta actual (horas desde el inicio de la partida).
 func get_absolute_hour() -> int:
 	return _absolute_hour()
 
@@ -3135,8 +2946,7 @@ func _finish_interview() -> void:
 	EventBus.staff_changed.emit()
 
 
-# Si el candidato de la entrevista ya no está (se fue, lo descartaron o se cerró su
-# vacante), la entrevista termina sin más.
+# Si el candidato ya no está, la entrevista termina sin más.
 func _drop_missing_interview() -> void:
 	if not interview.is_empty() and get_interviewed_now().is_empty():
 		interview = {}
@@ -3145,8 +2955,7 @@ func _drop_missing_interview() -> void:
 			appointments.erase(appointment)
 
 
-# Contrata a un candidato por un sueldo: ocupa el primer puesto libre, deja de ser
-# candidato y su vacante se cierra (los demás candidatos se van).
+# Contrata: ocupa el primer puesto libre y cierra la vacante (los demás candidatos se van).
 func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 	var station: Dictionary = get_free_workstations(candidate["role"])[0]
 	var employee: Dictionary = candidate.duplicate(true)
@@ -3176,9 +2985,8 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 		employee["name"], describe_employee(employee)]}
 
 
-## Contrata a alguien de ese cargo y nivel sin vacante ni entrevista, con el sueldo de
-## la tabla (lo usa la empresa con la que empieza la partida). Devuelve el empleado, o
-## vacío si el cargo no se puede contratar o no tiene puesto libre.
+## Contrata sin vacante ni entrevista con el sueldo de la tabla (empresa de prueba). Devuelve el
+## empleado, o vacío si no se puede o no hay puesto.
 func hire_directly(role: String, level: String) -> Dictionary:
 	if not role_problem(role).is_empty() or not get_station_problem(role).is_empty():
 		return {}
@@ -3209,8 +3017,8 @@ func _process_arrivals(today: int) -> void:
 	EventBus.staff_changed.emit()
 
 
-# Cuántos candidatos llegan hoy a una vacante. El primer día (hito 56) llega la primera
-# tanda según las estrellas, más uno con publicidad; con el premio, uno más cada día.
+# Candidatos que llegan hoy: el primer día la tanda según las estrellas (+1 con publicidad);
+# con el premio, uno más cada día.
 func _roll_arrivals(vacancy: Dictionary, today: int) -> int:
 	var first: bool = not bool(vacancy.get("first_done", true))
 	vacancy["first_done"] = true
@@ -3234,17 +3042,16 @@ func _roll_daily(vacancy: Dictionary, today: int) -> int:
 	return count
 
 
-## Cuántos llegan el primer día de una vacante: first_batch + first_batch_per_star por
-## estrella entera sobre neutral_stars (1★ = 1, 3★ = 3, 5★ = 5), al menos first_batch_min.
+## Cuántos llegan el primer día: first_batch + first_batch_per_star por estrella sobre
+## neutral_stars, al menos first_batch_min.
 func get_first_batch() -> int:
 	var stars: int = floori(Projects.reputation)
 	return maxi(int(StaffCatalog.get_hiring("first_batch_min")), int(StaffCatalog.get_hiring("first_batch"))
 		+ int(StaffCatalog.get_hiring("first_batch_per_star")) * (stars - int(StaffCatalog.get_hiring("neutral_stars"))))
 
 
-## Calidad de los candidatos de una vacante, entre −max_quality y +max_quality: el sueldo
-## ofrecido frente al de la tabla (quality_per_salary por cada 100 % de más o de menos) y el
-## ambiente medio de las Áreas de trabajo (quality_per_ambiance por punto).
+## Calidad de los candidatos (±max_quality): sueldo ofrecido frente a la tabla y ambiente medio
+## de las Áreas de trabajo.
 func get_candidate_quality(role: String, level: String, salary: int) -> float:
 	var table: int = maxi(1, StaffCatalog.get_salary(role, level))
 	var quality: float = (float(salary) / table - 1.0) * float(StaffCatalog.get_hiring("quality_per_salary")) \
@@ -3253,8 +3060,7 @@ func get_candidate_quality(role: String, level: String, salary: int) -> float:
 	return clampf(quality, -limit, limit)
 
 
-## Dónde cae una habilidad dentro de su rango (0 a 1) con un azar roll de 0 a 1: con calidad
-## positiva el rango se corre hacia arriba (0.5 = solo la mitad de arriba), con negativa hacia abajo.
+## Posición de una habilidad en su rango (0–1) para un azar roll: la calidad la corre arriba o abajo.
 static func quality_position(roll: float, quality: float) -> float:
 	return clampf(roll * (1.0 - absf(quality)) + maxf(quality, 0.0), 0.0, 1.0)
 
@@ -3270,8 +3076,7 @@ func get_work_area_ambiance() -> float:
 	return float(total) / count if count > 0 else 0.0
 
 
-## Lo que se espera de una vacante con ese sueldo, para el formulario de Personal:
-## «Llegan 3 el primer día (3 ★) · habilidades +20 % (sueldo +10 %, ambiente +4)».
+## Pronóstico de una vacante para Personal: «Llegan 3 el primer día (3 ★) · habilidades +20 % …».
 func describe_hiring_outlook(role: String, level: String, salary: int) -> String:
 	var quality: int = roundi(get_candidate_quality(role, level, salary) * 100.0)
 	var text: String = "Llegan %d el primer día (%d ★) · habilidades %s" % [get_first_batch(), floori(Projects.reputation),
@@ -3291,7 +3096,7 @@ func describe_hiring_outlook(role: String, level: String, salary: int) -> String
 	return text
 
 
-## Suma un candidato a cada vacante cada día durante days días (el «Premio de la industria»).
+## Suma un candidato por vacante cada día durante days días («Premio de la industria»).
 func boost_candidates(days: int) -> void:
 	award_until = maxi(award_until, next_arrival_day() + days)
 
@@ -3342,8 +3147,7 @@ func _take_id() -> int:
 	return _next_id - 1
 
 
-## Devuelve el estado del personal para guardarlo. El estado del azar va como texto,
-## porque JSON guarda los números como decimales y perdería precisión.
+## Estado para guardar. El azar va como texto: JSON perdería precisión.
 func export_state() -> Dictionary:
 	return {"vacancies": vacancies.duplicate(true), "employees": employees.duplicate(true),
 		"interview": interview.duplicate(), "appointments": appointments.duplicate(true), "ceo_at_work": ceo_at_work, "last_firing_day": last_firing_day,
@@ -3354,8 +3158,7 @@ func export_state() -> Dictionary:
 		"breaks": _export_breaks(), "present_today": present_today.keys(), "award_until": award_until}
 
 
-## Restaura el estado del personal desde una partida guardada. Sin datos (partidas de
-## la fase 1 o del hito 10) queda sin vacantes, sin empleados o sin entrevista.
+## Restaura el personal de una partida guardada; lo que falte queda vacío.
 func import_state(state: Dictionary) -> void:
 	vacancies.clear()
 	for saved: Dictionary in state.get("vacancies", []):
@@ -3380,7 +3183,7 @@ func import_state(state: Dictionary) -> void:
 		employee["owed"] = int(saved.get("owed", 0))
 		_add_morale_fields(employee, saved)
 		employees.append(employee)
-	# Dos ejecutivos no dirigen el mismo departamento: el segundo queda sin ninguno.
+	# Dos ejecutivos no dirigen el mismo departamento.
 	var directed: Dictionary[String, bool] = {}
 	for executive: Dictionary in get_executives():
 		var department: String = executive["department"]
@@ -3388,7 +3191,7 @@ func import_state(state: Dictionary) -> void:
 			executive["department"] = ""
 		else:
 			directed[department] = true
-	# Un líder cuyo gerente ya no está (o no es gerente) queda a cargo del CEO.
+	# Un líder sin gerente válido pasa al CEO.
 	for leader: Dictionary in get_leaders():
 		if not is_manager(get_employee(int(leader["manager_id"]))):
 			leader["manager_id"] = 0
@@ -3398,8 +3201,7 @@ func import_state(state: Dictionary) -> void:
 		var ends_at: int = int(saved_interview.get("ends_at", 0))
 		var starts_at: int = int(saved_interview.get("starts_at", INTERVIEW_NOT_STARTED))
 		if not saved_interview.has("starts_at"):
-			# Partida de antes de las entrevistas de media hora: ends_at estaba en horas
-			# y duraba 2; termina a esa hora en punto.
+			# Partida vieja: ends_at en horas y 2 h de entrevista.
 			starts_at = ends_at * 60 - 120
 			ends_at *= 60
 		interview = {"candidate_id": int(saved_interview["candidate_id"]), "starts_at": starts_at,
@@ -3413,7 +3215,7 @@ func import_state(state: Dictionary) -> void:
 	for saved: Dictionary in state.get("appointments", []):
 		appointments.append({"candidate_id": int(saved["candidate_id"]), "by": String(saved["by"]), "at": int(saved["at"])})
 	_drop_missing_interview()
-	# Antes del hito 35 no había plantillas: empieza con las de data/staff.json.
+	# Partidas viejas sin plantillas: las de data/staff.json.
 	if state.has("shift_templates"):
 		shift_templates.clear()
 		var top: int = 0
@@ -3431,19 +3233,18 @@ func import_state(state: Dictionary) -> void:
 		var members: Array[int] = []
 		for member: Variant in saved.get("members", []):
 			var member_id: int = int(member)
-			# Un empleado solo puede estar en un equipo y tiene que seguir contratado.
+			# Un empleado está en un solo equipo y tiene que seguir contratado.
 			if not get_employee(member_id).is_empty() and get_team_of(member_id).is_empty():
 				members.append(member_id)
 		var team_id: int = int(saved["id"])
 		var schedule: Dictionary = saved.get("schedule", WorkSchedule.make_shift(
 			int(StaffCatalog.get_teams("default_start_hour")), StaffCatalog.get_default_team_days()).to_dict())
-		# Antes del hito 31 no había líderes; tiene que seguir contratado, ser líder y no
-		# estar en otro equipo.
+		# El líder tiene que seguir contratado, ser líder y no estar en otro equipo.
 		var leader_id: int = int(saved.get("leader_id", 0))
 		var leader: Dictionary = get_employee(leader_id)
 		if leader.is_empty() or not is_leader(leader) or not get_team_of(leader_id).is_empty():
 			leader_id = 0
-		# Un equipo de una plantilla que ya no está se queda con su turno como propio.
+		# Con una plantilla que ya no está, se queda con su turno como propio.
 		var template: Dictionary = get_template(int(saved.get("template_id", NO_TEMPLATE)))
 		if not template.is_empty():
 			schedule = template["schedule"]
@@ -3478,22 +3279,21 @@ func import_state(state: Dictionary) -> void:
 	EventBus.staff_changed.emit()
 
 
-# Los datos del hito 19 de un empleado (desde una partida guardada o nuevos).
+# Campos de ánimo de un empleado (de una partida guardada o nuevos).
 func _add_morale_fields(employee: Dictionary, saved: Dictionary) -> void:
 	employee["carry"] = int(saved.get("carry", 0))
 	employee["own_schedule"] = bool(saved.get("own_schedule", false))
 	employee["overtime_pay"] = float(saved.get("overtime_pay", 0.0))
 	employee["night_pay"] = float(saved.get("night_pay", 0.0))
-	# Lo debido de horas extra y noche nunca pasa de lo debido en total.
+	# Lo debido de extras y noche nunca pasa de lo debido en total.
 	employee["owed_overtime"] = clampi(int(saved.get("owed_overtime", 0)), 0, int(employee["owed"]))
 	employee["owed_night"] = clampi(int(saved.get("owed_night", 0)), 0, int(employee["owed"]) - int(employee.get("owed_overtime", 0)))
 	employee["bad_days"] = int(saved.get("bad_days", 0))
 	employee["quit_day"] = int(saved.get("quit_day", NO_QUIT))
 	employee["min_energy"] = int(saved.get("min_energy", employee["energy"]))
 	employee["projects_worked"] = int(saved.get("projects_worked", 0))
-	# Historial (hito 51): errores que generó al programar, llegadas tarde, ausencias y
-	# jornadas a tiempo; missing_from/missing_until son las horas (absolutas) en que falta;
-	# promotion_ready_day, desde cuándo puede ascender (para el ambicioso).
+	# Historial; missing_from/missing_until son las horas absolutas en que falta y
+	# promotion_ready_day, desde cuándo puede ascender.
 	for counter: String in ["bugs_caused", "late_count", "absent_count", "on_time_count"]:
 		employee[counter] = int(saved.get(counter, 0))
 	employee["missing_from"] = int(saved.get("missing_from", NOT_MISSING))

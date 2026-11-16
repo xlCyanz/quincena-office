@@ -1,8 +1,6 @@
-# Árboles del mapa (MapDecor/TreeView), con el estilo de tools/sprites/STYLE.md. Las copas son una sola pieza
-# (el contorno, verde oscuro, va solo por la silueta) de borde ondulado, y se pintan en pantalla: muchas
-# manchas redondas chicas y suaves, cada una con su luz arriba a la izquierda y su borde un tono más oscuro,
-# sobre una luz general que va de claro (arriba a la izquierda) a oscuro (abajo a la derecha). Tronco marrón
-# liso y fino, a veces con horqueta. Los arbustos y setos de pieces/bushes.py usan las mismas funciones.
+# Árboles del mapa (MapDecor/TreeView). Copas de una pieza con contorno solo en la silueta, pintadas
+# en pantalla con manchas de hojas sobre una luz general (arriba a la izquierda). pieces/bushes.py
+# usa las mismas funciones.
 #
 #   tree_0               roble: copa ancha e irregular sobre un tronco grueso con horqueta
 #   tree_1               copa ovalada en punta sobre un tronco corto
@@ -13,12 +11,10 @@
 #   tree_6               árbol joven: tronco fino con horqueta y copa redonda chica
 #   tree_7               copa de pirámide ancha con horqueta
 #   <cada uno>_shadow
-#   tree_<n>_fall_1..16  hojas (o pétalos) que caen y quedan un momento en el piso; ciclo que empalma.
-#                        Mismo lienzo y apoyo que el árbol; el manifiesto da base, frame y frames
+#   tree_<n>_fall_1..16  hojas que caen (ciclo que empalma); mismo lienzo y apoyo que el árbol
 #   _sheets/trees.png
 #
-# Lienzo 128×256 con el apoyo en (64, 224), planta 1×1 (sección 10 de docs/sprites_128.md). La copa puede
-# pasar del rombo hacia los lados (hasta el borde del lienzo), nunca hacia abajo.
+# Lienzo 128×256, apoyo (64, 224), planta 1×1. La copa puede salir del rombo a los lados, nunca abajo.
 import os
 
 import numpy as np
@@ -64,8 +60,7 @@ def quantize(v):
 
 
 def blotch_field(c, seed, radius=(3.6, 7.0), spacing=24.0):
-    """Manchas de hojas sobre todo el lienzo: círculos chicos encimados (el último tapa); dentro de cada
-    uno el valor sube hacia arriba a la izquierda y baja en el borde de abajo a la derecha."""
+    """Manchas de hojas: círculos chicos encimados, cada uno claro arriba a la izquierda."""
     rng = np.random.RandomState(seed)
     X, Y = c.X, c.Y
     hh, ww = X.shape
@@ -96,8 +91,7 @@ def general_light(c, sx, sy, rx, ry):
 
 
 def clean(index, passes=2):
-    """Quita pixeles sueltos: el que no tiene ningún vecino (de los 8) de su mismo tono toma el de su
-    vecino de la izquierda."""
+    """Quita pixeles sueltos: sin vecino (de 8) de su tono, toma el del vecino de la izquierda."""
     index = np.asarray(index)
     for _ in range(passes):
         pad = np.pad(index, 1, mode="edge")
@@ -112,8 +106,8 @@ def clean(index, passes=2):
 
 
 def despeckle(c, passes=3):
-    """Limpieza final del sprite ya terminado: cada pixel opaco sin ningún vecino (de los 8) de su mismo
-    color toma el color más repetido entre sus vecinos opacos. No cambia la silueta."""
+    """Limpieza final: un pixel opaco sin vecino de su color toma el más repetido entre sus vecinos.
+    No cambia la silueta."""
     arr = np.array(c.image.convert("RGBA"))
     h, w = arr.shape[:2]
     for _ in range(passes):
@@ -175,9 +169,8 @@ def crown_paint(c, ramp, z0, z1, profile, seed, center=(0.5, 0.5), radius=(3.2, 
 
 
 def crown(c, ramp, z0, z1, profile, count, size, seed, center=(0.5, 0.5), name="crown", part=None, tex=None):
-    """Copa de revolución: relleno a lo largo del eje y `count` bultos chicos por toda la superficie del
-    perfil (profile(t) = radio en casillas a la altura t de 0 a 1), que le dan el borde ondulado. Una sola
-    pieza pintada en pantalla. Devuelve (id de pieza, textura, bultos (x, y, z, r))."""
+    """Copa de revolución con `count` bultos sobre el perfil (profile(t) = radio en casillas, t de 0 a 1).
+    Devuelve (id de pieza, textura, bultos (x, y, z, r))."""
     rng = np.random.RandomState(seed)
     cx, cy = center
     tex = tex or crown_paint(c, ramp, z0, z1, profile, seed, center)
@@ -217,7 +210,7 @@ def dot_tex(ctx):
 
 
 def dots(c, ramp, blobs, center, count, seed, size=(0.03, 0.04), name="dots"):
-    """Flores o frutos: bolitas de 5 a 7 px, de dos tonos, sobre los bultos que miran a la vista."""
+    """Flores o frutos de 5 a 7 px sobre los bultos que miran a la vista."""
     rng = np.random.RandomState(seed)
     cx, cy, cz = center
     front = [b for b in blobs if (b[0] - cx) + (b[1] - cy) > 0.05] or blobs
@@ -270,7 +263,7 @@ def tree_oak():
     branches(c, (0.5, 0.5, 50), [(0.82, 0.42, 96), (0.2, 0.62, 92), (0.5, 0.5, 98)], 4.5)
     tex = crown_paint(c, GREEN, 76, 210, ball(0.6), 4)
     pid, _, _ = crown(c, GREEN, 82, 182, ball(0.5), 160, (0.06, 0.09), seed=4, tex=tex)
-    # Copas menores que le rompen la bola: una a cada lado y una arriba.
+    # Copas menores a los lados y arriba.
     crown(c, GREEN, 80, 134, ball(0.27), 60, (0.06, 0.085), seed=41, center=(0.28, 0.76), part=pid, tex=tex)
     crown(c, GREEN, 78, 132, ball(0.27), 60, (0.06, 0.085), seed=42, center=(0.77, 0.28), part=pid, tex=tex)
     crown(c, GREEN, 146, 210, ball(0.33), 80, (0.06, 0.085), seed=43, center=(0.5, 0.5), part=pid, tex=tex)
@@ -285,9 +278,8 @@ def tree_ovate():
 
 
 def fir_tex(c, r0, z0, z1, k):
-    """Faldón del abeto: ramas en capas (filas de puntas redondeadas corridas a medias, separadas por una
-    línea oscura en arco, con la parte alta de cada punta un tono más clara), más claro a la izquierda y
-    con la parte de arriba a la sombra del piso de encima."""
+    """Faldón del abeto: filas de puntas redondeadas separadas por arcos oscuros; la parte de arriba
+    queda a la sombra del faldón de encima."""
     sx0, _ = screen(c, 0.5, 0.5, 0)
     X, Y = c.X, c.Y
     w, h = 10, 8
@@ -404,8 +396,7 @@ def ground_point(rng):
 
 
 def fall_frames(base, name, seed):
-    """Cuadros de la caída: cada hoja tiene su fase en el ciclo (así empalma): cae el 80 % del ciclo
-    meciéndose de lado y queda el resto en el piso."""
+    """Cuadros de la caída: cada hoja cae el 80 % del ciclo y queda el resto en el piso."""
     colors, (x0, x1, y0, y1), count = FALLING[name]
     rng = np.random.RandomState(seed)
     leaves = []

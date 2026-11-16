@@ -1,7 +1,5 @@
-# Prueba del hito 68 (mapa y cámara): zoom suave con más niveles, inercia al soltar un
-# arrastre, movimiento con teclado y con el borde de la pantalla, giro de la vista en
-# cuartos de vuelta (la lógica no cambia, solo el dibujo) y el mapa de alrededor: pasto,
-# camino a la calle, acera, calle, árboles y el límite del solar.
+# Mapa y cámara: zoom suave por niveles, inercia al soltar un arrastre, teclado y borde de la
+# pantalla, paredes de atrás altas y el mapa de alrededor (pasto, camino, acera, calle, árboles, límite).
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=camera_view
 extends Node
 
@@ -65,7 +63,7 @@ func _close_game(game: Node) -> void:
 	await _wait(1)
 
 
-# Espera a que termine la animación de la cámara (con tope, para no colgarse).
+# Espera a que termine la animación de la cámara (con tope).
 func _settle(camera: OfficeCamera, max_frames: int = 240) -> void:
 	for i: int in range(max_frames):
 		if not camera.is_moving():
@@ -141,8 +139,7 @@ func _check_zoom() -> void:
 		and site_box.size.y * GameConstants.CAMERA_ZOOM_LEVELS[0] <= SCREEN.y,
 		"con el zoom mínimo entra todo el solar: %s" % site_box.size)
 
-	# Rueda: el nivel cambia enseguida, lo que se ve llega con una animación y la casilla
-	# bajo el ratón queda fija durante toda la animación.
+	# Rueda: el nivel cambia enseguida, lo que se ve llega animado y la casilla bajo el ratón queda fija.
 	camera.import_state({"zoom": 2.0, "x": grid.get_lot_world_rect().get_center().x,
 		"y": grid.get_lot_world_rect().get_center().y})
 	var cell := Vector2i(2, 3)
@@ -163,7 +160,6 @@ func _check_zoom() -> void:
 	_expect(camera.zoom == Vector2.ONE * 2.5 and not camera.is_moving(), "la animación termina en 2.5: %s" % camera.zoom)
 	_expect(grid.screen_to_cell(anchor) == cell and grid.screen_to_world(anchor).distance_to(world_before) < 0.05,
 		"al terminar sigue la misma casilla bajo el ratón")
-	# Ruedas seguidas se suman: de 2.5 a 4 y de vuelta.
 	for i: int in range(3):
 		_push_mouse_button(MOUSE_BUTTON_WHEEL_UP, true, anchor)
 	_expect(camera.get_zoom_level() == 4.0, "tres pasos más llegan al máximo")
@@ -175,13 +171,12 @@ func _check_zoom() -> void:
 	_expect(float(state["zoom"]) == 3.0, "se guarda el nivel de destino: %s" % state)
 	await _settle(camera)
 	_expect(Vector2(state["x"], state["y"]).distance_to(camera.position) < 0.5, "y el centro donde termina")
-	# Partidas viejas: zoom_index en la lista de antes (3 = 2.0).
+	# Partidas viejas: zoom_index en la lista vieja (3 = 2.0).
 	camera.import_state({"zoom_index": 3, "x": 0.0, "y": 0.0})
 	_expect(camera.get_zoom_level() == 2.0 and camera.zoom == Vector2.ONE * 2.0 and not camera.is_moving(),
 		"zoom_index viejo 3 → 2.0: %s" % camera.get_zoom_level())
 	camera.import_state({"zoom_index": 0})
 	_expect(camera.get_zoom_level() == 0.5, "zoom_index viejo 0 → 0.5")
-	# «Ver oficina» y F: encuadre animado.
 	camera.import_state({"zoom": 0.25, "x": site_area.origin.x, "y": site_area.origin.y})
 	game.frame_office()
 	_expect(camera.is_moving(), "Ver oficina se anima")
@@ -189,7 +184,6 @@ func _check_zoom() -> void:
 	var lot_rect: Rect2 = grid.get_lot_world_rect()
 	_expect(camera.position.distance_to(lot_rect.get_center()) < 0.6 and camera.zoom.x == camera.get_zoom_level(),
 		"el encuadre animado termina centrado: %s vs %s" % [camera.position, lot_rect.get_center()])
-	# Sin la opción todo es instantáneo.
 	Settings.set_value("smooth_camera", false)
 	_push_mouse_button(MOUSE_BUTTON_WHEEL_DOWN, true, SCREEN / 2.0)
 	_expect(camera.zoom.x == camera.get_zoom_level() and not camera.is_moving(), "sin cámara suave el zoom salta")
@@ -203,7 +197,6 @@ func _check_inertia() -> void:
 	var grid: OfficeGrid = game.get_node("OfficeGrid")
 	var center: Vector2 = grid.get_lot_world_rect().get_center()
 	camera.import_state({"zoom": 1.0, "x": center.x, "y": center.y})
-	# Arrastre rápido hacia la derecha con el botón central, soltando enseguida.
 	var at: Vector2 = SCREEN / 2.0
 	_push_mouse_button(MOUSE_BUTTON_MIDDLE, true, at)
 	for i: int in range(4):
@@ -217,7 +210,6 @@ func _check_inertia() -> void:
 	_expect(camera.position.x < released.x, "la inercia sigue hacia donde se arrastró: %s → %s" % [released, camera.position])
 	await _settle(camera)
 	_expect(not camera.is_moving() and _in_map(grid, camera.position), "la inercia se frena dentro del mapa")
-	# Un clic nuevo la corta.
 	camera.import_state({"zoom": 1.0, "x": center.x, "y": center.y})
 	at = SCREEN / 2.0
 	_push_mouse_button(MOUSE_BUTTON_MIDDLE, true, at)
@@ -227,14 +219,12 @@ func _check_inertia() -> void:
 	_push_mouse_button(MOUSE_BUTTON_RIGHT, true, at)
 	_expect(not camera.is_moving(), "un clic corta la inercia")
 	_push_mouse_button(MOUSE_BUTTON_RIGHT, false, at)
-	# Soltar tras quedarse quieto no lanza la cámara.
 	_push_mouse_button(MOUSE_BUTTON_MIDDLE, true, at)
 	await get_tree().process_frame
 	_push_mouse_motion(at, at + Vector2(40, 0), MOUSE_BUTTON_MASK_MIDDLE)
 	await get_tree().create_timer(0.2).timeout
 	_push_mouse_button(MOUSE_BUTTON_MIDDLE, false, at + Vector2(40, 0))
 	_expect(not camera.is_moving(), "soltar tras quedarse quieto no deja inercia")
-	# Contra el borde del mapa se frena.
 	var area: Transform2D = grid.get_site_world_area()
 	camera.import_state({"zoom": 1.0, "x": (area * Vector2(0.02, 0.5)).x, "y": (area * Vector2(0.02, 0.5)).y})
 	at = SCREEN / 2.0
@@ -271,7 +261,6 @@ func _check_keyboard_and_edges() -> void:
 	_key(KEY_D, false)
 	_key(KEY_S, false)
 	_expect(camera.get_key_pan_direction() == Vector2.ZERO, "sin teclas no se mueve")
-	# Escribiendo en un campo de texto las letras no mueven la cámara.
 	var field := LineEdit.new()
 	game.get_node("Hud").add_child(field)
 	field.grab_focus()
@@ -279,7 +268,6 @@ func _check_keyboard_and_edges() -> void:
 	_expect(camera.get_key_pan_direction() == Vector2.ZERO, "con un campo de texto activo A no mueve")
 	_key(KEY_A, false)
 	field.queue_free()
-	# Con el menú de pausa abierto tampoco.
 	game.set_pause_menu_open(true)
 	camera.import_state({"zoom": 1.0, "x": center.x, "y": center.y})
 	_key(KEY_W, true)
@@ -287,7 +275,7 @@ func _check_keyboard_and_edges() -> void:
 	_key(KEY_W, false)
 	_expect(camera.position == center, "con la pausa abierta las teclas no mueven la cámara")
 	game.set_pause_menu_open(false)
-	# Borde de la pantalla (sin ventana se prueba la regla).
+	# Borde de la pantalla: sin ventana se prueba la regla.
 	var size: Vector2 = SCREEN
 	_expect(camera.get_edge_pan_direction(Vector2(3, 360), size) == Vector2.LEFT, "borde izquierdo")
 	_expect(camera.get_edge_pan_direction(Vector2(1278, 360), size) == Vector2.RIGHT, "borde derecho")
@@ -304,8 +292,7 @@ func _check_keyboard_and_edges() -> void:
 	await _close_game(game)
 
 
-# La vista ya no se gira (se quitó después del hito 69): siempre desde la misma esquina. Las
-# paredes de atrás (contorno con el exterior detrás) van altas y las demás, bajas.
+# La vista no gira: las paredes de atrás (contorno con el exterior detrás) van altas y las demás bajas.
 func _check_fixed_view() -> void:
 	var game: Node = await _open_game()
 	var camera: OfficeCamera = game.get_node("OfficeCamera")
@@ -330,7 +317,6 @@ func _check_fixed_view() -> void:
 			if grid.world_to_cell(grid.cell_to_world(Vector2i(x, y))) != Vector2i(x, y):
 				round_trip = false
 	_expect(round_trip, "casilla → píxel → casilla")
-	# Paredes: las de atrás altas, las del frente y las interiores bajas.
 	Economy.earn(5000, "Prueba")
 	var inner := Vector3i(lot.position.x + 2, lot.position.y + 4, GridEdge.AXIS_X)
 	builder.apply([{"edge": inner, "kind": ConstructionCatalog.WALL}])
@@ -362,7 +348,6 @@ func _check_map() -> void:
 	var surround: int = int(data["surround_width"])
 	var outer: Rect2i = site.grow(surround)
 	_expect(tiles.size() == outer.get_area() - OfficeState.lot.get_area(), "el plano cubre todo menos el local")
-	# Camino de la puerta al borde del solar.
 	var exit: Vector2i = OfficeState.get_outside_of_entrance() - OfficeState.entrance
 	var step: Vector2i = OfficeState.get_outside_of_entrance()
 	var path_ok: bool = true
@@ -372,7 +357,6 @@ func _check_map() -> void:
 		step += exit
 		path_length += 1
 	_expect(path_ok and path_length > 0, "camino de la entrada al borde del solar (%d casillas)" % path_length)
-	# Del lado de la salida: acera y calle con su línea; los otros lados, pasto oscuro.
 	var sidewalk: int = int(data["sidewalk_width"])
 	var road: int = int(data["road_width"])
 	_expect(tiles.get(step, "") == MapDecor.SIDEWALK, "acera al salir del solar: %s" % tiles.get(step, ""))
@@ -393,11 +377,9 @@ func _check_map() -> void:
 		if not site.has_point(cell) and (tiles[cell] == MapDecor.GRASS or tiles[cell] == MapDecor.PATH):
 			grass_ok = false
 	_expect(grass_ok, "dentro del solar pasto o camino; fuera, lo de afuera")
-	# Lo de afuera se dibuja en su capa, debajo del piso.
 	var around: TileMapLayer = grid.get_node("Surroundings")
 	_expect(around.get_used_cells().size() == outer.get_area() - site.get_area(), "capa de alrededor: %d" % around.get_used_cells().size())
 	_expect(around.get_index() < grid.get_node("Floor").get_index(), "alrededor debajo del piso")
-	# Árboles: en el pasto, lejos del local, nunca en el camino ni en la calle.
 	var trees: Array[TreeView] = grid.get_trees()
 	var margin: int = int(data["trees"]["lot_margin"])
 	var trees_ok: bool = trees.size() > 20
@@ -412,9 +394,7 @@ func _check_map() -> void:
 				if maxi(absi(cell.x - tree.cell.x), absi(cell.y - tree.cell.y)) < margin:
 					trees_ok = false
 	_expect(trees_ok and inside_site > 0, "%d árboles (%d en el solar) bien puestos" % [trees.size(), inside_site])
-	# Siempre el mismo mapa.
 	_expect(MapDecor.plan(site, OfficeState.lot, OfficeState.get_outside_of_entrance()) == plan, "el plano no cambia solo")
-	# Límite del solar: sus cuatro esquinas.
 	var border: PackedVector2Array = grid.get_site_border().get_corners()
 	var area: Transform2D = grid.get_site_world_area()
 	var border_ok: bool = border.size() == 4
@@ -422,7 +402,6 @@ func _check_map() -> void:
 		var local: Vector2 = area.affine_inverse() * corner
 		border_ok = border_ok and absf(local.x - roundf(local.x)) < 0.001 and absf(local.y - roundf(local.y)) < 0.001
 	_expect(border_ok, "el borde marca las esquinas del solar")
-	# Comprar terreno quita los árboles que quedan cerca del local nuevo.
 	Economy.earn(200000, "Prueba")
 	var builder: Builder = game.get_node("BuildController").builder
 	var quote: Dictionary = builder.quote_land("east", 6, OfficeState.lot.get_bounds().size.y, 0)
@@ -455,7 +434,7 @@ func _check_save() -> void:
 	_expect(is_equal_approx(float(restored["zoom"]), float(camera_state["zoom"]))
 		and Vector2(restored["x"], restored["y"]).distance_to(Vector2(camera_state["x"], camera_state["y"])) < 0.01,
 		"la cámara vuelve igual: %s vs %s" % [restored, camera_state])
-	# Una partida guardada con la vista girada vuelve a la esquina de siempre y encuadra la oficina.
+	# Una partida con la vista girada vuelve a la esquina de siempre y encuadra la oficina.
 	loaded.call("_restore_scene_state", {"view_rotation": 3, "camera": {"zoom": 0.25, "x": -9999.0, "y": -9999.0}})
 	loaded.get_node("OfficeCamera").finish_motion()
 	_expect(loaded.get_node("OfficeCamera").export_state()["x"] != -9999.0, "partida vieja girada: encuadra la oficina")

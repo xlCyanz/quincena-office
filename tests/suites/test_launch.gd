@@ -1,7 +1,5 @@
-# Prueba del hito 42: lanzamiento y ciclo de vida de los productos.
-# Criterio: un producto pequeño de buena calidad llega cerca de $150 al día en su mejor
-# momento; con errores pierde usuarios; una actualización lo reaviva; Mediana empresa pide
-# uno lanzado.
+# Lanzamiento y ciclo de vida: un producto pequeño bueno llega cerca de $150/día en su pico; los
+# errores quitan usuarios; una actualización lo reaviva; Mediana empresa pide uno lanzado.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=launch
 extends Node
 
@@ -43,8 +41,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva en Pequeña empresa, con dinero, objetivos cumplidos y una Sala de servidores
-# que funciona con un rack.
+# Partida nueva en Pequeña empresa con dinero, objetivos cumplidos y una Sala de servidores con un rack.
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -146,7 +143,6 @@ func _check_lifecycle() -> void:
 	_expect(half < 0.6 and half > 0.5, "a mitad de la caída: %.2f" % half)
 	_days(70)
 	_expect(is_equal_approx(float(product["curve"]), ProductCatalog.get_lifecycle("floor")), "y se queda en el piso")
-	# Con vendedores crece más rápido.
 	_expect(is_equal_approx(Products.get_growth_speed(), 1.0), "sin vendedores, velocidad 1")
 	Staff.employees.append({"id": 990, "name": "Vendedor", "role": "salesperson", "level": "junior", "salary": 0,
 		"schedule": StaffCatalog.get_role_schedule("salesperson"), "energy": 100, "mood": 70, "stress": 20, "paid_until": 0, "owed": 0})
@@ -195,7 +191,6 @@ func _check_update() -> void:
 		and is_equal_approx(float(product["bug_loss"]), 0.0), "vuelve al pico sin la pérdida por errores")
 	_expect(Products.get_users(product) > before, "lo reaviva: %d contra %d" % [Products.get_users(product), before])
 	_expect(_notices.any(func(text: String) -> bool: return text.begins_with("Actualización terminada")), "avisa: %s" % [_notices])
-	# Abandonar una actualización deja el producto como estaba.
 	Products.start_update(product["id"])
 	_expect(Products.abandon(product["id"])["ok"] and not product.has("update") and Products.get_product(product["id"]) == product,
 		"abandonar la actualización no quita el producto")
@@ -257,7 +252,7 @@ func _check_save() -> void:
 		and int(loaded["production_bugs"]) == 4 and Products.launched_count == 1, "el lanzado se guarda: %s" % [loaded])
 	_expect(loaded.has("update") and is_equal_approx(float(loaded["update"]["progress"]["design"]), 20.0)
 		and int(loaded["update"]["product_id"]) == product["id"], "y su actualización")
-	# Una partida del hito 41 (sin launched_count ni campos de lanzamiento) carga.
+	# Una partida vieja (sin campos de lanzamiento) carga.
 	Products.import_state({"products": [{"id": 1, "name": "Viejo", "type": "saas", "size": "small", "state": "development"}]})
 	_expect(Products.get_in_development().size() == 1 and Products.launched_count == 0, "partida del hito 41")
 

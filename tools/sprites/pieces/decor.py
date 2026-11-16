@@ -1,22 +1,14 @@
-# Decoración que faltaba: lámpara de pie, alfombra decorativa y pecera, con el estilo de
-# tools/sprites/STYLE.md (contorno oscuro del material, colores saturados, brillo de 1 px).
+# Decoración: lámpara de pie, alfombra y pecera (estilo de tools/sprites/STYLE.md).
 #
-#   floor_lamp            128×160, apoyo (64, 96): base redonda negra, poste de metal y pantalla
-#                         crema encendida (mueble chico: dibujada como si ocupara la casilla; el
-#                         juego la achica al 60 %). Simétrica: una sola imagen
-#   floor_lamp_q          la misma lámpara ya a su tamaño final (60 %), pixel art nativo
+#   floor_lamp            128×160, apoyo (64, 96); a tamaño de casilla (el juego la achica al 60 %)
+#   floor_lamp_q          la misma ya al 60 %
 #   floor_lamp(_q)_shadow sombra en el piso, aparte
-#   rug                   256×128, solo el rombo de 2×2 (se pisa, como un piso): campo vino, borde
-#                         crema con grecas y medallón en rombo. Simétrica: una sola imagen
-#   aquarium_r0..r3       192×160: mueble de madera naranja con dos puertas al frente y encima
-#                         el tanque de vidrio con agua, arena, plantas, piedras y peces (56 px de
-#                         alto: más que el `height` del juego, que es 40)
+#   rug                   256×128, solo el rombo de 2×2 (se pisa, como un piso)
+#   aquarium_r0..r3       192×160: mueble de madera con el tanque encima
 #   aquarium_r0..r3_shadow
-#   _sheets/decor.png     hoja de contacto (no es arte del juego)
+#   _sheets/decor.png     hoja de contacto
 #
-# Datos de data/furniture.json: floor_lamp (small, height 34), rug (2×2, height 1, walkable) y
-# aquarium (2×1, height 20). El frente de la pecera (las puertas) mira a −y con rotación 0, como
-# los demás muebles.
+# El frente de la pecera (las puertas) mira a −y con rotación 0.
 import os
 
 import numpy as np
@@ -35,8 +27,7 @@ AQUARIUM_ITEM = ITEMS["aquarium"]
 
 METAL = pal.METAL_LIGHT
 PLASTIC = pal.PLASTIC_BLACK
-# Pantalla de tela crema (el color del juego, f2d06b, más claro), encendida: lo de abajo del
-# borde brilla.
+# Pantalla de tela crema encendida: brilla bajo el borde.
 SHADE = pal.style_ramp("f6e3a1", side="ecd28a", shadow="dcbd72", outline="4e3510", deep="a07a35",
                        light="fff6d6", name="lamp_shade")
 SHADE_GLOW = SHADE.add("fff1b8")
@@ -82,7 +73,7 @@ def lamp(c, scale=1.0):
     def shade_tex(ctx):
         index = np.asarray(ctx.base).copy() if np.ndim(ctx.base) else np.full(np.shape(ctx.b), ctx.base)
         b = np.floor(ctx.b)
-        # Costura vertical en el frente y un filo más claro arriba y abajo.
+        # Costura vertical y filo claro arriba y abajo.
         index = np.where(np.abs(ctx.t) < 0.06, SHADE_SEAM, index)
         index = np.where((b == 0) & (ctx.t < 0.4), SHADE_GLOW, index)
         return np.where(b >= shade_h - 1, pal.LIGHT, index)
@@ -102,13 +93,12 @@ RUG_SIZE = 128  # px de la textura por lado (2 casillas de 64)
 
 
 def rug_tex(ctx):
-    """a, b de 0 a 128 a lo largo de x e y. Borde crema de 12 px con grecas, campo vino y un
-    medallón en rombo (los rombos de la textura salen en los ejes isométricos)."""
+    """Textura de la alfombra; a, b de 0 a 128 a lo largo de x e y."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     edge = np.minimum(np.minimum(a, RUG_SIZE - 1 - a), np.minimum(b, RUG_SIZE - 1 - b))
     index = np.full(a.shape, pal.BASE)
-    # Borde exterior oscuro de 2 px, banda crema con grecas y filete dorado.
+    # Borde oscuro de 2 px, banda crema con grecas y filete dorado.
     index = np.where(edge < 2, RUG_DARK, index)
     band = (edge >= 3) & (edge < 13)
     index = np.where(band, RUG_CREAM, index)
@@ -116,7 +106,7 @@ def rug_tex(ctx):
     greca = band & (edge >= 6) & (edge < 10) & (np.mod(along, 8) < 4) & (np.mod(along + edge, 8) < 6)
     index = np.where(greca, RUG_DARK, index)
     index = np.where((edge == 13) | (edge == 2), RUG_GOLD, index)
-    # Medallón: rombo dorado con centro azul y un rombo vino adentro.
+    # Medallón: rombo dorado con centro azul y rombo vino.
     da = np.abs(a + 0.5 - RUG_SIZE / 2.0)
     db = np.abs(b + 0.5 - RUG_SIZE / 2.0)
     diamond = np.maximum(da, db) * 1.4  # cuadrado en el modelo = rombo en pantalla
@@ -130,7 +120,7 @@ def rug_tex(ctx):
         corner = np.maximum(np.abs(a + 0.5 - ca), np.abs(b + 0.5 - cb)) * 1.4
         index = np.where((corner < 8) & (edge >= 14), RUG_GOLD, index)
         index = np.where((corner < 4) & (edge >= 14), RUG_NAVY, index)
-    # Trama suave del tejido en el campo: un punto más oscuro cada 4 px.
+    # Trama del tejido: un punto más oscuro cada 4 px.
     weave = (index == pal.BASE) & (np.mod(a + 2 * b, 4) == 0) & (np.mod(b, 2) == 0)
     return np.where(weave, pal.SOFT, index)
 
@@ -144,14 +134,13 @@ def rug():
 # ---------------------------------------------------------------------------- pecera
 
 STAND_TOP = 20  # alto del mueble (px de sprite)
-# El tanque sigue hasta 56: más que el `height` del juego (20 → 40), para que se lea como pecera
-# y no como una cama de agua. Entra en el lienzo de 192×160.
+# El tanque llega a 56, más que el `height` del juego (20 → 40), para que se lea como pecera.
 TANK_TOP = 56
 TANK_INSET = 2 / 64.0
 
 
 def stand_front(ctx):
-    """Frente del mueble: dos puertas con su ranura, tirador y zócalo."""
+    """Frente del mueble: dos puertas con tirador y zócalo."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     w = np.floor(ctx.w)
@@ -174,8 +163,7 @@ FISH = ((0.30, 9, FISH_ORANGE, 1), (0.62, 13, FISH_YELLOW, -1), (0.80, 6, FISH_R
 
 
 def tank_side(ctx):
-    """Una cara del tanque vista desde afuera: agua más oscura abajo, arena, plantas, piedras y
-    peces. a = px de izquierda a derecha, b = alto desde la base del tanque."""
+    """Una cara del tanque; a = px de izquierda a derecha, b = alto desde la base del tanque."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     w = np.floor(ctx.w)
@@ -187,12 +175,12 @@ def tank_side(ctx):
     index = np.where(b < sand_top, np.where(np.mod(a + b, 5) == 0, SAND_DARK, SAND), index)
     stone = ((a - w * 0.7) ** 2 / 9.0 + (b - 3) ** 2 / 4.0) <= 1.0
     index = np.where(stone, STONE, index)
-    # Plantas: tallos ondulados de 2 px que suben desde la arena.
+    # Plantas: tallos ondulados de 2 px.
     for x0, top in ((w * 0.14, h * 0.75), (w * 0.22, h * 0.55), (w * 0.88, h * 0.65)):
         sway = np.round(1.5 * np.sin(b / 3.0 + x0))
         stem = (np.abs(a - x0 - sway) < 1.0) & (b >= 2) & (b < top)
         index = np.where(stem, np.where(np.mod(b, 4) < 2, WEED_LIGHT, WEED), index)
-    # Peces de 5×3 con cola y ojo; miran a un lado o al otro.
+    # Peces de 5×3 con cola y ojo.
     for fx, fb, color, facing in FISH:
         cx = np.floor(w * fx)
         body = (np.abs(a - cx) <= 2) & (np.abs(b - fb) <= 1) & ~((np.abs(a - cx) == 2) & (np.abs(b - fb) == 1))
@@ -200,17 +188,17 @@ def tank_side(ctx):
         eye = (a == cx + facing) & (b == fb)
         index = np.where(body | tail, color, index)
         index = np.where(eye, FISH_EYE, index)
-    # Burbujas y un reflejo del vidrio en diagonal.
+    # Burbujas y reflejo en diagonal.
     bubbles = (np.abs(a - w * 0.5) < 1) & (np.mod(b, 5) == 0) & (b > h * 0.4)
     index = np.where(bubbles, WATER_SHINE, index)
     shine = (np.mod(a - b, 23) == 0) & (b > 4)
     index = np.where(shine, WATER_SHINE, index)
-    # Marco negro arriba y abajo (1 px de filo del vidrio).
+    # Filo negro de 1 px arriba y abajo.
     return np.where((b >= h - 2) | (b < 1), pal.OUTLINE, index)
 
 
 def tank_top(ctx):
-    """Arriba: la superficie del agua con brillos y el borde negro de la tapa."""
+    """Tapa: superficie del agua con brillos y borde negro."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     w = np.floor(ctx.w)

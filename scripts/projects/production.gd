@@ -1,16 +1,7 @@
-# Producción (diseño, 7.2 y 13.3): cuántos puntos rinde una persona por hora y cómo se
-# reparten entre las tres fases de un contrato. Son funciones puras: Projects arma la
-# lista de quienes trabajaron en la hora y llama a apply.
-#
-# Fases: diseño, programación y pruebas, en orden. Una fase se abre cuando la anterior
-# llega a phase_open_ratio de sus puntos, y su avance nunca pasa del porcentaje de la
-# anterior (programación no termina antes que diseño). Cada trabajador suma en la fase
-# de su especialidad si tiene lugar; si no, ayuda en la primera fase con lugar rindiendo
-# helper_factor. Un generalista (el CEO, phase = "") rinde completo en la primera fase con
-# lugar. Lo que no cabe se pierde.
-#
-# Errores (hito 17): Production solo corrige los encontrados y dice quién hizo qué; el
-# azar de generarlos y encontrarlos lo pone Projects con su semilla.
+# Producción (funciones puras): puntos por hora de cada persona y su reparto en las fases
+# diseño → programación → pruebas. Una fase abre con la anterior en phase_open_ratio y nunca
+# pasa su %; sin lugar en la suya se ayuda en la primera libre a helper_factor (el CEO,
+# phase "", rinde entero). Lo que no cabe se pierde. El azar de errores lo pone Projects.
 class_name Production
 extends RefCounted
 
@@ -18,15 +9,13 @@ extends RefCounted
 const EPSILON: float = 0.0001
 
 
-## Puntos por hora de una persona: los de su nivel, menos si está cansada (energía bajo
-## energy_full_from) o desanimada (ánimo bajo mood_full_from) y más con una computadora mejor.
+## Puntos por hora: los de su nivel × energía × ánimo × (1 + bono de la computadora).
 static func get_rate(level: String, energy: float, computer_bonus: float, mood: float = 100.0) -> float:
 	var base: float = StaffCatalog.get_points_per_hour(level)
 	return base * get_energy_factor(energy) * get_mood_factor(mood) * (1.0 + computer_bonus)
 
 
-## Cuánto rinde según la energía: 1 desde energy_full_from; debajo baja en línea recta
-## hasta energy_min_factor con energía 0.
+## Factor por energía: 1 desde energy_full_from, baja en línea hasta energy_min_factor en 0.
 static func get_energy_factor(energy: float) -> float:
 	var full_from: float = float(StaffCatalog.get_production("energy_full_from"))
 	var min_factor: float = float(StaffCatalog.get_production("energy_min_factor"))
@@ -35,8 +24,7 @@ static func get_energy_factor(energy: float) -> float:
 	return lerpf(min_factor, 1.0, clampf(energy, 0.0, full_from) / full_from)
 
 
-## Cuánto rinde según el ánimo: 1 desde mood_full_from; debajo baja en línea recta hasta
-## mood_min_factor con ánimo 0.
+## Factor por ánimo: 1 desde mood_full_from, baja en línea hasta mood_min_factor en 0.
 static func get_mood_factor(mood: float) -> float:
 	var full_from: float = float(StaffCatalog.get_production("mood_full_from"))
 	var min_factor: float = float(StaffCatalog.get_production("mood_min_factor"))
@@ -45,21 +33,20 @@ static func get_mood_factor(mood: float) -> float:
 	return lerpf(min_factor, 1.0, clampf(mood, 0.0, full_from) / full_from)
 
 
-## Bonificación de una computadora (data/furniture.json, production_bonus).
+## Bono de una computadora (furniture.json, production_bonus).
 static func get_computer_bonus(computer_id: String) -> float:
 	if computer_id.is_empty():
 		return 0.0
 	return FurnitureCatalog.get_production_bonus(computer_id)
 
 
-## Fase en que trabaja un cargo: la de su habilidad principal, o "" si no es una fase
-## (los vendedores no producen puntos).
+## Fase de un cargo (la de su habilidad principal), o "" si no produce (vendedores).
 static func get_role_phase(role: String) -> String:
 	var skill: String = StaffCatalog.get_main_skill(role)
 	return skill if ContractCatalog.PHASES.has(skill) else ""
 
 
-## Fracción hecha de una fase (0 a 1). Una fase sin puntos cuenta como hecha.
+## Fracción hecha de una fase (0 a 1); sin puntos cuenta como hecha.
 static func get_ratio(contract: Dictionary, phase: String) -> float:
 	var total: float = float(contract["points"][phase])
 	if total <= 0.0:
@@ -67,7 +54,7 @@ static func get_ratio(contract: Dictionary, phase: String) -> float:
 	return clampf(float(contract["progress"][phase]) / total, 0.0, 1.0)
 
 
-## Indica si una fase ya se puede trabajar (la anterior llegó a la mitad).
+## Indica si una fase ya se puede trabajar.
 static func is_open(contract: Dictionary, phase: String) -> bool:
 	var index: int = ContractCatalog.PHASES.find(phase)
 	if index <= 0:
@@ -76,7 +63,7 @@ static func is_open(contract: Dictionary, phase: String) -> bool:
 	return get_ratio(contract, previous) + EPSILON >= float(StaffCatalog.get_production("phase_open_ratio"))
 
 
-## Puntos que todavía caben en una fase ahora: hasta el porcentaje de la anterior.
+## Puntos que caben ahora en una fase (hasta el % de la anterior).
 static func get_room(contract: Dictionary, phase: String) -> float:
 	if not is_open(contract, phase):
 		return 0.0
@@ -97,17 +84,12 @@ static func is_finished(contract: Dictionary) -> bool:
 	return true
 
 
-## Suma una hora de trabajo al contrato. workers es una lista de {"phase", "rate"}
-## (phase = "" para un generalista). Devuelve lo que hizo cada uno: una lista de
-## {"worker", "phase", "amount", "kind"} con kind "work" (avance de una fase), "review"
-## (QA revisando con las pruebas completas) o "fix" (corrigiendo errores encontrados).
-##
-## Antes de avanzar, los programadores y el generalista corrigen los errores encontrados
-## (bugs_found), a fix_cost puntos cada uno.
+## Suma una hora de trabajo. workers: [{"phase", "rate"}] (phase "" = generalista). Devuelve
+## [{"worker", "phase", "amount", "kind"}], kind "work", "review" (QA con pruebas completas)
+## o "fix". Antes de avanzar, programadores y generalista corrigen bugs_found a fix_cost c/u.
 static func apply(contract: Dictionary, workers: Array[Dictionary]) -> Array[Dictionary]:
 	var done: Array[Dictionary] = []
-	# Primero los especialistas en el orden de las fases: así la hora de diseño abre
-	# lugar para la de programación en la misma hora.
+	# Especialistas primero, en orden de fases: el diseño de esta hora abre lugar a la programación.
 	var ordered: Array[Dictionary] = workers.duplicate()
 	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return _order(a["phase"]) < _order(b["phase"]))
@@ -137,7 +119,7 @@ static func apply(contract: Dictionary, workers: Array[Dictionary]) -> Array[Dic
 	return done
 
 
-# Gasta hasta rate puntos en corregir errores encontrados. Devuelve lo gastado.
+# Gasta hasta rate puntos en corregir errores encontrados; devuelve lo gastado.
 static func _fix(contract: Dictionary, rate: float) -> float:
 	var found: int = int(contract.get("bugs_found", 0))
 	if found <= 0:
@@ -166,18 +148,16 @@ static func _order(phase: String) -> int:
 	return ContractCatalog.PHASES.size() if index < 0 else index
 
 
-## Con lo que hizo cada uno en la hora (lo que devuelve apply): la programación genera
-## errores ocultos y las pruebas (o la revisión de QA) encuentran algunos: cada error
-## oculto se encuentra con probabilidad cobertura × puntos de pruebas / puntos de pruebas
-## del proyecto. Sirve para contratos y productos; el azar sale de rng. Cada item de
-## programación queda con "bugs", los errores ocultos que generó.
+## Con el resultado de apply: programar genera errores ocultos y probar encuentra cada uno con
+## probabilidad cobertura × puntos de pruebas / pruebas del proyecto. Anota "bugs" en cada item
+## de programación. Para contratos y productos; azar de rng.
 static func handle_bugs(project: Dictionary, done: Array[Dictionary], rng: RandomNumberGenerator) -> void:
 	var testing_total: float = maxf(1.0, float(project["points"]["testing"]))
 	for item: Dictionary in done:
 		var worker: Dictionary = item["worker"]
 		var amount: float = float(item["amount"])
 		if item["kind"] == "work" and item["phase"] == "programming":
-			# Quién los generó queda en el item (historial del empleado, hito 51).
+			# Quién los generó queda en el item (historial del empleado).
 			item["bugs"] = roll(amount * float(worker["bug_chance"]), rng)
 			project["bugs_hidden"] = int(project["bugs_hidden"]) + int(item["bugs"])
 		elif item["phase"] == "testing" and int(project["bugs_hidden"]) > 0:
@@ -191,14 +171,13 @@ static func handle_bugs(project: Dictionary, done: Array[Dictionary], rng: Rando
 			project["bugs_found"] = int(project["bugs_found"]) + found
 
 
-## Cuántas veces pasa algo que en promedio pasa expected veces: la parte entera siempre
-## y la fracción con esa probabilidad.
+## Veces que pasa algo con media expected: la parte entera siempre y la fracción con esa probabilidad.
 static func roll(expected: float, rng: RandomNumberGenerator) -> int:
 	var whole: int = floori(expected)
 	return whole + (1 if rng.randf() < expected - whole else 0)
 
 
-## Anota en el proyecto a los empleados que sumaron puntos (cuenta para sus ascensos).
+## Anota en el proyecto a quienes sumaron puntos (cuenta para ascensos).
 static func note_workers(project: Dictionary, done: Array[Dictionary]) -> void:
 	var worked_by: Array = project.get_or_add("worked_by", [])
 	for item: Dictionary in done:

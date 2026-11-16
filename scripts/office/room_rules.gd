@@ -1,25 +1,13 @@
-# Reglas de las habitaciones, como funciones puras sobre los datos de OfficeState.
-#
-# Un espacio es una zona de casillas que se recorre sin cruzar paredes ni puertas
-# (los muebles no cuentan). Está cerrado si todo su contorno tiene pared o puerta, y
-# puede ser habitación si además tiene al menos una puerta. Se calcula con un relleno
-# desde cada casilla (diseño, 15.7); con los tamaños de la fase 1 es instantáneo, así
-# que se recalcula con cada cambio de paredes y no solo al salir del modo construcción.
-#
-# Una habitación es {"type": String, "cells": Array[Vector2i]} (y "dirt", su suciedad
-# desde el hito 37): siempre ocupa un
-# espacio entero. Al cambiar las paredes, cada habitación pasa al espacio nuevo que
-# tiene más de sus muebles obligatorios y, a igualdad, más casillas en común con ella;
-# si ninguno le sirve, se deshace.
+# Reglas de las habitaciones (funciones puras). Un espacio es una zona que se recorre sin
+# cruzar paredes ni puertas; cerrado si todo su contorno tiene pared o puerta, y con una puerta
+# puede ser habitación. Una habitación ({"type", "cells", "dirt"}) ocupa un espacio entero.
 class_name RoomRules
 extends RefCounted
 
 const DIRECTIONS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]
 
 
-## Espacios del local. Cada uno es {"cells": Array[Vector2i], "doors": int,
-## "closed": bool, "exterior": bool}; exterior dice si toca el borde del local con
-## una pared o una puerta.
+## Espacios del local: {"cells", "doors", "closed", "exterior"} (exterior: toca el contorno del local).
 static func find_spaces(lot: Lot, edges: Dictionary[Vector3i, String]) -> Array[Dictionary]:
 	var spaces: Array[Dictionary] = []
 	var seen: Dictionary[Vector2i, bool] = {}
@@ -76,8 +64,7 @@ static func room_index_at(rooms: Array[Dictionary], cell: Vector2i) -> int:
 	return -1
 
 
-## Motivo por el que space no se puede marcar como type_id, o "" si se puede. rooms son
-## las habitaciones actuales (la que ya ocupe ese espacio se reemplazaría).
+## Por qué space no se puede marcar como type_id, o "". rooms: las actuales (la de ese espacio se reemplaza).
 static func mark_problem(type_id: String, space: Dictionary, rooms: Array[Dictionary], entrance: Vector2i) -> String:
 	var type_name: String = RoomCatalog.get_display_name(type_id)
 	var cells: Array[Vector2i] = space["cells"]
@@ -99,10 +86,8 @@ static func mark_problem(type_id: String, space: Dictionary, rooms: Array[Dictio
 	return ""
 
 
-## Las habitaciones después de un cambio de paredes: cada una pasa al espacio que
-## comparte casillas con ella y tiene más de sus muebles obligatorios (a igualdad, el
-## que más casillas comparte), si se puede marcar ahí. Las bloqueadas (locked) eligen
-## primero. Las que no encuentran espacio se pierden.
+## Habitaciones tras cambiar paredes: cada una pasa al espacio en común con más de sus muebles
+## obligatorios (a igualdad, más casillas en común). Las locked eligen primero; sin espacio se pierden.
 static func reconcile(rooms: Array[Dictionary], spaces: Array[Dictionary], entrance: Vector2i,
 		furniture: Array[Dictionary]) -> Array[Dictionary]:
 	var ordered: Array[Dictionary] = []
@@ -131,12 +116,12 @@ static func reconcile(rooms: Array[Dictionary], spaces: Array[Dictionary], entra
 			continue
 		claimed[best] = true
 		var cells: Array[Vector2i] = spaces[best]["cells"]
-		# La suciedad (hito 37) sigue a la habitación aunque cambie de casillas.
+		# La suciedad sigue a la habitación aunque cambie de casillas.
 		result.append({"type": room["type"], "cells": cells.duplicate(), "dirt": float(room.get("dirt", 0.0))})
 	return result
 
 
-# Cuántos muebles de los que pide un tipo de habitación hay dentro de cells.
+# Cuántos de los muebles que pide un tipo hay en cells.
 static func _count_required_furniture(type_id: String, cells: Array[Vector2i], furniture: Array[Dictionary]) -> int:
 	var count: int = 0
 	for requirement: Dictionary in RoomCatalog.get_requirements(type_id):
@@ -146,13 +131,11 @@ static func _count_required_furniture(type_id: String, cells: Array[Vector2i], f
 	return count
 
 
-## Solo para pruebas: false pide uno de cada mueble aunque el requisito diga count (las
-## oficinas con una sola silla, como antes de la silla de visita). No se guarda.
+## Solo para pruebas: false pide uno de cada mueble aunque diga count. No se guarda.
 static var counts_enabled: bool = true
 
 
-## Lo que le falta a una habitación para funcionar (tamaño y muebles), en frases para
-## el jugador. Vacío si funciona.
+## Lo que le falta a una habitación para funcionar, en frases para el jugador; vacío si funciona.
 static func function_problems(room: Dictionary, furniture: Array[Dictionary]) -> Array[String]:
 	var problems: Array[String] = []
 	var cells: Array[Vector2i] = room["cells"]
@@ -160,7 +143,7 @@ static func function_problems(room: Dictionary, furniture: Array[Dictionary]) ->
 	if cells.size() < min_area:
 		problems.append("es muy pequeña (%d de %d m²)" % [cells.size(), min_area])
 	for requirement: Dictionary in RoomCatalog.get_requirements(room["type"]):
-		# count: cuántos de esos muebles hacen falta (por defecto uno).
+		# count: cuántos hacen falta (por defecto uno).
 		var needed: int = int(requirement.get("count", 1)) if counts_enabled else 1
 		var found: int = 0
 		for item: Dictionary in furniture:

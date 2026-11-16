@@ -1,8 +1,5 @@
-# Personaje de la oficina (CEO o empleado): entra por la entrada, camina hasta su silla
-# esquivando los muebles, se sienta y sale por la entrada. No decide cuándo: la escena
-# de juego le dice con update_routine si tiene que estar en la oficina (Staff.is_expected).
-# Toda la lógica va en coordenadas de cuadrícula (grid_position); solo al final se
-# convierte a píxeles para dibujarlo dentro de la capa ordenada por Y.
+# Personaje de la oficina (CEO o empleado): entra, camina a su silla, se sienta y sale.
+# La escena decide cuándo con update_routine; la lógica va en casillas (grid_position).
 class_name OfficeCharacter
 extends Node2D
 
@@ -11,18 +8,17 @@ signal sat_down
 ## Salió del local por la entrada.
 signal left_office
 
-## STEPPING_OUT: sale del edificio a buscar un baño (faltan inodoros, hito 52) y vuelve.
+## STEPPING_OUT: sale del edificio a buscar un baño (faltan inodoros) y vuelve.
 enum Activity { AWAY, WALKING_TO_DESK, SEATED, WALKING_OUT, STEPPING_OUT }
 
-# Arte provisional: colores y medidas del muñeco (dibujado a unos 32×64 px de pie y
-# achicado por BODY_SCALE para que quede a la escala de los muebles).
+# Muñeco provisional: ~32×64 px de pie, achicado por BODY_SCALE.
 const PANTS_COLOR := Color("2f3b52")
 const SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.25)
 const SEAT_HEIGHT_PX: float = 14.0
-## Escala del muñeco: con 0.8 mide unos 50 px de pie, 1.7 m al lado de un escritorio de
-## 22 px (75 cm). El asiento queda a la altura de la silla y el icono de estado no se achica.
+## Escala del muñeco: con 0.8 mide ~50 px de pie (1.7 m frente a un escritorio de 75 cm).
+## El icono de estado no se achica.
 const BODY_SCALE: float = 0.8
-## Iconos de estado (hito 57, Staff.get_status_icon): color del globo y signo.
+## Iconos de estado (Staff.get_status_icon): color del globo y signo.
 const STATUS_ICONS: Dictionary[String, Array] = {
 	"no_station": [Color("8a8f99"), "?"],
 	"tired": [Color("5b8bd9"), "z"],
@@ -32,26 +28,24 @@ const STATUS_ICONS: Dictionary[String, Array] = {
 }
 const ICON_RADIUS: float = 7.0
 const ICON_FONT_SIZE: int = 11
-## Zona en la que un clic toca al personaje, relativa a su punto de apoyo (ya con BODY_SCALE).
+## Zona de clic relativa al punto de apoyo (ya con BODY_SCALE).
 const CLICK_AREA := Rect2(-10.0, -52.0, 20.0, 56.0)
-## Sprites (fase 8): ciclos de caminar por casilla recorrida y segundos reales por cuadro
-## de las poses quietas.
+## Ciclos de caminar por casilla y segundos reales por cuadro de las poses quietas.
 const WALK_CYCLES_PER_CELL: float = 1.5
 const FRAME_SECONDS: Dictionary[String, float] = {"idle": 0.45, "type": 0.14}
-## Dónde va el icono de estado sobre la cabeza del sprite, de pie y sentado.
+## Posición del icono de estado sobre la cabeza, de pie y sentado.
 const SPRITE_ICON_STANDING := Vector2(11.0, -52.0)
 const SPRITE_ICON_SEATED := Vector2(11.0, -46.0)
-## Sentado de espaldas: franja del sprite que se dibuja, desde el asiento (24 px de sprite sobre los
-## pies, menos lo que tapa el cojín) hacia arriba.
+## Sentado de espaldas: franja del sprite que se dibuja, desde el asiento hacia arriba.
 const SEATED_BACK_BAND := Vector2(21.0, 128.0)
-## Franja del sprite sentado con los antebrazos y las manos, en px del sprite sobre los pies.
+## Franja de antebrazos y manos del sprite sentado, en px sobre los pies.
 const HANDS_BAND := Vector2(41.0, 52.0)
-## Paletas de cada conjunto de ropa (la base, piel oscura y piel clara).
+## Paletas de cada conjunto (base, piel oscura, piel clara).
 const LOOK_VARIANTS: Array[String] = ["", "_v1", "_v2"]
 ## Ninguna casilla (para _release_cells).
 const NO_CELL := Vector2i(-1000000, -1000000)
 
-## Quién es: "ceo" o Staff.employee_key(id) (lo mismo que assigned_to en su silla).
+## "ceo" o Staff.employee_key(id) (igual que assigned_to en su silla).
 var person_key: String = ""
 ## Nombre para los avisos ("El CEO", "Ana Pérez").
 var display_name: String = ""
@@ -61,30 +55,27 @@ var tie_color := Color(0.0, 0.0, 0.0, 0.0)
 var skin_color := Color("d9a47a")
 var hair_color := Color("3b2a20")
 
-## Aspecto: hoja de sprites del personaje (conjunto de ropa y paleta, ver make_look). Sin
-## aspecto, o si falta su hoja, se dibuja el muñeco provisional.
+## Hoja de sprites (ver make_look); sin ella se dibuja el muñeco provisional.
 var look: String = "":
 	set(value):
 		look = value
 		queue_redraw()
-## Si teclea cuando se sienta frente a una computadora (las visitas no).
+## Teclea al sentarse frente a una computadora (las visitas no).
 var can_type: bool = true
 
 var activity: Activity = Activity.AWAY
-## Icono de estado que se dibuja sobre la cabeza ("" ninguno; claves de STATUS_ICONS).
+## Icono de estado ("" ninguno; claves de STATUS_ICONS).
 var status_icon: String = ""
-## Si al llegar a su lugar se queda de pie (los que llegan antes de su hora y esperan)
-## en vez de sentarse.
+## Se queda de pie al llegar en vez de sentarse (quien llega antes y espera).
 var standing: bool = false:
 	set(value):
 		standing = value
 		_animate(0.0, Vector2.ZERO)
 		_update_position()
 		queue_redraw()
-## Tiene prisa: camina GameConstants.CHARACTER_HURRY_FACTOR veces más rápido hasta llegar
-## adonde va (llega tarde, el candidato al que llaman). Si no, camina normal.
+## Con prisa camina CHARACTER_HURRY_FACTOR veces más rápido hasta llegar.
 var hurry: bool = false
-## Posición en la cuadrícula; con decimales mientras camina entre dos casillas.
+## Posición en la cuadrícula; con decimales mientras camina.
 var grid_position := Vector2.ZERO
 
 var _grid: OfficeGrid
@@ -92,44 +83,39 @@ var _pathfinder: OfficePathfinder
 var _seat_cell := Vector2i.ZERO
 var _entrance := Vector2i.ZERO
 var _outside := Vector2i.ZERO
-# Casillas que faltan por recorrer; la primera es la siguiente.
+# Casillas por recorrer; la primera es la siguiente.
 var _path: Array[Vector2i] = []
-# Una persona por casilla del local: casilla → personaje que la ocupa (la suya y, mientras
-# camina, la siguiente). Compartido entre todos los personajes.
+# Una persona por casilla del local: casilla → personaje (la suya y, caminando, la siguiente).
 static var _occupants: Dictionary = {}
-# Fila en la puerta: quienes esperan en la calle para entrar, por orden de llegada.
+# Fila en la puerta: quienes esperan en la calle, por orden de llegada.
 static var _door_queue: Array = []
-# Sillas que se dibujan junto con quien está sentado (casilla → personaje): la silla no se
-# dibuja aparte (FurnitureView lo consulta con draws_chair_at).
+# Sillas dibujadas junto con quien se sienta (casilla → personaje); FurnitureView usa draws_chair_at.
 static var _chairs_drawn: Dictionary = {}
 # Casillas del local que ocupa este personaje.
 var _held: Array[Vector2i] = []
-# Segundos (a 1x) que lleva esperando a que se libere la siguiente casilla.
+# Segundos (a 1x) esperando a que se libere la siguiente casilla.
 var _blocked_time: float = 0.0
 var _next_repath: float = GameConstants.CHARACTER_REPATH_WAIT
-# Lo que se dibuja con sprites: hacia dónde mira (0–3, como las rotaciones de los muebles),
-# pose y cuadro.
+# Estado del sprite: dirección (0–3, como las rotaciones), pose y cuadro.
 var _facing: int = 2
 var _pose: String = "stand"
 var _frame: int = 0
 var _walk_phase: float = 0.0
 var _anim_time: float = 0.0
-# Su lugar tiene asiento: hacia dónde mira sentado (-1 si no hay) y si queda frente a una
-# computadora.
+# Asiento de su lugar: dirección sentado (-1 si no hay) y si queda frente a una computadora.
 var _seat_facing: int = -1
 var _at_computer: bool = false
-# Mueble de su asiento ("" si no hay): con él se busca el cuadro «sentado en esa silla».
+# Mueble de su asiento ("" si no hay), para el cuadro «sentado en esa silla».
 var _seat_item: String = ""
 var _claimed_chair := Vector2i(-1000000, -1000000)
-# Cuánto se arrima al escritorio que tiene delante cuando está sentado, en casillas.
+# Cuánto se arrima sentado al escritorio de delante, en casillas.
 var _tuck := Vector2.ZERO
-# Pieza que dibuja las manos sobre el escritorio (ver _draw_hands).
+# Pieza que dibuja las manos sobre el escritorio (_draw_hands).
 var _hands: Node2D
 
 
-## Prepara al personaje con lo que necesita de la oficina. Lo llama la escena de juego.
-## outside es la casilla de fuera del local a la que sale por la puerta de entrada.
-## Empieza fuera; update_routine lo hace entrar.
+## Prepara al personaje (lo llama la escena). outside es la casilla de la calle frente a la
+## entrada; empieza fuera y update_routine lo hace entrar.
 func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 		entrance: Vector2i, outside: Vector2i) -> void:
 	_grid = grid
@@ -138,10 +124,10 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 	_entrance = entrance
 	_outside = outside
 	grid_position = Vector2(entrance)
-	# Cada uno empieza su animación en otro momento, así no se mueven todos a la vez.
+	# Desfasa la animación para que no se muevan todos a la vez.
 	_anim_time = float(absi(person_key.hash()) % 997) / 100.0
 	if _hands == null:
-		# Con y_sort_enabled la pieza de las manos se ordena con los muebles, no con el personaje.
+		# Con y_sort_enabled la pieza de las manos se ordena con los muebles.
 		y_sort_enabled = true
 		_hands = Node2D.new()
 		_hands.name = "Hands"
@@ -154,8 +140,7 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 	_update_position()
 
 
-## Aspecto para una persona: conjunto de ropa (outfit "casual", "office" o "executive"; de
-## mujer si woman) y una de las paletas según number.
+## Aspecto: conjunto de ropa ("casual", "office" o "executive"; de mujer si woman) y paleta según number.
 static func make_look(woman: bool, outfit: String, number: int) -> String:
 	var base: String = outfit
 	if woman:
@@ -163,18 +148,18 @@ static func make_look(woman: bool, outfit: String, number: int) -> String:
 	return base + LOOK_VARIANTS[posmod(number, LOOK_VARIANTS.size())]
 
 
-## Indica si un nombre completo es de mujer (por su primer nombre en data/names.json).
+## Indica si un nombre es de mujer (por su primer nombre en data/names.json).
 static func is_woman_name(full_name: String) -> bool:
 	return StaffCatalog.get_first_names("female").has(full_name.get_slice(" ", 0))
 
 
-## Indica si la silla de esa casilla se dibuja junto con quien está sentado en ella.
+## Indica si la silla de esa casilla se dibuja junto con quien está sentado.
 static func draws_chair_at(cell: Vector2i) -> bool:
 	var who: Variant = _chairs_drawn.get(cell)
 	return who != null and is_instance_valid(who)
 
 
-# Pose con la silla dibujada («sentado en su silla») si las hojas la traen; si no, la pose suelta.
+# Pose con la silla dibujada si las hojas la traen; si no, la pose suelta.
 func _drawn_pose() -> String:
 	if (_pose == "sit" or _pose == "type") and not _seat_item.is_empty():
 		var joined: String = "%s_%s" % [_pose, _seat_item]
@@ -183,7 +168,7 @@ func _drawn_pose() -> String:
 	return _pose
 
 
-# Avisa a las sillas si esta se dibuja ahora con su ocupante (o deja de hacerlo).
+# Avisa a las sillas si esta se dibuja ahora con su ocupante.
 func _update_chair_claim() -> void:
 	var cell: Vector2i = _seat_cell if visible and SpriteLibrary.has_character_look(look) and _drawn_pose() != _pose else NO_CELL
 	if cell == _claimed_chair:
@@ -197,7 +182,7 @@ func _update_chair_claim() -> void:
 		get_tree().call_group(FurnitureView.CHAIR_GROUP, "queue_redraw")
 
 
-## Pose y dirección que se dibujan con sprites: {pose, facing, frame}.
+## Estado del sprite: {pose, facing, frame}.
 func get_sprite_state() -> Dictionary:
 	return {"pose": _pose, "facing": _facing, "frame": _frame}
 
@@ -217,17 +202,16 @@ func get_path_cells() -> Array[Vector2i]:
 	return _path.duplicate()
 
 
-## Indica si un punto del mundo cae sobre el personaje (para elegirlo con un clic).
+## Indica si un punto del mundo cae sobre el personaje (para el clic).
 func contains_point(world_point: Vector2) -> bool:
 	return visible and CLICK_AREA.has_point(world_point - position)
 
 
-## Entra si tiene que estar en la oficina (expected) y está fuera o saliendo; sale si
-## no tiene que estar y está dentro o llegando.
+## Entra si expected y está fuera o saliendo; sale si no y está dentro o llegando.
 func update_routine(expected: bool) -> void:
 	if expected and (activity == Activity.AWAY or activity == Activity.WALKING_OUT):
 		if activity == Activity.AWAY:
-			# Aparece en la entrada; si hay alguien, espera en la calle a que se libere.
+			# Aparece en la entrada; si está ocupada, espera en la calle.
 			_release_cells()
 			grid_position = Vector2(_entrance) if _door_queue_front() == null and _claim(_entrance, false) \
 				else Vector2(_outside)
@@ -236,8 +220,7 @@ func update_routine(expected: bool) -> void:
 	elif not expected and (activity == Activity.SEATED or activity == Activity.WALKING_TO_DESK
 			or activity == Activity.STEPPING_OUT):
 		if not _grid.is_in_lot(get_cell()) and (_door_queue.has(self) or not visible):
-			# Todavía en la calle (esperando para entrar o de vuelta del baño): se va
-			# sin cruzar la puerta, así no le tapa la entrada a nadie.
+			# Aún en la calle: se va sin cruzar la puerta, así no tapa la entrada.
 			_path.clear()
 			_door_queue.erase(self)
 			_set_activity(Activity.WALKING_OUT)
@@ -247,8 +230,7 @@ func update_routine(expected: bool) -> void:
 		_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
 
 
-## Sentado, sale del edificio a buscar un baño y vuelve a su silla. Devuelve false si no
-## estaba sentado.
+## Sentado, sale a buscar un baño y vuelve a su silla. False si no estaba sentado.
 func step_out() -> bool:
 	if activity != Activity.SEATED:
 		return false
@@ -256,8 +238,7 @@ func step_out() -> bool:
 	return true
 
 
-## Cambia su silla (por ejemplo, si le asignan otro puesto). Si estaba en la oficina,
-## camina hasta la nueva.
+## Cambia su silla; si estaba en la oficina, camina hasta la nueva.
 func set_seat(seat_cell: Vector2i) -> void:
 	if seat_cell == _seat_cell:
 		return
@@ -266,19 +247,19 @@ func set_seat(seat_cell: Vector2i) -> void:
 		_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 
 
-## Vuelve a calcular el camino hacia donde iba (por ejemplo, después de construir).
+## Recalcula el camino hacia donde iba (por ejemplo, tras construir).
 func replan() -> void:
 	_replan_avoiding([])
 
 
-# Como replan, esquivando las casillas avoid si se puede.
+# Como replan, esquivando avoid si se puede.
 func _replan_avoiding(avoid: Array[Vector2i]) -> void:
 	_refresh_entrance()
 	match activity:
 		Activity.WALKING_TO_DESK:
 			_walk_to(_seat_cell, Activity.WALKING_TO_DESK, [], avoid)
 		Activity.SEATED:
-			# Sentado fuera de su lugar (una partida de antes): va a su lugar.
+			# Sentado fuera de su lugar (partida vieja): va a su lugar.
 			if get_cell() != _seat_cell:
 				_walk_to(_seat_cell, Activity.WALKING_TO_DESK, [], avoid)
 		Activity.WALKING_OUT:
@@ -292,24 +273,23 @@ func _process(delta: float) -> void:
 		_release_cells()
 		_door_queue.erase(self)
 		return
-	# Parado en una casilla que todavía no tiene (al cargar, al aparecer): la toma.
+	# Parado en una casilla que no tiene (al cargar o aparecer): la toma.
 	if _held.is_empty() and grid_position == Vector2(get_cell()):
 		_claim(get_cell(), true)
 	var before: Vector2 = grid_position
 	if not _path.is_empty():
 		_advance(GameClock.get_time_scale() * delta)
-	# Al llegar ya no camina: toma la pose de su lugar en este mismo cuadro.
+	# Al llegar toma la pose de su lugar en este mismo cuadro.
 	_animate(delta, grid_position - before if not _path.is_empty() else Vector2.ZERO)
 
 
-# Avanza por el camino lo que da el tiempo de juego transcurrido.
+# Avanza lo que da el tiempo de juego transcurrido.
 func _advance(scaled_delta: float) -> void:
 	var step: float = GameConstants.CHARACTER_WALK_SPEED * scaled_delta \
 		* (GameConstants.CHARACTER_HURRY_FACTOR if hurry else 1.0)
 	while step > 0.0 and not _path.is_empty():
 		var next: Vector2i = _path[0]
-		# Dentro del local, tras esperar mucho, pasa igual; afuera espera siempre (nadie
-		# de afuera le cierra el paso a quien está en la entrada).
+		# Dentro del local, tras esperar mucho, pasa igual; afuera espera siempre.
 		var inside: bool = _grid.is_in_lot(get_cell())
 		var force: bool = _blocked_time >= GameConstants.CHARACTER_PASS_WAIT and inside
 		# Desde la calle se entra por turno: primero el que espera hace más.
@@ -339,8 +319,7 @@ func _advance(scaled_delta: float) -> void:
 		_on_destination_reached()
 
 
-# Elige pose, dirección y cuadro del sprite según lo que hace; moved es lo que avanzó en
-# este cuadro, en casillas. Solo vuelve a dibujar si cambia algo.
+# Elige pose, dirección y cuadro; moved es lo avanzado en este cuadro (casillas). Redibuja solo si cambia.
 func _animate(delta: float, moved: Vector2) -> void:
 	if look.is_empty():
 		return
@@ -377,8 +356,8 @@ static func _facing_of(moved: Vector2) -> int:
 	return 2 if moved.y > 0.0 else 0
 
 
-# Mira qué hay en su lugar: si es un asiento, hacia dónde queda sentado (hacia el escritorio
-# o mostrador que lo tiene delante, arrimado a él como su silla; si no, hacia el frente del asiento).
+# Si su lugar es un asiento, hacia dónde mira sentado: al escritorio o mostrador de delante
+# (arrimado como su silla); si no, al frente del asiento.
 func _refresh_seat() -> void:
 	_refresh_entrance()
 	_seat_facing = -1
@@ -402,7 +381,7 @@ func _refresh_seat() -> void:
 	_update_position()
 
 
-# La entrada puede cambiar de lugar (terreno comprado frente a la puerta): toma la de ahora.
+# La entrada puede moverse (terreno frente a la puerta): toma la actual.
 func _refresh_entrance() -> void:
 	_entrance = OfficeState.entrance
 	_outside = OfficeState.get_outside_of_entrance()
@@ -413,9 +392,8 @@ func _is_sitting() -> bool:
 	return activity == Activity.SEATED and not standing and _seat_facing >= 0
 
 
-# Las manos sobre el escritorio: cuando el escritorio queda del lado de quien mira (sentado
-# mirando a +x o a +y) se dibuja después que la persona y le taparía las manos; esta pieza
-# repite la franja de los antebrazos ordenada justo después del escritorio.
+# Mirando a +x o +y el escritorio se dibuja después y taparía las manos: esta pieza repite
+# la franja de antebrazos justo después del escritorio.
 func _draw_hands() -> void:
 	if _hands_shown():
 		SpriteLibrary.draw_character(_hands, look, _drawn_pose(), _facing, _frame, -_hands.position, HANDS_BAND)
@@ -436,7 +414,7 @@ func _exit_tree() -> void:
 	_door_queue.erase(self)
 
 
-# El primero de la fila de la puerta que sigue esperando (quita a los que ya no).
+# El primero de la fila de la puerta que sigue esperando (quita a los que no).
 func _door_queue_front() -> OfficeCharacter:
 	while not _door_queue.is_empty():
 		var first: Variant = _door_queue[0]
@@ -447,13 +425,13 @@ func _door_queue_front() -> OfficeCharacter:
 	return null
 
 
-## Indica si otro personaje ocupa una casilla (la suya o la siguiente mientras camina).
+## Indica si otro personaje ocupa una casilla.
 func is_cell_taken(cell: Vector2i) -> bool:
 	var other: Variant = _occupants.get(cell)
 	return other != null and is_instance_valid(other) and other != self and (other as OfficeCharacter)._held.has(cell)
 
 
-## Casillas del local que ocupa (la suya y, mientras camina, la siguiente).
+## Casillas del local que ocupa (la suya y, caminando, la siguiente).
 func get_held_cells() -> Array[Vector2i]:
 	return _held.duplicate()
 
@@ -489,8 +467,8 @@ func _release_cells(keep: Vector2i = NO_CELL) -> void:
 	_held = kept
 
 
-# La siguiente casilla está ocupada: espera; cada tanto busca otro camino que esquive a
-# los demás. Afuera, esperando para entrar, no se ve (no se amontonan en la vereda).
+# Siguiente casilla ocupada: espera y cada tanto busca otro camino. Afuera, esperando para
+# entrar, no se ve.
 func _on_blocked(scaled_delta: float) -> void:
 	_blocked_time += scaled_delta
 	if not _grid.is_in_lot(get_cell()):
@@ -502,14 +480,13 @@ func _on_blocked(scaled_delta: float) -> void:
 		_replan_avoiding(get_taken_cells())
 
 
-## Devuelve el estado del personaje para guardarlo (hito 9).
+## Estado para guardar.
 func export_state() -> Dictionary:
 	var cell: Vector2i = get_cell()
 	return {"activity": activity, "cell": [cell.x, cell.y]}
 
 
-## Restaura el estado desde una partida guardada (hito 9). Si iba caminando, vuelve a
-## calcular el camino desde la casilla guardada.
+## Restaura el estado; si iba caminando, recalcula el camino desde la casilla guardada.
 func import_state(state: Dictionary) -> void:
 	var cell: Array = state.get("cell", [_entrance.x, _entrance.y])
 	grid_position = Vector2(int(cell[0]), int(cell[1]))
@@ -531,14 +508,13 @@ func import_state(state: Dictionary) -> void:
 	_update_position()
 
 
-# Calcula el camino hasta destination y, al final, añade extra_steps (por ejemplo, el
-# paso que lo saca del local por la entrada). Si puede, esquiva las casillas avoid.
+# Camino hasta destination más extra_steps (p. ej. el paso que sale por la entrada); esquiva avoid si puede.
 func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[Vector2i] = [],
 		avoid: Array[Vector2i] = []) -> void:
-	# Fuera del local (recién salido por la entrada) primero vuelve a entrar.
+	# Fuera del local (recién salido) primero vuelve a entrar.
 	if not _grid.is_in_lot(get_cell()):
 		if new_activity == Activity.WALKING_OUT:
-			# Ya afuera y saliendo: sigue a la calle sin volver a cruzar la puerta.
+			# Ya afuera y saliendo: sigue a la calle sin cruzar la puerta.
 			_door_queue.erase(self)
 			_path = [_outside] as Array[Vector2i]
 			_set_activity(new_activity)
@@ -573,8 +549,8 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 		_on_destination_reached()
 
 
-# Sin camino hasta to: camino hasta la casilla que se puede pisar más cerca de to (a la que
-# se llega desde from), para esperar ahí y no en la puerta. Vacío si ya está en la más cercana.
+# Sin camino a to: camino a la casilla pisable más cercana a to, para no esperar en la puerta.
+# Vacío si ya está en ella.
 func _path_to_closest(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	var best: Vector2i = from
 	var best_distance: int = _distance(from, to)
@@ -605,8 +581,7 @@ func _on_destination_reached() -> void:
 	hurry = false
 	match activity:
 		Activity.WALKING_TO_DESK:
-			# Sin camino hasta su lugar se queda de pie lo más cerca que pudo, sin sentarse:
-			# vuelve a intentarlo cuando cambie la oficina (replan).
+			# Sin camino a su lugar se queda de pie lo más cerca posible; replan lo reintenta al cambiar la oficina.
 			if get_cell() != _seat_cell:
 				_animate(0.0, Vector2.ZERO)
 				return
@@ -631,7 +606,7 @@ func _set_activity(new_activity: Activity) -> void:
 	queue_redraw()
 
 
-## Cambia el icono de estado (lo calcula la escena de juego al cambiar la hora).
+## Cambia el icono de estado (lo calcula la escena).
 func set_status_icon(icon: String) -> void:
 	if icon == status_icon:
 		return
@@ -644,18 +619,17 @@ func _update_position() -> void:
 		return
 	position = _grid.grid_to_world(grid_position + (_tuck if _is_sitting() else Vector2.ZERO))
 	if _hands != null:
-		# Justo después del escritorio que tiene delante (el mueble se ordena 1 px antes de su centro).
+		# Justo después del escritorio de delante (el mueble se ordena 1 px antes de su centro).
 		_hands.position = _grid.grid_to_world(Vector2(_seat_cell + FurnitureCatalog.get_front(maxi(_seat_facing, 0)))) - position
 		_hands.queue_redraw()
 
 
-# Muñeco provisional. El origen es el punto de apoyo en el centro de su casilla.
-# Sentado, la cadera queda sobre el asiento y las piernas cuelgan por delante.
+# Muñeco provisional; origen en el apoyo. Sentado, la cadera sobre el asiento y las piernas por delante.
 func _draw() -> void:
 	if _draw_sprite():
 		return
 	var seated: bool = activity == Activity.SEATED and not standing
-	# Sentado, la cadera tiene que quedar sobre el asiento aunque el cuerpo se achique.
+	# La cadera queda sobre el asiento aunque el cuerpo se achique.
 	var lift: float = -SEAT_HEIGHT_PX * (1.0 - BODY_SCALE) if seated else 0.0
 	var body := Transform2D(0.0, Vector2.ONE * BODY_SCALE, 0.0, Vector2(0.0, lift))
 	draw_set_transform_matrix(body)
@@ -684,18 +658,16 @@ func _draw() -> void:
 		_draw_status_icon(body * head_center + Vector2(9.0, -12.0))
 
 
-# Dibuja el personaje con su hoja de sprites: la sombra si está de pie, el cuadro de su pose
-# y el icono de estado. Devuelve false si no tiene aspecto o falta su hoja.
+# Dibuja sombra (de pie), cuadro e icono con su hoja. False si no tiene aspecto u hoja.
 func _draw_sprite() -> bool:
 	if not SpriteLibrary.has_character_look(look):
 		return false
 	var sitting: bool = _pose == "sit" or _pose == "type"
 	if not sitting:
 		SpriteLibrary.draw_character_shadow(self)
-	# Sentado de espaldas a la cámara, las piernas quedan del otro lado del asiento: se dibuja solo
-	# de la cadera para arriba (si no, los pies se ven encima de la silla).
+	# Sentado de espaldas las piernas quedan tras el asiento: solo de la cadera para arriba.
 	var pose: String = _drawn_pose()
-	# Sin cuadro con silla (un asiento que no es silla), de espaldas se dibuja de la cadera para arriba.
+	# Sin cuadro con silla, de espaldas se dibuja de la cadera para arriba.
 	var band: Vector2 = SEATED_BACK_BAND if sitting and pose == _pose and (_facing == 0 or _facing == 3) else Vector2.ZERO
 	if not SpriteLibrary.draw_character(self, look, pose, _facing, _frame, Vector2.ZERO, band):
 		return false
@@ -704,7 +676,7 @@ func _draw_sprite() -> bool:
 	return true
 
 
-# Globo con el signo del icono de estado, arriba a la derecha de la cabeza.
+# Globo del icono de estado, arriba a la derecha de la cabeza.
 func _draw_status_icon(center: Vector2) -> void:
 	var icon: Array = STATUS_ICONS[status_icon]
 	draw_circle(center, ICON_RADIUS + 1.0, Color(0.1, 0.1, 0.12, 0.9))

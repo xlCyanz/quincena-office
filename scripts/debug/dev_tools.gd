@@ -1,10 +1,5 @@
-# Herramientas de desarrollo: monitores del depurador y comandos de la consola Panku.
-# Solo trabaja en compilaciones de depuración (editor o exportación debug); en una
-# exportación release no registra nada. No es parte del juego: es ayuda para probar y balancear.
-#
-# - Monitores: aparecen en el editor, en Depurador → Monitores, grupo «Quincena», mientras el
-#   juego corre desde el editor. Se pueden graficar a 4x para ver el balance.
-# - Comandos: en la consola Panku (tecla ` o ~) se escribe `qo.help()` para ver la lista.
+# Herramientas de desarrollo: monitores del depurador (Depurador → Monitores, grupo «Quincena») y
+# comandos de Panku (`qo.help()`). Solo en compilaciones de depuración; en release no hace nada.
 extends Node
 
 ## Nombre con el que los comandos quedan disponibles en la consola Panku.
@@ -52,8 +47,7 @@ func get_monitor_sources() -> Dictionary[String, Callable]:
 var _monitor_ids: Array[StringName] = []
 
 
-# Al cerrar el juego hay que quitar los monitores: si Performance los sigue leyendo cuando
-# los autoloads ya no existen, Godot se cae al salir (signal 11).
+# Quitar los monitores al cerrar: si Performance los lee sin los autoloads, Godot se cae (signal 11).
 func _exit_tree() -> void:
 	for id: StringName in _monitor_ids:
 		if Performance.has_custom_monitor(id):
@@ -70,8 +64,8 @@ func _register_monitors() -> void:
 			_monitor_ids.append(id)
 
 
-# Renglones de la consola sobre el juego: siempre a la vista o solo con la consola abierta,
-# según la opción console_overlay. Usa lo que el addon ya ofrece (su opción «Screen Overlay»).
+# Renglones de la consola sobre el juego siempre o solo con ella abierta, según console_overlay
+# (usa el modo «Screen Overlay» del addon).
 func _apply_console_overlay() -> void:
 	var console: Node = get_node_or_null("/root/Panku")
 	if console == null:
@@ -94,8 +88,7 @@ func is_console_overlay_shown() -> bool:
 	return logger != null and int((logger as Object).get("output_overlay_display_mode")) == OVERLAY_ALWAYS
 
 
-# La consola es otro autoload (Panku). Se busca por ruta para no depender de él al compilar:
-# si se quita el addon, el juego sigue funcionando sin comandos.
+# Panku se busca por ruta para no depender de él al compilar: sin el addon no hay comandos.
 func _register_console_commands() -> void:
 	var console: Node = get_node_or_null("/root/Panku")
 	if console == null:

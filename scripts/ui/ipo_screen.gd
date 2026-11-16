@@ -1,7 +1,5 @@
-# Pantalla de cierre al salir a bolsa (diseño, 9.5; hito 48): la meta final de la partida.
-# Muestra las estadísticas (días jugados, empleados contratados y actuales, contratos
-# entregados, productos lanzados, valor y mejor reputación) con «Seguir jugando» (modo
-# libre) y «Volver al menú». Mientras está abierta tapa el juego.
+# Pantalla de cierre al salir a bolsa: estadísticas finales con «Seguir jugando» (modo libre)
+# y «Volver al menú». Tapa el juego.
 class_name IpoScreen
 extends CanvasLayer
 
@@ -29,7 +27,7 @@ func _ready() -> void:
 	_cover = ColorRect.new()
 	_cover.color = DIM_COLOR
 	_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
-	# Atrapa los clics: no se puede tocar el juego de atrás.
+	# Atrapa los clics para que no se toque el juego de atrás.
 	_cover.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_cover)
 	var center := CenterContainer.new()

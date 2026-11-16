@@ -1,8 +1,5 @@
-# Ventana del préstamo de emergencia (diseño, 8.2 y 17.2): aparece el día de nómina
-# cuando no alcanza el dinero y el banco todavía presta. Muestra el monto (lo que falta
-# para la nómina), la tasa, la cuota y el total, con Aceptar y Rechazar. Mientras está
-# abierta el tiempo queda en pausa (lo maneja la escena de juego) y no se puede tocar
-# nada más.
+# Ventana del préstamo de emergencia: el día de nómina sin dinero, si el banco presta.
+# Muestra monto, tasa, cuota y total con Aceptar y Rechazar; la escena de juego pausa mientras tanto.
 class_name EmergencyLoanDialog
 extends CanvasLayer
 

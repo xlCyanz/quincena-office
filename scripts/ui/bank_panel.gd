@@ -1,16 +1,5 @@
-# Menú Banco (diseño, 8.1, 8.3 y 12.3): el saldo de la cuenta empresarial, la
-# calificación de crédito con lo que suma cada factor, el interés y el límite (hito 21),
-# los ingresos y gastos por concepto del mes actual o del anterior (con «<» y «>») y el
-# historial de movimientos, los más nuevos arriba.
-#
-# Préstamos (hito 22): cada préstamo activo con su cuota, lo que falta y los botones
-# Saldar (con confirmación) y Refinanciar (eligiendo cuántos meses alargar), y la
-# solicitud con monto y plazo de a pasos y la vista previa de tasa, cuota y total.
-# Con cuotas atrasadas (hito 23) avisa cuántos meses van y qué haría hoy un embargo.
-#
-# No pausa el tiempo. Ocupa el lado izquierdo, como Personal, Proyectos y Equipos (abrir
-# uno cierra los otros; lo hace la escena de juego). Se construye en código; su botón va
-# en la barra de menús.
+# Menú Banco (lado izquierdo, no pausa): saldo, valor, calificación con sus factores, préstamos
+# (saldar, refinanciar y pedir), atrasos con lo que haría un embargo, resumen del mes y movimientos.
 class_name BankPanel
 extends CanvasLayer
 
@@ -29,7 +18,7 @@ const INCOME_COLOR := Color(0.55, 0.85, 0.5)
 const DATE_WIDTH: float = 120.0
 const AMOUNT_WIDTH: float = 110.0
 
-# Botón «?» de ayuda (hito 64).
+# Botón «?» de ayuda.
 var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
@@ -45,7 +34,7 @@ var _credit_rows: VBoxContainer
 var _company_label: Label
 var _company_rows: VBoxContainer
 var _loan_rows: VBoxContainer
-## Inversionista activo (hito 58).
+## Inversionista activo.
 var _investor_label: Label
 var _overdue_label: Label
 var _amount_label: Label
@@ -93,7 +82,7 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
-	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	# Ancho y alto según la pantalla y la barra de menús.
 	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
 	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
@@ -126,7 +115,7 @@ func _ready() -> void:
 	content.add_theme_constant_override("separation", 6)
 	scroll.add_child(content)
 
-	# Valor de la empresa (hito 26).
+	# Valor de la empresa.
 	_company_label = Label.new()
 	_company_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	content.add_child(_company_label)
@@ -327,7 +316,6 @@ func get_extra_buttons() -> Array[Button]:
 	return [_extra_minus, _extra_plus]
 
 
-## Texto de la calificación: título y una línea por factor.
 ## Valor de la empresa y sus partes, una por renglón ("concepto | monto").
 func get_value_text() -> String:
 	var lines: Array[String] = [_company_label.text]
@@ -336,6 +324,7 @@ func get_value_text() -> String:
 	return "\n".join(lines)
 
 
+## Texto de la calificación: título y una línea por factor.
 func get_credit_text() -> String:
 	var lines: Array[String] = [_credit_label.text]
 	for row: Node in _credit_rows.get_children():
@@ -637,13 +626,13 @@ func _refresh_movements() -> void:
 			amount, INCOME_COLOR if amount > 0 else Hud.NEGATIVE_COLOR))
 
 
-# Una fila: fecha (opcional), concepto y monto con signo. Sin ajuste de línea: dentro de
-# un HBox una etiqueta con ajuste se aplasta.
 ## Texto del inversionista ("" si no hay o el panel está cerrado).
 func get_investor_text() -> String:
 	return _investor_label.text if _investor_label != null and _investor_label.visible else ""
 
 
+# Una fila: fecha (opcional), concepto y monto con signo. Sin ajuste de línea: dentro de un
+# HBox una etiqueta con ajuste se aplasta.
 func _row(date: String, concept: String, amount: int, color: Color, bold: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	if not date.is_empty():

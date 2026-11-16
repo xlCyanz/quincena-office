@@ -1,5 +1,5 @@
-# Prueba del hito 5: modo construcción. Las paredes bloquean el paso, las
-# puertas lo permiten y cada acción cobra o devuelve dinero; el modo pausa el tiempo.
+# Modo construcción: las paredes bloquean el paso, las puertas no; cada acción cobra o devuelve
+# lo justo; el modo pausa el tiempo.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=construction
 extends Node
 
@@ -21,7 +21,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.office_changed.connect(func() -> void: _office_changes += 1)
 	_check_prices()
@@ -88,7 +88,7 @@ func _check_builder() -> void:
 	_expect(result["ok"] and Economy.balance == money - 15 + 17 and OfficeState.get_floor(cell) == "carpet",
 		"cambiar cerámica por alfombra: %s" % [result])
 	money = Economy.balance
-	# El contorno del local (paredes y entrada) no se compra ni se vende.
+	# El contorno (paredes y entrada) no se compra ni se vende.
 	var entrance_edge := Vector3i(OfficeState.entrance.x, OfficeState.entrance.y, GridEdge.AXIS_Y)
 	for pair: Array in [[Vector3i(5, 3, GridEdge.AXIS_X), ""], [Vector3i(5, 3, GridEdge.AXIS_X), DOOR],
 			[entrance_edge, ""], [entrance_edge, WALL]]:
@@ -98,7 +98,6 @@ func _check_builder() -> void:
 		_expect(not result["ok"] and Economy.balance == money and OfficeState.get_edge(outline_edge) == before,
 			"cambiar el contorno en %s: %s" % [outline_edge, result])
 
-	# Un piso no se quita: solo se cambia por otro.
 	result = builder.apply(_floor_change(cell, ConstructionCatalog.BARE_FLOOR))
 	_expect(not result["ok"] and Economy.balance == money and OfficeState.get_floor(cell) == "carpet",
 		"quitar la alfombra no debería poderse: %s" % [result])
@@ -107,7 +106,6 @@ func _check_builder() -> void:
 		"madera sobre la alfombra: %s" % [result])
 	money = Economy.balance
 
-	# Una fila de paredes se cobra entera o no se hace.
 	var row: Array[Dictionary] = []
 	for y: int in range(3, 6):
 		row.append({"edge": Vector3i(4, y, GridEdge.AXIS_X), "kind": WALL})
@@ -121,7 +119,6 @@ func _check_builder() -> void:
 	_expect(result["ok"] and Economy.balance == 0, "con el dinero justo se construye la fila: %s" % [result])
 	Economy.import_state({"balance": money})
 
-	# Fuera del local no se construye.
 	result = builder.apply(_edge_change(Vector3i(10, 10, GridEdge.AXIS_X), WALL))
 	_expect(not result["ok"], "se construyó fuera del local")
 	result = builder.apply(_floor_change(Vector2i(-3, 0), "wood"))
@@ -221,7 +218,6 @@ func _check_build_mode_in_game() -> void:
 	var to_screen: Callable = func(grid_position: Vector2) -> Vector2:
 		return grid.get_canvas_transform() * grid.grid_to_world(grid_position)
 
-	# Entrar: clic en "Construir".
 	_expect(not GameClock.is_paused, "el juego empieza en pausa")
 	await _click(panel.get_open_button().get_global_rect().get_center())
 	_expect(panel.is_build_mode(), "el clic en Construir no abrió el modo construcción")
@@ -232,7 +228,7 @@ func _check_build_mode_in_game() -> void:
 	await _push(key)
 	_expect(GameClock.is_paused, "en modo construcción el atajo 3 quitó la pausa")
 
-	# Paredes: arrastrar a lo largo del borde x = 4.5, de la fila 1 a la 4 (4 piezas).
+	# Paredes: arrastrar por el borde x = 4.5, filas 1 a 4 (4 piezas).
 	var money: int = Economy.balance
 	var walls_before: int = _count_pieces(grid)
 	var camera_before: Vector2 = camera.position
@@ -243,14 +239,12 @@ func _check_build_mode_in_game() -> void:
 	_expect(_count_pieces(grid) == walls_before + 4, "no se dibujaron las 4 paredes nuevas")
 	_expect(camera.position == camera_before, "arrastrar para construir movió la cámara")
 
-	# Puerta: clic en el borde del medio.
 	await _click(panel.get_tool_button(BuildController.TOOL_DOOR).get_global_rect().get_center())
 	money = Economy.balance
 	await _click(to_screen.call(Vector2(4.5, 2.0)))
 	_expect(OfficeState.get_edge(Vector3i(4, 2, GridEdge.AXIS_X)) == DOOR and Economy.balance == money - 175,
 		"la puerta sobre la pared debería costar $175; saldo %d → %d" % [money, Economy.balance])
 
-	# Piso: arrastrar alfombra de (3, 4) a (4, 5).
 	await _click(panel.get_tool_button("carpet").get_global_rect().get_center())
 	money = Economy.balance
 	await _drag(to_screen.call(Vector2(3.0, 4.0)), to_screen.call(Vector2(4.0, 5.0)))
@@ -259,14 +253,12 @@ func _check_build_mode_in_game() -> void:
 	_expect(Economy.balance == money + 4 * (17 - 15), "4 casillas de alfombra sobre cerámica: saldo %d → %d" % [
 		money, Economy.balance])
 
-	# Vender: clic sobre una pared.
 	await _click(panel.get_tool_button(BuildController.TOOL_SELL).get_global_rect().get_center())
 	money = Economy.balance
 	await _click(to_screen.call(Vector2(4.5, 4.0)))
 	_expect(OfficeState.get_edge(Vector3i(4, 4, GridEdge.AXIS_X)).is_empty() and Economy.balance == money + 25,
 		"vender una pared debería devolver $25; saldo %d → %d" % [money, Economy.balance])
 
-	# Una pared que encierra al CEO se rechaza y no cobra.
 	await _click(panel.get_tool_button(BuildController.TOOL_WALL).get_global_rect().get_center())
 	money = Economy.balance
 	await _click(to_screen.call(Vector2(1.0, 2.5)))
@@ -281,11 +273,9 @@ func _check_build_mode_in_game() -> void:
 			"el camino del CEO cruza una pared entre %s y %s" % [previous, cell])
 		previous = cell
 
-	# Salir: el tiempo vuelve a correr.
 	await _click(panel.get_exit_button().get_global_rect().get_center())
 	_expect(not panel.is_build_mode() and not GameClock.is_paused, "al salir el tiempo no volvió a correr")
 
-	# Con la cámara, el botón izquierdo vuelve a arrastrar.
 	camera_before = camera.position
 	var center: Vector2 = get_viewport().get_visible_rect().size / 2.0
 	await _drag(center, center + Vector2(40.0, 0.0))

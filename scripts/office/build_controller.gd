@@ -1,51 +1,38 @@
-# Herramientas del modo construcción con el ratón: muestra una vista previa de lo que
-# se va a construir o vender y, al soltar el botón izquierdo, lo aplica con Builder.
-# - Pared: arrastrar a lo largo de una línea de bordes pone una fila de paredes.
-# - Puerta: clic en un borde.
-# - Piso: arrastrar pinta un rectángulo de casillas.
-# - Mueble: clic coloca el mueble; clic derecho (o la tecla R) lo gira antes de ponerlo.
-# - Computadora: clic en un escritorio.
-# - Girar: clic en un mueble lo gira un cuarto de vuelta.
-# - Vender: clic en una pared o puerta interior, o en un mueble (si es un escritorio
-#   con computadora, primero la computadora). Los pisos no se venden: se cambian
-#   pasando otro piso encima.
-# - Tipo de habitación: clic en un espacio cerrado con puerta lo marca con ese tipo.
-# - Quitar habitación: clic en una habitación la deja sin tipo.
-# - Terreno: el mapa marca los lotes que tocan el local con su precio; solo esos se compran,
-#   con un clic (buy_land_plot_at). Los de más afuera aparecen al comprar el que tienen antes.
-# En modo construcción se escribe sobre cada habitación su nombre y si funciona.
+# Herramientas del modo construcción con el ratón: vista previa y, al soltar, Builder lo aplica.
+# Pared: arrastrar una fila · Puerta/Computadora/Girar: clic · Piso: arrastrar un rectángulo ·
+# Mueble: clic (clic derecho o R gira) · Vender: pieza interior o mueble (antes la computadora) ·
+# Habitación: clic en un espacio cerrado · Terreno: clic en un lote marcado (los que tocan el local).
+# Los pisos no se venden, se cambian. Sobre cada habitación se escribe su nombre y si funciona.
 class_name BuildController
 extends Node2D
 
-## Cambió el texto de estado (costo de la vista previa, resultado o error).
+## Cambió el texto de estado (costo, resultado o error).
 signal status_changed(text: String)
 ## Cambió el terreno elegido con el ratón (o se compró).
 signal land_changed
-## Hay algo que confirmar antes de hacerlo (mudar la Oficina Ejecutiva): text es la pregunta;
-## vacío = ya no hay nada pendiente.
+## Hay algo que confirmar (mudar la Oficina Ejecutiva): text es la pregunta; vacío = nada pendiente.
 signal confirm_changed(text: String)
 
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
 const TOOL_WINDOW: String = "window"
-## Puerta doble de vidrio de la entrada (hito 69).
+## Puerta doble de vidrio de la entrada.
 const TOOL_GLASS_DOOR: String = "glass_door"
 const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
 const LAND_HINT: String = "Clic en un lote marcado para comprarlo. Los de más afuera aparecen al comprar el que tienen antes."
-## Lotes marcados de la herramienta Terreno: relleno si se puede comprar, si no, y el de bajo el ratón.
+## Colores de los lotes de Terreno: comprable, no comprable y bajo el ratón.
 const PLOT_OK := Color(0.4, 1.0, 0.5, 0.16)
 const PLOT_BAD := Color(1.0, 0.35, 0.3, 0.14)
 const PLOT_HOVER := Color(0.4, 1.0, 0.5, 0.38)
-## Mejorar la computadora de un escritorio o una silla a su calidad siguiente (hito 46).
+## Mejorar computadora o silla a su calidad siguiente.
 const TOOL_UPGRADE: String = "upgrade"
 
-## Distancia máxima (en casillas) a un borde para que Vender lo elija en vez de la casilla.
+## Distancia máxima (casillas) a un borde para que Vender lo elija en vez de la casilla.
 const SELL_EDGE_DISTANCE: float = 0.2
-## Píxeles que se puede mover el ratón con el clic derecho para que cuente como clic
-## (girar) y no como arrastre de la cámara.
+## Píxeles de movimiento con clic derecho que aún cuentan como clic (girar), no arrastre.
 const RIGHT_CLICK_SLOP_PX: float = 6.0
 
 const PREVIEW_OK := Color(0.4, 1.0, 0.5, 0.9)
@@ -60,14 +47,13 @@ const LABEL_OK_COLOR := Color(0.55, 1.0, 0.6)
 const LABEL_BAD_COLOR := Color(1.0, 0.6, 0.5)
 const LABEL_OUTLINE_COLOR := Color(0.0, 0.0, 0.0, 0.8)
 
-## Herramienta elegida: una de las constantes TOOL_, un tipo de piso, el id de un
-## mueble o un tipo de habitación.
+## Herramienta: una constante TOOL_, un tipo de piso, un id de mueble o un tipo de habitación.
 var tool: String = TOOL_WALL
 var builder := Builder.new()
 
 var _grid: OfficeGrid
 var _active: bool = false
-## Cuarto de la casilla que marca la vista previa (mueble chico), o -1.
+## Cuarto que marca la vista previa (mueble chico), o -1.
 var _preview_quarter: int = -1
 var _pointer := Vector2.ZERO  # posición del ratón en la cuadrícula, con decimales
 var _dragging: bool = false
@@ -75,24 +61,23 @@ var _drag_start := Vector2.ZERO
 var _placement_rotation: int = 0
 var _right_press_position := Vector2.ZERO
 
-# Vista previa: lo que se marca en pantalla, si se puede hacer y cómo aplicarlo.
+# Vista previa: lo marcado, si se puede y cómo aplicarlo.
 var _preview_cells: Array[Vector2i] = []
 var _preview_edges: Array[Vector3i] = []
 var _preview_front := Vector2i.ZERO
 var _preview_ok: bool = false
 var _apply_preview := Callable()
-# Terreno elegido en la fila de BuildPanel.
-# Esquinas del terreno elegido (vacío si no hay) y si se está arrastrando.
-# Casilla donde se apretó el botón (el clic compra si se suelta en el mismo lote).
+# Terreno elegido en BuildPanel: esquinas (vacío si no hay), si se arrastra y la casilla del
+# clic (compra si se suelta en el mismo lote).
 var _land_press := Vector2i.ZERO
 var _land_pressed: bool = false
-# Lo que se hace si el jugador confirma la pregunta pendiente.
+# Lo que se hace si el jugador confirma.
 var _pending_confirm := Callable()
 var _pending_question: String = ""
-# Lotes que se pueden comprar con un clic (Builder.get_land_plots) y el que está bajo el ratón.
+# Lotes comprables con un clic (Builder.get_land_plots) y el que está bajo el ratón.
 var _plots: Array[Dictionary] = []
 var _hover_plot: int = -1
-# Zoom con el que se dibujaron los nombres de las habitaciones.
+# Zoom con el que se dibujaron los nombres.
 var _label_zoom: float = 0.0
 
 
@@ -111,19 +96,19 @@ func set_active(active: bool) -> void:
 	queue_redraw()
 
 
-## Lotes marcados que se pueden comprar con un clic (con la herramienta Terreno).
+## Lotes marcados de la herramienta Terreno.
 func get_land_plots() -> Array[Dictionary]:
 	return _plots
 
 
-## Vuelve a calcular los lotes marcados (al elegir la herramienta y después de comprar).
+## Recalcula los lotes marcados (al elegir la herramienta y tras comprar).
 func refresh_land_plots() -> void:
 	_plots = builder.get_land_plots() if _active and tool == TOOL_LAND else ([] as Array[Dictionary])
 	_hover_plot = -1
 	queue_redraw()
 
 
-## Compra con un clic el lote marcado que contiene esa casilla.
+## Compra el lote marcado que contiene esa casilla.
 func buy_land_plot_at(cell: Vector2i) -> Dictionary:
 	var index: int = _plot_at(cell)
 	if index < 0:
@@ -132,7 +117,7 @@ func buy_land_plot_at(cell: Vector2i) -> Dictionary:
 		return none
 	var result: Dictionary = builder.buy_land_cells(_plots[index]["cells"])
 	if not result["ok"]:
-		# Lo que no deja comprar (dinero, una habitación que se perdería).
+		# Lo que impide comprar (dinero, una habitación que se perdería).
 		result = builder.quote_land_cells(_plots[index]["cells"])
 	status_changed.emit(result["message"])
 	refresh_land_plots()
@@ -153,7 +138,7 @@ func is_active() -> bool:
 	return _active
 
 
-## Deja una pregunta pendiente: se hace action si el jugador dice que sí (answer_confirm).
+## Deja una pregunta pendiente; action se hace si se acepta (answer_confirm).
 func ask_confirm(question: String, action: Callable) -> Dictionary:
 	_pending_confirm = action
 	_pending_question = question
@@ -166,7 +151,7 @@ func is_confirming() -> bool:
 	return _pending_confirm.is_valid()
 
 
-## Responde la pregunta pendiente: con accept se hace; si no, se olvida.
+## Responde la pregunta: con accept se hace; si no, se olvida.
 func answer_confirm(accept: bool) -> Dictionary:
 	var action: Callable = _pending_confirm
 	_pending_confirm = Callable()
@@ -204,8 +189,7 @@ func rotate_placement() -> void:
 	_update_preview()
 
 
-# Los nombres de las habitaciones se dibujan a tamaño fijo en pantalla: si cambia el
-# zoom, se vuelven a dibujar.
+# Los nombres van a tamaño fijo en pantalla: se redibujan al cambiar el zoom.
 func _process(_delta: float) -> void:
 	if _active and get_canvas_transform().get_scale().x != _label_zoom:
 		queue_redraw()
@@ -241,7 +225,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_preview(false)
 		get_viewport().set_input_as_handled()
 	elif button != null and button.button_index == MOUSE_BUTTON_RIGHT:
-		# El clic derecho también mueve la cámara si se arrastra; aquí solo cuenta el clic.
+		# El clic derecho arrastrado mueve la cámara; aquí solo cuenta el clic.
 		if button.pressed:
 			_right_press_position = button.position
 		elif button.position.distance_to(_right_press_position) <= RIGHT_CLICK_SLOP_PX and _is_furniture_tool():
@@ -252,8 +236,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-# Terreno: un clic en un lote marcado lo compra. Solo se compran lotes marcados, que son los
-# que tocan el local: para llegar a uno de más afuera hay que comprar antes el que lo separa.
+# Terreno: un clic compra un lote marcado (solo los que tocan el local).
 func _land_input(event: InputEvent) -> void:
 	var cell: Vector2i = Vector2i(_pointer.round())
 	var button := event as InputEventMouseButton
@@ -297,7 +280,7 @@ func _clear_preview() -> void:
 	_apply_preview = Callable()
 
 
-# Recalcula la vista previa bajo el ratón; si announce, también avisa de su costo.
+# Recalcula la vista previa; si announce, avisa su costo.
 func _update_preview(announce: bool = true) -> void:
 	_clear_preview()
 	var start: Vector2 = _drag_start if _dragging else _pointer
@@ -310,7 +293,7 @@ func _update_preview(announce: bool = true) -> void:
 		queue_redraw()
 		return
 	elif _is_furniture_tool() and bool(info["wall_mounted"]):
-		# Objeto de pared: va en la pared más cercana al ratón, del lado donde está el ratón.
+		# Objeto de pared: en la pared más cercana, del lado del ratón.
 		var slot: Array = _wall_slot()
 		var wall_cell: Vector2i = slot[0]
 		var wall_rotation: int = slot[1]
@@ -365,7 +348,7 @@ func _update_preview(announce: bool = true) -> void:
 				var room_type: String = tool
 				quote = builder.quote_mark_room(room_type, cell)
 				if bool(quote.get("confirm", false)):
-					# Mudar la Oficina Ejecutiva: el clic pregunta y la respuesta la hace.
+					# Mudar la Oficina Ejecutiva: el clic pregunta y la respuesta lo hace.
 					var question: String = String(quote["message"])
 					_apply_preview = func() -> Dictionary: return ask_confirm(question,
 						func() -> Dictionary: return builder.move_ceo_office(cell))
@@ -392,8 +375,7 @@ func _update_preview(announce: bool = true) -> void:
 	queue_redraw()
 
 
-# [casilla, rotación] de la cara de pared más cercana al ratón: el borde más cercano y,
-# de sus dos casillas, la del lado del ratón (la pared queda detrás del frente).
+# [casilla, rotación] de la cara de pared más cercana: el borde más cercano y la casilla del lado del ratón.
 func _wall_slot() -> Array:
 	var edge: Vector3i = GridEdge.nearest(_pointer)
 	var cells: Array[Vector2i] = GridEdge.get_cells(edge)
@@ -413,7 +395,7 @@ func _wall_item_under_pointer() -> int:
 	return OfficeState.find_wall_item(slot[0], slot[1])
 
 
-# Vender elige el mueble de la casilla salvo que el ratón esté junto a una pared o puerta.
+# Vender toma el mueble de la casilla salvo que el ratón esté junto a una pared o puerta.
 func _sell_targets_furniture(cell: Vector2i) -> bool:
 	if OfficeState.find_furniture_at(cell) < 0:
 		return false
@@ -421,7 +403,7 @@ func _sell_targets_furniture(cell: Vector2i) -> bool:
 	return OfficeState.get_edge(edge).is_empty() or GridEdge.distance_to(edge, _pointer) > SELL_EDGE_DISTANCE
 
 
-# Casillas del espacio (zona entre paredes y puertas) que contiene cell.
+# Casillas del espacio que contiene cell.
 func _space_at(cell: Vector2i) -> Array[Vector2i]:
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
 	var index: int = RoomRules.space_index_at(spaces, cell)
@@ -439,7 +421,7 @@ func _footprint_at(cell: Vector2i, quarter: int = -1) -> Array[Vector2i]:
 	return FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"])
 
 
-# Cambios de pisos, paredes y puertas (los de Builder.quote) para la herramienta actual.
+# Cambios de pisos y bordes (de Builder.quote) para la herramienta actual.
 func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 	var changes: Array[Dictionary] = []
 	match tool:
@@ -471,7 +453,7 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 	return changes
 
 
-# Bordes de la misma línea que start, desde start hasta la altura de end.
+# Bordes de la línea de start, de start hasta la altura de end.
 func _edge_line(start: Vector3i, end: Vector2) -> Array[Vector3i]:
 	var edges: Array[Vector3i] = []
 	if start.z == GridEdge.AXIS_X:
@@ -514,7 +496,7 @@ func _draw() -> void:
 		draw_circle(_grid.grid_to_world(tip), PREVIEW_LINE_WIDTH * 1.5, color)
 
 
-# Lotes marcados de la herramienta Terreno: sus casillas rellenas y su precio encima.
+# Lotes marcados: casillas rellenas y precio encima.
 func _draw_land_plots() -> void:
 	if tool != TOOL_LAND or _plots.is_empty():
 		return
@@ -557,7 +539,7 @@ func _draw_room_labels() -> void:
 		if ambiance != 0:
 			lines.append([Ambiance.describe(room, OfficeState.furniture, windows, door_points).split(" (")[0],
 				LABEL_OK_COLOR if ambiance > 0 else LABEL_BAD_COLOR])
-		# Escala inversa al zoom de la cámara, para que el texto no crezca ni se pixele.
+		# Escala inversa al zoom, para que el texto no crezca ni se pixele.
 		draw_set_transform(center, 0.0, Vector2.ONE / _label_zoom)
 		var text_position := Vector2(-LABEL_WIDTH / 2.0, 0.0)
 		for line: Array in lines:

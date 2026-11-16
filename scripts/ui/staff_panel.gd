@@ -1,15 +1,5 @@
-# Menú Personal (diseño, 12.3) con vacantes, candidatos y empleados (5.2): publicar
-# una vacante (cargo, nivel, sueldo ofrecido y publicidad), ver las abiertas con sus
-# candidatos, cerrarlas, descartar, entrevistar y hacer ofertas, y ver los empleados
-# con los puestos de trabajo libres. La oferta de cada candidato empieza en el sueldo
-# de su vacante y se sube o se baja de a salary_step.
-#
-# No pausa el tiempo: los candidatos llegan mientras está abierto. Ocupa el lado
-# izquierdo para que la oficina siga a la vista. Se construye en código; su botón va
-# en la barra de menús (attach_button) y muestra cuántos candidatos esperan.
-#
-# Desde el hito 32, con líderes o gerentes, muestra el organigrama: el CEO y cada gerente
-# con los líderes que dirigen, y para cada líder una lista para elegir quién lo dirige.
+# Menú Personal (lado izquierdo, no pausa): publicar vacantes, candidatos (entrevistar y ofertar
+# de a salary_step), empleados, puestos libres y, con líderes o gerentes, el organigrama.
 class_name StaffPanel
 extends CanvasLayer
 
@@ -27,7 +17,7 @@ const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
 const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
 
-# Botón «?» de ayuda (hito 64).
+# Botón «?» de ayuda.
 var _help_button: Button
 var _open_button: Button
 var _panel: PanelContainer
@@ -78,7 +68,7 @@ func _ready() -> void:
 	_panel.offset_right = MARGIN + PANEL_WIDTH
 	_panel.offset_top = MARGIN_TOP
 	_panel.offset_bottom = -MARGIN_BOTTOM
-	# Ancho y alto según la pantalla y la barra de menús (hito 65).
+	# Ancho y alto según la pantalla y la barra de menús.
 	UiLayout.fit_left_panel(_panel, PANEL_WIDTH)
 	EventBus.ui_layout_changed.connect(func() -> void: UiLayout.fit_left_panel(_panel, PANEL_WIDTH))
 	var rows := VBoxContainer.new()
@@ -98,7 +88,7 @@ func _ready() -> void:
 	_help_button = HelpButton.create("staff")
 	header.add_child(_help_button)
 	header.add_child(close_button)
-	# Bajo la cabecera todo se desplaza junto, para que quepa con la interfaz grande (hito 65).
+	# Bajo la cabecera todo se desplaza junto para que quepa con la interfaz grande.
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -201,7 +191,7 @@ func is_open() -> bool:
 	return _panel.visible
 
 
-## Elige cargo y nivel en el formulario (como si se eligieran en las listas).
+## Elige cargo y nivel en el formulario como si se eligieran en las listas.
 func select_role_and_level(role: String, level: String) -> void:
 	_role_option.select(StaffCatalog.get_role_ids().find(role))
 	_level_option.select(StaffCatalog.get_level_ids().find(level))
@@ -311,8 +301,7 @@ func _selected_level() -> String:
 	return StaffCatalog.get_level_ids()[_level_option.selected]
 
 
-# Cargos que todavía no existen en esta etapa (el líder de equipo antes de Startup):
-# en gris, con la etapa en la que llegan.
+# Cargos que aún no existen en esta etapa: en gris, con la etapa en la que llegan.
 func _refresh_role_locks() -> void:
 	var roles: Array[String] = StaffCatalog.get_role_ids()
 	for index: int in range(roles.size()):
@@ -336,8 +325,7 @@ func get_level_option() -> OptionButton:
 	return _level_option
 
 
-# Al cambiar cargo o nivel, el sueldo vuelve al de la tabla. Un cargo sin niveles
-# deshabilita la lista de niveles.
+# Al cambiar cargo o nivel el sueldo vuelve al de la tabla; un cargo sin niveles deshabilita la lista.
 func _reset_salary() -> void:
 	_level_option.disabled = not StaffCatalog.has_levels(_selected_role())
 	_salary = StaffCatalog.get_salary(_selected_role(), _selected_level())
@@ -430,7 +418,7 @@ func _add_employees() -> void:
 		_card_buttons[employee_id] = card_button
 
 
-# Organigrama (hito 32): quién dirige a quién, solo si hay líderes o gerentes.
+# Organigrama: quién dirige a quién, solo si hay líderes o gerentes.
 func _add_org_chart() -> void:
 	var leaders: Array[Dictionary] = Staff.get_leaders()
 	var managers: Array[Dictionary] = Staff.get_managers()
@@ -474,8 +462,7 @@ func _add_org_chart() -> void:
 		_boss_choices[leader_id] = choice
 
 
-# Departamentos (hito 33): quién dirige cada uno y cuánto rinde; cada ejecutivo elige
-# el suyo.
+# Departamentos: quién dirige cada uno y cuánto rinde; cada ejecutivo elige el suyo.
 func _add_departments(executives: Array[Dictionary]) -> void:
 	var departments: Array[String] = Staff.get_departments()
 	for department: String in departments:

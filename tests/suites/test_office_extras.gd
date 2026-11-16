@@ -1,10 +1,9 @@
-# Prueba del hito 55: impresora, pizarra y ventanas.
-# Criterio: la impresora mejora al contador; con pizarra la reunión inútil cuesta la mitad y
-# los contratos grandes traen más plazo; una ventana sube el ambiente y no va en paredes interiores.
+# Impresora, pizarra y ventanas: la impresora mejora al contador; con pizarra la reunión inútil
+# cuesta la mitad y los grandes traen más plazo; la ventana sube el ambiente y solo va afuera.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=office_extras
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -12,7 +11,7 @@ const SEED: int = 20261155
 ## Zona abierta del local inicial (fuera de la Oficina Ejecutiva).
 const OPEN_CELL := Vector2i(3, 3)
 const TABLE_CELL := Vector2i(3, 4)
-## Casilla de la pared norte de la zona abierta; con rotación 2 la pared queda detrás.
+## Pared norte de la zona abierta; con rotación 2 queda detrás.
 const BOARD_CELL := Vector2i(4, 0)
 ## Bordes del contorno: norte de la Oficina Ejecutiva y este del local.
 const NORTH_EDGE := Vector3i(0, -1, GridEdge.AXIS_Y)
@@ -102,7 +101,7 @@ func _check_printer() -> void:
 	var base_maintenance: float = Staff.get_maintenance_discount()
 	var base_rate: float = Staff.get_loan_rate_discount()
 	_expect(base_maintenance > 0.0 and base_rate > 0.0, "el contador ya descuenta sin impresora")
-	# En otra habitación (la zona abierta, que no es un Área de trabajo) no cuenta.
+	# Fuera de un Área de trabajo no cuenta.
 	_expect(_builder.place("printer", Vector2i(4, 5), 0)["ok"], "impresora en la zona abierta")
 	_expect(is_equal_approx(Staff.get_printer_factor(), 1.0), "fuera del Área de trabajo no ayuda")
 	_expect(_builder.sell_furniture_at(Vector2i(4, 5))["ok"], "vender esa impresora")
@@ -112,7 +111,6 @@ func _check_printer() -> void:
 	_expect(is_equal_approx(Staff.get_maintenance_discount(), base_maintenance * 1.25),
 		"mantenimiento: %.4f" % Staff.get_maintenance_discount())
 	_expect(is_equal_approx(Staff.get_loan_rate_discount(), base_rate * 1.25), "tasa: %.4f" % Staff.get_loan_rate_discount())
-	# El cobro del pago atrasado: 3 días → 2 con impresora.
 	var effect: Dictionary = {"type": "withhold", "days": 3, "by_accountant": true}
 	_expect(int(Events._resolve(effect, {"amount": 900})["days"]) == 2, "con impresora el contador cobra en 2 días")
 	_expect(int(Events._resolve({"type": "withhold", "days": 15}, {"amount": 900})["days"]) == 15,
@@ -120,21 +118,19 @@ func _check_printer() -> void:
 	var option_effect: Dictionary = _late_payment_accountant_effect()
 	_expect(bool(option_effect.get("by_accountant", false)) and int(option_effect["days"]) == 3,
 		"la opción del contador en data/events.json usa la impresora")
-	# Sin contador la impresora no hace nada.
 	Staff.employees.clear()
 	_expect(is_equal_approx(Staff.get_printer_factor(), 1.0) and is_zero_approx(Staff.get_maintenance_discount()),
 		"sin contador, nada")
 	_expect(int(Events._resolve(effect, {"amount": 900})["days"]) == 3, "sin contador vuelven a ser 3 días")
 
 
-# Un mueble no puede dejar sin acceso una silla que ya estaba (la impresora delante de una).
+# Un mueble no puede dejar sin acceso una silla que ya estaba.
 func _check_seat_access() -> void:
 	_new_game()
 	_work_area([3, 4, 5])
 	var result: Dictionary = _builder.quote_place("printer", Vector2i(5, 2), 0)
 	_expect(not result["ok"] and String(result["message"]).contains("silla"), "no tapa el acceso a una silla: %s" % result["message"])
 	_expect(not _builder.quote_place("printer", Vector2i(3, 2), 0)["ok"], "tampoco la del otro lado")
-	# Lejos de las sillas, sí.
 	_expect(_builder.place("printer", Vector2i(4, 5), 0)["ok"], "en la zona abierta sí")
 
 
@@ -183,7 +179,6 @@ func _check_whiteboard() -> void:
 	Projects.set_seed(SEED)
 	var board_small: Dictionary = Projects._make_offer(GameClock.get_day_count(), "small")
 	_expect(int(board_small["days"]) == int(plain_small["days"]), "el pequeño sigue igual")
-	# Sin mesa la sala no funciona y la pizarra no cuenta.
 	OfficeState.furniture.remove_at(OfficeState.find_furniture_at(TABLE_CELL))
 	_expect(not Projects.has_room_item("meeting_room", "meeting_board"), "en una sala que no funciona no cuenta")
 	_expect(int(Events._resolve(effect, {})["hours"]) == 2, "otra vez 2 horas")
@@ -208,24 +203,21 @@ func _check_window_rules() -> void:
 	_expect(OfficeState.get_edge(NORTH_EDGE) == window and OfficeState.blocks_passage(NORTH_EDGE), "la ventana cierra el paso")
 	_expect(_rooms_text() == rooms_before, "las habitaciones no cambian: %s" % _rooms_text())
 	_expect(not _builder.quote([{"edge": NORTH_EDGE, "kind": window}])["ok"], "poner otra igual no cambia nada")
-	# Nada se cuelga en una ventana, ni se cambia por ventana una pared con algo colgado.
+	# Nada se cuelga en una ventana, ni pasa a ventana una pared con algo colgado.
 	_expect(FurnitureCatalog.get_wall_edge(Vector2i(0, 0), 2) == NORTH_EDGE, "el cuadro de (0, 0) mira a esa pared")
 	_expect(not _builder.quote_place("painting", Vector2i(0, 0), 2)["ok"], "no se cuelga un cuadro en la ventana")
 	_expect(_builder.place("painting", Vector2i(1, 0), 2)["ok"], "cuadro en la pared de al lado")
 	result = _builder.quote([{"edge": Vector3i(1, -1, GridEdge.AXIS_Y), "kind": window}])
 	_expect(not result["ok"] and String(result["message"]).contains("colgado"), "ni ventana donde hay un cuadro")
-	# Quitarla deja pared y devuelve la mitad.
 	balance = Economy.balance
 	result = _builder.apply([{"edge": NORTH_EDGE, "kind": ""}])
 	_expect(result["ok"] and int(result["cost"]) == -100 and Economy.balance == balance + 100, "vender la ventana devuelve $100")
 	_expect(OfficeState.get_edge(NORTH_EDGE) == ConstructionCatalog.WALL, "queda la pared")
 	_expect(not _builder.quote([{"edge": NORTH_EDGE, "kind": ""}])["ok"], "la pared del contorno sigue sin venderse")
-	# La herramienta Pared sobre una ventana también la vuelve pared.
 	_builder.apply([{"edge": NORTH_EDGE, "kind": window}])
 	result = _builder.apply([{"edge": NORTH_EDGE, "kind": ConstructionCatalog.WALL}])
 	_expect(result["ok"] and int(result["cost"]) == -100 and OfficeState.get_edge(NORTH_EDGE) == ConstructionCatalog.WALL,
 		"pared sobre la ventana: %s" % result["message"])
-	# Las ventanas no cuentan como bienes (como paredes y pisos).
 	var assets: int = Bank.get_assets_value()
 	_builder.apply([{"edge": NORTH_EDGE, "kind": window}])
 	_expect(Bank.get_assets_value() == assets, "la ventana no suma al valor")

@@ -1,6 +1,5 @@
-# Prueba del hito 18: entrega y reputación.
-# Criterio: cada resultado de la tabla 7.4 paga y mueve la reputación como dice; un
-# contrato con 3 días de atraso y 2 errores paga el 81%.
+# Entrega y reputación: cada resultado de la tabla 7.4 paga y mueve la reputación como dice;
+# 3 días de atraso y 2 errores pagan el 81 %.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=delivery
 extends Node
 
@@ -21,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	_check_preview()
@@ -47,7 +46,7 @@ func _near(a: float, b: float) -> bool:
 
 func _new_game() -> void:
 	SaveManager.new_game()
-	# Sin objetivos guiados (hito 28): sus recompensas cambiarían el saldo y la reputación.
+	# Sin objetivos guiados: sus recompensas cambiarían el saldo y la reputación.
 	for objective: Dictionary in Company.get_objectives():
 		Company.objectives_done.append(String(objective["id"]))
 	Staff.set_seed(SEED)
@@ -55,7 +54,7 @@ func _new_game() -> void:
 	_notices.clear()
 
 
-# Un contrato en curso de $1,000 terminado, a tiempo y sin errores; cada prueba lo cambia.
+# Contrato en curso de $1,000 terminado, a tiempo y sin errores; cada prueba lo cambia.
 func _contract(advance: int) -> Dictionary:
 	var contract: Dictionary
 	if Projects.contracts.is_empty():
@@ -84,7 +83,6 @@ func _check_preview() -> void:
 	var clean: Dictionary = Projects.preview_delivery(contract)
 	_expect(clean["paid"] == 1000 and _near(clean["reputation_change"], 0.3) and clean["result"] == "a tiempo y limpio",
 		"a tiempo y limpio: pago completo y +0.3: %s" % [clean])
-	# A tiempo con errores: pago reducido y baja la reputación.
 	contract["bugs_hidden"] = 1
 	contract["bugs_found"] = 1
 	contract["bugs_fixed"] = 5
@@ -93,7 +91,6 @@ func _check_preview() -> void:
 	var buggy: Dictionary = Projects.preview_delivery(contract)
 	_expect(buggy["bugs"] == 2 and buggy["paid"] == 960 and _near(buggy["reputation_change"], -0.1)
 		and buggy["result"] == "a tiempo, con 2 errores", "a tiempo con 2 errores: 96%% y −0.1: %s" % [buggy])
-	# Tarde: 3 días de atraso y 2 errores pagan el 81%.
 	contract["deadline_day"] = GameClock.get_day_count() - 3
 	var late: Dictionary = Projects.preview_delivery(contract)
 	_expect(late["late_days"] == 3 and late["gross"] == 810 and late["paid"] == 810 and _near(late["reputation_change"], -0.4),
@@ -109,7 +106,6 @@ func _check_preview() -> void:
 	var worst: Dictionary = Projects.preview_delivery(contract)
 	_expect(_near(worst["late_penalty"], 0.5) and _near(worst["bug_penalty"], 0.3) and worst["paid"] == 200
 		and _near(worst["reputation_change"], -0.5), "topes: %s" % [worst])
-	# Incompleto: se paga en proporción y no sube la reputación.
 	contract["deadline_day"] = GameClock.get_day_count() + 3
 	contract["bugs_hidden"] = 0
 	contract["bugs_found"] = 0
@@ -133,10 +129,9 @@ func _check_deliver() -> void:
 	_expect(Projects.history.size() == 1 and Projects.history[0]["paid"] == 510
 		and String(Projects.history[0]["result"]).contains("tarde (3 días)"), "historial: %s" % [Projects.history])
 	_expect(not Projects.deliver(contract["id"])["ok"], "no se entrega dos veces")
-	# Entregas limpias suben 0.3 cada una, hasta 5.
 	for i: int in range(4):
 		Projects.deliver(_contract(0)["id"])
-	# Desde el hito 27 los medianos piden la etapa Startup (o un vendedor), no 2 estrellas.
+	# Los medianos piden Startup (o un vendedor), no 2 estrellas.
 	_expect(_near(Projects.reputation, 2.2) and not Projects.get_allowed_sizes().has("medium"), "4 limpias: 2.2 ★ (medianos desde Startup)")
 	_expect(ProjectsPanel.stars(Projects.reputation) == "★★☆☆☆" and ProjectsPanel.stars(1.9) == "★☆☆☆☆", "estrellas enteras")
 	Projects.reputation = 4.9
@@ -165,7 +160,6 @@ func _check_client_cancel() -> void:
 	var contract_id: int = contract["id"]
 	var deadline: int = contract["deadline_day"]
 	var balance: int = Economy.balance
-	# Hasta el día del plazo, nada.
 	while GameClock.get_day_count() <= deadline:
 		GameClock.fast_forward_hours(GameConstants.HOURS_PER_DAY)
 	_expect(int(Projects.get_contract(contract_id).get("cancel_day", 0)) == Projects.NO_CANCEL_DAY, "a tiempo no se sortea")
@@ -182,7 +176,6 @@ func _check_client_cancel() -> void:
 	_expect(Economy.balance == balance and _near(Projects.reputation, 2.5), "no paga más, el anticipo queda y cae la reputación")
 	_expect(Projects.history[0]["result"] == "Cancelado por el cliente", "historial")
 	_expect(_notices.any(func(text: String) -> bool: return text.contains("canceló")), "aviso de la cancelación")
-	# Con la misma semilla, el mismo día.
 	_new_game()
 	contract = _contract(0)
 	while Projects.get_days_late(contract) <= 0:

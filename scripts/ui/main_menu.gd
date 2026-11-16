@@ -1,9 +1,4 @@
-# Menú principal (hito 61): lo primero que se ve al abrir el juego.
-# - «Continuar» carga la partida guardada más reciente; sin partidas no aparece.
-# - «Nueva partida» empieza de cero; si hay autoguardado, antes pregunta (se reemplaza).
-# - «Cargar partida» muestra el autoguardado y las ranuras manuales.
-# - «Ajustes» muestra las mismas opciones que en la partida (OptionsList).
-# - «Salir» cierra el juego.
+# Menú principal: Continuar (la partida más reciente), Nueva partida, Cargar, Ajustes y Salir.
 # Cada vista reemplaza a los botones; «Volver» o «Cancelar» regresan.
 extends Control
 
@@ -178,8 +173,7 @@ func _on_continue_pressed() -> void:
 		_on_slot_pressed(slot)
 
 
-# Con autoguardado, antes de empezar otra se pregunta: el autoguardado se reemplaza el
-# primer día (las ranuras manuales quedan).
+# Con autoguardado se pregunta antes: se reemplaza el primer día (las ranuras manuales quedan).
 func _on_new_game_pressed() -> void:
 	if not SaveManager.has_save(SaveManager.AUTOSAVE):
 		_start_new_game()

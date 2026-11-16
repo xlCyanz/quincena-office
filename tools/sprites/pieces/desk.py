@@ -1,24 +1,7 @@
-# Escritorio sencillo (simple_desk), computadoras (basic/mid/pro) y segundo monitor, en sus 4
-# rotaciones, con el estilo de tools/sprites/STYLE.md (madera naranja, plástico negro, pantalla
-# encendida, contorno grueso del material).
-#
-#   desk_simple_r0..r3.png             128×128, apoyo (64, 96)
-#   desk_simple_r0..r3_shadow.png      sombra en el piso, aparte
-#   computer_basic_r0..r3.png          128×160, apoyo (64, 128), dibujada a 44 px sobre el piso
-#   computer_basic: monitor de tubo beige sobre su caja acostada (computadora vieja)
-#   computer_mid_r0..r3.png            monitor plano negro, ancho y delgado
-#   computer_pro_r0..r3.png            todo en uno plateado y torre negra con luz azul sobre el tablero
-#   second_monitor_r0..r3.png          monitor chico del lado +x del escritorio
-#   *_shadow.png de las computadoras    sombra de contacto sobre el tablero (va entre el escritorio y la pieza)
-#   _sheets/desk.png                   hoja de contacto del grupo (no es arte del juego)
-#   _sheets/desk_seat.png              escritorio r0–r3 con su silla delante (para ver que el frente es coherente)
-#
-# El modelo se escribe una vez con rotación 0: el frente (donde va la silla, el hueco de las
-# piernas) mira a −y. La cajonera queda del lado +x con sus cajones hacia el frente (hacia quien se
-# sienta, a un lado de sus piernas); del lado −x van dos patas gruesas y atrás un faldón.
-#
-# Segundo monitor: el juego corre la computadora 0.15 casillas hacia −x del modelo y pone el
-# monitor en +x (x 21–30/32). Por eso todo lo de las computadoras queda entre x 5 y 26/32.
+# Escritorios (sencillo y largo) y computadoras (básica y pro) en 4 rotaciones, con el estilo de STYLE.md.
+# Modelo en rotación 0: el frente (silla, hueco de las piernas) mira a −y; cajonera en +x y patas en −x.
+# Escritorio 128×128, apoyo (64, 96); computadora 128×160, apoyo (64, 128); cada uno con su _shadow.
+# Las computadoras quedan entre x 5 y 26/32: con pantalla extra el juego las corre 0.15 casillas a −x.
 import math
 import os
 
@@ -40,7 +23,7 @@ TOP = iso.world_px(DESK["height"])  # 22 px del mundo -> z = 44
 SLAB = 6  # grosor del tablero
 LEGS = TOP - SLAB  # alto de patas y cajonera
 
-# Rampas propias (se les suman tonos: no tocar las constantes compartidas de palette.py).
+# Rampas propias: se les suman tonos sin tocar las compartidas de palette.py.
 WOOD = pal.style("wood_orange", name="desk_wood")
 PLASTIC = pal.style("plastic_black", name="desk_plastic")
 KEYS_GREY = PLASTIC.add("6a6868", "key")  # teclas del teclado negro
@@ -51,14 +34,13 @@ NAVY = pal.style_ramp("2c4373", outline="0c1226", light="4d6aa3", name="desk_nav
 LED = pal.style_ramp("6fe08a", name="desk_led")
 CYAN = pal.style_ramp("3fe0e8", name="desk_cyan")
 MAGENTA = pal.style_ramp("e05ae0", name="desk_magenta")
-# Vidrio de pantalla: oscuro y brillante (plano) o gris azulado (tubo), con reflejos en diagonal.
+# Vidrio de pantalla: oscuro (plano) o gris azulado (tubo).
 GLASS = pal.style_ramp("34343c", outline="101014", light="5a5a66", name="desk_glass")
 TUBE = pal.style_ramp("6b8a92", outline="1e2a30", light="9db8be", name="desk_tube")
 BEIGE = pal.style_ramp("e4d6b4", outline="4a3f2c", light="f6eed8", name="desk_beige")
 BEIGE_KEYS = BEIGE.add("c9b88f", "key")
 
-# Planta del escritorio (en 1/32 de casilla): tablero rectangular, 30 de ancho por 20 de fondo, pegado al
-# frente de la casilla (donde va la silla); atrás queda libre. La pantalla va cerca de quien se sienta.
+# Planta en 1/32 de casilla: tablero de 30×20 pegado al frente (−y).
 TOP_X0, TOP_X1, TOP_Y0, TOP_Y1 = 1, 31, 2, 22
 PED_X0, PED_X1, PED_Y0, PED_Y1 = 21, 30, 4, 20  # cajonera
 PED_Z0 = 3  # la cajonera va sobre un zócalo hundido
@@ -66,7 +48,7 @@ LEG = 3  # lado de las patas (6 px de pantalla por eje)
 LEG_X0 = 2
 LEG_YS = (4, 17)  # patas del lado −x: adelante y atrás
 SKIRT_Y0, SKIRT_Z0 = 18, 18  # faldón de atrás, entre la pata de atrás y la cajonera
-# Cajones: (primera fila, fila siguiente a la última) desde la base de la cajonera (35 px de alto).
+# Cajones: (primera fila, última + 1) desde la base de la cajonera.
 DRAWERS = ((2, 12), (13, 23), (24, 34))
 SHADOW_SHIFT = (0.10, 0.03)
 SHADOW_INSET = 3
@@ -83,8 +65,7 @@ def whole_runs(mask):
 
 
 def drawer_front(ctx):
-    """Frente de la cajonera: tres cajones con rendija oscura de 1 px alrededor, su canto de
-    abajo con luz y un tirador hundido (ranura oscura con su borde claro debajo)."""
+    """Frente de la cajonera: tres cajones con rendija y tirador hundido."""
     index = ctx.base
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
@@ -100,8 +81,7 @@ def drawer_front(ctx):
 
 
 def side_panel(ctx):
-    """Costado de afuera y espalda de la cajonera: un tablero grande hundido (detalle grande, no
-    textura): línea oscura arriba y a la izquierda, canto claro abajo y a la derecha."""
+    """Costado y espalda de la cajonera: un tablero hundido."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     a0, a1, b0, b1 = 4, int(ctx.w) - 4, 4, int(ctx.h) - 4
@@ -127,13 +107,12 @@ def with_under_top(fn):
 # ---------------------------------------------------------------------------- escritorio
 
 def desk_model(c, x0=None, x1=None):
-    """Escritorio con rotación 0: frente a −y. x0 y x1 = puntas del tablero (por defecto las del
-    sencillo); la cajonera va en la punta +x y las patas en la −x."""
+    """Escritorio en rotación 0. x0, x1 = puntas del tablero (por defecto las del sencillo)."""
     x0 = TOP_X0 if x0 is None else x0
     x1 = TOP_X1 if x1 is None else x1
     ped0, ped1 = x1 - (TOP_X1 - PED_X0), x1 - (TOP_X1 - PED_X1)
     leg0 = x0 + (LEG_X0 - TOP_X0)
-    # Zócalo hundido y cajonera con los cajones al frente; su cara hacia el hueco, en sombra.
+    # Zócalo hundido y cajonera; su cara hacia el hueco, en sombra.
     c.box((ped0 + 1) * U, (ped1 - 1) * U, (PED_Y0 + 1) * U, (PED_Y1 - 1) * U, 0, PED_Z0, WOOD,
           shade=-1, name="plinth")
     c.box(ped0 * U, ped1 * U, PED_Y0 * U, PED_Y1 * U, PED_Z0, LEGS, WOOD,
@@ -144,10 +123,10 @@ def desk_model(c, x0=None, x1=None):
     for y0 in LEG_YS:
         c.box(leg0 * U, (leg0 + LEG) * U, y0 * U, (y0 + LEG) * U, 0, LEGS, WOOD,
               tex={"sides": under_top}, name="leg")
-    # Faldón de atrás: por delante es el fondo del hueco (en sombra).
+    # Faldón de atrás (su frente es el fondo del hueco).
     c.box((leg0 + LEG) * U, ped0 * U, SKIRT_Y0 * U, (SKIRT_Y0 + 1) * U, SKIRT_Z0, LEGS, WOOD,
           tex={"sides": under_top}, shade={iso.FRONT: -1}, name="skirt")
-    # Tablero con vuelo (las puntas las recorta el acabado).
+    # Tablero.
     c.box(x0 * U, x1 * U, TOP_Y0 * U, TOP_Y1 * U, LEGS, TOP, WOOD, name="top")
 
 
@@ -158,8 +137,7 @@ def desk(rotation):
 
 
 def desk_shadow(rotation, size=None, x0=None, x1=None):
-    """Sombra del escritorio: cajonera y patas enteras y, del tablero, solo el centro (metido
-    SHADOW_INSET por lado), corrida abajo a la derecha."""
+    """Sombra: cajonera, patas y el centro del tablero (metido SHADOW_INSET), corrida abajo a la derecha."""
     x0 = TOP_X0 if x0 is None else x0
     x1 = TOP_X1 if x1 is None else x1
     ped0, ped1 = x1 - (TOP_X1 - PED_X0), x1 - (TOP_X1 - PED_X1)
@@ -175,29 +153,20 @@ def desk_shadow(rotation, size=None, x0=None, x1=None):
 
 # ---------------------------------------------------------------------------- piezas de las computadoras
 #
-# Cada spec: monitor (x0, x1, z0, z1 sobre el piso), su cuerpo, cómo se pinta el marco, el teclado y
-# lo que lleve aparte (torre). La pantalla mira a −y (el frente del escritorio); su cara está en
-# y = SCREEN_Y.
+# Cada spec: monitor (x0, x1, z0, z1), cuerpo, marco, teclado y torre. La pantalla mira a −y y su cara
+# está en y = SCREEN_Y.
 
 SCREEN_Y = 13
 SCREEN_DEPTH = 2
 
-# Dos niveles que se distinguen de lejos por la silueta y el color:
-#   básica  todo en uno crema de los 80: caja alta, pantalla chica arriba, ranura del disquete; sin
-#           torre; teclado y ratón crema
-#   pro     monitor plano negro, torre negra con luz azul, teclado y ratón negros
-# Pantalla del pro: un monitor de 24" 16:9 mide unos 54 × 32 cm con el marco y su borde de abajo queda
-# a unos 10 cm de la mesa. Ancho: 54 cm = 17 unidades (34 px a lo largo del eje). Alto: con la escala
-# de los muebles (0.59 px/cm) se ve aplastada frente a su ancho; se usa la de esta proyección
-# (0.78 px/cm): 32 cm = 25 px, y el pie 8 px.
-# depth = fondo de la caja de la pantalla; case = caja acostada debajo (x0, x1, y0, y1, alto);
-# stand = si lleva pie; slot = ranura del disquete en el mentón; glass = vidrio de la pantalla;
-# bulge = bulto de atrás; vents = ranuras en los costados.
+# Básica: todo en uno crema, sin torre. Pro: monitor plano negro (24": 34×25 px y 8 de pie) y torre negra.
+# depth = fondo de la pantalla; case = caja acostada (x0, x1, y0, y1, alto); stand = pie; slot = ranura del
+# disquete; glass = vidrio; bulge = bulto de atrás; vents = ranuras en los costados.
 SW, SZ0, SZ1 = 17, 8, 33
 
 
 def flat(x0, x1=None, z0=SZ0, z1=SZ1):
-    """Pantalla plana negra del pro (por defecto, la de 17 unidades)."""
+    """Pantalla plana negra del pro."""
     x1 = x0 + SW if x1 is None else x1
     return {"monitor": (x0, x1, DESK_Z + z0, DESK_Z + z1), "body": PLASTIC, "bezel": (1, 1, 3), "frame": None,
             "depth": 2, "case": None, "glass": GLASS, "bulge": True, "vents": False}
@@ -221,8 +190,8 @@ def cream(x0):
 
 
 def wing(inner_x, side, width=SW, z0=SZ0, z1=SZ1, turn=0.5):
-    """Pantalla girada hacia quien se sienta: sale del borde de la principal en inner_x hacia afuera
-    (side −1 o +1) y hacia el frente. turn = cuánto viene al frente por cada unidad de ancho."""
+    """Pantalla girada hacia quien se sienta, desde inner_x hacia `side` (±1). turn = cuánto viene al frente
+    por unidad de ancho."""
     return {"wing": (inner_x, side), "width": width, "z": (z0, z1), "turn": turn}
 
 
@@ -245,15 +214,13 @@ def shifted_spec(spec, dx):
 
 
 TOWER_ON = (9, 21, DESK_Z + 26)  # torre sobre el tablero: y0, y1 y hasta dónde sube
-# Sobre un escritorio de una casilla (y, centradas, sobre el ejecutivo): un sprite aparte.
+# Computadoras de una casilla: un sprite aparte, centrado sobre el escritorio.
 SPECS = {
     "basic": [cream(10)],
     "pro": [black_set(flat(11), 12, 8, (3, 8) + TOWER_ON)],
 }
-# Escritorio largo: tablero de 46 unidades (92 px) centrado en sus dos casillas (de 9 a 55). Sus
-# conjuntos van dibujados con el escritorio en un solo sprite (la torre del de tres pantallas va
-# debajo de la mesa y un sprite aparte no podría quedar detrás del tablero). Medidas desde la punta
-# −x del tablero; nada amontonado en una punta.
+# Escritorio largo: tablero de 46 unidades (x 9–55); sus conjuntos van en el mismo sprite (la torre del
+# pro3 va debajo de la mesa). Medidas desde la punta −x del tablero.
 LONG_X0, LONG_X1 = 9, 55
 LONG_CANVAS_HEIGHT = 40  # px del mundo: lo que sube la pantalla más alta sobre el piso
 LONG_SETS = {
@@ -316,7 +283,7 @@ def draw_wing(c, spec, index):
     glare = display & (((diagonal >= w * 0.62) & (diagonal < w * 0.62 + 5))
                        | ((diagonal >= w * 0.62 + 8) & (diagonal < w * 0.62 + 10)))
     c.paint(glare & (a > 2) & (b < h - 3), pal.LIGHT, GLASS)
-    # Espalda: el mismo bulto con ranuras que la pantalla recta, pintado.
+    # Espalda: bulto con ranuras.
     rear = c.select(part=back)
     plate = rear & (a >= w // 4) & (a < w - w // 4) & (b >= 3) & (b < h - 4)
     c.paint(plate, pal.LEFT)
@@ -338,8 +305,7 @@ def draw_set(c, specs):
 
 
 def monitor(c, spec):
-    """Monitor: pie y cuello (o la caja acostada de la computadora vieja), la caja de la pantalla y
-    el bulto de atrás; pinta la pantalla."""
+    """Monitor: pie y cuello (o caja acostada), caja de la pantalla y bulto de atrás."""
     x0, x1, z0, z1 = spec["monitor"]
     body = spec["body"]
     depth = spec["depth"]
@@ -394,8 +360,7 @@ def paint_vents(c, spec):
 
 
 def paint_screen(c, spec):
-    """Cara de la pantalla: marco (bisel) del cuerpo o de otro tono, vidrio oscuro con la sombra del
-    marco arriba y a la izquierda y dos reflejos en diagonal, y la luz de encendido en el mentón."""
+    """Cara de la pantalla: bisel, vidrio con sombra y reflejos y luz de encendido."""
     x0, x1, z0, z1 = spec["monitor"]
     side, top, chin = spec["bezel"]
     glass = spec["glass"]
@@ -405,7 +370,7 @@ def paint_screen(c, spec):
     w = (x1 - x0) * 2
     h = z1 - z0
     if spec["frame"] is not None:
-        # Marco de otro tono alrededor de la pantalla (el mentón queda del color del cuerpo).
+        # Marco de otro tono (el mentón queda del color del cuerpo).
         frame = face & (b >= chin - 1)
         c.paint(frame, pal.RIGHT, spec["frame"])
     display = face & (a >= side) & (a < w - side) & (b >= chin) & (b < h - top)
@@ -418,7 +383,7 @@ def paint_screen(c, spec):
     inner = display & (a > side) & (b < h - top - 1)
     c.paint((wide | thin) & inner, pal.LIGHT, glass)
     if spec.get("slot"):
-        # Todo en uno de los 80: ranura del disquete en el mentón, a la derecha, y un zócalo marcado abajo.
+        # Todo en uno: ranura del disquete en el mentón y zócalo marcado.
         slot_b = chin // 2 + 1
         c.paint(whole_runs(face & (b == slot_b) & (a >= w // 2) & (a < w - side - 1)), pal.DEEP)
         c.paint(whole_runs(face & (b == slot_b - 1) & (a >= w // 2) & (a < w - side - 1)), pal.LIGHT)
@@ -444,8 +409,7 @@ def paint_back(c):
 
 
 def keyboard(c, spec):
-    """Teclado: base delgada y tres filas de teclas pintadas encima (la de adelante con la barra
-    espaciadora); ratón al lado −x (la derecha de quien se sienta)."""
+    """Teclado con tres filas de teclas y ratón al lado −x (la derecha de quien se sienta)."""
     kx0, kx1, ky0, ky1 = spec["keyboard"]
     board = spec["board"]
     c.box(kx0 * U, kx1 * U, ky0 * U, ky1 * U, DESK_Z, DESK_Z + 2, board, name="keyboard")
@@ -466,9 +430,7 @@ def keyboard(c, spec):
 
 
 def tower(c, spec):
-    """Torre (el CPU) sobre el tablero. tower_style "retro": caja crema con dos bahías, ranura del
-    disquete, botón y luz; si no, caja negra moderna con franja de luz al frente y ventana con
-    luces en los costados. Rejilla atrás en las dos."""
+    """Torre: "retro" crema con bahías y disquete, si no negra con luces; rejilla atrás."""
     x0, x1, y0, y1, z1 = spec["tower"]
     body = spec.get("tower_body", PLASTIC)
     base = spec.get("tower_base", DESK_Z)  # 0 = en el piso, al lado del escritorio
@@ -539,8 +501,7 @@ def long_desk_shadow(rotation):
 
 
 def contact_shadow(rotation, height, boxes, mouse=None):
-    """Sombra de contacto de un tono sobre el tablero (para poner con transparencia entre el
-    escritorio y la pieza). Se arma en el piso y se sube 44 px."""
+    """Sombra de contacto sobre el tablero: se arma en el piso y se sube DESK_Z px."""
     c = iso.Canvas.on_desk(rotation, height)
     for x0, x1, y0, y1, h in boxes:
         c.box(x0 * U, x1 * U, y0 * U, y1 * U, 0, h, PLASTIC)
@@ -578,13 +539,13 @@ def computer_shadow(kind, rotation):
 # ---------------------------------------------------------------------------- salida
 
 def with_shadow(base, shadow, opacity=0.3, offset=(0, 0)):
-    """Pone una sombra de un tono sobre una imagen con transparencia (para las vistas)."""
+    """Compone una sombra con transparencia sobre una imagen."""
     faded = np.array(shadow)
     faded[..., 3] = (faded[..., 3] * opacity).astype(np.uint8)
     base.alpha_composite(Image.fromarray(faded, "RGBA"), offset)
 
 
-# Corrimiento en pantalla de 1 casilla hacia +x del modelo, por rotación (para la vista con segundo monitor).
+# Corrimiento en pantalla de 1 casilla hacia +x del modelo, por rotación.
 MODEL_X_STEP = {0: (64, 32), 1: (-64, 32), 2: (-64, -32), 3: (64, -32)}
 COMPUTER_SHIFT = 0.15
 
@@ -645,8 +606,8 @@ def long_name(key, rotation):
 
 
 def seats():
-    """Para el juego: a qué altura del modelo (en casillas, a lo largo del mueble) queda el teclado de
-    cada sprite, que es donde se dibuja quien se sienta."""
+    """Para el juego: posición del teclado a lo largo del mueble (casillas) por sprite; ahí va quien se
+    sienta."""
     result = {"computer_basic": seat_x(SPECS["basic"], 0.5), "computer_pro": seat_x(SPECS["pro"], 0.5)}
     for key in LONG_KEYS:
         result["desk_long" + ("_" + key if key else "")] = seat_x(LONG_SETS[key], (LONG_X0 + LONG_X1) / 2.0 * U)

@@ -1,59 +1,7 @@
-# Paredes, puertas, ventanas y esquinas (docs/sprites_128.md, sección 8) en el estilo de
-# tools/sprites/STYLE.md: cara de pared lisa (5 colores, WALL_COLORS), tapa y canto ciruela oscuro
-# (WALL_CAP) con contorno, puertas con marco, tableros y manija, puerta doble de vidrio de la
-# Recepción y ventana administrativa de aluminio con persiana veneciana.
-#
-#   wall_tall_x  wall_tall_y  wall_low_x  wall_low_y                 72×160 / 72×64
-#   door[_wood|_office]_tall_x … _low_y                              72×160 / 72×64
-#   glass_door_tall_x … _low_y                                       72×160 / 72×64
-#   window_tall_x … _low_y                                           72×160 / 72×64
-#   glass_door_double_a/_b_tall_x … _low_y   doble de vidrio sin marco en dos bordes (a, b)  72×160 / 72×64
-#   door[_wood|_office]_tall_<eje>_open_1…6   la hoja abierta de 15° en 15° hasta 90° hacia adentro
-#   glass_door_tall_<eje>_open_1…6            las dos hojas abren de 15° en 15° hasta 90° hacia afuera
-#   window_tall_<eje>_blind_1…3               la persiana baja hasta cerrar
-#   glass_door_double_a/_b_tall_<eje>_open_1…6   cada hoja abre de 15° en 15° hasta 90° hacia afuera
-#   wall_tall_corner[_left|_right|_front]                     16×128, poste de esquina 8×8 px de planta
-#   wall_low_corner[_back|_left|_right]                       16×28
-#   wall_tall_x_shadow  wall_tall_y_shadow                    128×128, franja sobre la casilla de adentro
-#
-# Cada pieza y cada cuadro sale en los 5 colores: sin color en el nombre la fría, y el color antes
-# de _tall/_low en las demás (door_wood_beige_tall_x_open_2).
-#
-# Cuadros de animación (kind wall_frame, solo de las piezas altas; el cuadro 0 es la pieza misma):
-# la hoja abierta sale de los 72 px del tramo, así que cada animación va en su propio lienzo, igual
-# para sus 3 cuadros. El manifiesto anota anchor (el mismo punto del piso que la pieza), base (la
-# pieza cerrada) y base_offset (dónde cae el lienzo de la pieza dentro del cuadro): la pared
-# alrededor queda pixel por pixel como en la pieza. Las bajas no tienen hoja: no se animan.
-#
-# La baja es el zócalo de la alta: la misma cara fría, la misma tapa (alto 20 en vez de 120).
-#
-# Puerta alta: el marco llega a 92 px (46 del mundo, la tabla de la guía) y encima sigue la pared
-# hasta 120, dentro del mismo sprite, para que no quede hueco junto a las paredes altas. Por eso
-# el manifiesto anota height 60 (el alto del sprite) y door_height 46 (el del marco).
-# Puerta baja: sin hoja; dos jambas bajas y el umbral, para que se lea como un paso.
-#
-# Apoyo de los tramos: el punto medio del borde de la casilla, en el piso: (36, alto − 18). El
-# borde va de (4, alto − 34) a (68, alto − 2) en los _y y de (68, alto − 34) a (4, alto − 2) en los
-# _x. El manifiesto lo anota (anchor, anchor_at, edge, thickness y sort_bias).
-#
-# Esquinas (wall_*_corner*): un poste de 8×8 px de planta centrado en el vértice, que el juego
-# dibuja DESPUÉS de los tramos que llegan a ese vértice (Y del vértice + POST_SORT_BIAS). Tapa la
-# muesca de la junta en L. Cada orientación de la L ve otras caras del poste, así que hay una por
-# orientación (se nombra por dónde queda la esquina en pantalla, con el local visto desde abajo):
-#   wall_tall_corner        fondo (arriba): dos altas que salen hacia +x y +y
-#   wall_tall_corner_left   izquierda: alta que llega desde −y y baja que sale hacia +x
-#   wall_tall_corner_right  derecha: alta que llega desde −x y baja que sale hacia +y
-#   wall_tall_corner_front  frente (abajo): dos altas que llegan desde −x y −y (local con entrantes)
-#   wall_low_corner         frente: dos bajas que llegan desde −x y −y
-#   wall_low_corner_back / _left / _right   las otras L de paredes bajas (tabiques interiores)
-# Apoyo: el vértice en el piso, (8, alto − 4). Se dibujan con sus vecinos completos (con su z) y
-# se guarda solo lo que cae dentro de la silueta del poste: así el contorno y los brillos quedan
-# donde quedarían con la esquina armada.
-#
-# Hojas de revisión (en DIR): sheet_walls_room.png (local de 4×3 con puertas, ventanas y
-# esquinas), sheet_walls_corners.png (esquinas ampliadas), sheet_walls_interior.png (tabiques
-# bajos), sheet_walls_variants.png (las variantes de puerta y la de vidrio), sheet_walls_animations.png
-# (cada animación de la pieza al último cuadro), sheet_walls_colors.png y _sheets/walls.png.
+# Paredes, puertas, ventanas, postes de esquina y sombras (docs/sprites_128.md, sección 8; estilo de STYLE.md).
+# Tramos de 72×160 (altos) y 72×64 (bajos) con apoyo en el punto medio del borde, en el piso: (36, alto − 18).
+# Cada pieza sale en los 5 colores de WALL_COLORS (el color va antes de _tall/_low; la fría sin color) y las
+# altas que se mueven traen cuadros (kind wall_frame) en su propio lienzo, ubicados con base_offset.
 import math
 import os
 import re
@@ -76,23 +24,18 @@ LOW = iso.WALL_LOW_HEIGHT  # 20 px de sprite
 WALL_TOP = iso.world_px(WALL_DATA["height"])  # 120
 DOOR_TOP = iso.world_px(DOOR_DATA["height"])  # 92
 CAP_H = 2  # alto de la tapa ciruela (su cara de arriba es el grosor de la pared)
-# Sin contorno donde la pared da contra el piso: como en la referencia, la cara llega limpia al
-# piso (el contorno grueso de los muebles ahí se ve como una raya negra a lo largo de la pared).
+# Sin contorno contra el piso: la cara llega limpia (ahí se vería como una raya negra).
 FLOOR_LINE = 0
 
-# Orden de dibujo: por la Y del apoyo, como en el juego. Dos tramos que se tocan en una esquina
-# pueden tener la MISMA Y: ahí va primero el _y y después el _x (sort_bias en el manifiesto).
+# Orden de dibujo por la Y del apoyo; con la misma Y va primero el _y (sort_bias del _x).
 SORT_BIAS_X = 0.5
 # El poste va después de todos los tramos que llegan a su vértice (Y del vértice + 17).
 POST_SORT_BIAS = 17.0
 
 # ---------------------------------------------------------------------------- rampas
 
-# Cara de la pared: WALL_COOL de STYLE.md (arriba 96acad, lados 899da0) con el contorno ciruela
-# de la tapa, así toda la pared lleva el mismo borde oscuro de la «maqueta».
-# Colores de la cara (todos con la tapa y el contorno ciruela). La fría es la de siempre y sus
-# piezas no llevan color en el nombre; las demás van como wall_<color>_tall_x, door_<color>_…,
-# window_<color>_… y wall_<color>_tall_corner_…. Cada una: (arriba, cara, brillo).
+# Colores de la cara, todos con tapa y contorno ciruela: (nombre, arriba, cara, brillo). La fría no lleva
+# color en el nombre.
 WALL_COLORS = (
     ("cool", "96acad", "899da0", "a3b6b7"),
     ("beige", "c2b7a3", "b3a792", "cfc5b3"),
@@ -112,8 +55,7 @@ def wall_ramp(color):
 
 
 def colored(name, color):
-    """Nombre de una pieza en un color: el color va antes de _tall/_low (wall_tall_x ->
-    wall_beige_tall_x, door_wood_tall_y_open_2 -> door_wood_beige_tall_y_open_2; la fría no cambia)."""
+    """Nombre de una pieza en un color (wall_tall_x -> wall_beige_tall_x; la fría no cambia)."""
     if color == DEFAULT_COLOR:
         return name
     return re.sub(r"_(tall|low)(?=_|$)", r"_%s_\1" % color, name, count=1)
@@ -128,8 +70,7 @@ def use_color(color):
     WALL = wall_ramp(color)
 CAP = pal.WALL_CAP  # tapa y canto: 584549 arriba, 493539 / 3e2e33 a los lados, contorno 21161a
 
-# Puerta (fila «Puerta» de STYLE.md): la hoja se ve en una cara lateral, así que su beige afa08d
-# es la cara derecha (como en la referencia) y la izquierda un paso más clara.
+# Hoja de puerta: el beige de la guía (afa08d) en la cara derecha y la izquierda un paso más clara.
 LEAF = pal.style_ramp("c9baa2", side="b8a991", shadow="afa08d", outline="2a211b", deep="5e3e29",
                       light="efdfbd", name="door_leaf")
 LEAF_GROOVE = LEAF.add("8d6e4f")  # ranura de los tableros (el «lado» de la fila Puerta)
@@ -145,11 +86,10 @@ BLIND = pal.style_ramp("a57a50", side="8f663f", shadow="7f5935", outline="3a1f0e
                        light="c49a6a", name="blind")
 BLIND_GAP = BLIND.add("5a3a20")  # rendija entre tablillas
 
-# Aluminio oscuro (frame_color 4f5862 de la puerta de vidrio en la cara derecha): marco de la
-# puerta de vidrio, de la puerta de oficina y de la ventana administrativa.
+# Aluminio oscuro: marcos de las puertas de vidrio y de oficina y de la ventana.
 ALU = pal.style_ramp("68727c", side="5a646d", shadow="4f5862", outline="1d2227", deep="3a4149",
                      light="8a949d", shine="c3cbd2", name="aluminum")
-# Vidrio de la puerta de la Recepción (a9d4e6 de data/construction.json en la cara derecha).
+# Vidrio de la puerta de la Recepción.
 GLASS_DOOR = pal.style_ramp("c3e4f2", side="b4dcec", shadow="a9d4e6", outline="2b3d4c", deep="5d8aa6",
                             light="dff1f8", shine="ffffff", name="glass_door")
 # Persiana veneciana de oficina: tablillas blancas con rendija gris.
@@ -174,8 +114,7 @@ OFFICE_SHINE = OFFICE_LEAF.add("e4f5fb")
 # ---------------------------------------------------------------------------- marco de dibujo
 
 class _Along(object):
-    """Contexto de textura con x = posición a lo largo del tramo (casillas, 0–1), sea cual sea
-    la orientación con la que se dibujó. Lo demás se lee del contexto del motor."""
+    """Contexto de textura con x = posición a lo largo del tramo (0–1), sea cual sea su orientación."""
 
     def __init__(self, ctx, x):
         self._ctx = ctx
@@ -185,17 +124,13 @@ class _Along(object):
         return getattr(self._ctx, name)
 
 
-# Caras del tramo (modelo de pared: x a lo largo, y a lo ancho) -> caras del mundo cuando el
-# tramo corre a lo largo de +y (un _x dibujado en un lienzo sin giro).
+# Caras del tramo (x a lo largo, y a lo ancho) -> caras del mundo cuando corre a lo largo de +y.
 _FACES_ALONG_Y = {iso.BACK: iso.X1, iso.FRONT: iso.X0, iso.X1: iso.BACK, iso.X0: iso.FRONT}
 
 
 class Frame(object):
-    """Dónde se dibuja el modelo de un tramo. En su propio lienzo (Canvas.wall) es la identidad:
-    el lienzo ya gira el _x. Para los postes, el mismo modelo se dibuja en un lienzo sin giro
-    junto a sus vecinos: along 'x' = el tramo corre a lo largo de +x desde (ox, oy) (un _y),
-    along 'y' = a lo largo de +y (un _x); las caras y la textura se cambian solas. part: todas
-    sus piezas se funden con esa (sin contorno entre ellas)."""
+    """Dónde se dibuja el modelo de un tramo: identidad en Canvas.wall; para los postes, en un lienzo sin
+    giro con along 'x' (un _y) o 'y' (un _x) desde (ox, oy). part: todas sus piezas se funden con esa."""
 
     def __init__(self, c, along="x", ox=0.0, oy=0.0, part=None):
         self.c = c
@@ -251,7 +186,7 @@ def _shift(mask, dy, dx):
 # ---------------------------------------------------------------------------- pared
 
 def wall_block(f, x0, x1, z0, z1, top=True):
-    """Bloque de pared del grosor entero: cara fría lisa; si llega arriba, tapa ciruela."""
+    """Bloque de pared del grosor entero; con top, tapa ciruela arriba."""
     if top:
         f.box(x0, x1, -HALF, HALF, z0, z1 - CAP_H, WALL, name="wall", part="wall")
         f.box(x0, x1, -HALF, HALF, z1 - CAP_H, z1, CAP, name="cap", part="wall")
@@ -260,17 +195,12 @@ def wall_block(f, x0, x1, z0, z1, top=True):
 
 
 def wall_model(f, height, x0=0.0, x1=1.0):
-    """Tramo de pared: x de 0 a 1 a lo largo, ±4 px de grosor, cara lisa y tapa ciruela."""
+    """Tramo de pared de x0 a x1 a lo largo, ±4 px de grosor."""
     wall_block(f, x0, x1, 0, height)
 
 
 def paint_canto(c):
-    """El canto del tramo (x = 1 del modelo, el extremo de adelante) va en ciruela, como el
-    corte de la «maqueta». En una pared seguida lo tapa el tramo siguiente; en una esquina, el
-    poste."""
-    # Antes iba en ciruela (como el corte de una maqueta), pero en las esquinas donde una pared alta
-    # termina sobre una baja quedaba una barra oscura con un escalón: ahora el canto es pared, del
-    # color de la pared con su sombra, y lo oscuro es solo la tapa.
+    """No hace nada: el canto va del color de la pared y lo oscuro es solo la tapa."""
     return
 
 
@@ -289,8 +219,7 @@ SHADOW_COLOR = (26, 28, 38)  # el mismo tono de las sombras de los muebles (Canv
 
 
 def wall_shadow(axis):
-    """Sombra de contacto de una pared alta sobre la casilla de adentro: una franja pegada al
-    borde (el de arriba a la izquierda del rombo para un _x, el de arriba a la derecha para un _y)."""
+    """Sombra de contacto de una pared alta: franja sobre la casilla de adentro, pegada al borde."""
     grid = iso.tile_grid()
     across = grid.u if axis == "x" else grid.v
     mask = grid.mask & (across < SHADOW_DEPTH[axis])
@@ -301,8 +230,7 @@ def wall_shadow(axis):
 
 # ---------------------------------------------------------------------------- puerta
 
-# Medidas a lo largo del tramo (en 1/32 de casilla = 2 px): pared 0–2, jamba 2–5, hoja 5–27,
-# jamba 27–30, pared 30–32. La hoja queda 2 px hundida (su cara en y = 1/32).
+# Medidas a lo largo (1/32 de casilla): pared 0–2, jamba 2–5, hoja 5–27, jamba 27–30, pared 30–32.
 DOOR_WALL = 2 / 32.0
 JAMB0, JAMB1 = 2 / 32.0, 5 / 32.0
 LEAF0, LEAF1 = 5 / 32.0, 27 / 32.0
@@ -313,8 +241,7 @@ OPENING = DOOR_TOP - LINTEL  # 88: arriba de la hoja
 HANDLE_Z = 44
 # Ángulos de la hoja en los cuadros de abrir (_open_1 a _open_6); el 0 es la pieza cerrada.
 SWING_ANGLES = (15, 30, 45, 60, 75, 90)
-# La hoja girada toma solo los tonos de cara según la luz (sin caer en el contorno ni en la sombra
-# profunda): de frente a la luz arriba, de lado la izquierda y de espaldas la derecha.
+# Tonos de la hoja girada según la luz (sin contorno ni sombra profunda).
 LEAF_BANDS = ((0.66, pal.BASE), (0.10, pal.LEFT), (-9.0, pal.RIGHT))
 
 
@@ -343,10 +270,8 @@ def vision_index(a, b, base, slot):
     return np.where(edge, OFFICE_EDGE, index)
 
 
-# Tipos de puerta que giran. layout: (pared, fin de la jamba, hoja desde, hoja hasta) a lo largo,
-# en 1/32 de casilla; la del otro lado es simétrica. Con marco oscuro va 8 px de pared a cada lado
-# (como la ventana): si no, el marco queda pegado a la unión con el tramo vecino y se ve el corte.
-# panels: tableros (a0, a1, b0, b1) en px de la hoja (ancho de la hoja × 86).
+# Puertas que giran. layout: (pared, fin de la jamba, hoja desde, hoja hasta) en 1/32 de casilla, simétrico;
+# panels: tableros (a0, a1, b0, b1) en px de la hoja.
 NARROW = (2, 5, 5, 27)  # hoja de 44 px
 WIDE = (4, 6, 6, 26)  # hoja de 40 px
 DOOR_TYPES = {
@@ -381,9 +306,8 @@ def leaf_panel_for(spec):
 
 
 def rbox(c, o, u, v, w, ramp, tex=None, bands=None, side_index=None, top_index=None, name=None, part=None):
-    """Caja con cualquier giro, hecha de seis paneles: o = esquina (x, y, z), u, v, w = sus tres
-    lados (dx, dy, dz). Las dos caras grandes (u × w) llevan la textura; los cantos (v × w) toman
-    side_index y arriba y abajo (u × v) top_index (o la luz si no se dan). Devuelve la pieza."""
+    """Caja con cualquier giro hecha de seis paneles: o = esquina, u, v, w = lados. Las caras u × w llevan
+    la textura, los cantos side_index y arriba y abajo top_index. Devuelve la pieza."""
     def add(a, b):
         return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
 
@@ -397,12 +321,9 @@ def rbox(c, o, u, v, w, ramp, tex=None, bands=None, side_index=None, top_index=N
 
 
 def hinged_leaf(c, hinge_x, sign, width, angle, outward, z0, z1, ramp, tex, side_index, top_index, hardware=()):
-    """Hoja con bisagra en x = hinge_x, de `width` casillas hacia +x (sign 1) o −x (sign −1), 2 px
-    de grueso centrada en y = 0, girada `angle` grados hacia +y (adentro) o −y (outward). El mismo
-    armado para la hoja cerrada (angle 0) y para los cuadros abiertos, así se ven iguales.
-    hardware: herrajes [(a0, a1, k0, k1, b0, b1, ramp)]: a en px desde la bisagra a lo largo de la
-    hoja, k en casillas desde el centro de la hoja hacia su cara de adentro (negativo, la de afuera),
-    b en px desde z0; giran con la hoja."""
+    """Hoja con bisagra en hinge_x, de `width` casillas hacia sign (±1), girada `angle` grados hacia +y (o −y
+    con outward). hardware: [(a0, a1, k0, k1, b0, b1, ramp)]: a en px desde la bisagra, k en casillas desde
+    el centro hacia adentro, b en px desde z0."""
     out = -1.0 if outward else 1.0
     t = math.radians(angle)
     turn = sign * out * t
@@ -424,8 +345,7 @@ def hinged_leaf(c, hinge_x, sign, width, angle, outward, z0, z1, ramp, tex, side
 
 
 def door_handle(px):
-    """Manija de las puertas que giran: placa de 4 px y palanca de 12 px hacia la bisagra, del lado
-    de adentro, a 6 px del canto libre."""
+    """Manija del lado de adentro: placa de 4 px y palanca de 12 px, a 6 px del canto libre."""
     return ((px - 10, px - 6, RECESS, RECESS + 1 / 64.0, HANDLE_Z - 6 - SILL, HANDLE_Z + 6 - SILL, METAL),
             (px - 18, px - 6, RECESS + 1 / 64.0, RECESS + 2 / 64.0, HANDLE_Z - SILL, HANDLE_Z + 3 - SILL, METAL))
 
@@ -439,11 +359,8 @@ def swung_leaf(c, spec, angle):
 
 
 def door_model(f, tall, kind="door", angle=0, skip=None, leaf=True):
-    """Puerta alta: pared a los lados y encima del marco hasta 120, marco (jambas y cabezal de 4),
-    hoja de 2 px con sus tableros (o mirilla), umbral y manija. angle: la hoja abierta hacia
-    adentro (0 = cerrada). Puerta baja: la alta cortada a 20 px sin la hoja.
-    Para los postes: skip = "start" o "end" deja sin el pedacito de pared de esa punta (lo ocupa
-    el poste) y leaf=False la dibuja sin hoja (la hoja no pasa por Frame)."""
+    """Puerta: pared a los lados y encima, marco, hoja, umbral y manija; angle la abre hacia adentro. La baja
+    va sin hoja. Para postes: skip ("start"/"end") quita la pared de esa punta y leaf=False, la hoja."""
     spec = DOOR_TYPES[kind]
     frame = spec["frame"]
     wall, jamb, leaf0, leaf1 = door_layout(spec)
@@ -467,11 +384,8 @@ def door_model(f, tall, kind="door", angle=0, skip=None, leaf=True):
 
 # ---------------------------------------------------------------------------- puerta doble de vidrio
 
-# La de la Recepción (data/construction.json, glass_door): marco de aluminio hasta 100 px (50 del
-# mundo), pared encima hasta 120, 8 px de pared a cada lado (como la ventana: el aluminio no toca
-# la unión). Dos hojas de vidrio de 20 px con perfil de aluminio y tirador vertical, cada una con
-# la bisagra en su jamba; se juntan en el medio. Al abrir (_open_1 a _open_6) las dos giran de 15°
-# en 15° hasta 90° hacia afuera (−y, el lado de la calle).
+# Puerta doble de vidrio de la Recepción: marco de aluminio hasta 100 px y pared encima; dos hojas de 20 px
+# con la bisagra en sus jambas que abren hacia afuera (−y).
 GLASS_TOP = iso.world_px(GLASS_DOOR_DATA["height"])  # 100
 GLASS_HEAD = GLASS_TOP - 4  # 96: arriba del vidrio
 GLASS_WALL = 4 / 32.0
@@ -486,8 +400,7 @@ GLASS_ALU_DARK = GLASS_DOOR.add("4f5862")
 
 
 def glass_leaf_face(ctx):
-    """Hoja de vidrio con perfil: a = px desde la bisagra (0–20), b = px desde el umbral. Perfil
-    de 2 px a los lados y arriba, zócalo de 4 abajo y reflejos en diagonal."""
+    """Hoja de vidrio: a = px desde la bisagra, b = px desde el umbral; perfil, zócalo y reflejos."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     width = np.floor(PANE * 64.0)
@@ -502,8 +415,7 @@ def glass_leaf_face(ctx):
 
 
 def glass_leaf(c, hinge_x, sign, angle):
-    """Hoja de la puerta de vidrio con marco (angle 0 = cerrada; abre hacia afuera) con su tirador
-    vertical de metal junto al canto libre, de los dos lados."""
+    """Hoja de vidrio (abre hacia afuera) con tirador vertical de los dos lados."""
     px = PANE * 64.0
     pull = tuple((px - 5, px - 4, k0, k1, PULL[0] - SILL, PULL[1] - SILL, METAL)
                  for k0, k1 in ((RECESS, RECESS + 1 / 64.0), (-RECESS - 1 / 64.0, -RECESS)))
@@ -533,13 +445,8 @@ def glass_door_model(f, tall, angle=0):
 
 # ---------------------------------------------------------------------------- puerta doble de vidrio sin marco
 
-# Variante de la Recepción que ocupa DOS bordes seguidos: dos hojas de vidrio templado sin marco de
-# 48 px (0.75 m) cada una, hueco de 96 px, 16 px de pared a cada lado y pared encima desde 100 px
-# (50 del mundo, como la de vidrio). Herrajes de metal en las esquinas de la bisagra y un tirador
-# largo junto al medio. Se dibuja como un modelo de x 0 a 2 y se guarda en dos mitades, cada una
-# un tramo normal de 72×160: glass_door_double_a (x 0–1, va en el borde de menor x o y) y _b
-# (x 1–2). Las bajas son solo los dos trozos de pared con el hueco entre ellos.
-# Al abrir (_open_1 a _open_6) cada hoja gira de 15° en 15° hasta 90° hacia afuera (−y).
+# Doble de vidrio sin marco: ocupa dos bordes; se modela de x 0 a 2 y se guarda en dos mitades de 72×160,
+# _a (x 0–1, el borde de menor x o y) y _b (x 1–2). Hojas de 48 px que abren hacia afuera (−y).
 DOUBLE_WALL = 8 / 32.0  # 16 px de pared a cada lado
 DOUBLE_GAP = 1 / 64.0  # medio hueco entre las dos hojas (1 px cada una)
 DOUBLE_TOP = GLASS_TOP  # 100
@@ -550,8 +457,7 @@ DOUBLE_EDGE = GLASS_DOOR.add("8fb8cc")  # canto del vidrio templado
 
 
 def double_leaf_face(ctx):
-    """Vidrio sin marco: a = px desde la bisagra (0–47), b = px desde abajo. Canto del vidrio y
-    reflejos en diagonal largos."""
+    """Vidrio sin marco: a = px desde la bisagra, b = px desde abajo; canto y reflejos."""
     a = np.floor(ctx.a)
     b = np.floor(ctx.b)
     width = np.floor((1.0 - DOUBLE_WALL - DOUBLE_GAP) * 64.0)
@@ -565,8 +471,7 @@ def double_leaf_face(ctx):
 
 
 def double_leaf(c, hinge_x, sign, angle):
-    """Hoja sin marco (angle 0 = cerrada; abre hacia afuera): herrajes de 6 px que abrazan el vidrio
-    arriba y abajo junto a la bisagra y tirador largo junto al canto libre, de los dos lados."""
+    """Hoja sin marco (abre hacia afuera) con herrajes junto a la bisagra y tirador largo."""
     width = 1.0 - DOUBLE_WALL - DOUBLE_GAP
     px = width * 64.0
     height = DOUBLE_TOP - DOUBLE_BOTTOM
@@ -597,10 +502,8 @@ def double_glass_model(f, tall, half=None, angle=0):
 
 # ---------------------------------------------------------------------------- ventana
 
-# Ventana administrativa: marco de aluminio oscuro, dos hojas con parante en el medio y un
-# travesaño que deja una banda fija arriba, vidrio hundido y persiana veneciana blanca. Alta:
-# pared abajo (0–28) y arriba (108–120), pared de 8 px a los lados, alféizar 28–32, cabezal
-# 104–108. La baja es una franja de ventana en la pared de 20 (sin persiana).
+# Ventana: marco de aluminio, parante, travesaño, vidrio hundido y persiana veneciana (solo la alta).
+# La baja es una franja de ventana en la pared de 20.
 WIN_WALL = 4 / 32.0
 WIN_JAMB = 6 / 32.0
 WIN_MULLION = (15 / 32.0, 17 / 32.0)
@@ -608,7 +511,7 @@ WIN_KINDS = {
     True: {"sill": (28, 32), "head": (104, 108), "transom": (84, 86)},
     False: {"sill": (4, 6), "head": (16, 18), "transom": None},
 }
-# Persiana: abajo de la tela en la pieza cerrada (_blind_0 = la pieza) y en _blind_1 a _blind_6.
+# Borde de abajo de la persiana por cuadro (0 = la pieza cerrada).
 BLIND_LEVELS = (70, 64, 58, 51, 45, 38, 32)
 
 
@@ -661,10 +564,8 @@ def window_model(f, tall, blind=None):
 
 # ---------------------------------------------------------------------------- esquinas
 
-# Vecinos de un vértice en el orden (−x, −y, +x, +y): n nada, t pared alta, l pared baja, h puerta
-# alta y d puerta baja. Los brazos de atrás (−x, −y) quedan detrás del poste: de ellos solo importa
-# el alto, así que una puerta ahí se nombra como pared (el juego hace lo mismo), salvo en la jamba
-# entre dos puertas seguidas en línea (wall_post_dndn, ndnd, hnhn, nhnh).
+# Vecinos de un vértice (−x, −y, +x, +y): n nada, t/l pared alta/baja, h/d puerta alta/baja. Atrás solo
+# importa el alto (una puerta se nombra como pared), salvo en las jambas entre dos puertas (MULLIONS).
 POST_HEIGHTS = {"t": WALL_TOP, "l": LOW, "n": 0, "h": WALL_TOP, "d": LOW}
 DOOR_CODES = ("d", "h")
 CORNERS = {
@@ -689,10 +590,8 @@ def is_mullion(neighbors):
 
 
 def post_combos():
-    """Todas las uniones que llevan poste: dos tramos o más en un vértice, salvo dos del mismo alto
-    en línea (ahí la pared sigue de largo; una pared y una puerta del mismo alto también), más las
-    jambas compartidas de dos puertas en línea. Cada una es (−x, −y, +x, +y): atrás n, l o t y
-    adelante n, l, t, d o h."""
+    """Uniones que llevan poste: dos tramos o más, salvo dos del mismo alto en línea, más las jambas de
+    dos puertas en línea. Cada una es (−x, −y, +x, +y)."""
     combos = []
     for a in "nlt":
         for b in "nlt":
@@ -713,11 +612,8 @@ def post_name(neighbors):
 
 
 def post_piece(neighbors):
-    """Poste de 8×8 px de planta en un vértice, del alto del vecino más alto. Se dibuja en un
-    lienzo grande con los cuatro tramos vecinos completos (con su z y fundidos con el poste) y se
-    guarda solo lo que cae dentro de la silueta del poste, recortado a 16 px de ancho con el
-    vértice en (8, alto − 4). Un vecino puerta se dibuja como puerta (jamba en vez de tapa); entre
-    dos puertas en línea queda un pedazo de pared con su tapa entre las dos jambas."""
+    """Poste de 8×8 px de planta en un vértice, del alto del vecino más alto: se dibuja con los vecinos
+    completos y se guarda solo su silueta, 16 px de ancho con el vértice en (8, alto − 4)."""
     height = max(POST_HEIGHTS[code] for code in neighbors)
     big_w, big_h = 192, height + 112
     origin = (96.0, big_h - 56.0)
@@ -731,22 +627,18 @@ def post_piece(neighbors):
             continue
         back = ox < 0 or oy < 0
         if code in DOOR_CODES:
-            # Una puerta más baja que el poste va sin su pedacito de pared del lado del poste (queda
-            # dentro del poste); del mismo alto lo lleva, fundido con el poste.
+            # Una puerta más baja que el poste va sin su pedazo de pared del lado del poste.
             skip = ("end" if back else "start") if POST_HEIGHTS[code] < height else None
             door_model(Frame(c, along, ox, oy, part=post), code == "h", skip=skip, leaf=False)
             continue
-        # Un tramo más bajo que el poste arranca en el borde del poste, no en el vértice: si no,
-        # su cara (del mismo plano que la del poste) tapa medio poste y en las esquinas ciruela
-        # queda una franja fría hasta el piso. Los del alto del poste siguen desde el vértice.
+        # Un tramo más bajo que el poste arranca en su borde; si no, su cara tapa medio poste.
         start, end = 0.0, 1.0
         if POST_HEIGHTS[code] < height:
             start, end = (0.0, 1.0 - HALF) if back else (HALF, 1.0)
         wall_model(Frame(c, along, ox, oy, part=post), POST_HEIGHTS[code], start, end)
     image = np.array(c.finish(ground_outline=FLOOR_LINE))
     alone = iso.Canvas(big_w, big_h, origin, size=(1, 1), rotation=0, swap=False, kind="post", anchor=origin)
-    # Entre dos puertas el poste toma además el contorno de las jambas que lo tocan (si no, queda una
-    # raya oscura de más entre él y la puerta de adelante): su silueta se alarga un poco hacia ellas.
+    # Entre dos puertas la silueta se alarga hacia las jambas para tomar su contorno.
     grow = MULLION_GROW if is_mullion(neighbors) else 0.0
     gx = grow if neighbors[0] != "n" else 0.0
     gy = grow if neighbors[1] != "n" else 0.0
@@ -777,9 +669,8 @@ def _floor_tiles(out_dir):
     return tiles if len(tiles) == 4 else [sheet.plain_tile()]
 
 
-# Código de la escena -> pieza. t/l pared, d/b puerta, w/v ventana (alta/baja).
-# k/m puerta de madera, o/p de oficina, g/h de vidrio y q/r la doble sin marco (mitades a y b;
-# s/u sus bajas) (alta/baja).
+# Código de la escena -> pieza: t/l pared, d/b puerta, w/v ventana, k/m madera, o/p oficina, g/h vidrio,
+# q/r y s/u la doble sin marco (mitades a y b); la primera de cada par es la alta.
 CODE_PIECES = {"t": "wall_tall", "l": "wall_low", "d": "door_tall", "b": "door_low",
                "w": "window_tall", "v": "window_low", "k": "door_wood_tall", "m": "door_wood_low",
                "o": "door_office_tall", "p": "door_office_low", "g": "glass_door_tall", "h": "glass_door_low",
@@ -790,8 +681,7 @@ CODE_FAMILY = {"t": "t", "d": "t", "w": "t", "k": "t", "o": "t", "g": "t", "q": 
 
 
 class WallLayout(object):
-    """Bordes de una escena de prueba: (x, y, eje) -> código. Pone los tramos, las sombras de
-    las altas y el poste de cada vértice en L."""
+    """Bordes de una escena de prueba ((x, y, eje) -> código): tramos, sombras y postes."""
 
     def __init__(self):
         self.edges = {}
@@ -860,8 +750,7 @@ def room_layout(cols=4, rows=3, doors_on="y"):
 
 
 def variants_layout(cols=6, rows=3):
-    """Local con las variantes en las paredes altas: ventana, puertas de madera, de vidrio, de
-    oficina y la doble de vidrio sin marco (dos bordes) al fondo, y sus bajas al frente."""
+    """Local con las variantes de puerta y ventana: altas al fondo y bajas al frente."""
     layout = WallLayout()
     back = {0: "w", 1: "k", 2: "g", 3: "o", 4: "q", 5: "r"}
     front = {1: "m", 2: "h", 3: "s", 4: "u"}
@@ -875,8 +764,7 @@ def variants_layout(cols=6, rows=3):
 
 
 def animation_sheet(out_dir):
-    """Cada animación en una fila, de la pieza cerrada al último cuadro, para los dos ejes: cada
-    cuadro pegado con su apoyo en el mismo punto."""
+    """Cada animación en una fila, de la pieza cerrada al último cuadro, con el apoyo alineado."""
     manifest = dict((e["file"], e) for e in iso.registry())
     rows = []
     for family, _model, frames, _extra in FAMILIES:
@@ -986,11 +874,8 @@ def anchor_meta(c, axis):
     }
 
 
-# Piezas por familia: (nombre, modelo(f, tall, paso), cuadros, metadatos). Los cuadros son los
-# pasos de la animación (paso 0 = la pieza cerrada) y salen solo en la alta: puertas que giran
-# (_open_1 a _open_6, la hoja abierta de 15° en 15° hasta 90° hacia adentro), la de vidrio (_open_1 a
-# _open_6, las dos hojas abren hacia afuera) y la ventana (_blind_1 a _blind_6, la persiana baja hasta
-# cerrar).
+# Familias: (nombre, modelo(f, tall, paso), cuadros, metadatos). Los cuadros salen solo en la alta
+# (paso 0 = la pieza cerrada).
 def _door_family(kind):
     return (kind, lambda f, tall, step: door_model(f, tall, kind, SWING_ANGLES[step - 1] if step else 0),
             ("open", len(SWING_ANGLES)), {"door_height": DOOR_DATA["height"]})
@@ -1006,8 +891,7 @@ FAMILIES = (
     ("window", lambda f, tall, step: window_model(f, tall, step), ("blind", len(BLIND_LEVELS) - 1),
      {"height": WINDOW_DATA["height"]}),
 )
-# Lo que la hoja abierta sale del lienzo de la pared (izquierda, arriba, derecha, abajo, en px);
-# después se recorta a lo que se usa en todos los cuadros.
+# Cuánto sale la hoja abierta del lienzo (izquierda, arriba, derecha, abajo, px); luego se recorta.
 FRAME_GROW = {"door": (48, 0, 48, 32), "glass_door": (32, 24, 32, 8)}  # la de vidrio abre hacia atrás
 
 
@@ -1019,8 +903,7 @@ def make_piece(model, axis, tall, step=0, canvas=None):
 
 
 def wide_wall_canvas(axis, tall, grow):
-    """Lienzo de pared más grande con el mismo dibujo: la pared cae en los mismos pixeles que en
-    Canvas.wall, corrida (izquierda, arriba)."""
+    """Lienzo de pared más grande con la pared en los mismos pixeles que Canvas.wall."""
     ref = iso.Canvas.wall(axis, tall)
     gl, gt, gr, gb = grow
     origin = (ref.origin[0] + gl, ref.origin[1] + gt)
@@ -1033,8 +916,7 @@ def wide_wall_canvas(axis, tall, grow):
 
 
 def frame_set(out_dir, family, model, frames, axis, color, base_name):
-    """Cuadros de la animación de una pieza alta, todos en el mismo lienzo y con el mismo apoyo
-    que la pieza (corrido base_offset)."""
+    """Cuadros de la animación de una pieza alta, en un lienzo común con el apoyo corrido base_offset."""
     label, count = frames
     if family in DOOR_TYPES:
         grow = FRAME_GROW["door"]
@@ -1068,8 +950,7 @@ def frame_set(out_dir, family, model, frames, axis, color, base_name):
     return files
 
 
-# Lienzo de trabajo de la doble: entran los dos tramos, un tramo de pared a cada lado (para que el
-# acabado empalme con las paredes vecinas) y las hojas abiertas hacia atrás.
+# Lienzo de la doble: los dos tramos, una pared vecina a cada lado (para el acabado) y las hojas abiertas.
 DOUBLE_GROW = (136, 56, 136, 104)
 
 
@@ -1091,9 +972,7 @@ def _double_render(axis, tall, half, angle, neighbors):
 
 
 def double_half_image(axis, tall, half, angle=0):
-    """La mitad como la vería el juego: sus pixeles (los de la mitad sola), con el acabado de la
-    puerta armada entre dos paredes donde lo que se ve es de ella; donde la tapa otra pieza queda
-    lo suyo, como en un tramo normal."""
+    """La mitad como la ve el juego: sus pixeles, con el acabado de la puerta armada donde se ve ella."""
     whole, whole_depth, c, ref = _double_render(axis, tall, None, angle, True)
     alone, alone_depth, _c, _ref = _double_render(axis, tall, half, angle, False)
     mine = alone[..., 3] == 255

@@ -1,27 +1,11 @@
 #!/usr/bin/env python3
-# Pasa al juego los sprites que ya están conectados (por ahora: suelo, paredes, árboles, muebles
-# de piso, objetos de pared y personajes).
+# Pasa al juego los sprites conectados (suelo, paredes, árboles, muebles, objetos de pared y personajes).
 #
 #   python3 tools/sprites/export_game.py DIR
 #
-# DIR es la carpeta donde generate.py escribió los PNG y sus manifest*.json. Escribe:
-#   assets/tiles/ground.png      atlas del suelo: una fila por estilo, una columna por variante;
-#                                cada casilla mide 128×64 (el rombo del sprite, sin la mitad vacía
-#                                de arriba) y lleva 1 px de más alrededor del rombo (el color del
-#                                borde repetido) para que dos casillas vecinas no dejen rendija
-#                                cuando el zoom no es entero
-#   assets/sprites/walls/*.png   tramos de pared, puerta, ventana y puerta de vidrio, y los postes
-#   assets/sprites/trees/*.png   los árboles y sus sombras
-#   assets/sprites/furniture/*.png  los muebles de piso, las computadoras y sus sombras
-#   assets/sprites/wall_items/*.png los objetos de pared, para pared _x y _y
-#   assets/sprites/characters/*.png una hoja por aspecto (conjunto de ropa y paleta): una fila por
-#                                dirección (r0..r3) y una columna por cuadro (de pie, sentado, parado ×4,
-#                                caminar ×8 y tecleando ×4), en casillas de 128×128. Las paletas _v1 y _v2
-#                                se sacan aquí cambiando color por color (rampa de la base -> rampa de la
-#                                variante): el generador solo las dibuja de pie
-#   data/sprites.json            dónde está cada cosa y su punto de apoyo (lo lee SpriteLibrary)
-#
-# Después hay que dejar que Godot importe lo nuevo: Godot --headless --editor --quit
+# DIR es la carpeta de generate.py (PNG y manifest*.json). Escribe assets/tiles/ground.png,
+# assets/sprites/ y data/sprites.json (apoyos; lo lee SpriteLibrary).
+# Después: Godot --headless --editor --quit
 import json
 import os
 import shutil
@@ -53,8 +37,7 @@ GROUND += [("path", "ground_path"), ("sidewalk", "ground_sidewalk"), ("road", "g
 EDGE_KINDS = ("wall", "door", "window", "glass_door")
 TREES = 8
 
-# Mueble del juego (id de data/furniture.json) -> (nombre del sprite, si tiene 4 rotaciones _r0.._r3).
-# Los chicos usan la versión _q (ya al 60 %, para un cuarto de casilla). Los objetos de pared no van aquí.
+# Mueble (id de data/furniture.json) -> (sprite, si tiene rotaciones _r0.._r3). Los chicos usan _q.
 FURNITURE = {
     "simple_desk": ("desk_simple", True), "executive_desk": ("executive_desk", True),
     "basic_chair": ("chair_basic", True), "ergonomic_chair": ("chair_ergonomic", True),
@@ -71,17 +54,16 @@ FURNITURE = {
     "backup_battery": ("backup_battery", True), "filing_cabinet": ("filing_cabinet", True),
     "floor_lamp": ("floor_lamp_q", False), "rug": ("rug", False), "aquarium": ("aquarium", True),
 }
-# Objeto de pared del juego -> dibujos posibles (el juego elige uno fijo por casilla); cada uno con _x y _y.
+# Objeto de pared -> dibujos posibles (uno fijo por casilla), cada uno con _x y _y.
 WALL_ITEMS = {
     "air_conditioner": ("air_conditioner",), "painting": ("painting", "painting_abstract", "painting_sea"),
     "wall_clock": ("wall_clock",), "whiteboard": ("whiteboard",), "presentation_screen": ("presentation_screen",),
 }
-# Escritorio que se dibuja entero con lo que lleva encima: computadora -> sprite según cuántas pantallas
-# extra tiene (0, 1, 2). Las pantallas extra no tienen sprite propio.
+# Escritorio dibujado entero con su computadora -> sprite según las pantallas extra (0, 1, 2).
 DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
                            "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}
-# Sillas: el asiento y el respaldo son imágenes aparte (<base>_seat_r0, <base>_back_r0), porque el
-# respaldo se dibuja delante o detrás de quien se sienta según la rotación.
+# Sillas: asiento y respaldo aparte (<base>_seat_r0, <base>_back_r0); el respaldo va delante o
+# detrás de quien se sienta según la rotación.
 PARTS = ("chair_basic", "chair_ergonomic")
 
 # Personajes: cuadros de cada pose, en el orden de las columnas de la hoja.
@@ -133,7 +115,7 @@ def check_chair_colors(directory):
 
 
 def bleed(tile):
-    """Repite 1 px hacia afuera el color del borde del rombo (4 vecinos)."""
+    """Repite 1 px hacia afuera el color del borde del rombo (evita rendijas con zoom no entero)."""
     arr = np.array(tile)
     alpha = arr[..., 3] > 0
     out = arr.copy()
@@ -227,8 +209,8 @@ def main(directory):
         wall_items[item] = {"sprites": list(bases), "base_z": manifest[bases[0] + "_x.png"]["base_z"]}
 
     # ---- personajes
-    # Además de las poses sueltas, cada hoja lleva «sentado en su silla» por cada silla: la silla
-    # entera, la persona (ya con su paleta) y encima la parte de la silla que la tapa.
+    # Cada hoja lleva además «sentado en su silla» por silla: silla entera + persona con su paleta +
+    # la parte de la silla que la tapa.
     chair_poses = [(pose, count) for pose, count in CHARACTER_POSES if pose in ("sit", "type")]
     all_poses = list(CHARACTER_POSES)
     for item, base in SEATED_CHAIRS.items():

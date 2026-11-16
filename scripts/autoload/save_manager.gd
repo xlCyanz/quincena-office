@@ -1,11 +1,6 @@
-# Guardado y carga (diseño, 12.5): reúne el export_state() de cada sistema en un
-# archivo JSON y lo reparte con import_state() al cargar. También prepara una partida
-# nueva.
-#
-# Hay un autoguardado, que se escribe solo al final de cada día de juego (al pasar a
-# las 00:00), y SLOT_COUNT ranuras de guardado manual. Lo que vive en la escena de
-# juego (cámara y CEO) lo aporta la escena con scene_state_provider; al cargar queda
-# esperando en take_scene_state() hasta que la escena se abre.
+# Guardado y carga: junta el export_state() de cada sistema en un JSON y lo reparte con import_state().
+# Autoguardado al pasar a las 00:00 y SLOT_COUNT ranuras manuales. La escena aporta cámara y CEO con
+# scene_state_provider y los recibe al abrirse con take_scene_state().
 extends Node
 
 const AUTOSAVE: String = "autosave"
@@ -17,12 +12,10 @@ const FORMAT_VERSION: int = 1
 ## Carpeta de los archivos de guardado (las pruebas usan otra para no tocar las del jugador).
 var save_dir: String = DEFAULT_SAVE_DIR
 
-## Con true una partida nueva empieza con la empresa de data/starting_company.json
-## (40 empleados, para probar); por defecto se empieza con el CEO solo.
+## true: una partida nueva empieza con la empresa de data/starting_company.json (para probar).
 var start_with_demo: bool = false
 
-## Lo pone la escena de juego mientras está abierta: devuelve el estado de la escena
-## (cámara y CEO). Sin escena abierta no hay autoguardado.
+## Lo pone la escena de juego abierta: devuelve su estado (cámara y CEO). Sin escena no hay autoguardado.
 var scene_state_provider := Callable()
 
 var _pending_scene_state: Dictionary = {}
@@ -31,14 +24,12 @@ var _game_over: bool = false
 
 
 func _ready() -> void:
-	# Economy se conecta antes (va antes en la lista de autoloads), así que el
-	# autoguardado del día 1 ya incluye el cobro del mantenimiento.
+	# Economy se conecta antes: el autoguardado del día 1 ya incluye el mantenimiento.
 	EventBus.day_changed.connect(_on_day_changed)
 	EventBus.game_over.connect(_on_game_over)
 
 
-## Deja todos los sistemas como al empezar una partida nueva: el local inicial con
-## la Oficina Ejecutiva, el capital inicial y el reloj en el día 1 a la hora de entrada.
+## Deja todos los sistemas como al empezar una partida nueva.
 func new_game() -> void:
 	_pending_scene_state = {}
 	_game_over = false
@@ -49,17 +40,16 @@ func new_game() -> void:
 	GameClock.new_game()
 	Projects.new_game()
 	Products.new_game()
-	# Después del local: la calificación inicial mira los muebles del local inicial.
+	# Después del local: la calificación inicial mira sus muebles.
 	Bank.new_game()
 	Company.new_game()
 	Events.new_game()
 	Tutorial.new_game()
-	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
-	# de esta partida, no las de la anterior.
+	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y deben ser las de esta partida.
 	Economy.new_game()
 	if start_with_demo:
 		StartingCompany.apply()
-		# La empresa de prueba no es una primera partida: empieza sin tutorial.
+		# La empresa de prueba empieza sin tutorial.
 		Tutorial.import_state({})
 	Company.finish_load()
 	Tutorial.finish_load()
@@ -116,8 +106,7 @@ func save_game(slot: String) -> bool:
 		"scene": scene_state_provider.call() if scene_state_provider.is_valid() else {},
 	}
 	DirAccess.make_dir_recursive_absolute(save_dir)
-	# Se escribe primero en un archivo temporal y luego se renombra, para que un cierre
-	# a mitad de escritura no deje el guardado anterior roto.
+	# Archivo temporal y luego renombrar: un cierre a mitad no rompe el guardado anterior.
 	var temporary: String = _path(slot) + ".tmp"
 	var file := FileAccess.open(temporary, FileAccess.WRITE)
 	if file == null:
@@ -128,8 +117,7 @@ func save_game(slot: String) -> bool:
 	return DirAccess.rename_absolute(temporary, _path(slot)) == OK
 
 
-## Carga una partida: restaura reloj, economía y oficina, y deja el estado de la escena
-## para cuando se abra. Devuelve false (sin cambiar nada) si el archivo no sirve.
+## Carga una partida y deja el estado de la escena para cuando se abra. Devuelve false (sin cambiar nada) si no sirve.
 func load_game(slot: String) -> bool:
 	var data: Dictionary = _read(slot)
 	if data.is_empty():
@@ -138,21 +126,15 @@ func load_game(slot: String) -> bool:
 	Company.begin_load()
 	Tutorial.begin_load()
 	OfficeState.import_state(data["office"])
-	# Las partidas de la fase 1 no tienen personal: se cargan sin vacantes.
 	Staff.import_state(data.get("staff", {}))
 	Projects.import_state(data.get("projects", {}))
 	Products.import_state(data.get("products", {}))
 	GameClock.import_state(data["clock"])
-	# Las partidas de antes del hito 21 no tienen banco: se calcula con lo que hay.
 	Bank.import_state(data.get("bank", {}))
-	# Las partidas de antes del hito 27 no tienen etapa: se calcula al cargar.
 	Company.import_state(data.get("company", {}))
-	# Las partidas de antes del hito 43 no tienen eventos: se cargan sin tarjeta abierta.
 	Events.import_state(data.get("events", {}))
-	# Las partidas de antes del hito 63 no tienen tutorial: cargan sin él (como terminado).
 	Tutorial.import_state(data.get("tutorial", {}))
-	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y tienen que ser las
-	# de esta partida, no las de la anterior.
+	# El saldo va al final: al cambiar, Staff y Bank pagan deudas, y deben ser las de esta partida.
 	Economy.import_state(data["economy"])
 	# Los objetivos se revisan con la partida ya entera.
 	Company.finish_load()
@@ -161,8 +143,7 @@ func load_game(slot: String) -> bool:
 	return true
 
 
-## La ranura guardada más reciente (autoguardado o manual), o "" si no hay ninguna. Con la
-## misma hora gana el autoguardado (hito 61: «Continuar»).
+## Ranura guardada más reciente, o ""; con la misma hora gana el autoguardado.
 func get_latest_slot() -> String:
 	var latest: String = ""
 	var latest_at: int = -1
@@ -176,8 +157,7 @@ func get_latest_slot() -> String:
 	return latest
 
 
-## Resumen de una ranura ({"day", "month", "hour", "balance", "saved_at"}), o vacío si
-## no hay partida ahí.
+## Resumen de una ranura ({"day", "month", "hour", "balance", "saved_at"}), o {} si está vacía.
 func get_summary(slot: String) -> Dictionary:
 	var data: Dictionary = _read(slot)
 	if data.is_empty():
@@ -198,8 +178,7 @@ func describe_slot(slot: String) -> String:
 		summary["hour"], MoneyFormat.format(summary["balance"])]
 
 
-## Estado de la escena de la última partida cargada (vacío si es nueva). Se entrega
-## una sola vez.
+## Estado de la escena de la última partida cargada ({} si es nueva). Se entrega una sola vez.
 func take_scene_state() -> Dictionary:
 	var state: Dictionary = _pending_scene_state
 	_pending_scene_state = {}
@@ -211,8 +190,7 @@ func _on_day_changed(_day: int, _month: int) -> void:
 		save_game(AUTOSAVE)
 
 
-# Al perder se borra el autoguardado para no volver al momento del embargo; las
-# ranuras manuales quedan.
+# Al perder se borra el autoguardado (no volver al embargo); las ranuras manuales quedan.
 func _on_game_over(_stats: Dictionary) -> void:
 	_game_over = true
 	if has_save(AUTOSAVE):

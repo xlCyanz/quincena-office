@@ -1,22 +1,6 @@
-# La empresa en conjunto (diseño, 9 y 17.2).
-#
-# Hito 26: el valor de la empresa, un número siempre visible que funciona como
-# puntuación: dinero + reventa de los muebles y las computadoras + terreno comprado (a
-# lo que se pagó) − deuda con el banco (capital pendiente, cuotas atrasadas y recargos).
-# Los productos se suman en la fase 5. No se guarda: se calcula con Economy,
-# OfficeState y Bank, y cuando algo de eso cambia avisa con
-# EventBus.company_value_changed.
-#
-# Hito 27: las cinco etapas de data/stages.json. Se revisan cada día y nunca bajan; al
-# subir avisan (EventBus.stage_changed y un aviso al jugador). Cada etapa pone un tope
-# por préstamo (Bank) y puede desbloquear tipos de habitación (Builder). Los contratos
-# medianos piden la etapa 2 (Projects).
-#
-# Hito 28: los objetivos guiados de data/objectives.json. Se ven los primeros
-# visible_count sin cumplir, en orden; cuando uno se cumple avisa, paga su recompensa
-# (dinero con el concepto «Objetivo cumplido» y reputación) una sola vez y entra el
-# siguiente. Las condiciones miran el estado de la partida (cuántos hay de algo), así
-# una partida vieja marca al cargar los que ya cumple, sin recompensa.
+# La empresa en conjunto: valor (dinero + bienes + terreno − deuda; no se guarda, avisa con
+# EventBus.company_value_changed), etapas de data/stages.json (nunca bajan), objetivos guiados de
+# data/objectives.json (recompensa una sola vez) y la salida a bolsa.
 extends Node
 
 const STAGES_PATH: String = "res://data/stages.json"
@@ -30,17 +14,14 @@ var stage: int = 0
 ## Ids de los objetivos cumplidos, en el orden en que se cumplieron.
 var objectives_done: Array[String] = []
 
-# Mientras SaveManager prepara o carga una partida, los demás sistemas cambian de a uno
-# y avisan: no se revisan objetivos con un estado a medias.
+# Mientras SaveManager prepara o carga, no se revisan objetivos con el estado a medias.
 var _loading: bool = false
-# Partida de antes del hito 28: al terminar de cargar se marcan los que ya cumple.
+# Partida sin objectives_done: al terminar de cargar se marcan los que ya cumple.
 var _mark_silently: bool = false
 # Pagar una recompensa cambia el saldo y vuelve a avisar: se evita revisar dentro de una revisión.
 var _checking: bool = false
-# data/objectives.json leído (ver _objectives_data).
 var _objectives: Dictionary = {}
-## Día (GameClock.get_day_count) en que la empresa salió a bolsa, o NOT_PUBLIC (hito 48).
-## Después la partida sigue en modo libre.
+## Día (GameClock.get_day_count) en que salió a bolsa, o NOT_PUBLIC; después sigue en modo libre.
 var public_day: int = NOT_PUBLIC
 # Ya se avisó que se puede salir a bolsa (una sola vez por partida).
 var _ipo_announced: bool = false
@@ -73,8 +54,7 @@ func begin_load() -> void:
 	_loading = true
 
 
-## … y que terminó: se marcan sin recompensa los objetivos que una partida vieja ya
-## cumple y se revisan los demás.
+## … y que terminó: marca sin recompensa los objetivos que ya cumple y revisa los demás.
 func finish_load() -> void:
 	_loading = false
 	if _mark_silently:
@@ -83,7 +63,7 @@ func finish_load() -> void:
 	check_objectives()
 
 
-# --- Valor (hito 26) ---
+# --- Valor ---
 
 ## Valor de la empresa.
 func get_value() -> int:
@@ -93,8 +73,7 @@ func get_value() -> int:
 	return total
 
 
-## Partes del valor, en orden: [{"label", "amount"}] (la deuda va en negativo).
-## Con inversionista (hito 58) se agrega lo que falta pagarle, estimado.
+## Partes del valor, en orden: [{"label", "amount"}] (deuda y lo que falta pagar al inversionista en negativo).
 func get_value_parts() -> Array[Dictionary]:
 	var parts: Array[Dictionary] = [
 		{"label": "Dinero", "amount": Economy.balance},
@@ -114,7 +93,7 @@ func _notify() -> void:
 	_announce_ipo()
 
 
-# --- Salir a bolsa (hito 48) ---
+# --- Salir a bolsa ---
 
 ## Indica si la empresa ya cotiza en bolsa (modo libre).
 func is_public() -> bool:
@@ -144,8 +123,7 @@ func ipo_problem() -> String:
 	return ""
 
 
-## Sale a bolsa: es la meta final. No da dinero; la partida sigue en modo libre. Avisa
-## con EventBus.went_public y las estadísticas de cierre. Devuelve {"ok", "message"}.
+## Sale a bolsa (meta final, sin dinero; sigue en modo libre) y emite EventBus.went_public. Devuelve {"ok", "message"}.
 func go_public() -> Dictionary:
 	var problem: String = ipo_problem()
 	if not problem.is_empty():
@@ -157,8 +135,7 @@ func go_public() -> Dictionary:
 	return {"ok": true, "message": message}
 
 
-## Estadísticas de la pantalla de cierre: días jugados, empleados contratados y actuales,
-## contratos entregados, productos lanzados, valor y mejor reputación.
+## Estadísticas de la pantalla de cierre.
 func get_ipo_stats() -> Dictionary:
 	return {"days": GameClock.get_day_count() + 1, "hired": Staff.hired_count, "employees": Staff.employees.size(),
 		"delivered": Projects.delivered_count, "launched": Products.launched_count, "value": get_value(),
@@ -173,7 +150,7 @@ func _announce_ipo() -> void:
 	EventBus.send_notice(EventBus.target_menu("company"), "La empresa ya puede salir a bolsa: es la meta final. Hazlo desde Empresa.")
 
 
-# --- Etapas (hito 27) ---
+# --- Etapas ---
 
 ## Cuántas etapas hay.
 func get_stage_count() -> int:
@@ -205,8 +182,7 @@ func get_requirements(index: int) -> Array[Dictionary]:
 	return result
 
 
-## Cuánto hay hoy de un requisito («employees», «delivered», «complete_teams»…). Los
-## productos y los ejecutivos llegan en las fases 4 y 5: por ahora son 0.
+## Cuánto hay hoy de un requisito («employees», «delivered», «complete_teams»…).
 func count_requirement(key: String) -> int:
 	match key:
 		"employees":
@@ -244,8 +220,7 @@ func meets(index: int) -> bool:
 	return true
 
 
-## Sube de etapa todo lo que se pueda (nunca baja). Con notify avisa al jugador de cada
-## etapa nueva; al cargar una partida se hace en silencio.
+## Sube de etapa todo lo que se pueda (nunca baja); con notify avisa de cada etapa nueva.
 func check_stage(notify: bool = true) -> void:
 	var reached: int = stage
 	while reached + 1 < get_stage_count() and meets(reached + 1):
@@ -307,7 +282,7 @@ func room_lock_reason(type_id: String) -> String:
 	return "La %s se desbloquea en %s." % [RoomCatalog.get_display_name(type_id), get_stage_name(get_room_stage(type_id))]
 
 
-# --- Objetivos (hito 28) ---
+# --- Objetivos ---
 
 ## Todos los objetivos, en orden: {"id", "text", "condition", "money", "reputation"}.
 func get_objectives() -> Array[Dictionary]:
@@ -334,8 +309,7 @@ func is_objective_done(objective_id: String) -> bool:
 	return objectives_done.has(objective_id)
 
 
-## Cómo va un objetivo: {"met": bool, "progress": String} (progress = «2 / 5» en los que
-## cuentan algo, o "").
+## Cómo va un objetivo: {"met", "progress"} (progress = «2 / 5» si cuenta algo, si no "").
 func get_objective_progress(objective: Dictionary) -> Dictionary:
 	var condition: Dictionary = objective.get("condition", {})
 	var count: int = int(condition.get("count", 1))
@@ -424,11 +398,9 @@ func export_state() -> Dictionary:
 		"ipo_announced": _ipo_announced}
 
 
-## Restaura el estado. Las partidas de antes del hito 27 calculan su etapa al cargar; las
-## de antes del hito 28 marcan sin recompensa los objetivos que ya cumplen.
+## Restaura el estado; sin etapa la calcula al cargar y sin objetivos marca los que ya cumple.
 func import_state(state: Dictionary) -> void:
 	stage = clampi(int(state.get("stage", 0)), 0, maxi(0, get_stage_count() - 1))
-	# Antes del hito 48 no se salía a bolsa.
 	public_day = int(state.get("public_day", NOT_PUBLIC))
 	_ipo_announced = bool(state.get("ipo_announced", false))
 	objectives_done.clear()
@@ -446,7 +418,7 @@ func _stages() -> Array:
 	return _data().get("stages", [])
 
 
-# Se lee una vez: los objetivos se revisan con cada cambio de personal o proyectos.
+# Se lee una vez: los objetivos se revisan con cada cambio.
 func _objectives_data() -> Dictionary:
 	if _objectives.is_empty():
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(OBJECTIVES_PATH))
@@ -457,7 +429,7 @@ func _objectives_data() -> Dictionary:
 	return _objectives
 
 
-# Se lee al usarlo, como data/bank.json, para que los ajustes del hito 29 se vean sin reiniciar.
+# Se lee al usarlo para ver los ajustes sin reiniciar.
 func _data() -> Dictionary:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(STAGES_PATH))
 	if parsed is Dictionary:

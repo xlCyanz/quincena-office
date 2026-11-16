@@ -1,8 +1,5 @@
-# Prueba de las entrevistas citadas (pedido después del hito 69): «Entrevistar» cita al
-# candidato para el próximo día de quien entrevista a su hora de entrada (las siguientes,
-# cada media hora); el candidato llega antes, espera de pie y a la hora camina a la silla
-# de visita y empieza la entrevista. Si quien entrevista no está, la cita se cancela con
-# aviso. Un candidato citado no se va. Las citas se guardan en la partida.
+# Entrevistas citadas: el candidato llega antes, espera de pie y a su hora camina a la silla
+# de visita y empieza; si quien entrevista no está se cancela con aviso. Se guardan.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=appointments
 extends Node
 
@@ -63,8 +60,7 @@ func _candidates(count: int) -> Array[Dictionary]:
 	return found
 
 
-# Adelanta el reloj hasta ese minuto absoluto: de a horas mientras se pueda y después de a
-# minutos, dejando correr cuadros para que la escena dibuje a los candidatos.
+# Adelanta hasta ese minuto absoluto dejando correr cuadros para que la escena dibuje a los candidatos.
 func _advance_to(minute: int) -> void:
 	while Staff.get_absolute_minute() < minute:
 		if minute - Staff.get_absolute_minute() > 60 and GameClock.get_minute() == 0:
@@ -100,13 +96,11 @@ func _check_ceo() -> void:
 	_expect(Staff.schedule_interview(int(second["id"]))["ok"], "cita al segundo")
 	_expect(int(Staff.get_appointment(int(second["id"]))["at"]) == at + 30, "el segundo media hora después")
 
-	# Guardar y cargar conserva las citas.
 	var saved: Dictionary = Staff.export_state()
 	Staff.import_state(JSON.parse_string(JSON.stringify(saved)))
 	_expect(Staff.appointments.size() == 2 and int(Staff.get_appointment(int(first["id"]))["at"]) == at,
 		"las citas se guardan: %s" % [Staff.appointments])
 
-	# Un candidato citado no se va aunque se le acaben los días.
 	first["arrived_day"] = GameClock.get_day_count() - 30
 	Staff.call("_process_arrivals", GameClock.get_day_count())
 	_expect(not Staff.get_candidate(int(first["id"])).is_empty(), "el citado espera su entrevista")
@@ -115,19 +109,17 @@ func _check_ceo() -> void:
 	var arrival: int = Staff.get_appointment_arrival(Staff.get_appointment(int(first["id"])))
 	_expect(at - arrival >= 10 and at - arrival <= 25, "llega entre 10 y 25 minutos antes: %d" % (at - arrival))
 
-	# Llega antes y espera de pie, no en la silla de visita.
 	await _advance_to(arrival - 1)
 	_expect(not game.appointment_visitors.has(int(first["id"])), "antes de su hora de llegada no está")
 	await _advance_to(arrival)
 	var waiting: Visitor = game.appointment_visitors.get(int(first["id"]))
-	# Entra cuando la puerta está libre (la prueba no deja caminar al CEO): basta que exista.
+	# Entra cuando la puerta está libre (aquí el CEO no camina): basta que exista.
 	_expect(waiting != null and waiting.standing and waiting.activity == OfficeCharacter.Activity.WALKING_TO_DESK,
 		"llega temprano y espera de pie")
 	var guest: Vector2i = Staff.get_guest_chair("ceo").get("cell", Vector2i(-99, -99))
 	_expect(waiting != null and waiting.get_seat_cell() != guest, "no espera en la silla de visita")
 	_expect(Staff.interview.is_empty(), "todavía no empieza")
 
-	# A la hora citada lo llaman: camina a la silla de visita y al sentarse empieza.
 	await _advance_to(at)
 	_expect(int(Staff.interview.get("candidate_id", -1)) == int(first["id"]) and not Staff.is_interview_started(),
 		"a las 8 lo llaman, todavía sin empezar: %s" % [Staff.interview])
@@ -151,7 +143,6 @@ func _check_ceo() -> void:
 		"al sentarse empieza la entrevista: %s" % [Staff.interview])
 	_expect(int(Staff.interview["ends_at"]) == started + 30, "dura media hora desde que se sienta")
 
-	# A la media hora termina y llaman al siguiente, que ya esperaba su turno.
 	await _advance_to(started + 29)
 	_expect(game.appointment_visitors.has(int(second["id"])), "el segundo ya espera su turno")
 	await _advance_to(started + 30)
@@ -159,7 +150,7 @@ func _check_ceo() -> void:
 	Staff.call("_check_appointments")
 	_expect(bool(first["interviewed"]), "el primero quedó entrevistado")
 	_expect(int(Staff.interview.get("candidate_id", -1)) == int(second["id"]), "después llaman al segundo")
-	# Si no llega a sentarse (aquí no se lo deja caminar), empieza igual al tope.
+	# Aquí no se lo deja caminar: empieza igual al tope.
 	var called: int = Staff.get_absolute_minute()
 	if game.interviewee != null:
 		game.interviewee.set_process(false)
@@ -170,7 +161,7 @@ func _check_ceo() -> void:
 	await _advance_to(Staff.get_absolute_minute() + 30)
 	Staff.check_interview()
 
-	# Si quien entrevista no está, la cita se cancela con aviso: el CEO se fue a casa.
+	# Quien entrevista no está (el CEO se fue a casa): se cancela con aviso.
 	_expect(Staff.schedule_interview(int(third["id"]))["ok"], "cita al tercero")
 	var soon: int = Staff.get_absolute_minute() + 10
 	Staff.get_appointment(int(third["id"]))["at"] = soon
@@ -210,7 +201,6 @@ func _check_executive() -> void:
 	var visitor: Visitor = game.interviewee
 	_expect(visitor != null and visitor.get_seat_cell() == Staff.get_guest_chair(key).get("cell", Vector2i(-99, -99)),
 		"el candidato va a la silla de visita del ejecutivo")
-	# Si el ejecutivo se va de la empresa, sus citas se borran.
 	var other: Dictionary = _candidates(1)[0]
 	Staff.check_interview()
 	if Staff.interview.is_empty() and Staff.schedule_interview(int(other["id"]), true)["ok"]:

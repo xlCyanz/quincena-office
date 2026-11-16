@@ -1,7 +1,5 @@
-# Prueba del hito 25: compra de terreno.
-# Criterio: comprar 4 × 3 al este cuesta $2,010, el local suma 12 m² y el mantenimiento
-# sube $60 al mes; no se puede comprar fuera del solar ni sin tocar el local; los
-# caminos llegan al terreno nuevo.
+# Compra de terreno: 4 × 3 al este cuesta $2,010, suma 12 m² y $60 de mantenimiento; no fuera
+# del solar ni sin tocar el local; los caminos llegan al terreno nuevo.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=land
 extends Node
 
@@ -21,7 +19,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	_check_lot()
 	_check_east()
@@ -100,9 +98,7 @@ func _check_east() -> void:
 		and OfficeState.get_edge(Vector3i(7, 3, y_axis)) == ConstructionCatalog.WALL, "pared en el contorno nuevo")
 	for edge: Vector3i in OfficeState.lot.get_outline():
 		_expect(not OfficeState.get_edge(edge).is_empty(), "todo el contorno cerrado: %s" % edge)
-	# Los caminos llegan al terreno nuevo.
 	_expect(not _pathfinder().find_path(OfficeState.entrance, Vector2i(8, 0)).is_empty(), "se llega caminando al terreno nuevo")
-	# El mantenimiento del mes siguiente cobra los metros nuevos.
 	var before: int = Economy.balance
 	GameClock.fast_forward_hours((GameConstants.DAYS_PER_MONTH - GameClock.get_day_count()) * GameConstants.HOURS_PER_DAY - GameClock.get_hour())
 	_expect(-_sum(Economy.CONCEPT_MAINTENANCE) == maintenance + 60, "mantenimiento de %d m²: %d" % [OfficeState.lot.get_area(), -_sum(Economy.CONCEPT_MAINTENANCE)])
@@ -113,13 +109,12 @@ func _check_refused() -> void:
 	_new_game()
 	var builder := Builder.new()
 	var quote: Dictionary = builder.quote_land(Builder.SIDE_EAST, 4, 40, 0)
-	# Lo que se sale del solar se deja afuera; se compra el resto.
 	var inside: bool = (quote["new_cells"] as Array).all(func(cell: Vector2i) -> bool: return OfficeState.site_rect.has_point(cell))
 	_expect(quote["ok"] and inside and (quote["new_cells"] as Array).size() < 4 * 40, "lo de fuera del solar no se compra: %s" % quote["message"])
 	quote = builder.quote_land(Builder.SIDE_EAST, 4, 3, 8)
 	_expect(not quote["ok"] and String(quote["message"]).contains("tocar el local"), "no sin tocar el local: %s" % quote["message"])
 	quote = builder.quote_land(Builder.SIDE_SOUTH, 3, 2, 2)
-	# Frente a la puerta sí se compra: la entrada se corre derecho al borde nuevo (sin hueco de calle).
+	# Frente a la puerta sí se compra: la entrada se corre derecho al borde nuevo.
 	var street: Vector2i = OfficeState.get_outside_of_entrance()
 	var old_entrance: Vector2i = OfficeState.entrance
 	_expect(quote["ok"] and (quote["new_cells"] as Array).has(street) and quote["entrance"] == old_entrance + Vector2i(0, 2)
@@ -170,9 +165,9 @@ func _check_notch() -> void:
 func _check_rooms() -> void:
 	_new_game()
 	var builder := Builder.new()
-	# Una franja al norte de todo el local juntaría la Oficina Ejecutiva con el resto.
+	# Franja al norte de todo el local, también sobre la Oficina Ejecutiva:
 	var quote: Dictionary = builder.quote_land(Builder.SIDE_NORTH, 6, 1, 0)
-	# Ahora se puede: el borde se abre al espacio común y la oficina conserva su pared.
+	# el borde se abre al espacio común y la oficina conserva su pared.
 	var office_before: int = 0
 	for room: Dictionary in OfficeState.rooms:
 		if room["type"] == "executive_office":
@@ -201,7 +196,7 @@ func _check_save() -> void:
 	_expect(OfficeState.lot.get_area() == 48, "partida nueva con el local inicial")
 	_expect(SaveManager.load_game("slot_5"), "cargar")
 	_expect(JSON.stringify(OfficeState.export_state()) == before and OfficeState.lot.get_area() == 60, "el local vuelve igual")
-	# Una partida de antes del hito 25 solo tiene el rectángulo.
+	# Una partida vieja solo tiene el rectángulo.
 	var state: Dictionary = OfficeState.export_state()
 	state.erase("lot_cells")
 	state["lot"] = [0, 0, 6, 8]
@@ -226,7 +221,6 @@ func _check_panel() -> void:
 	var controller: BuildController = game.get_node("BuildController")
 	var rect: Rect2i = OfficeState.lot_rect
 	var corner: Vector2i = Vector2i(rect.end.x, rect.position.y)
-	# Arrastrar ya no elige terreno suelto: solo se compran los lotes marcados.
 	var free_area: int = OfficeState.lot.get_area()
 	controller.set("_pointer", Vector2(corner + Vector2i(9, 0)))
 	controller.call("_land_input", _mouse_button(true))
@@ -234,7 +228,7 @@ func _check_panel() -> void:
 	controller.call("_land_input", _mouse_button(false))
 	_expect(OfficeState.lot.get_area() == free_area, "arrastrar lejos del local no compra nada")
 	_expect(not bool(controller.buy_land_plot_at(corner + Vector2i(9, 0))["ok"]), "un lote que no toca el local no se compra")
-	# Lotes marcados (fase 8): el solar se parte en lotes de 4×4 y los que tocan el local se compran con un clic.
+	# Lotes de 4×4: los que tocan el local se compran con un clic.
 	var plots: Array[Dictionary] = controller.get_land_plots()
 	_expect(plots.size() >= 4, "hay lotes marcados alrededor del local: %d" % plots.size())
 	var all_touch: bool = true
@@ -247,7 +241,7 @@ func _check_panel() -> void:
 	var area: int = OfficeState.lot.get_area()
 	var price: int = int(plots[0]["cost"])
 	var balance: int = Economy.balance
-	# Un clic (apretar y soltar en la misma casilla) sobre un lote lo compra.
+	# Un clic (apretar y soltar en la misma casilla) compra el lote.
 	controller.set("_pointer", Vector2(plot_cell))
 	controller.call("_land_input", _mouse_button(true))
 	controller.call("_land_input", _mouse_button(false))
@@ -258,7 +252,6 @@ func _check_panel() -> void:
 	for plot: Dictionary in controller.get_land_plots():
 		still = still or (plot["new_cells"] as Array).has(plot_cell)
 	_expect(not still and not controller.get_land_plots().is_empty(), "los lotes se vuelven a calcular")
-	# Cada lote marcado toca el local: uno de más afuera solo aparece al comprar el anterior.
 	var touching: bool = true
 	for plot: Dictionary in controller.get_land_plots():
 		var touches: bool = false
@@ -267,7 +260,6 @@ func _check_panel() -> void:
 				touches = touches or grid.is_in_lot(cell + step)
 		touching = touching and touches
 	_expect(touching, "todos los lotes marcados tocan el local")
-	# Sin dinero el lote se marca pero no se compra.
 	Economy.charge(Economy.balance - 100, "Prueba")
 	controller.refresh_land_plots()
 	var poor: Dictionary = controller.get_land_plots()[0]

@@ -1,20 +1,13 @@
-# Ambiente de una habitación (diseño 2 y 19.2; hito 45). Funciones puras sobre los datos
-# de OfficeState. Los adornos (plantas, cuadros, reloj, lámpara, alfombra, pecera) suman
-# sus puntos de ambiente; los puntos se reparten por el área (una sala grande pide más
-# adornos). Amontonar resta según cuánto se pasa de los escritorios que caben (uno cada
-# desk_area m²): crowding_max al tener crowding_full_over más, en proporción antes. El valor,
-# redondeado y entre min y max de data/furniture.json, se suma a la meta de ánimo de
-# quienes trabajan en la habitación.
+# Ambiente de una habitación (funciones puras): puntos de adornos repartidos por el área, menos
+# amontonar (crowding_max con crowding_full_over más escritorios de los que caben, uno cada
+# desk_area m²). Redondeado entre min y max, suma a la meta de ánimo de quien trabaja ahí.
 class_name Ambiance
 extends RefCounted
 
 
-## Detalle del ambiente de una habitación: {"points" (puntos de adornos), "decor" (lo que
-## suman por el área), "desks", "allowed_desks", "crowding" (lo que resta amontonar, ≤ 0),
-## "value" (int, el ambiente) y "stress_relief" (lo que baja la meta de estrés, la pecera
-## más fuerte que haya)}. windows son las ventanas que dan a la habitación (hito 55): cada
-## una suma sus puntos de ambiente como un adorno. extra_points son otros puntos de la
-## estructura, como la puerta de vidrio de la entrada (hito 69).
+## Detalle: {"points", "decor" (por el área), "desks", "allowed_desks", "crowding" (≤ 0), "value"
+## (int) y "stress_relief" (la pecera más fuerte)}. windows y extra_points (puerta de vidrio)
+## suman como adornos.
 static func get_detail(room: Dictionary, furniture: Array[Dictionary], windows: int = 0, extra_points: int = 0) -> Dictionary:
 	var cells: Array[Vector2i] = room["cells"]
 	var area: int = maxi(1, cells.size())
@@ -42,12 +35,12 @@ static func get_detail(room: Dictionary, furniture: Array[Dictionary], windows: 
 		"value": value, "stress_relief": relief}
 
 
-## Ambiente de una habitación (lo que suma a la meta de ánimo).
+## Ambiente de una habitación (suma a la meta de ánimo).
 static func get_value(room: Dictionary, furniture: Array[Dictionary], windows: int = 0, extra_points: int = 0) -> int:
 	return int(get_detail(room, furniture, windows, extra_points)["value"])
 
 
-## "Ambiente +6" (o "−5 por amontonar"): para el modo construcción y la ficha.
+## "Ambiente +6" (o "−5 por amontonar") para construcción y la ficha.
 static func describe(room: Dictionary, furniture: Array[Dictionary], windows: int = 0, extra_points: int = 0) -> String:
 	var detail: Dictionary = get_detail(room, furniture, windows, extra_points)
 	var value: int = detail["value"]

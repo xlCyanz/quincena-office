@@ -1,5 +1,5 @@
-# Prueba de los sprites conectados al juego (fase 8): suelo, paredes con sus postes de esquina,
-# árboles, muebles de piso y personajes se dibujan con las imágenes de data/sprites.json (SpriteLibrary).
+# Sprites conectados: suelo, paredes con postes, árboles, muebles de piso y personajes se dibujan
+# con las imágenes de data/sprites.json (SpriteLibrary).
 extends Node
 
 signal finished(failures: int, checks: int)
@@ -33,7 +33,7 @@ func _check_library() -> void:
 	for sprite: String in sprites:
 		_expect(SpriteLibrary.get_texture(sprite) != null, "%s tiene su imagen importada" % sprite)
 	_expect(not SpriteLibrary.has_sprite("no_existe") and SpriteLibrary.get_texture("no_existe") == null, "un nombre desconocido no da imagen")
-	# El tramo alto mide 72×160 de sprite con el apoyo en (36, 142): en el mundo, la mitad.
+	# Tramo alto de 72×160 con apoyo en (36, 142): en el mundo, la mitad.
 	var rect: Rect2 = SpriteLibrary.get_rect("wall_tall_x")
 	_expect(rect.is_equal_approx(Rect2(-18.0, -71.0, 36.0, 80.0)), "rectángulo de la pared alta en el mundo: %s" % rect)
 	for kind: String in [ConstructionCatalog.WALL, ConstructionCatalog.DOOR, ConstructionCatalog.WINDOW, ConstructionCatalog.GLASS_DOOR]:
@@ -47,7 +47,7 @@ func _check_library() -> void:
 	var plus_y: int = EdgePieceView.ARM_PLUS_Y
 	var minus_x: int = EdgePieceView.ARM_MINUS_X
 	var minus_y: int = EdgePieceView.ARM_MINUS_Y
-	# Poste de cada unión: wall_post_<−x><−y><+x><+y> con n (nada), l (bajo) o t (alto).
+	# Poste: wall_post_<−x><−y><+x><+y> con n (nada), l (bajo) o t (alto).
 	_expect(EdgePieceView.get_corner_sprite({plus_x: true, plus_y: true}) == "wall_post_nntt", "esquina del fondo")
 	_expect(EdgePieceView.get_corner_sprite({minus_y: true, plus_x: false}) == "wall_post_ntln", "esquina izquierda: alta que termina sobre baja")
 	_expect(EdgePieceView.get_corner_sprite({minus_x: true, plus_y: false}) == "wall_post_tnnl", "esquina derecha")
@@ -78,13 +78,13 @@ func _check_library() -> void:
 	_expect(MapDecor.get_grass_family(Vector2i(7, 9)) == MapDecor.get_grass_family(Vector2i(7, 9)), "la familia de una casilla no cambia")
 
 
-# Cada mueble de piso tiene su sprite en las 4 rotaciones; las sillas van en asiento y respaldo.
+# Cada mueble de piso con sprite en las 4 rotaciones; las sillas en asiento y respaldo.
 func _check_furniture() -> void:
 	for id: String in FurnitureCatalog.get_ids():
 		for rotation: int in range(4):
 			var sprite: String = SpriteLibrary.get_furniture_sprite(id, rotation)
 			if FurnitureCatalog.is_monitor(id):
-				# La pantalla extra no tiene sprite propio: va dibujada en el del escritorio largo.
+				# La pantalla extra va dibujada en el escritorio largo.
 				_expect(sprite.is_empty(), "%s no tiene sprite propio" % id)
 				continue
 			if FurnitureCatalog.is_wall_mounted(id):
@@ -105,7 +105,7 @@ func _check_furniture() -> void:
 		"la rotación da la vuelta")
 	_expect(SpriteLibrary.get_furniture_sprite("small_plant", 0).ends_with("_q"), "el mueble chico usa su versión de cuarto de casilla")
 	_expect(SpriteLibrary.get_furniture_sprite("no_existe", 0).is_empty(), "un mueble desconocido no da sprite")
-	# El escritorio largo se dibuja entero con lo que lleva: un sprite por computadora y pantallas extra.
+	# El escritorio largo se dibuja entero: un sprite por computadora y pantallas extra.
 	for rotation: int in range(4):
 		for entry: Array in [["basic_computer", 0, "desk_long_basic"], ["pro_computer", 0, "desk_long_pro1"],
 				["pro_computer", 1, "desk_long_pro2"], ["pro_computer", 2, "desk_long_pro3"]]:
@@ -118,7 +118,7 @@ func _check_furniture() -> void:
 		and SpriteLibrary.get_seat_x("no_existe") < 0.0, "dónde queda el teclado de cada sprite")
 
 
-# Hojas de personajes: los 6 conjuntos en sus 3 paletas, con todas las poses.
+# Los 6 conjuntos de personajes en sus 3 paletas, con todas las poses.
 func _check_characters() -> void:
 	for woman: bool in [false, true]:
 		for outfit: String in ["casual", "office", "executive"]:
@@ -152,7 +152,7 @@ func _check_game() -> void:
 	for style: String in ["bare", "carpet", "wood", "ceramic", MapDecor.GRASS, MapDecor.OUTSIDE, MapDecor.PATH,
 			MapDecor.SIDEWALK, MapDecor.ROAD, ConstructionCatalog.TERRAIN]:
 		_expect(rows.has(style), "el atlas tiene %s" % style)
-	# Dentro del local, cada casilla usa una variante de su piso; afuera, pasto o camino.
+	# Dentro del local, una variante de su piso por casilla; afuera, pasto o camino.
 	var variants: Dictionary[int, bool] = {}
 	for cell: Vector2i in floor_layer.get_used_cells():
 		var coords: Vector2i = floor_layer.get_cell_atlas_coords(cell)
@@ -160,7 +160,7 @@ func _check_game() -> void:
 		if grid.is_in_lot(cell):
 			variants[coords.x] = true
 	_expect(variants.size() > 2, "el piso usa más de dos variantes: %d" % variants.size())
-	# Paredes: cada tramo con su sprite; las cuatro esquinas del local llevan poste.
+	# Cada tramo con su sprite; las cuatro esquinas del local llevan poste.
 	var with_post: int = 0
 	var pieces: int = 0
 	for child: Node in grid.get_node("Objects").get_children():
@@ -179,7 +179,6 @@ func _check_game() -> void:
 			"árbol con sprite y sombra: %s" % tree.get_sprite())
 		kinds[tree.get_sprite()] = true
 	_expect(trees.size() > 0 and kinds.size() > 3, "árboles de varias clases: %d" % kinds.size())
-	# Muebles: cada pieza de piso se dibuja con su sprite.
 	var furniture_views: int = 0
 	for child: Node in grid.get_node("Objects").get_children():
 		if child is FurnitureView and not child.is_queued_for_deletion():
@@ -189,7 +188,7 @@ func _check_game() -> void:
 			furniture_views += 1
 			_expect(SpriteLibrary.has_sprite(piece.get_sprite()), "%s usa un sprite: «%s»" % [piece.name, piece.get_sprite()])
 	_expect(furniture_views >= 2, "hay muebles dibujados: %d" % furniture_views)
-	# Objetos de pared: con sprite en las caras que se ven de frente (miran a +x o +y); de espaldas, el dibujo provisional.
+	# Objetos de pared: sprite en las caras que se ven de frente (+x o +y); de espaldas, el dibujo provisional.
 	OfficeState.furniture.append({"id": "painting", "cell": Vector2i(0, 4), "rotation": 1})
 	OfficeState.furniture.append({"id": "wall_clock", "cell": Vector2i(4, 0), "rotation": 2})
 	OfficeState.furniture.append({"id": "painting", "cell": Vector2i(2, 1), "rotation": 3})
@@ -203,7 +202,7 @@ func _check_game() -> void:
 		"cuadro en pared del eje x: %s" % hung_sprites.get("painting_1", ""))
 	_expect(hung_sprites.get("wall_clock_2", "") == "wall_clock_y", "reloj en pared del eje y: %s" % hung_sprites.get("wall_clock_2", ""))
 	_expect(hung_sprites.get("painting_3", "?") == "", "de espaldas no hay sprite")
-	# Paredes arriba / abajo: con el botón ↕ todas van altas y lo colgado en una pared baja se ve a su tamaño.
+	# Con ↕ todas las paredes van altas y lo colgado en una pared baja se ve a su tamaño.
 	var front_edge: Vector3i = OfficeState.get_entrance_edge()
 	_expect(not grid.is_tall_edge(front_edge) and not game.are_walls_up(), "al empezar las paredes de adelante van bajas")
 	game.set_walls_up(true)
@@ -218,7 +217,7 @@ func _check_game() -> void:
 	game.set_walls_up(false)
 	await get_tree().process_frame
 	_expect(not game.are_walls_up() and not grid.is_tall_edge(front_edge), "paredes abajo otra vez")
-	# Al elegir un objeto de pared en Construir suben solas y al salir vuelven a como estaban.
+	# Al elegir un objeto de pared en Construir suben solas y al salir vuelven.
 	var build_panel: BuildPanel = game.get_node("BuildPanel")
 	build_panel.set_build_mode(true)
 	build_panel.select_tool("painting")
@@ -229,7 +228,7 @@ func _check_game() -> void:
 	_expect(not game.are_walls_up(), "con otra herramienta bajan")
 	build_panel.set_build_mode(false)
 	await get_tree().process_frame
-	# El CEO: camina mirando hacia donde va y, sentado frente a su computadora, teclea mirándola.
+	# El CEO camina mirando hacia donde va y, sentado frente a su computadora, teclea mirándola.
 	var ceo: Ceo = game.get("ceo")
 	_expect(SpriteLibrary.has_character_look(ceo.look), "el CEO tiene aspecto: %s" % ceo.look)
 	ceo.update_routine(true)
@@ -255,7 +254,7 @@ func _check_game() -> void:
 	var desk_cell: Vector2i = ceo.get_seat_cell() + FurnitureCatalog.get_front(int(seated["facing"]))
 	var desk: int = OfficeState.find_furniture_at(desk_cell)
 	_expect(desk >= 0 and not String(OfficeState.furniture[desk].get("computer", "")).is_empty(), "mira hacia su computadora")
-	# Sentado se dibuja junto con su silla (un solo cuadro): la silla no se dibuja aparte.
+	# Sentado se dibuja con su silla en un solo cuadro: la silla no se dibuja aparte.
 	_expect(OfficeCharacter.draws_chair_at(ceo.get_seat_cell()), "la silla del CEO se dibuja con él")
 	ceo.standing = true
 	_expect(String(ceo.get_sprite_state()["pose"]) == "idle", "de pie en su lugar no teclea")

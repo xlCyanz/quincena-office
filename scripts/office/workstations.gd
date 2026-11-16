@@ -1,23 +1,7 @@
-# Puestos de trabajo (diseño, 16.2): una silla delante de un escritorio con computadora,
-# las dos dentro de un Área de trabajo que funciona. Son funciones puras sobre los datos
-# de OfficeState; se recalculan cuando cambian los muebles o las habitaciones.
-#
-# "Delante" quiere decir que la silla está en la casilla que mira el frente del
-# escritorio (FurnitureCatalog.get_front) desde alguna de sus casillas, como el CEO en su
-# oficina. Cada escritorio sirve a una sola silla: si hay dos delante, cuenta la primera
-# de la lista de muebles. La silla del puesto es la que se asigna al empleado
-# (assigned_to); el CEO conserva la suya en la Oficina Ejecutiva.
-#
-# Desde el hito 32 también hay puestos en una Oficina única que funciona (para los
-# gerentes): una silla delante de un escritorio de la misma oficina, sin computadora, y
-# uno solo por oficina. Cada puesto dice en "room_type" de qué clase es.
-#
-# Desde el hito 36 la Recepción tiene puestos para los recepcionistas: una silla
-# delante del frente de un mostrador (is_counter), uno por mostrador.
-#
-# Desde el hito 37 el personal de limpieza tiene su puesto en un Cuarto de limpieza que
-# funciona: el armario de limpieza (is_closet) mismo, sin silla; uno por armario. En esos
-# puestos "chair" y "desk" son el armario (ahí va su assigned_to).
+# Puestos de trabajo (funciones puras): una silla en la casilla que mira el frente de un escritorio,
+# uno por escritorio (cuenta la primera silla). Clases por "room_type": Área de trabajo (con
+# computadora), Oficina única (sin computadora, uno por oficina), Recepción (mostrador) y Cuarto de
+# limpieza (el armario mismo es "chair" y "desk"). La silla es la que lleva assigned_to.
 class_name Workstations
 extends RefCounted
 
@@ -26,23 +10,19 @@ const SINGLE_OFFICE: String = "single_office"
 const RECEPTION: String = "reception"
 const CLEANING_ROOM: String = "cleaning_room"
 
-# Últimos puestos encontrados por clase de habitación y el hash de los datos que los dieron.
+# Últimos puestos por clase de habitación y el hash de los datos.
 static var _cache: Dictionary = {}
 static var _cache_key: int = 0
-# Últimos bonos por silla ocupada (bonuses_by_owner) y el hash de los muebles.
+# Últimos bonos por silla ocupada y el hash de los muebles.
 static var _bonuses: Dictionary[String, float] = {}
 static var _bonuses_key: int = 0
 
 
-## Todos los puestos de la oficina. Cada uno es {"chair": int, "desk": int,
-## "cell": Vector2i, "room_type": String}: índices en furniture de la silla y el
-## escritorio, la casilla de la silla y la clase de habitación. Con room_type solo los
-## de esa clase.
+## Puestos de la oficina: {"chair", "desk" (índices en furniture), "cell", "room_type"}.
+## Con room_type, solo los de esa clase.
 static func find_all(furniture: Array[Dictionary], rooms: Array[Dictionary], room_type: String = "") -> Array[Dictionary]:
-	# Buscarlos recorre los muebles por cada silla y se pide por cada empleado cada hora:
-	# se guarda el último resultado mientras muebles y habitaciones no cambien (el hash
-	# de los dos, que Godot calcula en código nativo, mucho más rápido que buscarlos). De
-	# las habitaciones cuentan el tipo y las casillas: la suciedad cambia cada hora.
+	# Se piden por empleado cada hora: se guardan mientras no cambie el hash de muebles y habitaciones
+	# (solo tipo y casillas; la suciedad cambia cada hora).
 	var room_parts: Array = []
 	for room: Dictionary in rooms:
 		room_parts.append(room["type"])
@@ -69,8 +49,7 @@ static func find_free(furniture: Array[Dictionary], rooms: Array[Dictionary], ro
 	return free
 
 
-# Puestos de una clase de habitación. En un Área de trabajo el escritorio necesita
-# computadora; en una Oficina única no, pero hay un solo puesto por oficina.
+# Puestos de una clase. En un Área de trabajo el escritorio necesita computadora; en una Oficina única no, pero uno por oficina.
 static func _find_kind(furniture: Array[Dictionary], rooms: Array[Dictionary], kind: String) -> Array[Dictionary]:
 	var room_cells: Dictionary[Vector2i, int] = {}
 	for room_index: int in range(rooms.size()):
@@ -115,8 +94,7 @@ static func is_working_station(furniture: Array[Dictionary], rooms: Array[Dictio
 	return false
 
 
-## Quién usa el mueble de furniture[index] como parte de su puesto: el assigned_to de
-## la silla del puesto, o "" si no es parte de un puesto ocupado.
+## assigned_to de quien usa furniture[index] en su puesto, o "" si no es de un puesto ocupado.
 static func owner_of(furniture: Array[Dictionary], rooms: Array[Dictionary], index: int) -> String:
 	for station: Dictionary in find_all(furniture, rooms):
 		if station["chair"] == index or station["desk"] == index:
@@ -124,15 +102,13 @@ static func owner_of(furniture: Array[Dictionary], rooms: Array[Dictionary], ind
 	return ""
 
 
-## Computadora que usa quien se sienta en la silla de furniture[chair_index]: la del
-## escritorio cuyo frente da a esa silla, o "" si no hay.
+## Computadora del escritorio cuyo frente da a la silla furniture[chair_index], o "".
 static func computer_for_chair(furniture: Array[Dictionary], chair_index: int) -> String:
 	var desk: int = computer_desk_for_chair(furniture, chair_index)
 	return "" if desk < 0 else String(furniture[desk]["computer"])
 
 
-## Índice del escritorio con computadora cuyo frente da a la silla de
-## furniture[chair_index] (el primero de la lista), o -1 si no hay.
+## Índice del primer escritorio con computadora cuyo frente da a esa silla, o -1.
 static func computer_desk_for_chair(furniture: Array[Dictionary], chair_index: int) -> int:
 	var chair_cell: Vector2i = furniture[chair_index]["cell"]
 	for desk_index: int in range(furniture.size()):
@@ -146,8 +122,7 @@ static func computer_desk_for_chair(furniture: Array[Dictionary], chair_index: i
 	return -1
 
 
-## Lo que suma a la producción un escritorio: su computadora y, con computadora, su
-## segundo monitor (hito 46).
+## Bono de producción de un escritorio: computadora y pantallas extra.
 static func get_desk_bonus(desk: Dictionary) -> float:
 	var computer: String = String(desk.get("computer", ""))
 	if computer.is_empty():
@@ -159,9 +134,8 @@ static func get_desk_bonus(desk: Dictionary) -> float:
 	return bonus
 
 
-## Lo que suma a la producción de cada silla ocupada su escritorio con computadora:
-## {assigned_to: bono} (sin computadora, 0). Lo mismo que bonus_of para todos de una vez,
-## sin recorrer los muebles por cada uno. Se guarda mientras los muebles no cambien.
+## Bono de cada silla ocupada: {assigned_to: bono}. Como bonus_of para todos a la vez; se guarda
+## mientras los muebles no cambien.
 static func bonuses_by_owner(furniture: Array[Dictionary]) -> Dictionary[String, float]:
 	var key: int = furniture.hash()
 	if key != _bonuses_key or _bonuses.is_empty():
@@ -187,8 +161,7 @@ static func _find_bonuses(furniture: Array[Dictionary]) -> Dictionary[String, fl
 	return result
 
 
-## Lo que suma a la producción de who (el assigned_to de su silla) el escritorio que
-## usa: computadora y segundo monitor.
+## Bono de producción del escritorio que usa who (assigned_to de su silla).
 static func bonus_of(furniture: Array[Dictionary], who: String) -> float:
 	for index: int in range(furniture.size()):
 		if furniture[index]["assigned_to"] == who:
@@ -197,7 +170,7 @@ static func bonus_of(furniture: Array[Dictionary], who: String) -> float:
 	return 0.0
 
 
-## Computadora que usa who (el assigned_to de su silla), o "" si no tiene.
+## Computadora que usa who, o "".
 static func computer_of(furniture: Array[Dictionary], who: String) -> String:
 	for index: int in range(furniture.size()):
 		if furniture[index]["assigned_to"] == who:
@@ -205,7 +178,7 @@ static func computer_of(furniture: Array[Dictionary], who: String) -> String:
 	return ""
 
 
-## Escritorio del puesto que funciona de who, o vacío (para el escritorio amplio).
+## Escritorio del puesto que funciona de who, o vacío (para mood_bonus).
 static func station_desk_of(furniture: Array[Dictionary], rooms: Array[Dictionary], who: String) -> Dictionary:
 	for station: Dictionary in find_all(furniture, rooms):
 		if furniture[station["chair"]]["assigned_to"] == who:
@@ -213,8 +186,8 @@ static func station_desk_of(furniture: Array[Dictionary], rooms: Array[Dictionar
 	return {}
 
 
-# Primer escritorio libre (con computadora si needs_computer; un mostrador si counter),
-# dentro de la habitación de la silla, cuyo frente da a la casilla de la silla.
+# Primer escritorio libre de la habitación de la silla con el frente hacia ella (con computadora
+# si needs_computer; mostrador si counter).
 static func _desk_for(furniture: Array[Dictionary], chair_cell: Vector2i,
 		work_cells: Dictionary[Vector2i, int], used_desks: Dictionary[int, bool], needs_computer: bool = true,
 		counter: bool = false) -> int:

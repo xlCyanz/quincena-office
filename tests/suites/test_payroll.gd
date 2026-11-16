@@ -1,10 +1,9 @@
-# Prueba del hito 13: nómina y despidos.
-# Criterio: el día 15 el saldo baja exactamente la mitad de la suma de sueldos; un
-# despido el día 10 cobra 10/30 del sueldo.
+# Nómina y despidos: el día 15 el saldo baja justo la mitad de los sueldos; un despido el
+# día 10 cobra 10/30 del sueldo.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=payroll
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -22,10 +21,10 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Carpeta aparte para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
-	# Estas pruebas son de la nómina sin préstamo de emergencia (hito 24): se rechaza.
+	# Nómina sin préstamo de emergencia: se rechaza.
 	EventBus.emergency_loan_offered.connect(func(_offer: Dictionary) -> void: Bank.reject_emergency())
 	_check_payroll_days()
 	_check_firing()
@@ -44,7 +43,7 @@ func _expect(condition: bool, message: String) -> void:
 		printerr("FALLO: " + message)
 
 
-# Partida nueva con un área de trabajo de tres puestos (escritorios en x 3–5).
+# Tres puestos (escritorios en x 3–5).
 func _new_game() -> void:
 	SaveManager.new_game()
 	Staff.set_seed(SEED)
@@ -62,15 +61,14 @@ func _new_game() -> void:
 		_expect(builder.place("simple_desk", Vector2i(x, 0), 2)["ok"], "escritorio en %d" % x)
 		_expect(builder.place("basic_chair", Vector2i(x, 1), 0)["ok"], "silla en %d" % x)
 		_expect(builder.install_computer("basic_computer", Vector2i(x, 0))["ok"], "computadora en %d" % x)
-	# 3 escritorios en 9 m² amontonan (caben 2: ambiente −15, hito 45): cuatro cuadros y un
-	# reloj en las paredes lo dejan casi neutro (+1), como era la prueba antes del ambiente.
+	# 3 escritorios en 9 m² amontonan (−15): cuadros y reloj dejan el ambiente casi neutro (+1).
 	for wall_spot: Array in [[Vector2i(3, 0), 2], [Vector2i(4, 0), 2], [Vector2i(5, 0), 2], [Vector2i(5, 1), 3]]:
 		_expect(builder.place("painting", wall_spot[0], wall_spot[1])["ok"], "cuadro en %s" % wall_spot[0])
 	_expect(builder.place("wall_clock", Vector2i(3, 1), 1)["ok"], "reloj")
 	_notices.clear()
 
 
-# Contrata a count empleados (uno por vacante) en la próxima llegada de candidatos.
+# count empleados, uno por vacante, en la próxima tanda de candidatos.
 func _hire(count: int) -> Array[Dictionary]:
 	var roles: Array[String] = ["programmer", "designer", "qa"]
 	var vacancy_ids: Array[int] = []
@@ -88,7 +86,7 @@ func _hire(count: int) -> Array[Dictionary]:
 	return hired
 
 
-# Avanza hasta las 0:00 del día day del mes actual (o del siguiente si ya pasó).
+# Hasta las 0:00 del día day del mes month.
 func _to_day(day: int, month: int) -> void:
 	var target: int = (month - 1) * GameConstants.DAYS_PER_MONTH + day - 1
 	var hours: int = (target - GameClock.get_day_count()) * GameConstants.HOURS_PER_DAY - GameClock.get_hour()
@@ -127,14 +125,13 @@ func _check_payroll_days() -> void:
 	before = Economy.balance
 	_to_day(30, 1)
 	_expect(before - Economy.balance == sum / 2, "el día 30 otra mitad")
-	# El día 1 del mes 2 solo se cobra el mantenimiento.
 	before = Economy.balance
 	_to_day(1, 2)
 	_expect(before - Economy.balance == Economy.get_maintenance(OfficeState.lot_rect.get_area()), "el día 1 no hay nómina")
 
 
 func _check_firing() -> void:
-	# Sigue la partida anterior: tres empleados pagados hasta el día 30 del mes 1.
+	# Sigue la partida anterior: tres empleados pagados hasta el 30 del mes 1.
 	_to_day(10, 2)
 	var first: Dictionary = Staff.employees[0]
 	var salary: int = first["salary"]
@@ -142,7 +139,7 @@ func _check_firing() -> void:
 	_expect(Staff.get_firing_cost(first) == cost, "despedir el día 10 cuesta 10/30 del sueldo: %d" % Staff.get_firing_cost(first))
 	var free_before: int = Staff.get_free_workstations().size()
 	var before: int = Economy.balance
-	# Desde el hito 19 el ánimo cambia cada día: se compara con el de justo antes.
+	# El ánimo cambia cada día: se compara con el de justo antes.
 	var moods: Dictionary[int, int] = {}
 	for other: Dictionary in Staff.employees:
 		moods[other["id"]] = int(other["mood"])
@@ -154,7 +151,6 @@ func _check_firing() -> void:
 		and Staff.get_free_workstations().size() == free_before + 1, "su puesto queda libre")
 	for other: Dictionary in Staff.employees:
 		_expect(int(other["mood"]) == moods[other["id"]] - 5, "los compañeros bajan 5 de ánimo: %d" % other["mood"])
-	# Otro despido dentro de los 7 días baja más.
 	_to_day(12, 2)
 	var survivor_mood: int = int(Staff.employees[1]["mood"])
 	Staff.fire(Staff.employees[0]["id"])
@@ -176,7 +172,7 @@ func _check_prorated() -> void:
 func _check_unpaid() -> void:
 	# Sigue la partida anterior: un empleado pagado hasta el 15.
 	var employee: Dictionary = Staff.employees[0]
-	# Bien pagado para que el ánimo no baje tanto como para renunciar (hito 19).
+	# Bien pagado para que el ánimo no baje hasta renunciar.
 	employee["salary"] = roundi(Staff.get_market_salary(employee) * 1.2)
 	var half: int = int(employee["salary"]) / 2
 	Economy.charge(Economy.balance - 10, "Prueba")
@@ -191,22 +187,18 @@ func _check_unpaid() -> void:
 	_expect(absi(int(employee["mood"]) - (mood_before - 20)) <= 3, "la nómina sin pagar baja 20 el ánimo: %d → %d" % [
 		mood_before, employee["mood"]])
 	_expect(not _notices.is_empty() and _notices[-1].begins_with("No alcanza el dinero para la nómina"), "aviso: %s" % [_notices])
-	# El despido incluye lo debido.
 	_expect(Staff.get_firing_cost(employee) == half, "despedir hoy cuesta lo debido: %d" % Staff.get_firing_cost(employee))
-	# Otra nómina sin dinero acumula deuda y vuelve a bajar el ánimo.
 	mood_before = int(employee["mood"])
 	_to_day(15, 2)
 	_expect(int(employee["owed"]) == half * 2 and int(employee["mood"]) < mood_before, "deuda acumulada: %d, ánimo %d" % [
 		employee["owed"], employee["mood"]])
-	# Apenas entra dinero suficiente se paga sola, toda junta. (El día 1 se cobró el
-	# mantenimiento: el saldo vuelve a $10 para que las cuentas sean claras.)
+	# Al entrar dinero se paga sola, toda junta (saldo a $10 tras el mantenimiento del día 1).
 	Economy.earn(10 - Economy.balance, "Prueba")
 	Economy.earn(half, "Cobro parcial")
 	_expect(int(employee["owed"]) == half * 2, "si todavía no alcanza, sigue la deuda")
 	Economy.earn(half * 2, "Cobro")
 	_expect(int(employee["owed"]) == 0 and Economy.balance == 10 + half, "la deuda se paga sola: saldo %d" % Economy.balance)
 	_expect(_last_movement()["concept"] == Staff.CONCEPT_PAYROLL and _last_movement()["amount"] == -half * 2, "movimiento de la deuda")
-	# Un despido con poco dinero deja el saldo negativo.
 	_to_day(20, 2)
 	var cost: int = Staff.get_firing_cost(employee)
 	Economy.charge(Economy.balance, "Prueba")
@@ -227,7 +219,7 @@ func _check_save() -> void:
 	SaveManager.new_game()
 	_expect(SaveManager.load_game("slot_3"), "cargar")
 	_expect(JSON.stringify(Staff.export_state()) == before, "la nómina vuelve igual")
-	# Un empleado de una partida del hito 12 gana desde su contratación.
+	# Partida vieja: el empleado gana desde su contratación.
 	var old: Dictionary = Staff.export_state()
 	for saved: Dictionary in old["employees"]:
 		saved.erase("paid_until")
@@ -273,7 +265,6 @@ func _check_card() -> void:
 	_walk(game, func() -> bool: return not is_instance_valid(character) or character.is_queued_for_deletion(), 60.0)
 	_expect(not is_instance_valid(character) or character.is_queued_for_deletion(), "al salir desaparece")
 	_expect(game.get_characters().size() == 2, "quedan el CEO y un empleado")
-	# Con deuda el reloj lo muestra.
 	Economy.charge(Economy.balance, "Prueba")
 	_to_day(15, 1)
 	await get_tree().process_frame

@@ -1,73 +1,64 @@
-# Dibujo provisional de un mueble sobre las casillas que ocupa, según su forma en el
-# catálogo: escritorio (caja con la computadora encima, si tiene), silla (asiento con
-# respaldo detrás), planta (maceta y hojas). Va dentro de la capa ordenada por Y.
-#
-# El respaldo de una silla es una pieza aparte (part = PART_BACKREST) con su propio
-# punto de orden: si queda del lado de quien mira, se dibuja delante de quien se sienta.
+# Dibujo de un mueble (sprite o provisional según su forma) en la capa ordenada por Y. El
+# respaldo de una silla es otra pieza (PART_BACKREST) con su punto de orden.
 class_name FurnitureView
 extends Node2D
 
-## Cuánto se adelanta hacia atrás el punto de orden del mueble: así un personaje en la
-## misma casilla (por ejemplo, sentado en una silla) siempre se dibuja delante.
+## Retroceso del punto de orden: un personaje en la misma casilla siempre queda delante.
 const SORT_BIAS_PX: float = 1.0
-## Grosor del respaldo de la silla y alto extra sobre el asiento, en casillas y píxeles.
+## Grosor del respaldo (casillas) y alto extra sobre el asiento (píxeles).
 const BACKREST_DEPTH: float = 0.18
 const BACKREST_HEIGHT_PX: float = 18.0
-## Medidas de la computadora sobre el escritorio (en casillas) y del frente marcado.
+## Computadora sobre el escritorio (casillas) y frente marcado.
 const MONITOR_WIDTH: float = 0.5
 const MONITOR_DEPTH: float = 0.12
-## Segundo monitor: ancho y cuánto se aparta del centro del escritorio.
+## Pantalla extra: ancho y separación del centro del escritorio.
 const SECOND_MONITOR_WIDTH: float = 0.3
 const SECOND_MONITOR_OFFSET: float = 0.3
 const FRONT_MARK_COLOR := Color(1.0, 1.0, 1.0, 0.35)
 const POT_COLOR := Color("8a5a3c")
 const POT_SIZE: float = 0.4
-## Margen del asiento de la silla respecto a su casilla, en casillas.
+## Margen del asiento respecto a su casilla, en casillas.
 const SEAT_INSET: float = 0.15
-## Objetos de pared (hito 45): ancho a lo largo de la pared y fondo, en casillas, y a qué
-## altura de la pared empiezan, en píxeles.
+## Objetos de pared: ancho y fondo (casillas) y altura en la pared donde empiezan (píxeles).
 const WALL_ITEM_WIDTH: float = 0.5
 const WALL_ITEM_DEPTH: float = 0.06
 const WALL_ITEM_BASE_PX: float = 24.0
-## En una pared baja el objeto se dibuja pegado abajo y no más alto que la pared.
+## En una pared baja el objeto va pegado abajo y no más alto que ella.
 const LOW_WALL_ITEM_BASE_PX: float = 1.0
-## Lámpara de pie: grosor del poste (en casillas) y radio de la pantalla (en píxeles).
+## Lámpara de pie: grosor del poste (casillas) y radio de la pantalla (píxeles).
 const LAMP_POLE: float = 0.08
 const LAMP_SHADE_RADIUS: float = 9.0
 const LAMP_POLE_COLOR := Color("5a5148")
 
-## Muebles chicos: ocupan un cuarto de su casilla y sus hojas y pantallas se dibujan a esta escala.
+## Escala del dibujo de los muebles chicos (un cuarto de casilla).
 const SMALL_SCALE: float = 0.6
 
-## Hacia dónde apunta el +x del modelo de un sprite (el largo de un escritorio) en cada rotación.
+## Hacia dónde apunta el +x del modelo (el largo de un escritorio) en cada rotación.
 const MODEL_X_SIDES: Array[Vector2] = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]
-## Lo más que se corre de lado quien se sienta para quedar frente al teclado, en casillas.
+## Máximo corrimiento lateral de quien se sienta para quedar frente al teclado, en casillas.
 const SEAT_SHIFT_MAX: float = 0.5
 
-## Sprite de un objeto de pared en una pared baja: se achica a esta escala y baja hasta
-## quedar pegado al piso (LOW_WALL_ITEM_BASE_PX).
+## Objeto de pared en pared baja: se achica a esta escala y baja hasta el piso (LOW_WALL_ITEM_BASE_PX).
 const LOW_WALL_SPRITE_SCALE: float = 0.5
 const SALT_WALL_ITEM: int = 71
 
-## Una silla delante del frente de un escritorio o mostrador se dibuja arrimada a él esto
-## (en casillas) y mirándolo, con quien se sienta (OfficeCharacter usa lo mismo).
+## Cuánto se arrima (casillas) la silla frente a un escritorio o mostrador, mirándolo; igual quien se sienta.
 const SEAT_TUCK: float = 0.3
 
-## Grupo de las piezas de las sillas: se redibujan cuando alguien se sienta o se levanta.
+## Grupo de las piezas de sillas: se redibujan al sentarse o levantarse alguien.
 const CHAIR_GROUP: String = "chair_views"
 
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
-## Tira de un mueble largo (de 1 casilla de ancho y varias de largo) con sprite: cada casilla
-## dibuja su tira del sprite con su propio punto de orden, así una pared o una persona al lado
-## de una punta no queda mal ordenada con el mueble entero. La pieza principal es la tira 0.
+## Tira de un mueble largo (1×N) con sprite: cada casilla dibuja la suya con su punto de orden,
+## para ordenarse bien con paredes y personas. La principal es la tira 0.
 const PART_SLICE: String = "slice"
 
 var item_id: String = ""
 var footprint: Array[Vector2i] = []
 var rotation_index: int = 0
 var computer_id: String = ""
-## Pantalla extra del escritorio ("" si no tiene; hito 46) y cuántas tiene (fase 8).
+## Pantalla extra del escritorio ("" si no tiene) y cuántas.
 var monitor_id: String = ""
 var monitor_count: int = 0
 var part: String = PART_MAIN
@@ -79,21 +70,20 @@ var _info: Dictionary = {}
 var _low := Vector2.ZERO  # esquinas de la base en la cuadrícula
 var _high := Vector2.ZERO
 var _scale: float = 1.0
-# Objeto de pared en una pared baja (no de atrás).
+# Objeto de pared en una pared baja.
 var _on_low_wall: bool = false
-# Punto de apoyo del sprite en la cuadrícula (centro de la casilla de anclaje o del cuarto).
+# Apoyo del sprite en la cuadrícula (centro de la casilla de anclaje o del cuarto).
 var _anchor := Vector2.ZERO
-# En una silla: el respaldo queda detrás del asiento (se dibuja antes y lleva la sombra).
+# Silla: el respaldo va detrás del asiento (se dibuja antes y lleva la sombra).
 var _back_first: bool = false
-# Tira que dibuja esta pieza y cuántas tiene el mueble (1 = se dibuja entero).
-# Rotación con la que se dibuja (la silla arrimada a un escritorio lo mira).
+# Tira de esta pieza y cuántas tiene el mueble (1 = entero).
+# Rotación dibujada (la silla arrimada mira al escritorio).
 var _sprite_rotation: int = 0
 var _slice: int = 0
 var _slices: int = 1
 
 
-## Coloca el mueble a partir de su entrada en OfficeState.furniture. piece elige qué
-## pieza dibuja este nodo (PART_MAIN o, en una silla, PART_BACKREST).
+## Coloca el mueble desde su entrada en OfficeState.furniture; piece: PART_MAIN o PART_BACKREST.
 func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice: int = 0) -> void:
 	_grid = grid
 	part = piece
@@ -153,8 +143,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 	queue_redraw()
 
 
-# Un objeto de pared es una placa delgada pegada a la cara de la pared, del lado de su
-# casilla (la pared queda detrás de su frente).
+# Objeto de pared: placa delgada en la cara de la pared, del lado de su casilla.
 func _setup_wall_item(cell: Vector2i) -> void:
 	_on_low_wall = not _grid.is_tall_edge(FurnitureCatalog.get_wall_edge(cell, rotation_index))
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
@@ -174,7 +163,7 @@ static func has_backrest(item_id_to_check: String) -> bool:
 	return String(FurnitureCatalog.get_item(item_id_to_check).get("shape", "")) == "chair"
 
 
-## En cuántas tiras se dibuja un mueble: una por casilla si es largo (1×N) y tiene sprite.
+## Tiras en que se dibuja un mueble: una por casilla si es largo (1×N) con sprite.
 static func get_slice_count(item: Dictionary) -> int:
 	var id: String = item["id"]
 	if FurnitureCatalog.is_wall_mounted(id) or SpriteLibrary.get_furniture_sprite(id, item["rotation"]).is_empty():
@@ -186,14 +175,13 @@ static func get_slice_count(item: Dictionary) -> int:
 	return cells.size() if span.x == 0 or span.y == 0 else 1
 
 
-## Rotación con la que se dibuja (distinta de rotation_index en una silla arrimada a un escritorio).
+## Rotación dibujada (distinta de rotation_index en una silla arrimada).
 func get_sprite_rotation() -> int:
 	return _sprite_rotation
 
 
-## Cuánto se corre de lado (en casillas) quien se sienta en seat_cell para quedar frente al
-## teclado del escritorio que tiene delante: el sprite del escritorio (o de su computadora) dice
-## dónde está. Cero si no hay escritorio o no se sabe.
+## Corrimiento lateral (casillas) de quien se sienta en seat_cell para quedar frente al teclado
+## del escritorio de delante (según su sprite). Cero si no hay o no se sabe.
 static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
 	var facing: Dictionary = OfficeState.get_desk_facing(seat_cell)
 	if facing.is_empty():
@@ -202,7 +190,7 @@ static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
 	var rotation: int = posmod(int(desk["rotation"]), 4)
 	var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(desk["id"], desk["cell"], rotation)
 	var computer: String = String(desk.get("computer", ""))
-	# Dónde queda el teclado a lo largo del modelo, desde su punta −x.
+	# Posición del teclado a lo largo del modelo, desde su punta −x.
 	var along: float = SpriteLibrary.get_seat_x(SpriteLibrary.get_desk_set_base(desk["id"], computer, FurnitureCatalog.get_monitor_count(desk)))
 	if along < 0.0 and not SpriteLibrary.get_furniture_sprite(desk["id"], rotation).is_empty():
 		var own: float = SpriteLibrary.get_seat_x(SpriteLibrary.get_furniture_base(computer))
@@ -215,7 +203,7 @@ static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
 		return Vector2.ZERO
 	var side: Vector2 = MODEL_X_SIDES[rotation]
 	var axis: Vector2 = side.abs()
-	# Del modelo a la cuadrícula: desde el centro de la casilla de anclaje, a lo largo del mueble.
+	# Del modelo a la cuadrícula: desde el centro del anclaje, a lo largo del mueble.
 	var place: float = along - 0.5 if side.x + side.y > 0.0 else cells.size() - along - 0.5
 	var front: Vector2i = FurnitureCatalog.FRONT_DIRECTIONS[int(facing["direction"])]
 	var index: float = Vector2(seat_cell + front - Vector2i(desk["cell"])).dot(axis)
@@ -227,10 +215,10 @@ func get_slice() -> int:
 	return _slice
 
 
-## Nombre del sprite que dibuja esta pieza ("" si usa el dibujo provisional).
+## Sprite de esta pieza ("" si usa el dibujo provisional).
 func get_sprite() -> String:
 	if FurnitureCatalog.is_wall_mounted(item_id):
-		# Solo hay dibujo de las caras que se ven de frente (las que miran a +x o a +y).
+		# Solo hay dibujo de las caras que miran a +x o +y.
 		var facing: Vector2i = FurnitureCatalog.get_front(rotation_index)
 		if facing.x + facing.y < 0:
 			return ""
@@ -243,15 +231,14 @@ func get_sprite() -> String:
 	return whole if not whole.is_empty() else SpriteLibrary.get_furniture_sprite(item_id, rotation_index)
 
 
-# Dibuja la pieza con sus sprites (sombra, mueble y lo que lleva encima). Devuelve false
-# si no hay sprite para este mueble.
+# Dibuja la pieza con sprites (sombra, mueble y lo de encima). False si no hay sprite.
 func _draw_sprites() -> bool:
 	var sprite: String = get_sprite()
 	if sprite.is_empty():
 		return false
 	var at: Vector2 = _local(_anchor)
 	if has_backrest(item_id) and OfficeCharacter.draws_chair_at(footprint[0]):
-		# Quien está sentado ahí se dibuja junto con la silla: aquí queda solo la sombra.
+		# Quien se sienta se dibuja junto con la silla: aquí solo la sombra.
 		if (part == PART_BACKREST) == _back_first:
 			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "shadow"), at)
 		return true
@@ -261,7 +248,7 @@ func _draw_sprites() -> bool:
 		var drop: float = SpriteLibrary.get_wall_item_base(item_id) * LOW_WALL_SPRITE_SCALE - LOW_WALL_ITEM_BASE_PX
 		return SpriteLibrary.draw_scaled(self, sprite, at + Vector2(0.0, drop), LOW_WALL_SPRITE_SCALE)
 	if _slices > 1:
-		# Tira de su casilla: de mitad a mitad con las vecinas; las puntas llegan al borde del sprite.
+		# Tira de su casilla: de mitad a mitad con las vecinas; las puntas llegan al borde.
 		var step: float = (_local(Vector2(footprint[1])) - _local(Vector2(footprint[0]))).x * SpriteLibrary.get_scale()
 		var from: float = step * (_slice - 0.5) if _slice > 0 else -INF * signf(step)
 		var to: float = step * (_slice + 0.5) if _slice < _slices - 1 else INF * signf(step)
@@ -275,8 +262,7 @@ func _draw_sprites() -> bool:
 			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "shadow"), at)
 		SpriteLibrary.draw(self, sprite, at)
 	if not computer_id.is_empty() and SpriteLibrary.get_desk_set_base(item_id, computer_id, monitor_count).is_empty():
-		# La computadora va sobre el centro del escritorio (el sprite ya trae la altura). Un
-		# escritorio con conjuntos (el largo) ya la trae dibujada en su propio sprite.
+		# La computadora va sobre el centro del escritorio; el largo ya la trae en su sprite.
 		var center: Vector2 = (_low + _high) / 2.0
 		SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index, "shadow"), _local(center))
 		SpriteLibrary.draw(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index), _local(center))
@@ -322,7 +308,7 @@ func _draw() -> void:
 			draw_circle(top + Vector2(7.0, 3.0) * s, 8.0 * s, color.lightened(0.1))
 		_:
 			IsoBox.draw(self, _corners(_low, _high), height, color)
-			# Una franja clara marca el frente (donde se sienta quien lo usa).
+			# Franja clara en el frente (donde se sienta quien lo usa).
 			var mark: Array[Vector2] = _strip(front, 0.1)
 			var lift := Vector2(0.0, -height - 0.5)
 			var points: PackedVector2Array = _corners(mark[0], mark[1])
@@ -339,7 +325,7 @@ func _draw_computer(front: Vector2, desk_height: float) -> void:
 	var across := Vector2(absf(front.y), absf(front.x))  # eje a lo ancho del escritorio
 	var depth: Vector2 = Vector2(absf(front.x), absf(front.y)) * MONITOR_DEPTH
 	if not monitor_id.is_empty():
-		# Con segundo monitor, la computadora se corre a un lado y el monitor va al otro.
+		# Con pantalla extra, la computadora va a un lado y el monitor al otro.
 		var monitor: Dictionary = FurnitureCatalog.get_item(monitor_id)
 		var monitor_center: Vector2 = center + across * SECOND_MONITOR_OFFSET
 		var monitor_size: Vector2 = across * SECOND_MONITOR_WIDTH + depth
@@ -351,7 +337,7 @@ func _draw_computer(front: Vector2, desk_height: float) -> void:
 		float(computer.get("height", 12.0)), computer.get("color", Color.BLACK))
 
 
-# Franja de la base pegada al lado indicado por direction, con depth casillas de fondo.
+# Franja de la base del lado direction, con depth casillas de fondo.
 func _strip(direction: Vector2, depth: float) -> Array[Vector2]:
 	var low: Vector2 = _low
 	var high: Vector2 = _high

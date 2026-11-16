@@ -1,17 +1,10 @@
-# Pinta las texturas del suelo (pisos del local y terreno del mapa) con más detalle que la
-# casilla en pantalla: cada casilla de 64×32 px se pinta en DETAIL veces más píxeles y la
-# capa del piso se dibuja a 1/DETAIL con suavizado, así el suelo no se ve pixelado de cerca.
-#
-# Cada estilo tiene un material (pasto, cerámica, madera, alfombra, concreto, grava, acera,
-# asfalto) que pinta en coordenadas de la casilla (u, v de 0 a 1 a lo largo de los ejes de
-# la cuadrícula). Los dibujos que se repiten (losas, tablones, juntas, manchas) usan esas
-# coordenadas y ruido periódico, así casillas vecinas encajan sin costuras. Solo funciones
-# puras: OfficeGrid arma el TileSet con la imagen.
+# Texturas del suelo (funciones puras) a DETAIL veces la resolución de la casilla, dibujadas a
+# 1/DETAIL con suavizado. Cada estilo tiene un material pintado en (u, v) de la casilla con
+# ruido periódico, así las vecinas encajan sin costuras. OfficeGrid arma el TileSet.
 class_name GroundPainter
 extends RefCounted
 
-## Cuántos píxeles de textura hay por píxel de la casilla en pantalla (el de los sprites:
-## docs/sprites_128.md, 1 px del mundo = 2 px del sprite).
+## Píxeles de textura por píxel de la casilla (como los sprites: 1 px del mundo = 2 px).
 const DETAIL: int = 2
 
 const GRASS: String = "grass"
@@ -23,15 +16,14 @@ const GRAVEL: String = "gravel"
 const SLABS: String = "slabs"
 const ASPHALT: String = "asphalt"
 
-## Material de cada estilo del atlas (pisos de data/construction.json y estilos de data/map.json).
+## Material de cada estilo del atlas (pisos y estilos del mapa).
 const MATERIALS: Dictionary[String, String] = {
 	"bare": CONCRETE, "terrain": GRASS, "carpet": CARPET, "wood": WOOD, "ceramic": CERAMIC,
 	"grass": GRASS, "outside": GRASS, "path": GRAVEL, "sidewalk": SLABS, "road": ASPHALT, "road_line": ASPHALT,
 }
-## Cuánto se acerca cada variante de color al color medio del estilo (0 = la variante tal cual):
-## así las casillas vecinas del pasto se distinguen poco y no se ve un tablero.
+## Cuánto se acerca cada variante al color medio (0 = tal cual), para que el pasto no parezca tablero.
 const VARIANT_BLEND: float = 0.6
-## Losas por lado en la cerámica, tablones por casilla en la madera y cuadros de alfombra.
+## Losas por lado (cerámica), tablones por casilla (madera) y cuadros de alfombra.
 const CERAMIC_TILES: int = 2
 const WOOD_PLANKS: int = 4
 const CARPET_TILES: int = 2
@@ -39,21 +31,20 @@ const CARPET_TILES: int = 2
 const GRASS_PATCH_SEED: int = 5417
 
 
-## Material de un estilo del atlas (el pasto si no se conoce).
+## Material de un estilo (pasto si no se conoce).
 static func get_material(style: String) -> String:
 	return MATERIALS.get(style, GRASS)
 
 
-## Pinta una casilla en image con su esquina en offset (en píxeles de textura). colors son
-## los colores del estilo y variant cuál usa esta columna del atlas. overlap es cuánto se
-## pasa el rombo de su borde (en píxeles de textura) para no dejar rayas entre casillas.
+## Pinta una casilla en image con su esquina en offset. variant: columna del atlas; overlap: cuánto
+## se pasa el rombo de su borde para no dejar rayas.
 static func paint(image: Image, offset: Vector2i, size: Vector2i, style: String, colors: Array, variant: int,
 		overlap: float, line_color: Color = Color.TRANSPARENT, line_direction: Vector2 = Vector2.ZERO) -> void:
 	var material: String = get_material(style)
 	var base: Color = _variant_color(colors, variant)
 	var other: Color = colors[(variant + 1) % colors.size()] if colors.size() > 1 else base.darkened(0.08)
 	if material in [CERAMIC, WOOD, CARPET, CONCRETE]:
-		# Los pisos del local son iguales en todas las casillas: el dibujo ya trae sus losas.
+		# Los pisos del local son iguales en todas las casillas.
 		base = colors[0]
 		other = colors[1] if colors.size() > 1 else base.darkened(0.08)
 	var seed: int = hash(style)
@@ -66,7 +57,7 @@ static func paint(image: Image, offset: Vector2i, size: Vector2i, style: String,
 			var py: float = (y + 0.5 - half.y) / half.y
 			if absf(px) + absf(py) > limit:
 				continue
-			# Fuera del rombo (en el solape) se sigue el dibujo de la casilla de al lado.
+			# En el solape se sigue el dibujo de la casilla de al lado.
 			var u: float = fposmod((py + px) / 2.0 + 0.5, 1.0)
 			var v: float = fposmod((py - px) / 2.0 + 0.5, 1.0)
 			var color: Color = shade(material, base, other, u, v, x, y, seed + (variant * 101 if material == GRASS else 0))
@@ -78,8 +69,7 @@ static func paint(image: Image, offset: Vector2i, size: Vector2i, style: String,
 			image.set_pixel(offset.x + x, offset.y + y, color)
 
 
-## Color de un punto de la casilla según su material. u y v van de 0 a 1 a lo largo de los
-## ejes de la cuadrícula; sx y sy son el píxel de la textura (para el grano fino).
+## Color de un punto según su material; u, v de 0 a 1 en la casilla y sx, sy el píxel (grano fino).
 static func shade(material: String, base: Color, other: Color, u: float, v: float, sx: int, sy: int, seed: int) -> Color:
 	match material:
 		CERAMIC:
@@ -99,10 +89,9 @@ static func shade(material: String, base: Color, other: Color, u: float, v: floa
 	return _grass(base, other, u, v, sx, sy, seed)
 
 
-# Pasto: manchas suaves de dos tonos, briznas (trazos de 2 × 6 píxeles, oscuras abajo y
-# claras en la punta). Las briznas cambian con la variante para que no se note la repetición.
+# Pasto: manchas suaves de dos tonos y briznas de 2 × 6 px; las briznas cambian con la variante.
 static func _grass(base: Color, other: Color, u: float, v: float, sx: int, sy: int, seed: int) -> Color:
-	# Las manchas no cambian con la variante: así encajan entre casillas vecinas.
+	# Las manchas no cambian con la variante: encajan entre vecinas.
 	var patches: float = noise(u, v, 3, GRASS_PATCH_SEED) * 0.6 + noise(u, v, 7, GRASS_PATCH_SEED + 1) * 0.4
 	var color: Color = base.lerp(other, patches)
 	color = _tone(color, (patches - 0.5) * 0.12)
@@ -118,7 +107,7 @@ static func _grass(base: Color, other: Color, u: float, v: float, sx: int, sy: i
 	return color
 
 
-# Cerámica: losas en tablero suave con junta, bisel claro arriba y oscuro abajo y brillo leve.
+# Cerámica: losas con junta, bisel y brillo leve.
 static func _ceramic(base: Color, other: Color, u: float, v: float, seed: int) -> Color:
 	var tu: float = u * CERAMIC_TILES
 	var tv: float = v * CERAMIC_TILES
@@ -138,7 +127,7 @@ static func _ceramic(base: Color, other: Color, u: float, v: float, seed: int) -
 	return _tone(color, (noise(u, v, 6, seed + 4) - 0.5) * 0.05)
 
 
-# Madera: tablones a lo largo de u, con las uniones escalonadas, la ranura entre tablones y veta.
+# Madera: tablones a lo largo de u con uniones escalonadas, ranura y veta.
 static func _wood(base: Color, other: Color, u: float, v: float, seed: int) -> Color:
 	var plank_v: float = v * WOOD_PLANKS
 	var plank: int = floori(plank_v)
@@ -157,7 +146,7 @@ static func _wood(base: Color, other: Color, u: float, v: float, seed: int) -> C
 	return color
 
 
-# Alfombra: cuadros de alfombra con la fibra en direcciones alternas y grano fino.
+# Alfombra: cuadros con la fibra alterna y grano fino.
 static func _carpet(base: Color, other: Color, u: float, v: float, sx: int, sy: int, seed: int) -> Color:
 	var tu: float = u * CARPET_TILES
 	var tv: float = v * CARPET_TILES
@@ -186,7 +175,7 @@ static func _concrete(base: Color, other: Color, u: float, v: float, sx: int, sy
 	return color
 
 
-# Grava del camino: tierra con piedritas claras y oscuras de 2×2 píxeles.
+# Grava: tierra con piedritas de 2×2 px.
 static func _gravel(base: Color, other: Color, u: float, v: float, sx: int, sy: int, seed: int) -> Color:
 	var color: Color = base.lerp(other, noise(u, v, 5, seed))
 	var stone: float = _hash(sx / 2, sy / 2, seed + 1)
@@ -197,7 +186,7 @@ static func _gravel(base: Color, other: Color, u: float, v: float, sx: int, sy: 
 	return color
 
 
-# Acera: una baldosa grande por casilla con junta en el borde y grano fino.
+# Acera: una baldosa por casilla con junta y grano fino.
 static func _slabs(base: Color, other: Color, u: float, v: float, sx: int, sy: int, seed: int) -> Color:
 	var color: Color = base.lerp(other, noise(u, v, 3, seed) * 0.7)
 	color = _tone(color, (_hash(sx, sy, seed + 1) - 0.5) * 0.06)
@@ -209,7 +198,7 @@ static func _slabs(base: Color, other: Color, u: float, v: float, sx: int, sy: i
 	return color
 
 
-# Asfalto: grano fino de piedritas y manchas.
+# Asfalto: grano fino y manchas.
 static func _asphalt(base: Color, other: Color, u: float, v: float, sx: int, sy: int, seed: int) -> Color:
 	var color: Color = base.lerp(other, noise(u, v, 4, seed) * 0.8)
 	var grain: float = _hash(sx, sy, seed + 1)
@@ -220,7 +209,7 @@ static func _asphalt(base: Color, other: Color, u: float, v: float, sx: int, sy:
 	return color
 
 
-# Color de una variante, acercado al color medio del estilo.
+# Color de una variante acercado al color medio.
 static func _variant_color(colors: Array, variant: int) -> Color:
 	var mean := Color(0.0, 0.0, 0.0)
 	for color: Color in colors:
@@ -236,8 +225,7 @@ static func _tone(color: Color, amount: float) -> Color:
 	return color.lightened(amount) if amount >= 0.0 else color.darkened(-amount)
 
 
-## Ruido suave entre 0 y 1 que se repite cada casilla (period celdas por lado), así casillas
-## vecinas encajan sin costura.
+## Ruido suave entre 0 y 1 que se repite cada casilla (period celdas por lado).
 static func noise(u: float, v: float, period: int, seed: int) -> float:
 	var x: float = fposmod(u, 1.0) * period
 	var y: float = fposmod(v, 1.0) * period
@@ -254,7 +242,7 @@ static func noise(u: float, v: float, period: int, seed: int) -> float:
 	return lerpf(lerpf(a, b, fx), lerpf(c, d, fx), fy)
 
 
-# Número fijo entre 0 y 1 para unos enteros (azar que no cambia entre partidas).
+# Número fijo entre 0 y 1 para unos enteros.
 static func _hash(x: int, y: int, seed: int) -> float:
 	var h: int = (x * 374761393 + y * 668265263 + seed * 1274126177) & 0xFFFFFFFF
 	h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF

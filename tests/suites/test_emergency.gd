@@ -1,7 +1,5 @@
-# Prueba del hito 24: préstamo de emergencia.
-# Criterio: el día 15 sin dinero aparece la ventana con el tiempo en pausa; aceptar paga
-# la nómina y crea el préstamo al 12 %; rechazar deja la deuda de nómina; con 2 meses de
-# cuotas atrasadas no se ofrece.
+# Préstamo de emergencia: el día 15 sin dinero sale la ventana en pausa; aceptar paga la nómina
+# y crea el préstamo al 12 %; rechazar deja la deuda; con 2 meses de atraso no se ofrece.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=emergency
 extends Node
 
@@ -22,7 +20,7 @@ func _ready() -> void:
 		print("Esta escena es una prueba automática sin ventana; se abre el juego normal.")
 		get_tree().change_scene_to_file.call_deferred(MENU_SCENE_PATH)
 		return
-	# Las pruebas guardan en otra carpeta para no tocar las partidas del jugador.
+	# Para no tocar las partidas del jugador.
 	SaveManager.save_dir = "user://test_saves"
 	EventBus.notice.connect(func(text: String) -> void: _notices.append(text))
 	_check_offer()
@@ -128,7 +126,7 @@ func _check_accept() -> void:
 		"préstamo al 12 %%: %s" % [Bank.loans])
 	_expect(Bank.get_available() == available and Bank.get_debt() == amount, "no cuenta para el límite")
 	_expect(not Bank.refinance_problem(Bank.loans[0], 3).is_empty(), "no se refinancia")
-	# Del día 15 al día 1 hay 16 días: la primera cuota es el día 1 siguiente.
+	# Del 15 al 1 hay 16 días: la primera cuota es el día 1 siguiente.
 	_expect(int(Bank.loans[0]["first_due_day"]) == GameConstants.DAYS_PER_MONTH, "primera cuota el día 1 del mes 2")
 	Economy.earn(10000, "Prueba")
 	_to_day(1)
@@ -199,7 +197,6 @@ func _check_window() -> void:
 	GameClock.stop()
 	var dialog: EmergencyLoanDialog = game.get_node("EmergencyLoanDialog")
 	_expect(not dialog.is_open(), "la ventana empieza cerrada")
-	# Un salto largo se corta al aparecer la oferta.
 	GameClock.fast_forward_hours((20 - GameClock.get_day_count()) * GameConstants.HOURS_PER_DAY)
 	_expect(GameClock.get_day() == 15 and GameClock.get_hour() == 0, "el salto se corta el día 15: día %d %d:00" % [GameClock.get_day(), GameClock.get_hour()])
 	_expect(dialog.is_open() and GameClock.is_paused, "la ventana abre con el tiempo en pausa")
@@ -212,7 +209,6 @@ func _check_window() -> void:
 	_expect(not GameClock.is_paused, "el tiempo vuelve a correr")
 	game.queue_free()
 	await get_tree().process_frame
-	# Cargar una partida con la oferta pendiente vuelve a abrir la ventana.
 	_new_game_with_employee()
 	_to_day(15)
 	SaveManager.save_game("slot_5")

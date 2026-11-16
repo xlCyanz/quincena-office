@@ -1,12 +1,9 @@
-# Prueba de los cuartos de casilla (pedido después del hito 69, como la colocación de
-# Timberborn pero con 1 m² dividido en 4): los muebles chicos (planta pequeña, zafacón,
-# dispensador de agua y lámpara de pie) ocupan un cuarto y caben hasta 4 por casilla; con
-# un mueble grande no comparten. Vender y girar eligen el del cuarto bajo el ratón, y la
-# partida guarda el cuarto (las viejas los ponen en el primero).
+# Cuartos de casilla: los muebles chicos ocupan un cuarto y caben 4 por casilla, nunca con uno grande;
+# vender y girar eligen el del cuarto bajo el ratón; se guarda el cuarto (las partidas viejas, el 0).
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=quarters
 extends Node
 
-## Terminó: cuántas comprobaciones fallaron y cuántas se hicieron (lo escucha test_all).
+## Lo escucha test_all: fallos y comprobaciones.
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -66,7 +63,7 @@ func _check_builder() -> void:
 	var full: Dictionary = builder.place("trash_can", CELL, 0)
 	_expect(not full["ok"] and String(full["message"]).contains("otro objeto"), "un quinto no cabe: %s" % full["message"])
 	_expect(not builder.place("simple_desk", CELL, 0)["ok"], "un escritorio no va con chicos")
-	# Vender el del cuarto 2 deja los otros; sin cuarto, uno se pone en el libre.
+	# Vender el del cuarto 2 deja los otros; sin cuarto, se pone en el libre.
 	var money: int = Economy.balance
 	_expect(builder.sell_furniture_at(CELL, 2)["ok"] and Economy.balance > money, "vender el del cuarto 2")
 	var quarters: Array[int] = []
@@ -77,13 +74,11 @@ func _check_builder() -> void:
 	_expect(builder.place("trash_can", CELL, 0)["ok"], "un zafacón sin cuarto entra en el libre")
 	_expect(FurnitureCatalog.get_quarter(OfficeState.furniture[OfficeState.find_furniture_at(CELL, 2)]) == 2
 		and OfficeState.furniture[OfficeState.find_furniture_at(CELL, 2)]["id"] == "trash_can", "y quedó en el cuarto 2")
-	# Girar el del cuarto 1.
 	_expect(builder.rotate(CELL, 1)["ok"] and int(OfficeState.furniture[OfficeState.find_furniture_at(CELL, 1)]["rotation"]) == 1,
 		"girar el del cuarto 1")
-	# Junto a un escritorio: un chico no se pone sobre él, sí al lado.
+	# Junto a un escritorio: no sobre él, sí al lado.
 	builder.place("simple_desk", CELL + Vector2i(1, 0), 0)
 	_expect(not builder.place("small_plant", CELL + Vector2i(1, 0), 0, 0)["ok"], "un chico no va encima de un escritorio")
-	# La casilla con chicos sigue tapando el paso.
 	_expect(OfficeState.get_blocking_cells().has(CELL), "la casilla con chicos tapa el paso")
 
 
@@ -95,7 +90,6 @@ func _check_save() -> void:
 		quarters.append(FurnitureCatalog.get_quarter(item))
 	quarters.sort()
 	_expect(quarters == ([0, 1, 2, 3] as Array[int]), "guardar y cargar conserva los cuartos: %s" % [quarters])
-	# Una partida vieja (sin cuarto) los pone en el primero.
 	for item: Dictionary in saved["furniture"]:
 		item.erase("quarter")
 	OfficeState.import_state(JSON.parse_string(JSON.stringify(saved)))
@@ -114,7 +108,7 @@ func _check_controller() -> void:
 	var controller: BuildController = game.get_node("BuildController")
 	panel.set_build_mode(true)
 	panel.select_tool("small_plant")
-	# Con el ratón en el cuarto de abajo a la derecha de la casilla.
+	# Ratón en el cuarto de abajo a la derecha.
 	controller.set("_pointer", Vector2(CELL) + Vector2(0.3, 0.2))
 	controller.call("_update_preview")
 	_expect(int(controller.get("_preview_quarter")) == 3 and bool(controller.get("_preview_ok")), "la vista previa marca el cuarto 3")
