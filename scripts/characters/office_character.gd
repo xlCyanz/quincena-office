@@ -277,6 +277,10 @@ func _replan_avoiding(avoid: Array[Vector2i]) -> void:
 	match activity:
 		Activity.WALKING_TO_DESK:
 			_walk_to(_seat_cell, Activity.WALKING_TO_DESK, [], avoid)
+		Activity.SEATED:
+			# Sentado fuera de su lugar (una partida de antes): va a su lugar.
+			if get_cell() != _seat_cell:
+				_walk_to(_seat_cell, Activity.WALKING_TO_DESK, [], avoid)
 		Activity.WALKING_OUT:
 			_walk_to(_entrance, Activity.WALKING_OUT, [_outside], avoid)
 		Activity.STEPPING_OUT:
@@ -516,6 +520,11 @@ func import_state(state: Dictionary) -> void:
 			_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 		Activity.WALKING_OUT:
 			_walk_to(_entrance, Activity.WALKING_OUT, [_outside])
+		Activity.SEATED:
+			if grid_position == Vector2(_seat_cell):
+				_set_activity(saved)
+			else:
+				_walk_to(_seat_cell, Activity.WALKING_TO_DESK)
 		_:
 			_set_activity(saved)
 	visible = activity != Activity.AWAY
@@ -540,7 +549,8 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 			var inside: Array[Vector2i] = _find_path(_entrance, destination, avoid)
 			if inside.is_empty():
 				push_warning("%s no encuentra camino de %s a %s" % [display_name, _entrance, destination])
-			else:
+				inside = _path_to_closest(_entrance, destination)
+			if not inside.is_empty():
 				inside.pop_front()
 				_path.append_array(inside)
 		_path.append_array(extra_steps)
@@ -550,7 +560,8 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 	_path = _find_path(get_cell(), destination, avoid)
 	if _path.is_empty() and get_cell() != destination:
 		push_warning("%s no encuentra camino de %s a %s" % [display_name, get_cell(), destination])
-	elif not _path.is_empty():
+		_path = _path_to_closest(get_cell(), destination)
+	if not _path.is_empty():
 		_path.pop_front()  # La primera casilla es en la que ya está.
 		# Si iba entre dos casillas, primero vuelve al centro de la suya.
 		if grid_position != Vector2(get_cell()):
@@ -560,6 +571,25 @@ func _walk_to(destination: Vector2i, new_activity: Activity, extra_steps: Array[
 	_update_position()
 	if _path.is_empty():
 		_on_destination_reached()
+
+
+# Sin camino hasta to: camino hasta la casilla que se puede pisar más cerca de to (a la que
+# se llega desde from), para esperar ahí y no en la puerta. Vacío si ya está en la más cercana.
+func _path_to_closest(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var best: Vector2i = from
+	var best_distance: int = _distance(from, to)
+	for cell: Vector2i in _pathfinder.get_reachable(from):
+		var distance: int = _distance(cell, to)
+		if distance < best_distance or (distance == best_distance and cell < best):
+			best = cell
+			best_distance = distance
+	if best == from:
+		return []
+	return _pathfinder.find_path(from, best)
+
+
+static func _distance(a: Vector2i, b: Vector2i) -> int:
+	return absi(a.x - b.x) + absi(a.y - b.y)
 
 
 # Camino que esquiva avoid; si así no hay, el de siempre.
@@ -575,6 +605,11 @@ func _on_destination_reached() -> void:
 	hurry = false
 	match activity:
 		Activity.WALKING_TO_DESK:
+			# Sin camino hasta su lugar se queda de pie lo más cerca que pudo, sin sentarse:
+			# vuelve a intentarlo cuando cambie la oficina (replan).
+			if get_cell() != _seat_cell:
+				_animate(0.0, Vector2.ZERO)
+				return
 			_set_activity(Activity.SEATED)
 			sat_down.emit()
 		Activity.WALKING_OUT:

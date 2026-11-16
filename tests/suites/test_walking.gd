@@ -48,6 +48,7 @@ func _ready() -> void:
 	_check_corridor()
 	_check_entrance()
 	_check_release()
+	_check_unreachable()
 	_check_spots()
 	_game.queue_free()
 	await get_tree().process_frame
@@ -223,6 +224,38 @@ func _check_release() -> void:
 	_made.erase(leaving)
 	leaving.free()
 	_expect(not other.is_cell_taken(_cell(4, 4)), "al quitarlo de la escena también")
+	_clear()
+
+
+# Sin camino hasta su silla no se sienta en la puerta: espera de pie lo más cerca que puede
+# y, cuando la oficina cambia y hay camino, va a sentarse. Sentado fuera de su silla (una
+# partida de antes, al cambiar la oficina), también va a su silla.
+func _check_unreachable() -> void:
+	var seat: Vector2i = _cell(5, 3)
+	var walls: Array[Vector2i] = [seat + Vector2i.LEFT, seat + Vector2i.RIGHT, seat + Vector2i.UP, seat + Vector2i.DOWN]
+	var closed := OfficePathfinder.new()
+	closed.build(OfficeState.lot, OfficeState.get_blocking_cells() + walls, OfficeState.edges)
+	var walker: OfficeCharacter = _make(OfficeState.entrance, seat, closed)
+	walker.call("_release_cells")
+	walker.activity = OfficeCharacter.Activity.AWAY
+	walker.visible = false
+	walker.update_routine(true)
+	_run(15.0)
+	var distance: int = absi(walker.get_cell().x - seat.x) + absi(walker.get_cell().y - seat.y)
+	_expect(walker.activity != OfficeCharacter.Activity.SEATED, "sin camino a su silla no se sienta")
+	_expect(walker.get_cell() != OfficeState.entrance and distance == 2,
+		"espera de pie lo más cerca de su silla, no en la puerta: %s" % [walker.get_cell() - _origin])
+	_expect(walker.get_sprite_state().get("pose", "") != "sit", "no se dibuja sentado")
+	closed.build(OfficeState.lot, OfficeState.get_blocking_cells(), OfficeState.edges)
+	walker.replan()
+	_run(6.0)
+	_expect(walker.activity == OfficeCharacter.Activity.SEATED and walker.get_cell() == seat,
+		"con camino, va a su silla y se sienta")
+	var moved: OfficeCharacter = _make(_cell(1, 5), _cell(4, 5))
+	moved.replan()
+	_run(6.0)
+	_expect(moved.activity == OfficeCharacter.Activity.SEATED and moved.get_cell() == _cell(4, 5),
+		"sentado fuera de su silla, al cambiar la oficina va a ella")
 	_clear()
 
 

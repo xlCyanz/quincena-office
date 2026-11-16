@@ -27,6 +27,8 @@ func build(lot: Lot, blocked_cells: Array[Vector2i], edges: Dictionary[Vector3i,
 	_astar.default_compute_heuristic = AStarGrid2D.HEURISTIC_MANHATTAN
 	_astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_MANHATTAN
 	_astar.update()
+	# Al volver a armarlo con el mismo tamaño, update() no borra lo bloqueado antes.
+	_astar.fill_solid_region(_astar.region, false)
 	var size: Vector2i = _astar.region.size
 	for x: int in range(size.x):
 		for y: int in range(size.y):
