@@ -68,20 +68,37 @@ SMALL_SCALE = 0.8  # BODY_SCALE del juego (OfficeCharacter): el personaje a tama
 
 class Pose(object):
     """Medidas de una pose en px del cuerpo. arm = (hombro, codo, muñeca, centro de la mano,
-    radios de la mano) con lat hacia afuera (se espeja en el brazo izquierdo)."""
+    radios de la mano) con lat hacia afuera (se espeja en el brazo izquierdo).
+    Para los cuadros de una animación (lado = −1 izquierda del personaje, +1 derecha):
+      feet    lado -> (adelante, levantado) de ese pie
+      swing   lado -> (codo, muñeca, mano) corrimiento hacia adelante de ese brazo
+      hands   lado -> cuánto sube esa mano (tecleando)
+      bob     cuánto sube todo el cuerpo sobre las piernas (el paso)
+      breath  cuánto suben los hombros y la cabeza (respirar); la cintura no se mueve"""
 
-    def __init__(self, name, sit, arm, height):
+    def __init__(self, name, sit, arm, height, feet=None, swing=None, hands=None, bob=0.0, breath=0.0):
         self.name = name
         self.sit = sit
         drop = SIT_DROP if sit else 0.0
-        self.belt_z = BELT_Z - drop
-        self.neck_z = NECK_Z - drop
-        self.head_z = HEAD_Z - drop
+        self.bob = float(bob)
+        self.breath = float(breath)
+        self.belt_z = BELT_Z - drop + self.bob
+        self.neck_z = NECK_Z - drop + self.bob + self.breath
+        self.head_z = HEAD_Z - drop + self.bob + self.breath
         self.arm = arm
         self.height = height  # alto esperado sobre los pies (mínimo, máximo) a escala 1
+        self.feet = feet or {}
+        self.swing = swing or {}
+        self.hands = hands or {}
+
+    def foot(self, sign):
+        return self.feet.get(sign, (0.0, 0.0))
 
     def arm_points(self, sign):
-        return [(sign * p[0], p[1], p[2]) for p in self.arm[:4]]
+        lift = self.bob + self.breath
+        swing = (0.0,) + tuple(self.swing.get(sign, (0.0, 0.0, 0.0)))
+        up = (0.0, 0.0, 0.4 * self.hands.get(sign, 0.0), self.hands.get(sign, 0.0))
+        return [(sign * p[0], p[1] + swing[i], p[2] + lift + up[i]) for i, p in enumerate(self.arm[:4])]
 
 
 # De pie: brazos abiertos hacia afuera y el codo apenas doblado hacia adelante; entre la mano y
@@ -92,6 +109,41 @@ STAND = Pose("stand", False, ((13.6, 0.0, 57.0), (16.0, 0.4, 47.5), (17.4, 2.4, 
 # horizontal, con las manos planas (palmas abajo) como sobre un teclado.
 SIT = Pose("sit", True, ((13.6, 0.0, 54.0), (15.0, 1.0, 44.2), (10.8, 13.5, 44.6),
                          (9.8, 17.4, 44.2), (4.2, 4.8, 3.3)), (86, 100))
+
+# ---- animaciones: cada cuadro es una pose (el ciclo empalma: después del último va el primero)
+WALK_FRAMES = 8
+IDLE_FRAMES = 4
+TYPE_FRAMES = 4
+STRIDE = 7.5  # cuánto se adelanta y se atrasa cada pie
+FOOT_LIFT = 3.6  # cuánto sube el pie que avanza
+ARM_SWING = (1.6, 4.0, 6.0)  # codo, muñeca y mano: van al revés de la pierna de su lado
+
+
+def walk_poses():
+    """Caminar: el pie izquierdo adelante en el cuadro 3 y el derecho en el 7; el pie que avanza
+    va levantado, el cuerpo sube 1 px cuando las piernas se cruzan y los brazos van al revés."""
+    poses = []
+    for i in range(WALK_FRAMES):
+        t = 2.0 * math.pi * i / WALK_FRAMES
+        s, c = math.sin(t), math.cos(t)
+        feet = {-1.0: (STRIDE * s, FOOT_LIFT * max(c, 0.0)), 1.0: (-STRIDE * s, FOOT_LIFT * max(-c, 0.0))}
+        swing = {-1.0: tuple(-k * s for k in ARM_SWING), 1.0: tuple(k * s for k in ARM_SWING)}
+        poses.append(Pose("walk", False, STAND.arm, STAND.height, feet=feet, swing=swing, bob=abs(c)))
+    return poses
+
+
+def idle_poses():
+    """De pie, respirando: hombros y cabeza suben 1 px y bajan."""
+    return [Pose("idle", False, STAND.arm, STAND.height, breath=b) for b in (0.0, 0.6, 1.0, 0.6)][:IDLE_FRAMES]
+
+
+def type_poses():
+    """Sentado tecleando: sube una mano, baja, sube la otra, baja."""
+    ups = ({-1.0: 2.0}, {-1.0: 0.6, 1.0: 0.6}, {1.0: 2.0}, {-1.0: 0.6, 1.0: 0.6})
+    return [Pose("type", True, SIT.arm, SIT.height, hands=up) for up in ups][:TYPE_FRAMES]
+
+
+ANIMATIONS = (("walk", walk_poses), ("idle", idle_poses), ("type", type_poses))
 
 OUTLINE, DEEP, RIGHT, LEFT, BASE, LIGHT = pal.OUTLINE, pal.DEEP, pal.RIGHT, pal.LEFT, pal.BASE, pal.LIGHT
 
@@ -786,7 +838,8 @@ def build_model(fig, hair=True):
     # Zapatos: separados unos 3 px, la punta hacia adelante.
     for side, sign in (("l", -1.0), ("r", 1.0)):
         lat = sign * SHOE_LAT
-        box = (lat - half, lat + half, back + shift, front + shift, 0.0, height)
+        step, lift = pose.foot(sign)
+        box = (lat - half, lat + half, back + shift + step, front + shift + step, lift, height + lift)
         fig.solid("shoe_" + side, "shoes", f_box(*(box + (radius,))), box)
     cut_z = pose.belt_z + BELT_H
     cut = lambda lat, fwd, z: z - cut_z
@@ -813,9 +866,10 @@ def build_model(fig, hair=True):
         # cinturón (cortado plano ahí) y las dos se funden arriba (unión suavizada): la cadera es
         # redonda como las piernas, así el sombreado baja seguido del cinturón a los zapatos. Se
         # abren un poco hacia los pies: entre los tobillos queda un hueco de 3 px.
-        legs = f_blend(f_capsule((-6.0, 0.0, 42.0), (-SHOE_LAT, 0.4, 7.5), 7.0, 6.0),
-                       f_capsule((6.0, 0.0, 42.0), (SHOE_LAT, 0.4, 7.5), 7.0, 6.0), 2.5)
-        fig.solid("pants", "pants", f_intersect(legs, cut), (-14.0, 14.0, -8.5, 8.5, 2.0, cut_z))
+        both = [stand_leg(pose, sign, 7.0, 6.0, 6.0, pose.belt_z + 10.0) for sign in (-1.0, 1.0)]
+        legs = f_blend(both[0], both[1], 2.5)
+        reach = STRIDE + 2.0
+        fig.solid("pants", "pants", f_intersect(legs, cut), (-14.0, 14.0, -8.5 - reach, 8.5 + reach, 2.0, cut_z))
     # Camisa: el torso es una sola caja redondeada (caras limpias: arriba los hombros, el pecho
     # y el costado), un poco más angosta en la cintura.
     fig.solid("torso", "jacket" if fig.style.jacket else "shirt", f_torso(pose, fig.style), (-13.2, 13.2, -8.6, 8.6, pose.belt_z - 4.0, pose.neck_z + 1.5))
@@ -853,6 +907,17 @@ def build_model(fig, hair=True):
         build_hair(fig)
 
 
+def stand_leg(pose, sign, r_top, r_low, hip_lat, hip_z):
+    """Pierna de pie: cadera → rodilla → tobillo. Con el pie adelantado o levantado (caminar) la
+    rodilla se dobla hacia adelante; parada es un tubo recto."""
+    step, lift = pose.foot(sign)
+    ankle = (sign * SHOE_LAT, 0.4 + step, 7.5 + lift)
+    hip = (sign * hip_lat, 0.0, hip_z)
+    knee = ((hip[0] + ankle[0]) / 2.0, (hip[1] + ankle[1]) / 2.0 + 0.9 * lift, (hip[2] + ankle[2]) / 2.0 + 0.3 * lift)
+    r_mid = (r_top + r_low) / 2.0
+    return f_blend(f_capsule(hip, knee, r_top, r_mid), f_capsule(knee, ankle, r_mid, r_low), 1.5)
+
+
 def build_skirt(fig, cut_z):
     """Falda (capa pants) y piernas de piel. De pie: campana hasta SKIRT_HEM. Sentada: cubre la
     cadera y los muslos hasta antes de la rodilla; las canillas bajan a la vista."""
@@ -882,8 +947,10 @@ def build_skirt(fig, cut_z):
         fig.solid("pants", "pants", f_intersect(bell, lambda lat, fwd, z: z - cut_z),
                   (-14.4, 14.4, -10.0, 10.0, SKIRT_HEM - 1.0, cut_z))
         for side, sign in (("l", -1.0), ("r", 1.0)):
-            leg = f_capsule((sign * 5.8, 0.0, SKIRT_HEM + 6.0), (sign * SHOE_LAT, 0.4, 7.5), 5.2, 4.6)
-            fig.solid("leg_" + side, "skin", leg, (sign * 6.3 - 6.0, sign * 6.3 + 6.0, -6.0, 6.5, 2.0, SKIRT_HEM + 8.0))
+            leg = stand_leg(pose, sign, 5.2, 4.6, 5.8, SKIRT_HEM + 6.0)
+            reach = STRIDE + 2.0
+            fig.solid("leg_" + side, "skin", leg, (sign * 6.3 - 6.0, sign * 6.3 + 6.0, -6.0 - reach, 6.5 + reach, 2.0,
+                                                    SKIRT_HEM + 8.0 + FOOT_LIFT))
 
 
 HAIR_OFFSET = (0.0, -1.0, 1.6)  # centro del casquete respecto del centro de la cabeza
@@ -1177,8 +1244,8 @@ def hand_details(fig):
         hand = fig.of("hand_" + side)
         if hand.sum() < 12:
             continue
-        hx, hy, hz = fig.pose.arm[3]
-        x, y = fig.canon(sign * (hx + 0.4), hy + 1.6, hz)
+        hx, hy, hz = fig.pose.arm_points(sign)[3]
+        x, y = fig.canon(hx + sign * 0.4, hy + 1.6, hz)
         fig.art(x, y, ["n", "n"], {"n": ("skin", "darker")}, hand)
 
 
@@ -1260,7 +1327,8 @@ def verify(fig, name):
     ys, xs = np.nonzero(alpha)
     # Apoyo: los pies (sentado, la cadera) sobre (64, 112) y el alto de la pose a su escala.
     low_x, low_y = fig.screen(0.0, shoe_fwd(pose) + 2.0, 0.0)
-    if not low_y <= ys.max() + 1 <= low_y + 6:
+    reach = 0.5 * max([abs(pose.foot(sign)[0]) for sign in (-1.0, 1.0)])  # caminando, el pie de adelante baja más
+    if not low_y - reach <= ys.max() + 1 <= low_y + 6 + reach:
         problems.append("la fila más baja es %d (pies en %.1f)" % (ys.max(), low_y))
     tall = FEET[1] - ys.min()
     if not pose.height[0] * fig.k <= tall <= pose.height[1] * fig.k:
@@ -1314,7 +1382,8 @@ def export_layers(fig, bald, folder, name):
         stack[part[..., 3] > 0] = part[part[..., 3] > 0]
         image.save(os.path.join(folder, "%s_%s.png" % (name, layer_name)))
     assert np.array_equal(stack, sprite), "%s: las capas no componen el sprite" % name
-    bald.c.image.save(os.path.join(folder, "%s_bald.png" % name))
+    if bald is not None:
+        bald.c.image.save(os.path.join(folder, "%s_bald.png" % name))
 
 
 def layer_info():
@@ -1422,6 +1491,7 @@ def build_sheet(out_dir, figures):
 def build(out_dir):
     files = []
     figures = []
+    frames = []  # cuadros de animación (no van en la hoja de contacto)
     problems = []
     layers_dir = os.path.join(out_dir, "character_layers")
     if not os.path.isdir(layers_dir):
@@ -1439,6 +1509,21 @@ def build(out_dir):
                 files.append(iso.save(fig.c, out_dir, name, **meta))
                 export_layers(fig, build_one(rotation, looks[""], pose, hair=False, style=style), layers_dir, name)
                 figures.append((name, fig))
+        # Animaciones: un sprite por cuadro, <nombre>_1 … _N (el manifiesto da frame y frames).
+        for kind, make in ANIMATIONS:
+            poses = make()
+            for rotation in range(4):
+                for index, pose in enumerate(poses):
+                    fig = build_one(rotation, looks[""], pose, style=style)
+                    name = "character_%s%s_r%d_%d" % (style.prefix, kind, rotation, index + 1)
+                    problems += verify(fig, name)
+                    meta = {"pose": kind, "style": style.name, "frame": index + 1, "frames": len(poses),
+                            "layers": list(LAYER_ORDER)}
+                    if pose.sit:
+                        meta["seat_z"] = SIT_SEAT_Z
+                    files.append(iso.save(fig.c, out_dir, name, **meta))
+                    export_layers(fig, None, layers_dir, name)
+                    frames.append((name, fig))
         base = dict(figures)["character_%sstand_r1" % style.prefix]
         for suffix in ("_v1", "_v2"):
             fig = build_one(1, looks[suffix], style=style)
