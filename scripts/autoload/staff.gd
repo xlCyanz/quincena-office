@@ -224,8 +224,9 @@ func import_state(state: Dictionary) -> void:
 		var members: Array[int] = []
 		for member: Variant in saved.get("members", []):
 			var member_id: int = int(member)
-			# Un empleado está en un solo equipo y tiene que seguir contratado.
-			if not get_employee(member_id).is_empty() and get_team_of(member_id).is_empty():
+			# Un empleado está en un solo equipo, sigue contratado y su puesto entra en equipos.
+			var member_data: Dictionary = get_employee(member_id)
+			if not member_data.is_empty() and can_join_teams(member_data) and get_team_of(member_id).is_empty():
 				members.append(member_id)
 		var team_id: int = int(saved["id"])
 		var schedule: Dictionary = saved.get("schedule", WorkSchedule.make_shift(

@@ -51,6 +51,8 @@ func _lateness_roll(employee: Dictionary, at: int) -> float:
 ## Minutos respecto de la hora en punto en que entra alguien cuya llegada es en at (negativo =
 ## antes); fijo por persona y hora. Solo es visual.
 func get_arrival_offset(employee: Dictionary, at: int) -> int:
+	if is_cleaner(employee) and cleaning_shift_enabled:
+		return get_cleaning_minutes(employee).x
 	if not arrival_spread_enabled:
 		return 0
 	var rng := RandomNumberGenerator.new()
@@ -66,15 +68,30 @@ func get_arrival_offset(employee: Dictionary, at: int) -> int:
 ## Minutos de la hora actual que tarda en entrar quien empieza (o vuelve de llegar tarde) ahora; 0 si no.
 func get_late_minutes(key: String) -> int:
 	var employee: Dictionary = get_employee_by_key(key)
-	if employee.is_empty() or not is_expected_now(key):
+	if not _is_entering_now(employee):
 		return 0
+	return maxi(get_arrival_offset(employee, _absolute_hour()), 0)
+
+
+## Minuto de la hora actual en que limpieza empieza a limpiar al entrar (no al volver de almorzar); 0 si no.
+func get_cleaning_start_minute(employee: Dictionary) -> int:
+	if not is_cleaner(employee) or not _is_entering_now(employee):
+		return 0
+	return get_cleaning_minutes(employee).y
+
+
+# Le toca estar ahora y no estaba la hora anterior (ni almorzando).
+func _is_entering_now(employee: Dictionary) -> bool:
+	if employee.is_empty():
+		return false
+	var key: String = employee_key(employee["id"])
+	if not is_expected_now(key):
+		return false
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()
 	var previous_weekday: int = weekday if hour > 0 else posmod(weekday - 1, GameConstants.DAYS_PER_WEEK)
 	var previous_hour: int = posmod(hour - 1, GameConstants.HOURS_PER_DAY)
-	if is_expected(key, previous_weekday, previous_hour) or get_schedule(employee).is_lunch(previous_weekday, previous_hour):
-		return 0
-	return maxi(get_arrival_offset(employee, _absolute_hour()), 0)
+	return not is_expected(key, previous_weekday, previous_hour) and not get_schedule(employee).is_lunch(previous_weekday, previous_hour)
 
 
 ## Minutos antes de la hora siguiente en que entra quien empieza en ella a tiempo; 0 si no.
@@ -99,7 +116,8 @@ func get_early_minutes(key: String) -> int:
 ## fijo por persona y hora; 0 si no termina ahora.
 func get_leave_minutes(key: String) -> int:
 	var employee: Dictionary = get_employee_by_key(key)
-	if employee.is_empty() or not arrival_spread_enabled or is_expected_now(key):
+	if employee.is_empty() or not arrival_spread_enabled or is_expected_now(key) \
+			or (is_cleaner(employee) and cleaning_shift_enabled):
 		return 0
 	var weekday: int = GameClock.get_weekday()
 	var hour: int = GameClock.get_hour()
@@ -190,6 +208,15 @@ func get_team_trait_mood(employee: Dictionary) -> float:
 	for person: Dictionary in _team_people(employee):
 		best = maxf(best, float(_trait_value(person, "team_mood")))
 	return best
+
+
+## Lo que suma a la meta de ánimo de todos un alegre de la empresa (una vez aunque haya varios).
+func get_office_trait_mood() -> float:
+	if _office_mood_cache == NO_OFFICE_MOOD:
+		_office_mood_cache = 0.0
+		for person: Dictionary in employees:
+			_office_mood_cache = maxf(_office_mood_cache, _trait_value(person, "office_mood"))
+	return _office_mood_cache
 
 
 # Mentores del equipo de un empleado, sin contarlo a él.
@@ -294,6 +321,15 @@ static func describe_trait(trait_id: String) -> String:
 	var team_mood: Variant = StaffCatalog.get_trait_effect(trait_id, "team_mood")
 	if team_mood != null:
 		parts.append("+%d al ánimo de su equipo" % int(team_mood))
+	var office_mood: Variant = StaffCatalog.get_trait_effect(trait_id, "office_mood")
+	if office_mood != null:
+		parts.append("+%d a la meta de ánimo de todos" % int(office_mood))
+	var clean: Variant = StaffCatalog.get_trait_effect(trait_id, "clean")
+	if clean != null:
+		parts.append("limpia %s" % percent.call(float(clean)))
+	var early: Variant = StaffCatalog.get_trait_effect(trait_id, "early_minutes")
+	if early != null:
+		parts.append("llega y empieza a limpiar %d min antes" % int(early))
 	var mentor: Variant = StaffCatalog.get_trait_effect(trait_id, "mentor_points")
 	if mentor != null:
 		var levels: Array[String] = []

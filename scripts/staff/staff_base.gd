@@ -77,6 +77,11 @@ var bathrooms_enabled: bool = true
 var company_hiring_enabled: bool = true
 ## Solo para pruebas: false hace que todos entren a la hora en punto. No se guarda.
 var arrival_spread_enabled: bool = true
+## Solo para pruebas: false hace que limpieza entre y limpie a la hora en punto y saque los rasgos de
+## los demás. No se guarda.
+var cleaning_shift_enabled: bool = true
+# get_office_trait_mood de esta hora (NO_OFFICE_MOOD = sin calcular).
+var _office_mood_cache: float = NO_OFFICE_MOOD
 ## Hasta qué día (sin incluirlo) el «Premio de la industria» suma un candidato por vacante.
 var award_until: int = 0
 ## Pausas: hora absoluta → claves de quienes descansan (la actual y la anterior, que se
@@ -110,7 +115,9 @@ static var _trait_summaries: Dictionary[int, Dictionary] = {}
 
 ## Efectos que se multiplican como (1 + valor) y los que van tal cual; de los demás cuenta el
 ## más fuerte y de los booleanos, cualquiera.
-const PLUS_ONE_EFFECTS: Array[String] = ["points", "night_points", "day_points", "no_coffee_points"]
+const PLUS_ONE_EFFECTS: Array[String] = ["points", "night_points", "day_points", "no_coffee_points", "clean"]
+
+const NO_OFFICE_MOOD: float = -1.0
 
 const TIMES_EFFECTS: Array[String] = ["bug_factor", "find_factor", "quit_days_factor"]
 
@@ -118,6 +125,7 @@ const TIMES_EFFECTS: Array[String] = ["bug_factor", "find_factor", "quit_days_fa
 func _clear_hour_caches() -> void:
 	_present_cache.clear()
 	_lunch_cache.clear()
+	_office_mood_cache = NO_OFFICE_MOOD
 
 
 ## Fija la semilla del azar (pruebas).
@@ -200,6 +208,27 @@ func get_ceo_lunch_hour() -> int:
 ## Indica si un empleado es ejecutivo.
 func is_executive(employee: Dictionary) -> bool:
 	return employee.get("role", "") == StaffCatalog.get_executive_role()
+
+
+## Indica si alguien es del personal de limpieza.
+func is_cleaner(employee: Dictionary) -> bool:
+	return employee.get("role", "") == String(StaffCatalog.get_cleaning("role"))
+
+
+## Indica si alguien puede entrar a un equipo: ni gerentes, ni ejecutivos, ni puestos no_teams.
+func can_join_teams(employee: Dictionary) -> bool:
+	return not is_manager(employee) and not is_executive(employee) \
+		and not StaffCatalog.is_role_without_teams(String(employee.get("role", "")))
+
+
+## Minuto de la hora de entrada en que limpieza llega y en que empieza a limpiar
+## (cleaning.arrive_minute y start_minute, menos early_minutes de sus rasgos); 0 sin cleaning_shift_enabled.
+func get_cleaning_minutes(employee: Dictionary) -> Vector2i:
+	if not cleaning_shift_enabled or not is_cleaner(employee):
+		return Vector2i.ZERO
+	var early: int = roundi(_trait_value(employee, "early_minutes"))
+	return Vector2i(maxi(0, int(StaffCatalog.get_cleaning("arrive_minute")) - early),
+		maxi(0, int(StaffCatalog.get_cleaning("start_minute")) - early))
 
 
 ## Sueldo de su nivel en la tabla, con el que se compara el suyo.
@@ -352,7 +381,7 @@ func _get_team_map() -> Dictionary[int, Dictionary]:
 func get_employees_without_team() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for employee: Dictionary in employees:
-		if get_team_of(employee["id"]).is_empty():
+		if can_join_teams(employee) and get_team_of(employee["id"]).is_empty():
 			result.append(employee)
 	return result
 

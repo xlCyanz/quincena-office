@@ -78,6 +78,11 @@ static func has_levels(role: String) -> bool:
 
 
 ## Etapa (índice) desde la que existe un cargo.
+## Indica si el puesto no entra en equipos (ni, por eso, en proyectos).
+static func is_role_without_teams(role: String) -> bool:
+	return bool(_staff_data()["roles"].get(role, {}).get("no_teams", false))
+
+
 static func get_role_min_stage(role: String) -> int:
 	return int(_staff_data()["roles"].get(role, {}).get("min_stage", 0))
 
@@ -288,9 +293,11 @@ static func get_last_names() -> Array[String]:
 	return names
 
 
-static func get_trait_ids() -> Array[String]:
+## Rasgos que puede tener un puesto (traits.pools[role], o el de por defecto).
+static func get_trait_ids(role: String = "") -> Array[String]:
+	var pools: Dictionary = _staff_data()["traits"]["pools"]
 	var ids: Array[String] = []
-	ids.assign(_names_data()["traits"].keys())
+	ids.assign(pools.get(role, pools["default"]))
 	return ids
 
 

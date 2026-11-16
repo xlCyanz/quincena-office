@@ -104,6 +104,13 @@ func _check_in_game() -> void:
 		"el CEO llega a las 7:30: %s" % pending.get("ceo", -1))
 	var ceo_at: int = pending["ceo"] if pending.has("ceo") else -1
 	pending.erase("ceo")
+	# Solo el turno de las 8 (limpieza entra a las 7).
+	var day_keys: Array[String] = []
+	for character: Employee in day_shift:
+		day_keys.append(character.person_key)
+	for key: String in pending.keys():
+		if not day_keys.has(key):
+			pending.erase(key)
 	var early_count: int = 0
 	var early_ok: bool = true
 	for character: Employee in day_shift:

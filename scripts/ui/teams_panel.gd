@@ -399,7 +399,7 @@ func _add_team(team: Dictionary) -> void:
 	choice.clip_text = true
 	for employee: Dictionary in Staff.employees:
 		var current: Dictionary = Staff.get_team_of(employee["id"])
-		if int(current.get("id", 0)) == team_id or Staff.is_manager(employee) or Staff.is_executive(employee):
+		if int(current.get("id", 0)) == team_id or not Staff.can_join_teams(employee):
 			continue
 		var where: String = "sin equipo" if current.is_empty() else "en %s" % current["name"]
 		choice.add_item("%s (%s, %s)" % [employee["name"], StaffCatalog.get_role_name(employee["role"]), where], employee["id"])

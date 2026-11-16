@@ -11,7 +11,11 @@
 		"unpunctual": "Impuntual",
 		"mentor": "Mentor",
 		"ambitious": "Ambicioso",
-		"loyal": "Leal"
+		"loyal": "Leal",
+		"meticulous": "Meticuloso",
+		"careless": "Despistado",
+		"early_bird": "Madrugador",
+		"cheerful": "Alegre"
 	},
 	"traits_per_person": [1, 3]
 }

@@ -337,6 +337,7 @@ func get_mood_target(employee: Dictionary) -> int:
 	if get_schedule(employee).get_night_hours() > 0 and not _trait_flag(employee, "night_mood_free"):
 		target += float(StaffCatalog.get_overtime("night_mood"))
 	target += get_team_trait_mood(employee)
+	target += get_office_trait_mood()
 	if is_waiting_promotion(employee):
 		target += _trait_value(employee, "promotion_wait_mood")
 	if works_in_dirty_room(employee_key(employee["id"])):

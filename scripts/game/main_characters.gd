@@ -37,6 +37,8 @@ var _early: Dictionary[String, bool] = {}
 var _last_arrival_check: int = -1
 # Hay alguien de limpieza trapeando: cada mop_minutes cambia de lugar (main._process).
 var _cleaners_on_duty: bool = false
+# Limpieza que ya llegó y espera su minuto de empezar: clave → minuto absoluto.
+var _cleaning_starts: Dictionary[String, int] = {}
 
 # El reloj estaba en pausa antes de abrir construcción o Ajustes.
 var _was_paused_before_menu: bool = false
@@ -296,7 +298,8 @@ func _spot_of(employee: Dictionary) -> Vector2i:
 
 ## Indica si alguien es de limpieza y le toca estar ahora (trapea con su cubo).
 func is_cleaning_now(employee: Dictionary) -> bool:
-	return not employee.is_empty() and employee["role"] == String(StaffCatalog.get_cleaning("role")) and Staff.is_expected_now(Staff.employee_key(employee["id"]))
+	return Staff.is_cleaner(employee) and Staff.is_expected_now(Staff.employee_key(employee["id"])) \
+		and GameClock.get_minute() >= Staff.get_cleaning_start_minute(employee)
 
 
 ## Dónde trapea ahora alguien de limpieza: una casilla libre que cambia cada mop_minutes, en la
@@ -411,7 +414,9 @@ func _arrive_staggered(character: OfficeCharacter, eating: bool, now: int, hour_
 		var late_at: int = hour_start + Staff.get_late_minutes(key)
 		if late_at <= now:
 			# Entra después de su hora: llega apurado.
-			character.hurry = now > hour_start or Staff.get_late_minutes(key) > 0
+			# Limpieza entra a su minuto fijo: solo se apura si ya pasó.
+			character.hurry = now > late_at if Staff.is_cleaner(Staff.get_employee_by_key(key)) \
+				else now > hour_start or Staff.get_late_minutes(key) > 0
 			return false
 		_arrivals[key] = late_at
 		character.set_seat(_home_spot(key))
@@ -494,6 +499,7 @@ func _update_routines() -> void:
 	_arrivals.clear()
 	_departures.clear()
 	_cleaners_on_duty = false
+	_cleaning_starts.clear()
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
 		if leaving:
@@ -515,7 +521,11 @@ func _update_routines() -> void:
 			character.set_seat(_home_spot(character.person_key))
 		var mopping: bool = false
 		if character is Employee and not eating and not resting.has(character.person_key):
-			mopping = is_cleaning_now(Staff.get_employee_by_key(character.person_key))
+			var employee: Dictionary = Staff.get_employee_by_key(character.person_key)
+			mopping = is_cleaning_now(employee)
+			var start: int = Staff.get_cleaning_start_minute(employee)
+			if not mopping and start > GameClock.get_minute() and Staff.is_expected_now(character.person_key):
+				_cleaning_starts[character.person_key] = hour_start + start
 		character.cleaning = mopping
 		_cleaners_on_duty = _cleaners_on_duty or mopping
 		character.update_routine(eating or Staff.is_expected_now(character.person_key))

@@ -276,7 +276,7 @@ func _check_cleaner() -> void:
 	for room: Dictionary in OfficeState.rooms:
 		room["dirt"] = 0.0
 	OfficeState.rooms[index]["dirt"] = 60.0
-	GameClock.fast_forward_hours(8)
+	GameClock.fast_forward_hours(7)
 	_expect(is_equal_approx(OfficeState.get_room_dirt(_work_room()), 60.0), "antes de su turno sigue sucia")
 	GameClock.fast_forward_hours(3)
 	_expect(OfficeState.get_room_dirt(_work_room()) == 0.0, "en su turno la limpieza la deja en 0: %.1f" % OfficeState.get_room_dirt(_work_room()))

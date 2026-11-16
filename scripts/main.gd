@@ -150,6 +150,7 @@ func _restore_scene_state(state: Dictionary) -> void:
 # mop_minutes a la limpieza.
 func _process(_delta: float) -> void:
 	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty() and not _cleaners_on_duty \
+			and _cleaning_starts.is_empty() \
 			and Staff.appointments.is_empty() and appointment_visitors.is_empty():
 		return
 	var now: int = get_arrival_minute()
@@ -164,6 +165,9 @@ func _process(_delta: float) -> void:
 			due = true
 	for key: String in _departures:
 		if _departures[key] <= now:
+			due = true
+	for key: String in _cleaning_starts:
+		if _cleaning_starts[key] <= now:
 			due = true
 	var wander: bool = not _early.is_empty() and now % int(StaffCatalog.get_arrivals("wander_minutes")) == 0 \
 		and OfficeState.get_working_room(OfficeState.BREAK_ROOM).is_empty()

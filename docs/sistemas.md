@@ -206,6 +206,15 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `mop_minutes` (20) en esa habitación o, sin nada sucio, recorre las habitaciones (`mop_spots_per_room` casillas en cada una; `is_cleaning_now`,
   `_cleaners_on_duty` hace que `main._process` lo mueva). `OfficeCharacter.cleaning`: camina con el suape (pose `mopwalk`) y en su lugar trapea
   (`mop`, `is_mopping`, mirando a un lado distinto por casilla) con el cubo al lado (pieza hija `Bucket`, `SpriteLibrary.get_bucket_sprite`).
+- Turno de limpieza (`test_cleaning_shift`): horario de 7 a 15, almuerzo a las 11. Entra a las 7:20 (`cleaning.arrive_minute`) y limpia desde las
+  7:30 (`start_minute`), sin sorteo de llegada ni minutos al salir (`Staff.get_cleaning_minutes`, `get_arrival_offset`, `get_leave_minutes`).
+  `get_cleaning_start_minute` solo cuenta al entrar (no al volver del almuerzo); `is_cleaning_now` lo respeta y `main_characters._cleaning_starts`
+  hace que `main._process` la mande a trapear a ese minuto. `_update_dirt` limpia la hora de entrada solo `(60 − start)/60` y cada uno ×
+  `_trait_product(…, "clean")`. Rasgos por cargo en `traits.pools` (`StaffCatalog.get_trait_ids(role)`; `default` para los demás):
+  limpieza tiene Meticuloso (`clean` +25 %), Despistado (−20 %), Madrugador (`early_minutes` 20: 7:00 y 7:10), Alegre (`office_mood` +2 a la
+  meta de ánimo de todos, una vez: `get_office_trait_mood`), Impuntual, Leal y Adicto al café. No entra en equipos ni proyectos (`no_teams`
+  en el cargo, `StaffCatalog.is_role_without_teams`, `Staff.can_join_teams`): `add_to_team` la rechaza, Horarios no la ofrece, «Sin equipo»
+  no la lista y al cargar sale de su equipo. `Staff.cleaning_shift_enabled` (solo pruebas) apaga los minutos fijos y los rasgos propios en las partes anteriores.
   Prueba `test_cleaning_view`. `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas según el ancho (hito 65).
 - Competencia (`competition` en `data/staff.json`): cada medianoche (`Staff._update_morale`) otra empresa puede ofrecerle a un SemiSenior o
   Senior, o a un líder, gerente o ejecutivo (cuentan como Senior), su sueldo +15–30 % (`outside_offer`: `{salary, until_day}`, 5 días).

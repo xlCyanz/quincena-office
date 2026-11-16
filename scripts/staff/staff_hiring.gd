@@ -594,7 +594,7 @@ func _make_candidate(vacancy: Dictionary, today: int) -> Dictionary:
 	var step: int = int(StaffCatalog.get_hiring("salary_step"))
 	var asked: float = StaffCatalog.get_salary(role, level) * _rng.randf_range(float(ratio_values[0]), float(ratio_values[1]))
 	var traits: Array[String] = []
-	var trait_pool: Array[String] = StaffCatalog.get_trait_ids()
+	var trait_pool: Array[String] = StaffCatalog.get_trait_ids(role if cleaning_shift_enabled else "")
 	var trait_count: Vector2i = StaffCatalog.get_traits_per_person()
 	for i: int in range(_rng.randi_range(trait_count.x, trait_count.y)):
 		traits.append(trait_pool.pop_at(_rng.randi_range(0, trait_pool.size() - 1)))

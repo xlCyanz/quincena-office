@@ -174,6 +174,9 @@ func add_to_team(team_id: int, employee_id: int) -> Dictionary:
 	if is_manager(employee) or is_executive(employee):
 		return {"ok": false, "message": "%s es %s: dirige desde su oficina y no entra a un equipo." % [
 			employee["name"], StaffCatalog.get_role_name(employee["role"]).to_lower()]}
+	if StaffCatalog.is_role_without_teams(String(employee["role"])):
+		return {"ok": false, "message": "%s es %s: no entra a equipos ni a proyectos." % [
+			employee["name"], StaffCatalog.get_role_name(employee["role"]).to_lower()]}
 	if is_leader(employee):
 		if int(team["leader_id"]) != 0:
 			return {"ok": false, "message": "%s ya tiene líder: %s. Quítalo primero." % [team["name"],
@@ -597,10 +600,16 @@ func _update_dirt() -> void:
 		OfficeState.add_dirt(room_index, float(people[room_index]))
 		changed = true
 	var amount: float = float(StaffCatalog.get_cleaning("clean_per_hour")) * get_department_factor("administration")
-	for _cleaner: Dictionary in cleaners:
+	for cleaner: Dictionary in cleaners:
 		var dirtiest: int = OfficeState.get_dirtiest_room()
-		if dirtiest >= 0:
-			OfficeState.clean_room(dirtiest, amount)
+		if dirtiest < 0:
+			continue
+		var share: float = _trait_product(cleaner, "clean")
+		# La hora de entrada solo limpia desde start_minute.
+		if _cached_schedule_in(cleaner, team_map.get(int(cleaner["id"]), {})).start_hour == hour:
+			share *= float(60 - get_cleaning_minutes(cleaner).y) / 60.0
+		if share > 0.0:
+			OfficeState.clean_room(dirtiest, amount * share)
 			changed = true
 	if not changed:
 		return
