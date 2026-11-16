@@ -1,4 +1,5 @@
-# Árbol de adorno del mapa (arte provisional): tronco y copa redonda sobre una casilla
+# Árbol de adorno del mapa: uno de los sprites tree_<n> (con su sombra) elegido por la
+# posición; sin sprites, el arte provisional: tronco y copa redonda sobre una casilla
 # fuera del local. Va en la capa ordenada por Y para que un personaje pase por delante o
 # por detrás. Su tamaño y su verde salen de la posición (MapDecor.noise).
 class_name TreeView
@@ -14,6 +15,8 @@ var _grid: OfficeGrid
 var _scale: float = 1.0
 var _trunk_color := Color.SADDLE_BROWN
 var _leaf_color := Color.FOREST_GREEN
+# Sprite del árbol ("" = arte provisional).
+var _sprite: String = ""
 
 
 func setup(grid: OfficeGrid, tree_cell: Vector2i) -> void:
@@ -26,10 +29,25 @@ func setup(grid: OfficeGrid, tree_cell: Vector2i) -> void:
 	_leaf_color = Color(String(leaves[clampi(pick, 0, leaves.size() - 1)]))
 	_scale = 0.8 + 0.5 * MapDecor.noise(cell, MapDecor.SALT_TREE_SIZE)
 	position = grid.grid_to_world(Vector2(cell))
+	var kinds: int = 0
+	while SpriteLibrary.has_sprite("tree_%d" % kinds):
+		kinds += 1
+	_sprite = ""
+	if kinds > 0:
+		_sprite = "tree_%d" % mini(floori(MapDecor.noise(cell, MapDecor.SALT_TREE_COLOR) * kinds), kinds - 1)
 	queue_redraw()
 
 
+## Sprite con que se dibuja ("" = arte provisional).
+func get_sprite() -> String:
+	return _sprite
+
+
 func _draw() -> void:
+	if not _sprite.is_empty():
+		SpriteLibrary.draw(self, _sprite + "_shadow", Vector2.ZERO, Color(1.0, 1.0, 1.0, SpriteLibrary.SHADOW_ALPHA))
+		SpriteLibrary.draw(self, _sprite)
+		return
 	var half := Vector2(TRUNK_SIZE, TRUNK_SIZE) / 2.0
 	var center := Vector2(cell)
 	var base := PackedVector2Array()

@@ -514,6 +514,16 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   entrada) reemplaza las comparaciones con `DOOR`. Suma sus puntos al ambiente de la habitación con la casilla de entrada
   (`OfficeState.get_room_door_ambiance`, cuarto parámetro `extra_points` de `Ambiance`). `EdgePieceView` la dibuja con dos postes, dintel y
   dos hojas. Herramienta `TOOL_GLASS_DOOR` («Puerta de vidrio»); la empresa de prueba la trae puesta. No cuenta como bien.
+- Sprites conectados (fase 8, `SpriteLibrary`, funciones estáticas; `data/sprites.json` lo escribe `tools/sprites/export_game.py DIR`
+  a partir de la carpeta de `generate.py`, junto con `assets/tiles/ground.png` y `assets/sprites/`; después `Godot --headless --import`):
+  los sprites van a 2 px por px del mundo (`GroundPainter.DETAIL` 2) y `SpriteLibrary.draw(canvas, nombre, punto)` los dibuja a la mitad con
+  su apoyo en el punto. Suelo: `OfficeGrid._build_sprite_tile_set` arma el TileSet con el atlas (una fila por estilo, 4 variantes;
+  `ground.png.import` con mipmaps y capas con `TEXTURE_FILTER_NEAREST_WITH_MIPMAPS`); el piso elige variante al azar fijo y el pasto, además,
+  familia por zonas (`MapDecor.get_grass_family`: liso, tupido, manchones y claro); `is_style_row(fila, estilo)` dice si una fila dibuja un
+  estilo. Sin atlas se pinta con `GroundPainter` como antes. Paredes: `EdgePieceView` dibuja `<pieza>_<tall|low>_<x|y>` (`get_sprite_name`)
+  y, encima, los postes de esquina de sus puntas (`OfficeGrid._place_corner_posts`, `EdgePieceView.get_corner_sprite(brazos)`: solo en las L).
+  Árboles: `TreeView` elige `tree_0`…`tree_7` por la casilla y dibuja su `_shadow` al 30 %. Sin sprite, cada uno cae al arte provisional.
+  Faltan muebles, personajes, objetos de pared, sombra de las paredes y las animaciones. Prueba `test_sprites`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo

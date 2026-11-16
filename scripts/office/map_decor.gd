@@ -22,6 +22,10 @@ const SALT_STYLE: int = 1
 const SALT_TREE: int = 2
 const SALT_TREE_SIZE: int = 3
 const SALT_TREE_COLOR: int = 4
+const SALT_GRASS: int = 5
+## Tamaño de las zonas de pasto, en casillas, y cuánto del mapa toma cada familia.
+const GRASS_ZONE: int = 4
+const GRASS_FAMILIES: Array[Array] = [["plain", 0.40], ["lush", 0.23], ["patchy", 0.22], ["sunny", 0.15]]
 
 const DIRECTIONS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)]
 
@@ -57,6 +61,25 @@ static func noise(cell: Vector2i, salt: int) -> float:
 	h = (h ^ (h >> 13)) * 1274126177
 	h = (h ^ (h >> 16)) & 0x7fffffff
 	return float(h % 100000) / 100000.0
+
+
+## Familia de pasto de una casilla (sprites): por zonas, con ruido suave entre puntos cada
+## GRASS_ZONE casillas, así no se ve un solo dibujo repetido ni un salpicado casilla a casilla.
+static func get_grass_family(cell: Vector2i) -> String:
+	var at: Vector2 = Vector2(cell) / float(GRASS_ZONE)
+	var corner := Vector2i(floori(at.x), floori(at.y))
+	var t: Vector2 = at - Vector2(corner)
+	t = t * t * (Vector2(3.0, 3.0) - 2.0 * t)
+	var top: float = lerpf(noise(corner, SALT_GRASS), noise(corner + Vector2i(1, 0), SALT_GRASS), t.x)
+	var bottom: float = lerpf(noise(corner + Vector2i(0, 1), SALT_GRASS), noise(corner + Vector2i(1, 1), SALT_GRASS), t.x)
+	# El ruido suavizado se junta hacia el medio: se estira para que las cuatro familias salgan.
+	var value: float = clampf(0.5 + (lerpf(top, bottom, t.y) - 0.5) * 1.8, 0.0, 0.9999)
+	var limit: float = 0.0
+	for family: Array in GRASS_FAMILIES:
+		limit += float(family[1])
+		if value < limit:
+			return String(family[0])
+	return String(GRASS_FAMILIES[0][0])
 
 
 ## Dirección (en la cuadrícula) en que se sale del local por la entrada: de la casilla de

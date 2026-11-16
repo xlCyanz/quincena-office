@@ -1,0 +1,523 @@
+{
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño.",
+	"ground": {
+		"file": "res://assets/tiles/ground.png",
+		"styles": {
+			"bare": {
+				"count": 4,
+				"row": 0
+			},
+			"carpet": {
+				"count": 4,
+				"row": 1
+			},
+			"ceramic": {
+				"count": 4,
+				"row": 3
+			},
+			"grass_lush": {
+				"count": 4,
+				"row": 6
+			},
+			"grass_patchy": {
+				"count": 4,
+				"row": 5
+			},
+			"grass_plain": {
+				"count": 4,
+				"row": 4
+			},
+			"grass_sunny": {
+				"count": 4,
+				"row": 7
+			},
+			"outside_lush": {
+				"count": 4,
+				"row": 10
+			},
+			"outside_patchy": {
+				"count": 4,
+				"row": 9
+			},
+			"outside_plain": {
+				"count": 4,
+				"row": 8
+			},
+			"outside_sunny": {
+				"count": 4,
+				"row": 11
+			},
+			"path": {
+				"count": 4,
+				"row": 12
+			},
+			"road": {
+				"count": 4,
+				"row": 14
+			},
+			"road_line_x": {
+				"count": 4,
+				"row": 15
+			},
+			"road_line_y": {
+				"count": 4,
+				"row": 16
+			},
+			"sidewalk": {
+				"count": 4,
+				"row": 13
+			},
+			"wood": {
+				"count": 4,
+				"row": 2
+			}
+		},
+		"tile": [
+			128,
+			64
+		]
+	},
+	"scale": 2,
+	"sprites": {
+		"door_low_x": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/door_low_x.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"door_low_y": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/door_low_y.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"door_tall_x": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/door_tall_x.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"door_tall_y": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/door_tall_y.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"glass_door_low_x": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/glass_door_low_x.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"glass_door_low_y": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/glass_door_low_y.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"glass_door_tall_x": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_tall_x.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"glass_door_tall_y": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_tall_y.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"tree_0": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_0.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_0_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_0_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_1": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_1.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_1_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_1_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_2": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_2.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_2_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_2_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_3": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_3.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_3_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_3_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_4": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_4.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_4_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_4_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_5": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_5.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_5_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_5_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_6": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_6.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_6_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_6_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_7": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_7.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"tree_7_shadow": {
+			"anchor": [
+				64.0,
+				224.0
+			],
+			"file": "trees/tree_7_shadow.png",
+			"size": [
+				128,
+				256
+			]
+		},
+		"wall_low_corner": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_low_corner.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_low_corner_back": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_low_corner_back.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_low_corner_left": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_low_corner_left.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_low_corner_right": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_low_corner_right.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_low_x": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/wall_low_x.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"wall_low_y": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/wall_low_y.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"wall_tall_corner": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_tall_corner.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_tall_corner_front": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_tall_corner_front.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_tall_corner_left": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_tall_corner_left.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_tall_corner_right": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_tall_corner_right.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_tall_x": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/wall_tall_x.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"wall_tall_y": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/wall_tall_y.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"window_low_x": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/window_low_x.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"window_low_y": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/window_low_y.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"window_tall_x": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/window_tall_x.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"window_tall_y": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/window_tall_y.png",
+			"size": [
+				72,
+				160
+			]
+		}
+	}
+}

@@ -21,6 +21,8 @@ static var _shared_tile_set: TileSet = null
 static var _shared_rows: Dictionary[String, int] = {}
 static var _shared_columns: Dictionary[String, int] = {}
 static var _shared_source_id: int = -1
+# true si el TileSet salió del atlas de sprites (data/sprites.json) y no de GroundPainter.
+static var _shared_from_sprites: bool = false
 var _lot := Lot.new()
 var _site_rect := Rect2i()
 # Casilla de fuera del local junto a la entrada (de ahí sale el camino a la calle).
@@ -49,11 +51,11 @@ func _ready() -> void:
 	_floor.tile_set = _get_tile_set()
 	_surroundings.name = "Surroundings"
 	_surroundings.tile_set = _floor.tile_set
-	# El suelo se pinta con GroundPainter.DETAIL veces más píxeles: la capa se achica a la
-	# casilla de siempre y se suaviza, así de cerca no se ve pixelado.
+	# El suelo tiene GroundPainter.DETAIL veces más píxeles que la casilla: la capa se achica
+	# a la casilla de siempre. Es pixel art: sin suavizar de cerca y con mipmaps de lejos.
 	for layer: TileMapLayer in [_floor, _surroundings]:
 		layer.scale = Vector2.ONE / GroundPainter.DETAIL
-		layer.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	add_child(_surroundings)
 	move_child(_surroundings, _floor.get_index())
 	_site_border.name = "SiteBorder"
@@ -88,7 +90,7 @@ func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vec
 	for cell: Vector2i in lot.get_cells():
 		var floor_type: String = floors.get(cell, ConstructionCatalog.BARE_FLOOR)
 		var row: int = _atlas_rows.get(floor_type, _atlas_rows[ConstructionCatalog.BARE_FLOOR])
-		_floor.set_cell(cell, _floor_source_id, Vector2i(posmod(cell.x + cell.y, 2), row))
+		_floor.set_cell(cell, _floor_source_id, Vector2i(_floor_variant(cell, floor_type), row))
 	hovered_cell = NO_CELL
 	_highlight.visible = false
 	_place_edge_pieces(edges)
@@ -125,11 +127,38 @@ func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
 		if child is EdgePieceView:
 			_objects.remove_child(child)
 			child.queue_free()
+	var views: Dictionary[Vector3i, EdgePieceView] = {}
 	for edge: Vector3i in edges:
 		var view := EdgePieceView.new()
 		view.name = "%s_%d_%d_%d" % [edges[edge], edge.x, edge.y, edge.z]
 		_objects.add_child(view)
 		view.setup(self, edge, edges[edge], is_back_edge(edge))
+		views[edge] = view
+	_place_corner_posts(views)
+
+
+# Postes de esquina (sprites): tapan la muesca donde dos tramos se juntan en L. Cada tramo
+# dibuja, después de sí mismo, los postes de sus dos puntas: así el poste queda encima de
+# los dos tramos y se ordena con ellos frente a muebles y personas.
+func _place_corner_posts(views: Dictionary[Vector3i, EdgePieceView]) -> void:
+	# Vértice (x, y) = punto (x + 0.5, y + 0.5) de la cuadrícula; brazo = hacia dónde sale el tramo.
+	var corners: Dictionary[Vector2i, Dictionary] = {}
+	for edge: Vector3i in views:
+		for end: Array in _edge_vertices(edge):
+			var arms: Dictionary = corners.get_or_add(end[0], {})
+			arms[end[1]] = views[edge].tall
+	for edge: Vector3i in views:
+		for end: Array in _edge_vertices(edge):
+			var sprite: String = EdgePieceView.get_corner_sprite(corners[end[0]])
+			if not sprite.is_empty():
+				views[edge].add_post(sprite, grid_to_world(Vector2(end[0]) + Vector2(0.5, 0.5)))
+
+
+# Los dos vértices de un borde, cada uno con el brazo que el borde es para ese vértice.
+func _edge_vertices(edge: Vector3i) -> Array[Array]:
+	if edge.z == GridEdge.AXIS_X:
+		return [[Vector2i(edge.x, edge.y - 1), EdgePieceView.ARM_PLUS_Y], [Vector2i(edge.x, edge.y), EdgePieceView.ARM_MINUS_Y]]
+	return [[Vector2i(edge.x - 1, edge.y), EdgePieceView.ARM_PLUS_X], [Vector2i(edge.x, edge.y), EdgePieceView.ARM_MINUS_X]]
 
 
 ## Indica si un borde es del contorno de atrás: la casilla de fuera del local queda detrás
@@ -224,15 +253,40 @@ func _update_map() -> void:
 	_site_border.setup(self, _site_rect)
 
 
+# Variante del piso de una casilla del local. Con sprites, una al azar fijo (todas tienen el
+# mismo brillo medio); con el arte pintado, en tablero.
+func _floor_variant(cell: Vector2i, floor_type: String) -> int:
+	if not _shared_from_sprites:
+		return posmod(cell.x + cell.y, 2)
+	var count: int = _atlas_columns.get(floor_type, 1)
+	return mini(floori(MapDecor.noise(cell, MapDecor.SALT_STYLE) * count), count - 1)
+
+
 # Casilla del atlas de un estilo del mapa: una variante al azar fijo; la línea de la
-# calle va en la columna de su dirección en pantalla.
+# calle va en la columna de su dirección en pantalla. Con sprites, el pasto elige además
+# su familia por zonas (MapDecor.get_grass_family) y la línea tiene una fila por eje.
 func _map_tile(cell: Vector2i, style: String) -> Vector2i:
+	if _shared_from_sprites:
+		var axis: int = int(_map_plan.get("road_axis", GridEdge.AXIS_X))
+		if style == MapDecor.ROAD_LINE:
+			style = "road_line_x" if axis == GridEdge.AXIS_X else "road_line_y"
+		elif style == MapDecor.GRASS or style == MapDecor.OUTSIDE:
+			style = "%s_%s" % [style, MapDecor.get_grass_family(cell)]
 	var row: int = _atlas_rows.get(style, _atlas_rows[MapDecor.GRASS])
 	if style == MapDecor.ROAD_LINE:
 		var axis: int = int(_map_plan.get("road_axis", GridEdge.AXIS_X))
 		return Vector2i(axis, row)
 	var count: int = _atlas_columns.get(style, 1)
 	return Vector2i(mini(floori(MapDecor.noise(cell, MapDecor.SALT_STYLE) * count), count - 1), row)
+
+
+## Indica si una fila del atlas dibuja un estilo: la suya o, con sprites, la de una de sus
+## familias (el pasto tiene varias: grass_plain, grass_lush…).
+func is_style_row(row: int, style: String) -> bool:
+	for name: String in _atlas_rows:
+		if _atlas_rows[name] == row and (name == style or name.begins_with(style + "_")):
+			return true
+	return false
 
 
 ## Rombo del solar en píxeles del mundo, como Transform2D: origin es la esquina de
@@ -305,7 +359,54 @@ func update_hover(world_position: Vector2) -> void:
 ## pruebas lo llaman antes, así la partida no se traba en su primer cuadro.
 static func prepare_tile_set() -> void:
 	if _shared_tile_set == null:
+		_shared_tile_set = _build_sprite_tile_set()
+		_shared_from_sprites = _shared_tile_set != null
+	if _shared_tile_set == null:
 		_shared_tile_set = _build_tile_set()
+
+
+# TileSet a partir del atlas de sprites del suelo; null si no hay atlas (entonces se pinta
+# con GroundPainter). El terreno sin comprar y el pasto sin familia usan el pasto liso.
+static func _build_sprite_tile_set() -> TileSet:
+	var ground: Dictionary = SpriteLibrary.get_ground()
+	var path: String = String(ground.get("file", ""))
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return null
+	var texture: Texture2D = load(path) as Texture2D
+	if texture == null:
+		return null
+	var tile_size := Vector2i(int(ground["tile"][0]), int(ground["tile"][1]))
+	if tile_size != GameConstants.TILE_SIZE * GroundPainter.DETAIL:
+		return null
+	var source := TileSetAtlasSource.new()
+	source.texture = texture
+	source.texture_region_size = tile_size
+	_shared_rows = {}
+	_shared_columns = {}
+	var styles: Dictionary = ground.get("styles", {})
+	for style: String in styles:
+		var row: int = int(styles[style]["row"])
+		var count: int = int(styles[style]["count"])
+		_shared_rows[style] = row
+		_shared_columns[style] = count
+		for column: int in range(count):
+			source.create_tile(Vector2i(column, row))
+	var aliases: Dictionary[String, String] = {
+		ConstructionCatalog.TERRAIN: "grass_plain", MapDecor.GRASS: "grass_plain", MapDecor.OUTSIDE: "outside_plain",
+	}
+	for alias: String in aliases:
+		if not _shared_rows.has(alias) and _shared_rows.has(aliases[alias]):
+			_shared_rows[alias] = _shared_rows[aliases[alias]]
+			_shared_columns[alias] = _shared_columns[aliases[alias]]
+	for needed: String in [ConstructionCatalog.BARE_FLOOR, MapDecor.GRASS]:
+		if not _shared_rows.has(needed):
+			return null
+	var tile_set := TileSet.new()
+	tile_set.tile_shape = TileSet.TILE_SHAPE_ISOMETRIC
+	tile_set.tile_layout = TileSet.TILE_LAYOUT_DIAMOND_DOWN
+	tile_set.tile_size = tile_size
+	_shared_source_id = tile_set.add_source(source)
+	return tile_set
 
 
 # El TileSet del suelo, pintado la primera vez y compartido después.

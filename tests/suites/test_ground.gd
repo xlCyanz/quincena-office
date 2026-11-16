@@ -72,7 +72,7 @@ func _check_grid() -> void:
 	_expect(floor_layer.tile_set.tile_size == GameConstants.TILE_SIZE * GroundPainter.DETAIL, "losas de textura más grandes")
 	_expect(floor_layer.scale.is_equal_approx(Vector2.ONE / GroundPainter.DETAIL) and surroundings.scale == floor_layer.scale,
 		"las capas se achican")
-	_expect(floor_layer.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS, "el suelo se suaviza")
+	_expect(floor_layer.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS, "el suelo es pixel art: sin suavizar de cerca, con mipmaps de lejos")
 	var step: Vector2 = grid.cell_to_world(Vector2i(1, 0)) - grid.cell_to_world(Vector2i(0, 0))
 	_expect(step.is_equal_approx(Vector2(GameConstants.TILE_SIZE) / 2.0), "la casilla sigue midiendo 64×32 en el mundo: %s" % step)
 	var cell := Vector2i(3, 2)

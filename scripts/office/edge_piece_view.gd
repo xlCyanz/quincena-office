@@ -1,4 +1,5 @@
-# Dibujo provisional de una pared o una puerta: una caja delgada sobre su borde. Las de atrás
+# Pared, puerta o ventana sobre su borde. Se dibuja con su sprite (SpriteLibrary:
+# <pieza>_<tall|low>_<x|y>) y, si no lo hay, con el arte provisional: una caja delgada. Las de atrás
 # (contorno con el exterior detrás) van a su alto; las demás, bajas, para ver adentro.
 # Va dentro de la capa ordenada por Y; su punto de orden es el centro del borde, así que
 # un personaje queda detrás si está en la casilla de atrás y delante si está en la de
@@ -10,6 +11,12 @@ extends Node2D
 const THICKNESS: float = 0.08
 ## La puerta se dibuja un poco más corta que el borde, para que se note el marco.
 const DOOR_INSET: float = 0.15
+
+## Brazos de un vértice: hacia dónde sale de él cada tramo (para elegir el poste de esquina).
+const ARM_PLUS_X: int = 0
+const ARM_PLUS_Y: int = 1
+const ARM_MINUS_X: int = 2
+const ARM_MINUS_Y: int = 3
 
 var edge := Vector3i.ZERO
 var kind: String = ""
@@ -24,6 +31,9 @@ var _frame_bases: Array[PackedVector2Array] = []
 var _leaf_bases: Array[PackedVector2Array] = []
 var _frame_color := Color.DIM_GRAY
 var _along := Vector2.RIGHT  # dirección del borde en pantalla
+# Sprite del tramo ("" = arte provisional) y postes de esquina que dibuja encima: [sprite, posición].
+var _sprite: String = ""
+var _posts: Array[Array] = []
 
 
 func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: bool = true) -> void:
@@ -48,6 +58,10 @@ func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: 
 	_base = PackedVector2Array()
 	for corner: Vector2 in IsoBox.grid_rect_corners(grid, low, high):
 		_base.append(corner - position)
+	_sprite = get_sprite_name(kind, tall, edge.z)
+	if not SpriteLibrary.has_sprite(_sprite):
+		_sprite = ""
+	_posts.clear()
 	_frame_bases.clear()
 	_leaf_bases.clear()
 	if kind == ConstructionCatalog.GLASS_DOOR:
@@ -74,7 +88,55 @@ func _segment(grid: OfficeGrid, ends: Array[Vector2], span: Vector2, depth: floa
 	return base
 
 
+## Nombre del sprite de una pieza: <pieza>_<tall|low>_<x|y>.
+static func get_sprite_name(piece_kind: String, is_tall: bool, axis: int) -> String:
+	return "%s_%s_%s" % [piece_kind, "tall" if is_tall else "low", "x" if axis == GridEdge.AXIS_X else "y"]
+
+
+## Sprite del poste de un vértice según sus brazos (brazo → si ese tramo es alto), o "" si no
+## lleva: solo las esquinas en L (dos tramos perpendiculares).
+static func get_corner_sprite(arms: Dictionary) -> String:
+	if arms.size() != 2:
+		return ""
+	var tall: bool = false
+	for arm: int in arms:
+		tall = tall or bool(arms[arm])
+	var suffix: String = ""
+	if arms.has(ARM_PLUS_X) and arms.has(ARM_PLUS_Y):
+		suffix = "" if tall else "_back"
+	elif arms.has(ARM_MINUS_Y) and arms.has(ARM_PLUS_X):
+		suffix = "_left"
+	elif arms.has(ARM_MINUS_X) and arms.has(ARM_PLUS_Y):
+		suffix = "_right"
+	elif arms.has(ARM_MINUS_X) and arms.has(ARM_MINUS_Y):
+		suffix = "_front" if tall else ""
+	else:
+		return ""
+	var sprite: String = "wall_%s_corner%s" % ["tall" if tall else "low", suffix]
+	return sprite if SpriteLibrary.has_sprite(sprite) else ""
+
+
+## Agrega un poste de esquina en un punto del mundo; se dibuja encima del tramo.
+func add_post(sprite: String, world_position: Vector2) -> void:
+	_posts.append([sprite, world_position - position])
+	queue_redraw()
+
+
+## Sprite con que se dibuja el tramo ("" = arte provisional) y cuántos postes lleva.
+func get_sprite() -> String:
+	return _sprite
+
+
+func get_post_count() -> int:
+	return _posts.size()
+
+
 func _draw() -> void:
+	if not _sprite.is_empty():
+		SpriteLibrary.draw(self, _sprite)
+		for post: Array in _posts:
+			SpriteLibrary.draw(self, post[0], post[1])
+		return
 	if kind == ConstructionCatalog.GLASS_DOOR:
 		_draw_glass_door()
 		return

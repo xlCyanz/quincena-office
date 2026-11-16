@@ -10,8 +10,9 @@
 class_name GroundPainter
 extends RefCounted
 
-## Cuántos píxeles de textura hay por píxel de la casilla en pantalla.
-const DETAIL: int = 4
+## Cuántos píxeles de textura hay por píxel de la casilla en pantalla (el de los sprites:
+## docs/sprites_128.md, 1 px del mundo = 2 px del sprite).
+const DETAIL: int = 2
 
 const GRASS: String = "grass"
 const CERAMIC: String = "ceramic"

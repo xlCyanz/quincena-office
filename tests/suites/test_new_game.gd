@@ -128,7 +128,7 @@ func _check_new_game_state() -> void:
 	for cell: Vector2i in floor_layer.get_used_cells():
 		if not lot.has_point(cell):
 			var terrain_row: int = floor_layer.get_cell_atlas_coords(cell).y
-			_expect(terrain_row == rows[MapDecor.GRASS] or terrain_row == rows[MapDecor.PATH], "casilla %s sin terreno" % cell)
+			_expect(grid.is_style_row(terrain_row, MapDecor.GRASS) or grid.is_style_row(terrain_row, MapDecor.PATH), "casilla %s sin terreno" % cell)
 			continue
 		var expected_type: String = "wood" if office_cells.has(cell) else "ceramic"
 		_expect(OfficeState.get_floor(cell) == expected_type, "casilla %s con piso %s" % [cell, OfficeState.get_floor(cell)])
