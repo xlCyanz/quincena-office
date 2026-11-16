@@ -174,6 +174,10 @@ interiores) van **bajitas** para ver adentro.
 - 4 direcciones (como las rotaciones), animaciones: parado (1–2 cuadros), caminar (4–6), sentado (1), sentado
   trabajando (2). Sentado, la cadera a 24 px de sprite sobre el piso.
 - Piezas intercambiables (pelo, piel, camisa, pantalón) en capas aparte ayudan a tener muchos empleados distintos.
+- Hechos (`tools/sprites/pieces/character.py`): cabeza grande, cuerpo robusto y dos ojos oscuros; de pie y sentado en 4
+  direcciones con 6 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
+  `character_woman_office_` y `character_woman_executive_`; cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
+  que solo cambian la paleta. Faltan caminar y sentado trabajando.
 
 ## 10. Árboles y otros
 
