@@ -59,7 +59,7 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      asiento, respaldo de tres cojines con botón y brazos gruesos enrollados; dispensador de agua de gabinete blanco
      con panel oscuro (llaves roja y azul) y rejillas, y bidón grande celeste casi transparente con tres aros y
      brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
-   - *Trabajo* (`pieces/office_extra.py`): escritorio amplio de madera naranja como el sencillo pero de dos casillas;
+   - *Trabajo* (`pieces/office_extra.py`): (el escritorio amplio se quitó);
      ejecutivo de nogal con dos cajoneras de tiradores dorados, panel de tres tableros hundidos del lado de la visita y
      tablero grueso con filo dorado; impresora gris clara (pantalla celeste, hoja saliendo) sobre un mueble gris oscuro;
      archivero de metal de cuatro cajones con etiqueta crema; gabinete de baterías gris pizarra con pantalla verde,

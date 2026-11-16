@@ -398,7 +398,7 @@ def check_furniture(report, name, arr, entry, kind):
                      "lienzo %dx%d según la guía para planta %sx%s y alto %s (es %dx%d)"
                      % (expected[0], expected[1], w, d, entry["height"], width, height))
     elif kind == "on_desk":
-        report.check(name, (width, height) == (128, 128), "lienzo 128×128 (es %dx%d)" % (width, height))
+        report.check(name, (width, height) == (128, 160), "lienzo 128×160 (es %dx%d)" % (width, height))
     origin = (d * 64.0, height - (w + d) * 32.0)
     anchor = entry.get("anchor")
     if anchor is not None:
@@ -763,7 +763,7 @@ def check_other(report, name, arr, entry, kind):
                      "lienzo de arbusto de planta 1×1, 2×1 o 2×2 (es %dx%d)" % (width, height))
         report.check(name, lowest >= height - 48, "el arbusto llega al piso (fila más baja %d)" % lowest)
     elif kind == "overlay":
-        report.check(name, (width, height) == (128, 128), "lienzo 128×128 (es %dx%d)" % (width, height))
+        report.check(name, (width, height) == (128, 160), "lienzo 128×160 (es %dx%d)" % (width, height))
         if (width, height) == (128, 128):
             outside = opaque & ~iso.rhombus_mask(128, 128)
             report.check(name, not outside.any(), "solo dentro del rombo (%d px fuera)" % int(outside.sum()))

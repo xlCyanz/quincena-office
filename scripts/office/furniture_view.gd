@@ -39,16 +39,19 @@ const LAMP_POLE_COLOR := Color("5a5148")
 ## Muebles chicos: ocupan un cuarto de su casilla y sus hojas y pantallas se dibujan a esta escala.
 const SMALL_SCALE: float = 0.6
 
-## Con segundo monitor la computadora se corre esto (en casillas) hacia el otro lado del
-## escritorio; el sprite del monitor ya viene dibujado en su lado.
-const COMPUTER_SHIFT: float = 0.15
-## Hacia dónde queda el lado del segundo monitor (+x del modelo del sprite) en cada rotación.
-const MONITOR_SIDES: Array[Vector2] = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]
+## Hacia dónde apunta el +x del modelo de un sprite (el largo de un escritorio) en cada rotación.
+const MODEL_X_SIDES: Array[Vector2] = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]
+## Lo más que se corre de lado quien se sienta para quedar frente al teclado, en casillas.
+const SEAT_SHIFT_MAX: float = 0.5
 
 ## Sprite de un objeto de pared en una pared baja: se achica a esta escala y baja hasta
 ## quedar pegado al piso (LOW_WALL_ITEM_BASE_PX).
 const LOW_WALL_SPRITE_SCALE: float = 0.5
 const SALT_WALL_ITEM: int = 71
+
+## Una silla delante del frente de un escritorio o mostrador se dibuja arrimada a él esto
+## (en casillas) y mirándolo, con quien se sienta (OfficeCharacter usa lo mismo).
+const SEAT_TUCK: float = 0.3
 
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
@@ -61,8 +64,9 @@ var item_id: String = ""
 var footprint: Array[Vector2i] = []
 var rotation_index: int = 0
 var computer_id: String = ""
-## Segundo monitor del escritorio ("" si no tiene; hito 46).
+## Pantalla extra del escritorio ("" si no tiene; hito 46) y cuántas tiene (fase 8).
 var monitor_id: String = ""
+var monitor_count: int = 0
 var part: String = PART_MAIN
 ## Cuarto de la casilla de un mueble chico (0–3), o -1.
 var quarter: int = -1
@@ -79,6 +83,8 @@ var _anchor := Vector2.ZERO
 # En una silla: el respaldo queda detrás del asiento (se dibuja antes y lleva la sombra).
 var _back_first: bool = false
 # Tira que dibuja esta pieza y cuántas tiene el mueble (1 = se dibuja entero).
+# Rotación con la que se dibuja (la silla arrimada a un escritorio lo mira).
+var _sprite_rotation: int = 0
 var _slice: int = 0
 var _slices: int = 1
 
@@ -94,6 +100,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 	rotation_index = item["rotation"]
 	computer_id = item.get("computer", "")
 	monitor_id = item.get("monitor", "")
+	monitor_count = FurnitureCatalog.get_monitor_count(item)
 	_info = FurnitureCatalog.get_item(item_id)
 	footprint = FurnitureCatalog.get_footprint(item_id, item["cell"], rotation_index)
 	if FurnitureCatalog.is_wall_mounted(item_id):
@@ -107,6 +114,15 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 	_anchor = _low
 	_low -= Vector2(0.5, 0.5)
 	_high += Vector2(0.5, 0.5)
+	_sprite_rotation = rotation_index
+	if has_backrest(item_id):
+		var desk: Dictionary = OfficeState.get_desk_facing(footprint[0])
+		if not desk.is_empty() and not get_sprite().is_empty():
+			_sprite_rotation = int(desk["direction"])
+			var tuck: Vector2 = Vector2(FurnitureCatalog.get_front(_sprite_rotation)) * SEAT_TUCK + get_seat_shift(footprint[0])
+			_anchor += tuck
+			_low += tuck
+			_high += tuck
 	quarter = FurnitureCatalog.get_quarter(item)
 	_scale = 1.0
 	if quarter >= 0:
@@ -122,7 +138,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 	if String(_info.get("shape", "")) == "rug":
 		# Se pisa: se dibuja antes que quien camina encima.
 		sort_point = _low
-	var back: Array[Vector2] = _strip(-Vector2(FurnitureCatalog.get_front(rotation_index)), BACKREST_DEPTH)
+	var back: Array[Vector2] = _strip(-Vector2(FurnitureCatalog.get_front(_sprite_rotation)), BACKREST_DEPTH)
 	var back_point: Vector2 = (back[0] + back[1]) / 2.0
 	_back_first = back_point.x + back_point.y < sort_point.x + sort_point.y
 	if part == PART_BACKREST:
@@ -166,6 +182,42 @@ static func get_slice_count(item: Dictionary) -> int:
 	return cells.size() if span.x == 0 or span.y == 0 else 1
 
 
+## Rotación con la que se dibuja (distinta de rotation_index en una silla arrimada a un escritorio).
+func get_sprite_rotation() -> int:
+	return _sprite_rotation
+
+
+## Cuánto se corre de lado (en casillas) quien se sienta en seat_cell para quedar frente al
+## teclado del escritorio que tiene delante: el sprite del escritorio (o de su computadora) dice
+## dónde está. Cero si no hay escritorio o no se sabe.
+static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
+	var facing: Dictionary = OfficeState.get_desk_facing(seat_cell)
+	if facing.is_empty():
+		return Vector2.ZERO
+	var desk: Dictionary = OfficeState.furniture[int(facing["index"])]
+	var rotation: int = posmod(int(desk["rotation"]), 4)
+	var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(desk["id"], desk["cell"], rotation)
+	var computer: String = String(desk.get("computer", ""))
+	# Dónde queda el teclado a lo largo del modelo, desde su punta −x.
+	var along: float = SpriteLibrary.get_seat_x(SpriteLibrary.get_desk_set_base(desk["id"], computer, FurnitureCatalog.get_monitor_count(desk)))
+	if along < 0.0 and not SpriteLibrary.get_furniture_sprite(desk["id"], rotation).is_empty():
+		var own: float = SpriteLibrary.get_seat_x(SpriteLibrary.get_furniture_base(computer))
+		if own >= 0.0:
+			# La computadora suelta va sobre el centro del mueble.
+			along = (cells.size() - 1) / 2.0 + own
+		elif computer.is_empty():
+			along = SpriteLibrary.get_seat_x(SpriteLibrary.get_furniture_base(desk["id"]))
+	if along < 0.0:
+		return Vector2.ZERO
+	var side: Vector2 = MODEL_X_SIDES[rotation]
+	var axis: Vector2 = side.abs()
+	# Del modelo a la cuadrícula: desde el centro de la casilla de anclaje, a lo largo del mueble.
+	var place: float = along - 0.5 if side.x + side.y > 0.0 else cells.size() - along - 0.5
+	var front: Vector2i = FurnitureCatalog.FRONT_DIRECTIONS[int(facing["direction"])]
+	var index: float = Vector2(seat_cell + front - Vector2i(desk["cell"])).dot(axis)
+	return axis * clampf(place - index, -SEAT_SHIFT_MAX, SEAT_SHIFT_MAX)
+
+
 ## Tira que dibuja esta pieza (0 si el mueble va entero).
 func get_slice() -> int:
 	return _slice
@@ -182,8 +234,9 @@ func get_sprite() -> String:
 		var pick: int = int(MapDecor.noise(cell, SALT_WALL_ITEM) * 1000.0)
 		return SpriteLibrary.get_wall_item_sprite(item_id, FurnitureCatalog.get_wall_edge(cell, rotation_index).z, pick)
 	if has_backrest(item_id):
-		return SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "back" if part == PART_BACKREST else "seat")
-	return SpriteLibrary.get_furniture_sprite(item_id, rotation_index)
+		return SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "back" if part == PART_BACKREST else "seat")
+	var whole: String = SpriteLibrary.get_desk_set_sprite(item_id, computer_id, monitor_count, rotation_index)
+	return whole if not whole.is_empty() else SpriteLibrary.get_furniture_sprite(item_id, rotation_index)
 
 
 # Dibuja la pieza con sus sprites (sombra, mueble y lo que lleva encima). Devuelve false
@@ -204,25 +257,20 @@ func _draw_sprites() -> bool:
 		var from: float = step * (_slice - 0.5) if _slice > 0 else -INF * signf(step)
 		var to: float = step * (_slice + 0.5) if _slice < _slices - 1 else INF * signf(step)
 		if _slice == 0:
-			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "shadow"), at)
+			SpriteLibrary.draw_shadow(self, sprite + "_shadow", at)
 		SpriteLibrary.draw_strip(self, sprite, at, minf(from, to), maxf(from, to))
 		if _slice < _slices - 1:
 			return true
 	else:
 		if not has_backrest(item_id) or (part == PART_BACKREST) == _back_first:
-			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "shadow"), at)
+			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "shadow"), at)
 		SpriteLibrary.draw(self, sprite, at)
-	if not computer_id.is_empty():
-		# La computadora va sobre el centro del escritorio (el sprite ya trae la altura).
+	if not computer_id.is_empty() and SpriteLibrary.get_desk_set_base(item_id, computer_id, monitor_count).is_empty():
+		# La computadora va sobre el centro del escritorio (el sprite ya trae la altura). Un
+		# escritorio con conjuntos (el largo) ya la trae dibujada en su propio sprite.
 		var center: Vector2 = (_low + _high) / 2.0
-		var computer_at: Vector2 = center
-		if not monitor_id.is_empty():
-			computer_at -= MONITOR_SIDES[posmod(rotation_index, 4)] * COMPUTER_SHIFT
-			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(monitor_id, rotation_index, "shadow"), _local(center))
-		SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index, "shadow"), _local(computer_at))
-		SpriteLibrary.draw(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index), _local(computer_at))
-		if not monitor_id.is_empty():
-			SpriteLibrary.draw(self, SpriteLibrary.get_furniture_sprite(monitor_id, rotation_index), _local(center))
+		SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index, "shadow"), _local(center))
+		SpriteLibrary.draw(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index), _local(center))
 	return true
 
 

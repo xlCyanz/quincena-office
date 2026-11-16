@@ -69,6 +69,10 @@ func _check_furniture() -> void:
 	for id: String in FurnitureCatalog.get_ids():
 		for rotation: int in range(4):
 			var sprite: String = SpriteLibrary.get_furniture_sprite(id, rotation)
+			if FurnitureCatalog.is_monitor(id):
+				# La pantalla extra no tiene sprite propio: va dibujada en el del escritorio largo.
+				_expect(sprite.is_empty(), "%s no tiene sprite propio" % id)
+				continue
 			if FurnitureCatalog.is_wall_mounted(id):
 				_expect(sprite.is_empty(), "%s (de pared) no está entre los muebles de piso" % id)
 				for axis: int in [GridEdge.AXIS_X, GridEdge.AXIS_Y]:
@@ -87,6 +91,17 @@ func _check_furniture() -> void:
 		"la rotación da la vuelta")
 	_expect(SpriteLibrary.get_furniture_sprite("small_plant", 0).ends_with("_q"), "el mueble chico usa su versión de cuarto de casilla")
 	_expect(SpriteLibrary.get_furniture_sprite("no_existe", 0).is_empty(), "un mueble desconocido no da sprite")
+	# El escritorio largo se dibuja entero con lo que lleva: un sprite por computadora y pantallas extra.
+	for rotation: int in range(4):
+		for entry: Array in [["basic_computer", 0, "desk_long_basic"], ["pro_computer", 0, "desk_long_pro1"],
+				["pro_computer", 1, "desk_long_pro2"], ["pro_computer", 2, "desk_long_pro3"]]:
+			var whole: String = SpriteLibrary.get_desk_set_sprite("long_desk", entry[0], entry[1], rotation)
+			_expect(whole == "%s_r%d" % [entry[2], rotation] and SpriteLibrary.get_texture(whole) != null
+				and SpriteLibrary.get_texture(whole + "_shadow") != null, "largo con %s y %d pantallas extra: «%s»" % [entry[0], entry[1], whole])
+	_expect(SpriteLibrary.get_desk_set_sprite("simple_desk", "pro_computer", 0, 0).is_empty()
+		and SpriteLibrary.get_desk_set_sprite("long_desk", "", 0, 0).is_empty(), "el sencillo y el largo vacío van con su sprite de siempre")
+	_expect(SpriteLibrary.get_seat_x("desk_long_pro1") > 0.5 and is_equal_approx(SpriteLibrary.get_seat_x("computer_basic"), 0.5)
+		and SpriteLibrary.get_seat_x("no_existe") < 0.0, "dónde queda el teclado de cada sprite")
 
 
 # Hojas de personajes: los 6 conjuntos en sus 3 paletas, con todas las poses.

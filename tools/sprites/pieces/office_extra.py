@@ -1,7 +1,5 @@
 # Muebles de trabajo que faltaban, con el estilo de tools/sprites/STYLE.md:
 #
-#   wide_desk_r0..r3           2×1: escritorio amplio de madera naranja como el sencillo, con patas a un
-#                              lado, faldón atrás y cajonera del otro (frente a −y con rotación 0)
 #   executive_desk_r0..r3      2×1: escritorio ejecutivo de nogal: dos cajoneras enteras, panel con
 #                              tableros hundidos del lado de la visita y tablero grueso con filo dorado
 #   printer_r0..r3             impresora multifunción gris clara sobre un mueble bajo con puerta
@@ -11,8 +9,8 @@
 #   <cada uno>_shadow          sombra en el piso, aparte
 #   _sheets/office_extra.png   hoja de contacto
 #
-# Los dos escritorios tienen la superficie en z = 44 (iso.DESK_TOP) para que las computadoras se
-# apoyen igual que en el sencillo, aunque el ejecutivo tenga `height` 26 en data/furniture.json.
+# El escritorio tiene la superficie en z = 44 (iso.DESK_TOP) para que las computadoras se
+# apoyen igual que en el sencillo, aunque tenga `height` 26 en data/furniture.json.
 import numpy as np
 
 import iso
@@ -21,7 +19,6 @@ from pieces import desk as simple
 from pieces._kit import Saver, drawers, g, grid, inside, plain, sunken
 
 ITEMS = iso.load_json("data/furniture.json")["items"]
-WIDE = ITEMS["wide_desk"]
 EXEC = ITEMS["executive_desk"]
 PRINTER = ITEMS["printer"]
 FILING = ITEMS["filing_cabinet"]
@@ -57,35 +54,6 @@ BATTERY_HANDLE = BATTERY_BODY.add("8c96a0")
 TABLE_WOOD = pal.style("wood_orange", name="meeting_wood")
 TABLE_EDGE = TABLE_WOOD.add("743b0e")
 COLUMN = pal.style_ramp("4a4f55", outline="141619", name="meeting_column")
-
-
-# ---------------------------------------------------------------------------- escritorio amplio
-
-def wide_desk(rotation):
-    """Como el sencillo pero de dos casillas: patas en −x, faldón atrás y la cajonera en +x."""
-    c = iso.Canvas.furniture(WIDE["size"], WIDE["height"], rotation)
-    legs_top = TOP - simple.SLAB
-    px0, px1 = 52, 61
-    c.box((px0 + 1) * U, (px1 - 1) * U, (simple.PED_Y0 + 1) * U, (simple.PED_Y1 - 1) * U, 0, simple.PED_Z0, WOOD,
-          shade=-1, name="plinth")
-    c.box(px0 * U, px1 * U, simple.PED_Y0 * U, simple.PED_Y1 * U, simple.PED_Z0, legs_top, WOOD,
-          tex={iso.FRONT: simple.with_under_top(simple.drawer_front), iso.X1: simple.with_under_top(simple.side_panel),
-               iso.BACK: simple.with_under_top(simple.side_panel), iso.X0: simple.under_top},
-          shade={iso.X0: -1}, name="pedestal", flat=False)
-    legs = None
-    for y0 in simple.LEG_YS:
-        pid = c.box(simple.LEG_X0 * U, (simple.LEG_X0 + simple.LEG) * U, y0 * U, (y0 + simple.LEG) * U, 0, legs_top,
-                    WOOD, tex={"sides": simple.under_top}, name="legs" if legs is None else None, part=legs,
-                    flat=False)
-        legs = pid if legs is None else legs
-    c.box((simple.LEG_X0 + simple.LEG) * U, px0 * U, simple.SKIRT_Y0 * U, (simple.SKIRT_Y0 + 1) * U, simple.SKIRT_Z0,
-          legs_top, WOOD, tex={"sides": simple.under_top}, shade={iso.FRONT: -1}, name="skirt", flat=False)
-    c.box(1 * U, 63 * U, simple.TOP_Y0 * U, simple.TOP_Y1 * U, legs_top, TOP, WOOD, name="top")
-    return c
-
-
-def wide_shadow_shapes():
-    return [("bar", 0.2, 0.5, 1.8, 0.5, 0.4, 0, TOP)]
 
 
 # ---------------------------------------------------------------------------- escritorio ejecutivo
@@ -289,7 +257,6 @@ def meeting_shadow_shapes():
 
 def build(out_dir):
     s = Saver(out_dir)
-    s.rotations(wide_desk, "wide_desk", wide_shadow_shapes(), height=WIDE["height"])
     s.rotations(executive_desk, "executive_desk", exec_shadow_shapes(), height=EXEC["height"])
     s.rotations(printer, "printer", printer_shadow_shapes(), height=PRINTER["height"])
     s.rotations(filing_cabinet, "filing_cabinet", filing_shadow_shapes(), height=FILING["height"])

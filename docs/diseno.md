@@ -460,7 +460,7 @@ El catálogo tiene unos 40 objetos, que son también la lista de arte por genera
 | Categoría | Objeto | Tamaño | Efecto |
 | --- | --- | --- | --- |
 | Puesto de trabajo | Escritorio sencillo | 1 casilla | Un puesto de trabajo |
-| Puesto de trabajo | Escritorio amplio | 2 casillas | Un puesto; sube un poco el ánimo |
+| Puesto de trabajo | Escritorio largo | 2 casillas | Un puesto; admite hasta 2 pantallas extra con computadora pro |
 | Puesto de trabajo | Escritorio ejecutivo | 2 casillas | Para oficinas del CEO, ejecutivos y gerentes |
 | Puesto de trabajo | Silla básica / ergonómica | 1 casilla | La ergonómica hace que la energía baje más lento |
 | Puesto de trabajo | Computadora básica / media / pro | Sobre el escritorio | Velocidad de trabajo |
@@ -629,7 +629,7 @@ Un puesto básico completo (escritorio, silla y computadora) cuesta $710. Los ob
 
 | Objeto | Precio |
 | --- | --- |
-| Escritorio sencillo / amplio / ejecutivo | $150 / $350 / $900 |
+| Escritorio sencillo / largo / ejecutivo | $150 / $350 / $900 |
 | Silla básica / ergonómica | $60 / $250 |
 | Computadora básica / media / pro | $500 / $1,200 / $2,500 |
 | Mesa de reuniones | $1,200 |
@@ -963,7 +963,7 @@ La fase 5 agrega lo que hace a la empresa algo más que un taller de contratos: 
 - **Valor de la empresa:** suma lo que generan los productos (provisional: 60 días de su ingreso actual).
 - **Eventos:** una tarjeta con texto corto y dos o tres opciones. El tiempo sigue corriendo y el jugador tiene 2 minutos reales para elegir, a cualquier velocidad; si no elige, el juego toma una opción al azar. No ocurren en pausa ni en modo construcción. Uno cada pocos días al inicio, más seguidos mientras más grande es la empresa; la mitad buenos y la mitad malos. Cada evento tiene condiciones (por ejemplo, sin contador), y roles o muebles que lo reducen o lo anulan.
 - **Ambiente:** cada habitación tiene un ambiente que suben la decoración (plantas, cuadros, reloj, alfombras, lámparas, pecera) y que baja amontonar escritorios. El ambiente cambia la meta de ánimo de quienes trabajan ahí. Los objetos de pared se colocan en un borde con pared, como las puertas.
-- **Calidades:** la computadora media y la pro dan más velocidad y se instalan o mejoran sobre el escritorio; el segundo monitor suma un poco; la silla ergonómica hace que la energía baje más lento; el escritorio amplio sube un poco el ánimo.
+- **Calidades:** (fase 8: quedan dos niveles, básica y pro; las pantallas extra, hasta 2, solo van en el escritorio largo con computadora pro.) La computadora pro da más velocidad y se instala o mejora sobre el escritorio; cada pantalla extra suma un poco; la silla ergonómica hace que la energía baje más lento. (El escritorio amplio se quitó en la fase 8: el sencillo ya es rectangular.)
 - **Contratos grandes:** desde Mediana empresa con 4 estrellas. La Sala de reuniones aparece para construir cuando llega la primera oferta grande y exige mesa de reuniones. Los clientes de élite llegan en Corporación: pagan más y exigen más reputación. Corporación también desbloquea el tamaño máximo del solar.
 - **Salir a bolsa:** con Corporación y un valor de más de $5,000,000 aparece la opción. Muestra una pantalla de cierre con estadísticas y la partida sigue en modo libre.
 - **Guardado:** los datos nuevos se exportan e importan tolerando claves ausentes; una partida de la fase 4 carga sin productos, sin eventos pendientes y con ambiente neutro.
@@ -978,7 +978,7 @@ La fase 5 agrega lo que hace a la empresa algo más que un taller de contratos: 
 | 43. Eventos | Sistema de eventos: sorteo según frecuencia y condiciones, tarjeta con opciones y cuenta atrás de 2 minutos reales, efectos | No salen en pausa ni en construcción; sin elegir se toma una opción al azar a los 2 minutos a cualquier velocidad; la frecuencia sube con la empresa |
 | 44. Lista de eventos | Los eventos de 10.2 con sus efectos, condiciones y prevención (contador, limpieza, líder, baterías de respaldo, archivero) | Con contador la inspección de impuestos no multa; con baterías el apagón no ocurre; sin limpieza aparece la oficina sucia |
 | 45. Ambiente y decoración | Decoración de piso y de pared, ambiente por habitación, efecto en la meta de ánimo, penalidad por amontonar | Una habitación con plantas y cuadros sube la meta de ánimo; muchos escritorios juntos la bajan; los objetos de pared van en bordes con pared |
-| 46. Calidades de muebles | Computadora media y pro, segundo monitor, silla ergonómica y escritorio amplio, con mejorar desde el escritorio | Una computadora pro rinde más que la básica; con silla ergonómica la energía baja más lento; mejorar cobra la diferencia |
+| 46. Calidades de muebles | Computadora media y pro, segundo monitor y silla ergonómica, con mejorar desde el escritorio (el escritorio amplio se quitó en la fase 8) | Una computadora pro rinde más que la básica; con silla ergonómica la energía baja más lento; mejorar cobra la diferencia |
 | 47. Contratos grandes y Sala de reuniones | Mesa de reuniones, Sala de reuniones, ofertas grandes desde Mediana empresa, clientes de élite en Corporación | La primera oferta grande habilita la Sala de reuniones; sin sala no se acepta; los de élite solo llegan en Corporación |
 | 48. Corporación y salir a bolsa | Requisitos de Corporación, tamaño máximo del solar, opción de salir a bolsa, pantalla de cierre y modo libre | Con 4 ejecutivos y 3 productos activos se llega a Corporación; con valor > $5,000,000 se puede salir a bolsa y la partida sigue |
 | 49. Comprobación de la fase | Simulación sin ventana de una empresa que llega a Corporación con productos y sale a bolsa; ajuste de `data/products.json`, `data/events.json` y `data/stages.json` | La simulación llega a la bolsa sin quebrar con una política simple; los productos dan una parte visible de los ingresos; todas las pruebas anteriores siguen pasando |

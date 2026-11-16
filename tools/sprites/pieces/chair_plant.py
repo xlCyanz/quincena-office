@@ -86,14 +86,17 @@ def _spec(item, name, **kw):
     return spec
 
 
-# Silla básica: asiento a z = 28, cojín de 7 px de grueso y respaldo grueso y abultado.
-BASIC = _spec(CHAIR_ITEM, "chair_basic", cushion=20, pan=17, hub=6, post=27,
-              back=(18 / 64.0, 46 / 64.0, 46 / 64.0, 54 / 64.0, 32, 60), back_corner=7, back_edge=3.0,
-              bracket_top=44)
-# Ergonómica: asiento a z = 36, respaldo alto de malla con marco, apoyabrazos.
-ERGO = _spec(ERGO_ITEM, "chair_ergonomic", fabric=FABRIC_ERGO, back_ramp=PLASTIC, cushion=29, pan=26, hub=6,
-             post=35, back=(17 / 64.0, 47 / 64.0, 48 / 64.0, 53 / 64.0, 39, 64), back_corner=8, back_edge=2.0,
-             bracket_top=50, arms=True, mesh=True)
+# Asiento a 24 px del piso, la altura de la cadera del personaje sentado (character.SIT_SEAT_Z): más
+# alto que eso la silla se ve grande junto al escritorio (44) y el personaje se hunde en el cojín.
+SEAT_TOP = 24
+# Silla básica: cojín de 7 px de grueso y respaldo grueso y abultado, que apenas pasa del escritorio.
+BASIC = _spec(CHAIR_ITEM, "chair_basic", seat_top=SEAT_TOP, cushion=16, pan=13, hub=6, post=23,
+              back=(18 / 64.0, 46 / 64.0, 46 / 64.0, 54 / 64.0, 28, 52), back_corner=7, back_edge=3.0,
+              bracket_top=40)
+# Ergonómica: la misma altura de asiento, respaldo alto de malla con marco, apoyabrazos.
+ERGO = _spec(ERGO_ITEM, "chair_ergonomic", seat_top=SEAT_TOP, fabric=FABRIC_ERGO, back_ramp=PLASTIC, cushion=17, pan=14,
+             hub=6, post=23, back=(17 / 64.0, 47 / 64.0, 48 / 64.0, 53 / 64.0, 27, 58), back_corner=8, back_edge=2.0,
+             bracket_top=40, arms=True, mesh=True)
 
 
 def _round_rect(px, py, half_x, half_y, radius):

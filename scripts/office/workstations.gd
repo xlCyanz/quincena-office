@@ -155,7 +155,7 @@ static func get_desk_bonus(desk: Dictionary) -> float:
 	var bonus: float = FurnitureCatalog.get_production_bonus(computer)
 	var monitor: String = String(desk.get("monitor", ""))
 	if not monitor.is_empty():
-		bonus += FurnitureCatalog.get_production_bonus(monitor)
+		bonus += FurnitureCatalog.get_production_bonus(monitor) * FurnitureCatalog.get_monitor_count(desk)
 	return bonus
 
 

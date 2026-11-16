@@ -5,6 +5,9 @@ extends Node
 
 ## Oficina con la que empieza toda partida nueva.
 const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
+## Mueble quitado del juego (el escritorio amplio): las partidas viejas lo cambian por uno sencillo.
+const REMOVED_WIDE_DESK: String = "wide_desk"
+const REMOVED_MID_COMPUTER: String = "mid_computer"
 ## Tipo de la Sala de servidores (data/rooms.json).
 const SERVER_ROOM: String = "server_room"
 ## Baño: sus inodoros dan la capacidad (hito 52).
@@ -173,6 +176,28 @@ func wall_items_on(edge: Vector3i) -> Array[int]:
 		var item: Dictionary = furniture[index]
 		if FurnitureCatalog.is_wall_mounted(item["id"]) and FurnitureCatalog.get_wall_edge(item["cell"], item["rotation"]) == edge:
 			found.append(index)
+	return found
+
+
+## Escritorio o mostrador que tiene su frente hacia una casilla (quien se sienta ahí queda
+## delante de él): {direction (0–3, hacia el mueble, como las rotaciones), computer (si tiene
+## computadora), index (el mueble en furniture)}. Vacío si no hay ninguno. Con varios, prefiere el que tiene computadora.
+func get_desk_facing(cell: Vector2i) -> Dictionary:
+	var found: Dictionary = {}
+	for direction: int in range(FurnitureCatalog.FRONT_DIRECTIONS.size()):
+		var step: Vector2i = FurnitureCatalog.FRONT_DIRECTIONS[direction]
+		var index: int = find_furniture_at(cell + step)
+		if index < 0:
+			continue
+		var desk: Dictionary = furniture[index]
+		var info: Dictionary = FurnitureCatalog.get_item(desk["id"])
+		if not bool(info.get("accepts_computer", false)) and not bool(info.get("is_counter", false)):
+			continue
+		if FurnitureCatalog.get_front(int(desk["rotation"])) != -step:
+			continue
+		var has_computer: bool = not String(desk.get("computer", "")).is_empty()
+		if found.is_empty() or (has_computer and not bool(found["computer"])):
+			found = {"direction": direction, "computer": has_computer, "index": index}
 	return found
 
 
@@ -559,7 +584,7 @@ func export_state() -> Dictionary:
 		var cell: Vector2i = item["cell"]
 		saved_furniture.append({"id": item["id"], "cell": [cell.x, cell.y], "rotation": item["rotation"],
 			"assigned_to": item["assigned_to"], "computer": item["computer"], "monitor": String(item.get("monitor", "")),
-			"quarter": FurnitureCatalog.get_quarter(item)})
+			"monitors": FurnitureCatalog.get_monitor_count(item), "quarter": FurnitureCatalog.get_quarter(item)})
 	var saved_floors: Array = []
 	for cell: Vector2i in floors:
 		saved_floors.append([cell.x, cell.y, floors[cell]])
@@ -609,8 +634,49 @@ func import_state(state: Dictionary) -> void:
 	furniture.clear()
 	for item: Dictionary in state.get("furniture", []):
 		furniture.append(_furniture_from_data(item))
+	_replace_removed_furniture()
 	entrance = _to_cell(state.get("entrance", [0, 0]))
 	_hang_wall_items()
+
+
+# El escritorio amplio (2×1) ya no existe: en una partida vieja cada uno pasa a ser un
+# escritorio sencillo, con su computadora, en la casilla de las dos que tiene un asiento
+# delante de su frente (así el puesto sigue funcionando); si ninguna, en la de anclaje.
+func _replace_removed_furniture() -> void:
+	for item: Dictionary in furniture:
+		if String(item["id"]) != REMOVED_WIDE_DESK:
+			continue
+		var rotation: int = int(item["rotation"])
+		var front: Vector2i = FurnitureCatalog.get_front(rotation)
+		var other: Vector2i = item["cell"] + (Vector2i(0, 1) if rotation % 2 == 1 else Vector2i(1, 0))
+		item["id"] = "simple_desk"
+		if not _has_seat_at(item["cell"] + front) and _has_seat_at(other + front):
+			item["cell"] = other
+	for item: Dictionary in furniture:
+		# La computadora media ya no existe: pasa a básica.
+		if String(item["computer"]) == REMOVED_MID_COMPUTER:
+			item["computer"] = "basic_computer"
+		# Las pantallas extra ahora solo van en un escritorio largo con computadora pro: las que
+		# no cumplen se quitan y se devuelve lo pagado.
+		var count: int = FurnitureCatalog.get_monitor_count(item)
+		if count <= 0:
+			continue
+		var allowed: int = FurnitureCatalog.get_max_monitors(item["id"]) if FurnitureCatalog.allows_monitors(item["computer"]) else 0
+		if count > allowed:
+			var price: int = FurnitureCatalog.get_price(item["monitor"]) * (count - allowed)
+			item["monitors"] = allowed
+			if allowed <= 0:
+				item["monitor"] = ""
+			# Economy se importa después: el reembolso va al terminar de cargar.
+			Economy.earn.call_deferred(price, Builder.CONCEPT_FURNITURE)
+
+
+# Indica si en una casilla hay un asiento (para _replace_removed_furniture).
+func _has_seat_at(cell: Vector2i) -> bool:
+	for item: Dictionary in furniture:
+		if item["cell"] == cell and bool(FurnitureCatalog.get_item(item["id"]).get("is_seat", false)):
+			return true
+	return false
 
 
 # Antes del hito 45 el aire acondicionado ocupaba una casilla de piso: cada objeto de
@@ -666,6 +732,7 @@ func _furniture_from_data(item: Dictionary) -> Dictionary:
 		"assigned_to": String(item.get("assigned_to", "")),
 		"computer": String(item.get("computer", "")),
 		"monitor": String(item.get("monitor", "")),
+		"monitors": int(item.get("monitors", 0 if String(item.get("monitor", "")).is_empty() else 1)),
 		# Los muebles chicos guardan su cuarto; las partidas viejas los ponen en el primero.
 		"quarter": int(item.get("quarter", 0 if FurnitureCatalog.is_small(String(item["id"])) else -1)),
 	}

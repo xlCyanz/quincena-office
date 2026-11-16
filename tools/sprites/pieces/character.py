@@ -107,8 +107,8 @@ STAND = Pose("stand", False, ((13.6, 0.0, 57.0), (16.0, 0.4, 47.5), (17.4, 2.4, 
                               (18.0, 3.0, CUFF_Z - 3.5), (4.6, 4.6, 5.2)), (96, 104))
 # Sentado: el brazo baja junto al cuerpo hasta el codo y el antebrazo va al frente, casi
 # horizontal, con las manos planas (palmas abajo) como sobre un teclado.
-SIT = Pose("sit", True, ((13.6, 0.0, 54.0), (15.0, 1.0, 44.2), (10.8, 13.5, 44.6),
-                         (9.8, 17.4, 44.2), (4.2, 4.8, 3.3)), (86, 100))
+SIT = Pose("sit", True, ((13.6, 0.0, 54.0), (15.0, 1.5, 44.6), (10.8, 16.0, 45.6),
+                         (9.8, 20.5, 45.4), (4.2, 4.8, 3.3)), (86, 100))
 
 # ---- animaciones: cada cuadro es una pose (el ciclo empalma: después del último va el primero)
 WALK_FRAMES = 8

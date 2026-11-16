@@ -41,6 +41,8 @@ const FRAME_SECONDS: Dictionary[String, float] = {"idle": 0.45, "type": 0.14}
 ## Dónde va el icono de estado sobre la cabeza del sprite, de pie y sentado.
 const SPRITE_ICON_STANDING := Vector2(11.0, -52.0)
 const SPRITE_ICON_SEATED := Vector2(11.0, -46.0)
+## Franja del sprite sentado con los antebrazos y las manos, en px del sprite sobre los pies.
+const HANDS_BAND := Vector2(41.0, 52.0)
 ## Paletas de cada conjunto de ropa (la base, piel oscura y piel clara).
 const LOOK_VARIANTS: Array[String] = ["", "_v1", "_v2"]
 ## Ninguna casilla (para _release_cells).
@@ -74,6 +76,7 @@ var standing: bool = false:
 	set(value):
 		standing = value
 		_animate(0.0, Vector2.ZERO)
+		_update_position()
 		queue_redraw()
 ## Tiene prisa: camina GameConstants.CHARACTER_HURRY_FACTOR veces más rápido hasta llegar
 ## adonde va (llega tarde, el candidato al que llaman). Si no, camina normal.
@@ -109,6 +112,10 @@ var _anim_time: float = 0.0
 # computadora.
 var _seat_facing: int = -1
 var _at_computer: bool = false
+# Cuánto se arrima al escritorio que tiene delante cuando está sentado, en casillas.
+var _tuck := Vector2.ZERO
+# Pieza que dibuja las manos sobre el escritorio (ver _draw_hands).
+var _hands: Node2D
 
 
 ## Prepara al personaje con lo que necesita de la oficina. Lo llama la escena de juego.
@@ -124,6 +131,13 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 	grid_position = Vector2(entrance)
 	# Cada uno empieza su animación en otro momento, así no se mueven todos a la vez.
 	_anim_time = float(absi(person_key.hash()) % 997) / 100.0
+	if _hands == null:
+		# Con y_sort_enabled la pieza de las manos se ordena con los muebles, no con el personaje.
+		y_sort_enabled = true
+		_hands = Node2D.new()
+		_hands.name = "Hands"
+		_hands.draw.connect(_draw_hands)
+		add_child(_hands)
 	if not EventBus.office_changed.is_connected(_refresh_seat):
 		EventBus.office_changed.connect(_refresh_seat)
 	_set_activity(Activity.AWAY)
@@ -298,7 +312,7 @@ func _animate(delta: float, moved: Vector2) -> void:
 	else:
 		if GameClock.get_time_scale() > 0.0:
 			_anim_time += delta
-		if activity == Activity.SEATED and not standing and _seat_facing >= 0:
+		if _is_sitting():
 			pose = "type" if _at_computer and can_type else "sit"
 			facing = _seat_facing
 		if FRAME_SECONDS.has(pose):
@@ -308,6 +322,8 @@ func _animate(delta: float, moved: Vector2) -> void:
 		_facing = facing
 		_frame = frame
 		queue_redraw()
+		if _hands != null:
+			_hands.queue_redraw()
 
 
 # Dirección (0–3) hacia la que avanza.
@@ -318,30 +334,42 @@ static func _facing_of(moved: Vector2) -> int:
 
 
 # Mira qué hay en su lugar: si es un asiento, hacia dónde queda sentado (hacia el escritorio
-# con computadora que lo tiene delante, si lo hay; si no, hacia el frente del asiento).
+# o mostrador que lo tiene delante, arrimado a él como su silla; si no, hacia el frente del asiento).
 func _refresh_seat() -> void:
 	_seat_facing = -1
 	_at_computer = false
+	_tuck = Vector2.ZERO
 	var index: int = OfficeState.find_furniture_at(_seat_cell)
-	if index < 0:
-		return
-	var seat: Dictionary = OfficeState.furniture[index]
-	var info: Dictionary = FurnitureCatalog.get_item(seat["id"])
-	if not bool(info.get("is_seat", false)) and not bool(info.get("waiting_seat", false)):
-		return
-	_seat_facing = posmod(int(seat["rotation"]), 4)
-	for direction: int in range(FurnitureCatalog.FRONT_DIRECTIONS.size()):
-		var desk_index: int = OfficeState.find_furniture_at(_seat_cell + FurnitureCatalog.FRONT_DIRECTIONS[direction])
-		if desk_index < 0:
-			continue
-		var desk: Dictionary = OfficeState.furniture[desk_index]
-		if String(desk.get("computer", "")).is_empty():
-			continue
-		if FurnitureCatalog.get_front(int(desk["rotation"])) == -FurnitureCatalog.FRONT_DIRECTIONS[direction]:
-			_seat_facing = direction
-			_at_computer = true
-			break
+	if index >= 0:
+		var seat: Dictionary = OfficeState.furniture[index]
+		var info: Dictionary = FurnitureCatalog.get_item(seat["id"])
+		if bool(info.get("is_seat", false)) or bool(info.get("waiting_seat", false)):
+			_seat_facing = posmod(int(seat["rotation"]), 4)
+			var desk: Dictionary = OfficeState.get_desk_facing(_seat_cell) if FurnitureView.has_backrest(seat["id"]) else {}
+			if not desk.is_empty():
+				_seat_facing = int(desk["direction"])
+				_at_computer = bool(desk["computer"])
+				_tuck = Vector2(FurnitureCatalog.get_front(_seat_facing)) * FurnitureView.SEAT_TUCK \
+					+ FurnitureView.get_seat_shift(_seat_cell)
 	_animate(0.0, Vector2.ZERO)
+	_update_position()
+
+
+# Indica si se dibuja sentado en su asiento.
+func _is_sitting() -> bool:
+	return activity == Activity.SEATED and not standing and _seat_facing >= 0
+
+
+# Las manos sobre el escritorio: cuando el escritorio queda del lado de quien mira (sentado
+# mirando a +x o a +y) se dibuja después que la persona y le taparía las manos; esta pieza
+# repite la franja de los antebrazos ordenada justo después del escritorio.
+func _draw_hands() -> void:
+	if _hands_shown():
+		SpriteLibrary.draw_character(_hands, look, _pose, _facing, _frame, -_hands.position, HANDS_BAND)
+
+
+func _hands_shown() -> bool:
+	return _pose == "type" and _tuck != Vector2.ZERO and (_facing == 1 or _facing == 2) and SpriteLibrary.has_character_look(look)
 
 
 func _exit_tree() -> void:
@@ -511,6 +539,7 @@ func _set_activity(new_activity: Activity) -> void:
 	if activity == Activity.SEATED:
 		_refresh_seat()
 	_animate(0.0, Vector2.ZERO)
+	_update_position()
 	queue_redraw()
 
 
@@ -523,7 +552,13 @@ func set_status_icon(icon: String) -> void:
 
 
 func _update_position() -> void:
-	position = _grid.grid_to_world(grid_position)
+	if _grid == null:
+		return
+	position = _grid.grid_to_world(grid_position + (_tuck if _is_sitting() else Vector2.ZERO))
+	if _hands != null:
+		# Justo después del escritorio que tiene delante (el mueble se ordena 1 px antes de su centro).
+		_hands.position = _grid.grid_to_world(Vector2(_seat_cell + FurnitureCatalog.get_front(maxi(_seat_facing, 0)))) - position
+		_hands.queue_redraw()
 
 
 # Muñeco provisional. El origen es el punto de apoyo en el centro de su casilla.

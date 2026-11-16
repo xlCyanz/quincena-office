@@ -37,6 +37,7 @@ from PIL import Image  # noqa: E402
 
 import sheet  # noqa: E402
 from pieces import character  # noqa: E402
+from pieces import desk as desk_piece  # noqa: E402
 
 TILE = (128, 64)
 VARIANTS = 4
@@ -56,14 +57,14 @@ TREES = 8
 # Mueble del juego (id de data/furniture.json) -> (nombre del sprite, si tiene 4 rotaciones _r0.._r3).
 # Los chicos usan la versión _q (ya al 60 %, para un cuarto de casilla). Los objetos de pared no van aquí.
 FURNITURE = {
-    "simple_desk": ("desk_simple", True), "executive_desk": ("executive_desk", True), "wide_desk": ("wide_desk", True),
+    "simple_desk": ("desk_simple", True), "executive_desk": ("executive_desk", True),
     "basic_chair": ("chair_basic", True), "ergonomic_chair": ("chair_ergonomic", True),
     "small_plant": ("plant_small_q", False), "large_plant": ("plant_large", False),
     "reception_counter": ("reception_counter", True), "waiting_sofa": ("waiting_sofa", True),
     "trash_can": ("trash_can_q", False), "water_dispenser": ("water_dispenser_q", True),
     "cleaning_closet": ("cleaning_closet", True), "server_rack": ("server_rack", True),
-    "basic_computer": ("computer_basic", True), "mid_computer": ("computer_mid", True),
-    "pro_computer": ("computer_pro", True), "second_monitor": ("second_monitor", True),
+    "long_desk": ("desk_long", True),
+    "basic_computer": ("computer_basic", True), "pro_computer": ("computer_pro", True),
     "meeting_table": ("meeting_table", False), "toilet": ("toilet", True), "sink": ("sink", True),
     "coffee_maker": ("coffee_maker", True), "fridge": ("fridge", True), "microwave": ("microwave", True),
     "printer": ("printer", True), "sofa": ("sofa", True), "ping_pong": ("ping_pong", True),
@@ -76,6 +77,10 @@ WALL_ITEMS = {
     "air_conditioner": ("air_conditioner",), "painting": ("painting", "painting_abstract", "painting_sea"),
     "wall_clock": ("wall_clock",), "whiteboard": ("whiteboard",), "presentation_screen": ("presentation_screen",),
 }
+# Escritorio que se dibuja entero con lo que lleva encima: computadora -> sprite según cuántas pantallas
+# extra tiene (0, 1, 2). Las pantallas extra no tienen sprite propio.
+DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
+                           "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}
 # Sillas: el asiento y el respaldo son imágenes aparte (<base>_seat_r0, <base>_back_r0), porque el
 # respaldo se dibuja delante o detrás de quien se sienta según la rotación.
 PARTS = ("chair_basic", "chair_ergonomic")
@@ -186,6 +191,14 @@ def main(directory):
             if os.path.isfile(os.path.join(directory, base + suffix + "_shadow.png")):
                 copy(base + suffix + "_shadow", "furniture")
         furniture[item] = {"base": base, "rotated": rotated, "parts": parts}
+    for item, by_computer in DESK_SETS.items():
+        for names in by_computer.values():
+            for base in names:
+                for rotation in range(4):
+                    copy("%s_r%d" % (base, rotation), "furniture")
+                    copy("%s_r%d_shadow" % (base, rotation), "furniture")
+        furniture[item]["sets"] = by_computer
+    seats = dict((name, round(value, 4)) for name, value in desk_piece.seats().items())
 
     wall_items = {}
     for item, bases in WALL_ITEMS.items():
@@ -234,7 +247,10 @@ def main(directory):
                        "variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo "
                        "(anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, "
                        "si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); "
-                       "la sombra es el nombre sin parte más _shadow. wall_items: objeto de pared -> dibujos "
+                       "la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que "
+                       "lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: "
+                       "base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, "
+                       "en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). wall_items: objeto de pared -> dibujos "
                        "(sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso "
                        "empieza (base_z). characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y "
@@ -244,6 +260,7 @@ def main(directory):
         "characters": {"cell": list(CHARACTER_CELL), "anchor": [64, 112], "poses": poses, "looks": looks,
                        "shadow": "character_stand_shadow"},
         "furniture": furniture,
+        "seats": seats,
         "sprites": sprites,
         "wall_items": wall_items,
     }

@@ -1,5 +1,5 @@
 {
-	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso empieza (base_z). characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y cuántos tiene; cell y anchor en px del sprite).",
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso empieza (base_z). characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y cuántos tiene; cell y anchor en px del sprite).",
 	"characters": {
 		"anchor": [
 			64,
@@ -119,6 +119,21 @@
 			"parts": false,
 			"rotated": false
 		},
+		"long_desk": {
+			"base": "desk_long",
+			"parts": false,
+			"rotated": true,
+			"sets": {
+				"basic_computer": [
+					"desk_long_basic"
+				],
+				"pro_computer": [
+					"desk_long_pro1",
+					"desk_long_pro2",
+					"desk_long_pro3"
+				]
+			}
+		},
 		"meeting_table": {
 			"base": "meeting_table",
 			"parts": false,
@@ -126,11 +141,6 @@
 		},
 		"microwave": {
 			"base": "microwave",
-			"parts": false,
-			"rotated": true
-		},
-		"mid_computer": {
-			"base": "computer_mid",
 			"parts": false,
 			"rotated": true
 		},
@@ -158,11 +168,6 @@
 			"base": "rug",
 			"parts": false,
 			"rotated": false
-		},
-		"second_monitor": {
-			"base": "second_monitor",
-			"parts": false,
-			"rotated": true
 		},
 		"server_rack": {
 			"base": "server_rack",
@@ -211,11 +216,6 @@
 		},
 		"water_dispenser": {
 			"base": "water_dispenser_q",
-			"parts": false,
-			"rotated": true
-		},
-		"wide_desk": {
-			"base": "wide_desk",
 			"parts": false,
 			"rotated": true
 		}
@@ -298,6 +298,15 @@
 		]
 	},
 	"scale": 2,
+	"seats": {
+		"computer_basic": 0.5,
+		"computer_pro": 0.5938,
+		"desk_long": 1.0,
+		"desk_long_basic": 0.9688,
+		"desk_long_pro1": 1.0,
+		"desk_long_pro2": 0.8125,
+		"desk_long_pro3": 0.9688
+	},
 	"sprites": {
 		"air_conditioner_x": {
 			"anchor": [
@@ -951,265 +960,617 @@
 		"computer_basic_r0": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r0.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r0_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r0_shadow.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r1": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r1.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r1_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r1_shadow.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r2": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r2.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r2_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r2_shadow.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r3": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r3.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_basic_r3_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_basic_r3_shadow.png",
 			"size": [
 				128,
-				128
-			]
-		},
-		"computer_mid_r0": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r0.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r0_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r0_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r1": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r1.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r1_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r1_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r2": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r2.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r2_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r2_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r3": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r3.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"computer_mid_r3_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/computer_mid_r3_shadow.png",
-			"size": [
-				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r0": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r0.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r0_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r0_shadow.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r1": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r1.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r1_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r1_shadow.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r2": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r2.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r2_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r2_shadow.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r3": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r3.png",
 			"size": [
 				128,
-				128
+				160
 			]
 		},
 		"computer_pro_r3_shadow": {
 			"anchor": [
 				64.0,
-				96.0
+				128.0
 			],
 			"file": "furniture/computer_pro_r3_shadow.png",
 			"size": [
 				128,
-				128
+				160
+			]
+		},
+		"desk_long_basic_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r0.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_basic_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_basic_r1": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r1.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_basic_r1_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_basic_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r2.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_basic_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_basic_r3": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r3.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_basic_r3_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_basic_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro1_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r0.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro1_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro1_r1": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r1.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro1_r1_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro1_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r2.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro1_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro1_r3": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r3.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro1_r3_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro1_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro2_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r0.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro2_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro2_r1": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r1.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro2_r1_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro2_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r2.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro2_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro2_r3": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r3.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro2_r3_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro2_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro3_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r0.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro3_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro3_r1": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r1.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro3_r1_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro3_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r2.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro3_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_pro3_r3": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r3.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_pro3_r3_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_pro3_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r0.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_r1": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r1.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_r1_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r2.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"desk_long_r3": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r3.png",
+			"size": [
+				192,
+				192
+			]
+		},
+		"desk_long_r3_shadow": {
+			"anchor": [
+				128.0,
+				128.0
+			],
+			"file": "furniture/desk_long_r3_shadow.png",
+			"size": [
+				192,
+				160
 			]
 		},
 		"desk_simple_r0": {
@@ -2279,94 +2640,6 @@
 				128
 			]
 		},
-		"second_monitor_r0": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r0.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r0_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r0_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r1": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r1.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r1_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r1_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r2": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r2.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r2_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r2_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r3": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r3.png",
-			"size": [
-				128,
-				128
-			]
-		},
-		"second_monitor_r3_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/second_monitor_r3_shadow.png",
-			"size": [
-				128,
-				128
-			]
-		},
 		"server_rack_r0": {
 			"anchor": [
 				64.0,
@@ -3355,94 +3628,6 @@
 			"size": [
 				64,
 				128
-			]
-		},
-		"wide_desk_r0": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r0.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r0_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r0_shadow.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r1": {
-			"anchor": [
-				128.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r1.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r1_shadow": {
-			"anchor": [
-				128.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r1_shadow.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r2": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r2.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r2_shadow": {
-			"anchor": [
-				64.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r2_shadow.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r3": {
-			"anchor": [
-				128.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r3.png",
-			"size": [
-				192,
-				160
-			]
-		},
-		"wide_desk_r3_shadow": {
-			"anchor": [
-				128.0,
-				96.0
-			],
-			"file": "furniture/wide_desk_r3_shadow.png",
-			"size": [
-				192,
-				160
 			]
 		},
 		"window_low_x": {

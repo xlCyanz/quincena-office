@@ -113,6 +113,39 @@ static func draw_scaled(canvas: CanvasItem, sprite: String, at: Vector2, factor:
 	return true
 
 
+## Sprite de un escritorio que se dibuja entero con lo que lleva encima (el largo): según su
+## computadora y cuántas pantallas extra tiene. "" si ese mueble no va así o no tiene computadora.
+static func get_desk_set_sprite(desk_id: String, computer_id: String, monitors: int, rotation: int, shadow: bool = false) -> String:
+	var base: String = get_desk_set_base(desk_id, computer_id, monitors)
+	if base.is_empty():
+		return ""
+	var sprite: String = "%s_r%d%s" % [base, posmod(rotation, 4), "_shadow" if shadow else ""]
+	return sprite if has_sprite(sprite) else ""
+
+
+## Base del nombre de ese sprite (sin rotación), o "".
+static func get_desk_set_base(desk_id: String, computer_id: String, monitors: int) -> String:
+	var furniture: Dictionary = get_data().get("furniture", {})
+	var sets: Dictionary = furniture.get(desk_id, {}).get("sets", {})
+	if not sets.has(computer_id):
+		return ""
+	var names: Array = sets[computer_id]
+	return String(names[clampi(monitors, 0, names.size() - 1)])
+
+
+## A qué altura del modelo queda el teclado de un sprite de escritorio o de computadora, en
+## casillas a lo largo del mueble desde su punta −x; -1 si no se sabe.
+static func get_seat_x(base: String) -> float:
+	var seats: Dictionary = get_data().get("seats", {})
+	return float(seats[base]) if seats.has(base) else -1.0
+
+
+## Base del sprite de un mueble (sin parte ni rotación), o "".
+static func get_furniture_base(item_id: String) -> String:
+	var furniture: Dictionary = get_data().get("furniture", {})
+	return String(furniture[item_id]["base"]) if furniture.has(item_id) else ""
+
+
 ## Dibuja solo una tira vertical de un sprite: las columnas de from a to, en px del sprite
 ## medidos desde su punto de apoyo (que cae en `at`). Devuelve false si no existe.
 static func draw_strip(canvas: CanvasItem, sprite: String, at: Vector2, from: float, to: float) -> bool:
@@ -151,8 +184,9 @@ static func get_character_frames(pose: String) -> int:
 
 ## Dibuja un cuadro de un personaje con los pies en `at`: aspecto, pose, dirección (0–3,
 ## como las rotaciones de los muebles) y cuadro. Devuelve false si no existe.
+## Con band (x = desde, y = hasta, en px del sprite sobre los pies) dibuja solo esa franja de alto.
 static func draw_character(canvas: CanvasItem, look: String, pose: String, rotation: int, frame: int,
-		at: Vector2 = Vector2.ZERO) -> bool:
+		at: Vector2 = Vector2.ZERO, band: Vector2 = Vector2.ZERO) -> bool:
 	var characters: Dictionary = get_data().get("characters", {})
 	var looks: Dictionary = characters.get("looks", {})
 	var poses: Dictionary = characters.get("poses", {})
@@ -169,7 +203,13 @@ static func draw_character(canvas: CanvasItem, look: String, pose: String, rotat
 	var anchor := Vector2(float(characters["anchor"][0]), float(characters["anchor"][1]))
 	var column: int = int(poses[pose]["column"]) + posmod(frame, int(poses[pose]["frames"]))
 	var source := Rect2(Vector2(column, posmod(rotation, 4)) * cell, cell)
-	canvas.draw_texture_rect_region(texture, Rect2(at - anchor / get_scale(), cell / get_scale()), source)
+	var target := Rect2(at - anchor / get_scale(), cell / get_scale())
+	if band != Vector2.ZERO:
+		var top: float = clampf(anchor.y - band.y, 0.0, cell.y)
+		var bottom: float = clampf(anchor.y - band.x, 0.0, cell.y)
+		source = Rect2(source.position + Vector2(0.0, top), Vector2(cell.x, bottom - top))
+		target = Rect2(target.position + Vector2(0.0, top / get_scale()), source.size / get_scale())
+	canvas.draw_texture_rect_region(texture, target, source)
 	return true
 
 

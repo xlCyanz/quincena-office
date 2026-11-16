@@ -325,13 +325,18 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   2 diseñadores, 4 programadores y 2 QA con líder, vendedores, contador, recepcionista, limpieza, gerente y ejecutivo) que rellena
   si alguien se va, le da a cada equipo el contrato más grande y al CEO solo pequeños; guarda 1.5 meses de gastos. Llega a Mediana
   empresa (~mes 13) e imprime un resumen por mes; compara 3 meses con el CEO dirigiendo 4 departamentos contra un ejecutivo.
-- Calidades de muebles (hito 46, `data/furniture.json`): computadora básica/media/pro (`production_bonus` 0/0.15/0.3), segundo monitor
-  (`is_monitor`, $300, +0.05, en `furniture["monitor"]` sobre un escritorio con computadora, uno por escritorio; se vende antes que la
-  computadora), silla ergonómica ($250, `energy_per_work_hour` −4 en vez de −6: `Staff.get_work_energy`) y escritorio amplio ($350, 2×1,
-  `mood_bonus` +5 a la meta de ánimo de su puesto: `Staff.get_desk_mood`, `Workstations.station_desk_of`). `upgrade_to` es la calidad
-  siguiente; `Builder.quote_upgrade`/`upgrade` (herramienta Mejorar) la cambia en su lugar cobrando la diferencia, también en un puesto
-  ocupado o la silla del CEO. El bono de un puesto es computadora + monitor (`Workstations.get_desk_bonus`, `bonus_of`, `bonuses_by_owner`
-  con caché). `data/rooms.json` acepta la silla ergonómica y el escritorio amplio donde pedía silla y escritorio.
+- Calidades de muebles (hito 46; fase 8, `data/furniture.json`): dos niveles de computadora, básica (`basic_computer`, $500, la crema todo en uno)
+  y pro (`pro_computer`, $2,500, `production_bonus` 0.3, negra con torre); la media se quitó (una partida vieja la carga como básica). Pantalla
+  extra (`second_monitor`, `is_monitor`, $300, +0.05 cada una): solo sobre un escritorio que las admite (`max_monitors`: el largo, 2) y con una
+  computadora que las admite (`extra_monitors`: la pro); `furniture["monitor"]` + `"monitors"` (cuántas, `FurnitureCatalog.get_monitor_count`); se
+  venden de a una antes que la computadora; las de una partida vieja que ya no caben se quitan devolviendo lo pagado
+  (`OfficeState._replace_removed_furniture`). Escritorio largo (`long_desk`, $350, 2×1, acepta computadora). Silla ergonómica ($250,
+  `energy_per_work_hour` −4 en vez de −6: `Staff.get_work_energy`). El escritorio amplio ($350, 2×1, +5 de ánimo) se quitó: una partida vieja lo
+  carga como sencillo en la casilla con la silla delante; queda el mecanismo `mood_bonus` de un escritorio (`Staff.get_desk_mood`,
+  `Workstations.station_desk_of`), que hoy ningún mueble usa. `upgrade_to` es la calidad siguiente (básica → pro); `Builder.quote_upgrade`/`upgrade`
+  (herramienta Mejorar) la cambia en su lugar cobrando la diferencia, también en un puesto ocupado o la silla del CEO. El bono de un puesto es
+  computadora + pantallas extra (`Workstations.get_desk_bonus`, `bonus_of`, `bonuses_by_owner` con caché). `data/rooms.json` acepta la silla
+  ergonómica donde pedía silla y el escritorio largo donde pedía escritorio.
 - Contratos grandes y élite (hito 47, `data/contracts.json`): grande (`min_stage` 4 = Mediana empresa, 4 ★) y `elite` «De élite» (`min_stage`
   5 = Corporación, 5 ★, puntos del grande, pago ×1.5, clientes de `elite_clients`); los dos exigen Sala de reuniones que funcione
   (`requires_room`, mesa de reuniones 2×2 $1,200). La Sala de reuniones (`unlocked_by_offer` en `data/rooms.json`) se marca solo desde que
@@ -533,6 +538,16 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   en `Visitor`); `_animate` elige pose, dirección (0–3 como las rotaciones) y cuadro: camina según lo recorrido (`WALK_CYCLES_PER_CELL`),
   sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
   `can_type` false en visitas), si no `sit`, y de pie `idle`; solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
+  Sentado frente a un escritorio o mostrador (`OfficeState.get_desk_facing(casilla)`: `{direction, computer}`), la silla y quien se sienta se
+  dibujan arrimados `FurnitureView.SEAT_TUCK` (0.3 casillas) y mirándolo (`get_sprite_rotation`, `OfficeCharacter._tuck`; `grid_position` no cambia);
+  mirando a +x o +y, la pieza hija `Hands` (el personaje tiene `y_sort_enabled`) repite la franja de antebrazos `HANDS_BAND` ordenada tras el
+  escritorio. El asiento de las sillas va a 24 px de sprite (la cadera del personaje) y el teclado al borde del escritorio. Un mueble largo
+  (1×N) se dibuja en una tira por casilla (`PART_SLICE`, `get_slice_count`) para ordenarse bien con paredes y personas.
+  Computadoras (`tools/sprites/pieces/desk.py`): sobre el escritorio sencillo o el ejecutivo, un sprite aparte (`computer_basic`, `computer_pro`,
+  128×160 con apoyo (64, 128)) en el centro del mueble; el escritorio largo se dibuja entero con lo que lleva (`sets` de su entrada en
+  `data/sprites.json`: `desk_long_basic`, `desk_long_pro1`/`pro2`/`pro3` según las pantallas extra; con tres la torre va debajo de la mesa;
+  `SpriteLibrary.get_desk_set_sprite`). `seats` dice a qué altura del modelo queda el teclado de cada sprite y `FurnitureView.get_seat_shift(casilla)`
+  corre de lado (hasta media casilla) a la silla y a quien se sienta para quedar frente a él.
   Objetos de pared (`wall_items` en `data/sprites.json`: dibujos y `base_z`; `SpriteLibrary.get_wall_item_sprite(id, eje, elección)`):
   `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; solo las caras que se ven de frente (frente
   a +x o +y; de espaldas sigue el dibujo provisional); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a

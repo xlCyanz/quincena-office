@@ -438,9 +438,10 @@ class Canvas(object):
 
     @classmethod
     def on_desk(cls, rotation=0, height=12):
-        """128×128 para computadoras y segundo monitor: apoyo en (64, 96) y z = 0 en el piso. La
-        superficie del escritorio está en z = 44 (iso.DESK_TOP): dibujar desde ahí hacia arriba."""
-        c = cls.furniture((1, 1), height, rotation, canvas=(128, 128), kind="on_desk")
+        """128×160 para computadoras y segundo monitor: apoyo en (64, 128) y z = 0 en el piso. La
+        superficie del escritorio está en z = 44 (iso.DESK_TOP): dibujar desde ahí hacia arriba
+        (caben unos 50 px sobre el tablero, lo que mide un monitor grande)."""
+        c = cls.furniture((1, 1), height, rotation, canvas=(128, 160), kind="on_desk")
         return c
 
     @classmethod

@@ -148,6 +148,8 @@ static func _load() -> void:
 			"production_bonus": float(raw.get("production_bonus", 0.0)),
 			"upgrade_to": String(raw.get("upgrade_to", "")),
 			"is_monitor": bool(raw.get("is_monitor", false)),
+			"max_monitors": int(raw.get("max_monitors", 0)),
+			"extra_monitors": bool(raw.get("extra_monitors", false)),
 			"energy_per_work_hour": int(raw.get("energy_per_work_hour", 0)),
 			"mood_bonus": int(raw.get("mood_bonus", 0)),
 			"presentation_screen": bool(raw.get("presentation_screen", false)),
@@ -219,6 +221,23 @@ static func get_upgrade(id: String) -> String:
 ## Indica si es un segundo monitor: va sobre un escritorio con computadora.
 static func is_monitor(id: String) -> bool:
 	return bool(get_item(id).get("is_monitor", false))
+
+
+## Cuántas pantallas extra admite un escritorio (fase 8: solo el largo, 2).
+static func get_max_monitors(id: String) -> int:
+	return int(get_item(id).get("max_monitors", 0))
+
+
+## Indica si una computadora admite pantallas extra (la pro).
+static func allows_monitors(computer_id: String) -> bool:
+	return bool(get_item(computer_id).get("extra_monitors", false))
+
+
+## Cuántas pantallas extra tiene un escritorio (las partidas de antes guardaban solo una, en "monitor").
+static func get_monitor_count(item: Dictionary) -> int:
+	if String(item.get("monitor", "")).is_empty():
+		return 0
+	return maxi(int(item.get("monitors", 1)), 1)
 
 
 ## Lo que suma a la producción de quien lo usa (computadora o segundo monitor).

@@ -259,7 +259,7 @@ func quote_place(id: String, anchor: Vector2i, rotation: int, quarter: int = -1)
 	if FurnitureCatalog.is_small(id) and quarter < 0:
 		quarter = _free_quarter(id, anchor)
 	var item: Dictionary = {"id": id, "cell": anchor, "rotation": posmod(rotation, 4),
-		"assigned_to": "", "computer": "", "monitor": "", "quarter": quarter if FurnitureCatalog.is_small(id) else -1}
+		"assigned_to": "", "computer": "", "monitor": "", "monitors": 0, "quarter": quarter if FurnitureCatalog.is_small(id) else -1}
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate.append(item)
 	var cost: int = FurnitureCatalog.get_price(id)
@@ -360,7 +360,10 @@ func quote_sell_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
 	if not String(item.get("monitor", "")).is_empty():
 		var monitor_refund: int = FurnitureCatalog.get_resale(item["monitor"])
 		var monitor_name: String = FurnitureCatalog.get_item(item["monitor"])["name"]
-		item["monitor"] = ""
+		# Se vende de a una.
+		item["monitors"] = FurnitureCatalog.get_monitor_count(item) - 1
+		if int(item["monitors"]) <= 0:
+			item["monitor"] = ""
 		candidate[index] = item
 		return {"ok": true, "cost": -monitor_refund, "message": "Venta de %s: +$%d" % [monitor_name, monitor_refund],
 			"furniture": candidate}
@@ -404,21 +407,28 @@ func install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 	return _commit(quote_install_computer(computer_id, cell))
 
 
-## Instalar un segundo monitor en el escritorio que ocupa cell: necesita computadora y
-## va uno por escritorio (hito 46).
+## Instalar una pantalla extra en el escritorio que ocupa cell (hito 46; fase 8): solo en un
+## escritorio que las admite (el largo, hasta max_monitors) y con una computadora pro.
 func quote_install_monitor(monitor_id: String, cell: Vector2i) -> Dictionary:
 	var index: int = OfficeState.find_furniture_at(cell)
 	if index < 0 or not bool(FurnitureCatalog.get_item(OfficeState.furniture[index]["id"])["accepts_computer"]):
-		return _fail(0, "El monitor va sobre un escritorio.")
+		return _fail(0, "La pantalla extra va sobre un escritorio largo.")
 	var item: Dictionary = OfficeState.furniture[index].duplicate()
+	var limit: int = FurnitureCatalog.get_max_monitors(item["id"])
+	if limit <= 0:
+		return _fail(0, "La pantalla extra solo cabe en un escritorio largo.")
 	if String(item["computer"]).is_empty():
 		return _fail(0, "Ese escritorio no tiene computadora: instala una primero.")
-	if not String(item.get("monitor", "")).is_empty():
-		return _fail(0, "Ese escritorio ya tiene segundo monitor.")
+	if not FurnitureCatalog.allows_monitors(item["computer"]):
+		return _fail(0, "Las pantallas extra necesitan una computadora pro.")
+	var count: int = FurnitureCatalog.get_monitor_count(item)
+	if count >= limit:
+		return _fail(0, "Ese escritorio ya tiene todas sus pantallas.")
 	var cost: int = FurnitureCatalog.get_price(monitor_id)
 	if not Economy.can_afford(cost):
 		return _fail(cost, "No alcanza el dinero: cuesta $%d." % cost)
 	item["monitor"] = monitor_id
+	item["monitors"] = count + 1
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate[index] = item
 	var monitor_name: String = FurnitureCatalog.get_item(monitor_id)["name"]

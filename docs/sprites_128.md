@@ -84,8 +84,12 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
   - Muebles simétricos (planta, zafacón, lámpara, rack…) pueden tener una sola imagen.
 - **Muebles chicos** (`small`: planta pequeña, zafacón, dispensador de agua, lámpara de pie): el juego los dibuja al 60 %
   en un cuarto de la casilla. Dibujarlos en 128×128 como si ocuparan la casilla entera; el juego los achica.
-- **Computadoras y segundo monitor** van **encima** de un escritorio: lienzo de 128×128 con el apoyo en (64, 96), dibujados
-  a la altura de la superficie del escritorio (22 px del mundo = 44 px de sprite sobre el piso).
+- **Computadoras** (dos niveles): `computer_basic` (todo en uno crema, teclado y ratón crema) y `computer_pro` (monitor plano negro de
+  34×25 px con pie de 8, torre negra con luz azul, teclado y ratón negros) van **encima** de un escritorio: lienzo de 128×160 con el apoyo
+  en (64, 128), dibujados a la altura de la superficie del escritorio (22 px del mundo = 44 px de sprite sobre el piso).
+- **Escritorio largo** (`desk_long_r0`–`_r3`, 2×1, tablero de 92 px centrado en sus dos casillas): se dibuja entero con lo que lleva encima,
+  un sprite por conjunto: `desk_long_basic`, `desk_long_pro1` (torre y pantalla), `desk_long_pro2` (la segunda pantalla girada hacia quien se
+  sienta) y `desk_long_pro3` (tres en alas y la torre en el piso, debajo de la mesa). Las pantallas extra no tienen sprite propio.
 
 | Mueble | Planta | Alto (mundo) | Lienzo |
 | --- | --- | --- | --- |
@@ -94,7 +98,7 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 | Dispensador de agua, lámpara de pie (chicos) | 1×1 | 34 | 128×160 |
 | Nevera, máquina expendedora | 1×1 | 40 | 128×160 |
 | Rack de servidores | 1×1 | 44 | 128×160 |
-| Escritorio ejecutivo / amplio, mostrador, sofás, mesa de comedor, pecera | 2×1 | 12–26 | 192×160 (o 192×128 si `height` ≤ 16) |
+| Escritorio ejecutivo, mostrador, sofás, mesa de comedor, pecera | 2×1 | 12–26 | 192×160 (o 192×128 si `height` ≤ 16) |
 | Mesa de reuniones, ping pong | 2×2 | 12–20 | 256×192 |
 | Alfombra | 2×2 | 1 | 256×128 (solo el rombo, como un piso) |
 
@@ -107,7 +111,7 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
   cliente); `waiting_sofa_r0`–`_r3` (2×1, respaldo de 38 px: más que su `height` de 12); `water_dispenser_r0`–`_r3`
   y `water_dispenser_q_r0`–`_r3` (chico: grifos solo al frente); `trash_can` y `trash_can_q` (chico y simétrico, 26 px de alto: más que su `height` de 10). Cada
   uno con su `_shadow`.
-- Trabajo (`tools/sprites/pieces/office_extra.py`): `wide_desk_r0`–`_r3` y `executive_desk_r0`–`_r3` (2×1, superficie
+- Trabajo (`tools/sprites/pieces/office_extra.py`): `executive_desk_r0`–`_r3` (2×1, superficie
   en z = 44 como el escritorio sencillo para que las computadoras se apoyen igual, aunque el ejecutivo tenga `height` 26);
   `printer_r0`–`_r3` (impresora sobre un mueble bajo), `filing_cabinet_r0`–`_r3`, `backup_battery_r0`–`_r3` y
   `meeting_table` (2×2, redonda: una sola imagen).

@@ -51,7 +51,7 @@ static func get_value(item: Dictionary) -> int:
 	if not String(item.get("computer", "")).is_empty():
 		total += FurnitureCatalog.get_resale(item["computer"])
 	if not String(item.get("monitor", "")).is_empty():
-		total += FurnitureCatalog.get_resale(item["monitor"])
+		total += FurnitureCatalog.get_resale(item["monitor"]) * FurnitureCatalog.get_monitor_count(item)
 	return total
 
 

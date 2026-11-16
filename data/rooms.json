@@ -17,7 +17,7 @@
 			"name": "Oficina única",
 			"min_area": 4,
 			"required": [
-				{ "name": "Escritorio", "items": ["simple_desk", "wide_desk", "executive_desk"] },
+				{ "name": "Escritorio", "items": ["simple_desk", "long_desk", "executive_desk"] },
 				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair"], "count": 2 }
 			],
 			"color": "c97b5a"
@@ -54,7 +54,7 @@
 			"name": "Área de trabajo",
 			"min_area": 6,
 			"required": [
-				{ "name": "Escritorio", "items": ["simple_desk", "wide_desk", "executive_desk"] },
+				{ "name": "Escritorio", "items": ["simple_desk", "long_desk", "executive_desk"] },
 				{ "name": "Silla", "items": ["basic_chair", "ergonomic_chair"] }
 			],
 			"color": "5aa84f"

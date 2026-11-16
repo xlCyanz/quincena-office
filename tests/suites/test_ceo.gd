@@ -190,7 +190,11 @@ func _check_pause_freezes() -> void:
 func _check_seated() -> void:
 	_expect(_sat_count == 1, "sat_down se emitió %d veces" % _sat_count)
 	_expect(_ceo.get_cell() == _seat and _ceo.grid_position == Vector2(_seat), "el CEO no quedó en la silla")
-	_expect(_ceo.position.distance_to(_grid.cell_to_world(_seat)) < 0.01, "el CEO no se dibuja sobre la silla")
+	# Sentado frente a su escritorio se dibuja arrimado a él y frente al teclado, como su silla (fase 8).
+	var tuck: Vector2 = Vector2(FurnitureCatalog.get_front(int(OfficeState.get_desk_facing(_seat).get("direction", 0)))) * FurnitureView.SEAT_TUCK \
+		+ FurnitureView.get_seat_shift(_seat)
+	_expect(not OfficeState.get_desk_facing(_seat).is_empty()
+		and _ceo.position.distance_to(_grid.grid_to_world(Vector2(_seat) + tuck)) < 0.01, "el CEO no se dibuja sobre la silla")
 	var walk_seconds: float = 8.0 / GameConstants.CHARACTER_WALK_SPEED
 	_expect(GameClock.get_hour() == 8, "llegar (%.0f s) no debería pasar de las 8:59" % walk_seconds)
 
