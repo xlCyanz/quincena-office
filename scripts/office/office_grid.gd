@@ -194,6 +194,11 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 		view.name = "%s_%d_%d" % [item["id"], item["cell"].x, item["cell"].y]
 		_objects.add_child(view)
 		view.setup(self, item)
+		for slice: int in range(1, FurnitureView.get_slice_count(item)):
+			var strip := FurnitureView.new()
+			strip.name = "%s_tira_%d" % [view.name, slice]
+			_objects.add_child(strip)
+			strip.setup(self, item, FurnitureView.PART_SLICE, slice)
 		if FurnitureView.has_backrest(item["id"]):
 			var backrest := FurnitureView.new()
 			backrest.name = view.name + "_respaldo"

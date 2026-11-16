@@ -52,6 +52,10 @@ const SALT_WALL_ITEM: int = 71
 
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
+## Tira de un mueble largo (de 1 casilla de ancho y varias de largo) con sprite: cada casilla
+## dibuja su tira del sprite con su propio punto de orden, así una pared o una persona al lado
+## de una punta no queda mal ordenada con el mueble entero. La pieza principal es la tira 0.
+const PART_SLICE: String = "slice"
 
 var item_id: String = ""
 var footprint: Array[Vector2i] = []
@@ -74,13 +78,18 @@ var _on_low_wall: bool = false
 var _anchor := Vector2.ZERO
 # En una silla: el respaldo queda detrás del asiento (se dibuja antes y lleva la sombra).
 var _back_first: bool = false
+# Tira que dibuja esta pieza y cuántas tiene el mueble (1 = se dibuja entero).
+var _slice: int = 0
+var _slices: int = 1
 
 
 ## Coloca el mueble a partir de su entrada en OfficeState.furniture. piece elige qué
 ## pieza dibuja este nodo (PART_MAIN o, en una silla, PART_BACKREST).
-func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> void:
+func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice: int = 0) -> void:
 	_grid = grid
 	part = piece
+	_slice = slice
+	_slices = get_slice_count(item)
 	item_id = item["id"]
 	rotation_index = item["rotation"]
 	computer_id = item.get("computer", "")
@@ -118,6 +127,8 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 	_back_first = back_point.x + back_point.y < sort_point.x + sort_point.y
 	if part == PART_BACKREST:
 		sort_point = back_point
+	if _slices > 1:
+		sort_point = Vector2(footprint[clampi(_slice, 0, footprint.size() - 1)])
 	position = grid.grid_to_world(sort_point) - Vector2(0.0, SORT_BIAS_PX)
 	queue_redraw()
 
@@ -141,6 +152,23 @@ func _setup_wall_item(cell: Vector2i) -> void:
 ## Indica si este mueble necesita además una pieza de respaldo.
 static func has_backrest(item_id_to_check: String) -> bool:
 	return String(FurnitureCatalog.get_item(item_id_to_check).get("shape", "")) == "chair"
+
+
+## En cuántas tiras se dibuja un mueble: una por casilla si es largo (1×N) y tiene sprite.
+static func get_slice_count(item: Dictionary) -> int:
+	var id: String = item["id"]
+	if FurnitureCatalog.is_wall_mounted(id) or SpriteLibrary.get_furniture_sprite(id, item["rotation"]).is_empty():
+		return 1
+	var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(id, item["cell"], item["rotation"])
+	if cells.size() < 2:
+		return 1
+	var span: Vector2i = cells[-1] - cells[0]
+	return cells.size() if span.x == 0 or span.y == 0 else 1
+
+
+## Tira que dibuja esta pieza (0 si el mueble va entero).
+func get_slice() -> int:
+	return _slice
 
 
 ## Nombre del sprite que dibuja esta pieza ("" si usa el dibujo provisional).
@@ -170,9 +198,20 @@ func _draw_sprites() -> bool:
 			return SpriteLibrary.draw(self, sprite, at)
 		var drop: float = SpriteLibrary.get_wall_item_base(item_id) * LOW_WALL_SPRITE_SCALE - LOW_WALL_ITEM_BASE_PX
 		return SpriteLibrary.draw_scaled(self, sprite, at + Vector2(0.0, drop), LOW_WALL_SPRITE_SCALE)
-	if not has_backrest(item_id) or (part == PART_BACKREST) == _back_first:
-		SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "shadow"), at)
-	SpriteLibrary.draw(self, sprite, at)
+	if _slices > 1:
+		# Tira de su casilla: de mitad a mitad con las vecinas; las puntas llegan al borde del sprite.
+		var step: float = (_local(Vector2(footprint[1])) - _local(Vector2(footprint[0]))).x * SpriteLibrary.get_scale()
+		var from: float = step * (_slice - 0.5) if _slice > 0 else -INF * signf(step)
+		var to: float = step * (_slice + 0.5) if _slice < _slices - 1 else INF * signf(step)
+		if _slice == 0:
+			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "shadow"), at)
+		SpriteLibrary.draw_strip(self, sprite, at, minf(from, to), maxf(from, to))
+		if _slice < _slices - 1:
+			return true
+	else:
+		if not has_backrest(item_id) or (part == PART_BACKREST) == _back_first:
+			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "shadow"), at)
+		SpriteLibrary.draw(self, sprite, at)
 	if not computer_id.is_empty():
 		# La computadora va sobre el centro del escritorio (el sprite ya trae la altura).
 		var center: Vector2 = (_low + _high) / 2.0
@@ -188,7 +227,7 @@ func _draw_sprites() -> bool:
 
 
 func _draw() -> void:
-	if _draw_sprites():
+	if _draw_sprites() or part == PART_SLICE:
 		return
 	var height: float = _info.get("height", 16.0)
 	var color: Color = _info.get("color", Color.WHITE)

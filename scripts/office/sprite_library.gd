@@ -113,6 +113,25 @@ static func draw_scaled(canvas: CanvasItem, sprite: String, at: Vector2, factor:
 	return true
 
 
+## Dibuja solo una tira vertical de un sprite: las columnas de from a to, en px del sprite
+## medidos desde su punto de apoyo (que cae en `at`). Devuelve false si no existe.
+static func draw_strip(canvas: CanvasItem, sprite: String, at: Vector2, from: float, to: float) -> bool:
+	var texture: Texture2D = get_texture(sprite)
+	if texture == null:
+		return false
+	var rect: Rect2 = get_rect(sprite)
+	var size: Vector2 = rect.size * get_scale()
+	var anchor_x: float = -rect.position.x * get_scale()
+	var left: float = clampf(anchor_x + from, 0.0, size.x)
+	var right: float = clampf(anchor_x + to, 0.0, size.x)
+	if right <= left:
+		return true
+	var source := Rect2(left, 0.0, right - left, size.y)
+	var target := Rect2(at + rect.position + Vector2(left / get_scale(), 0.0), source.size / get_scale())
+	canvas.draw_texture_rect_region(texture, target, source)
+	return true
+
+
 ## Dibuja la sombra de piso de un sprite (a SHADOW_ALPHA). Devuelve false si no existe.
 static func draw_shadow(canvas: CanvasItem, sprite: String, at: Vector2 = Vector2.ZERO) -> bool:
 	return draw(canvas, sprite, at, Color(1.0, 1.0, 1.0, SHADOW_ALPHA))
