@@ -73,6 +73,7 @@ Solo para probar y balancear; no viajan en las exportaciones.
 | `scripts/office/` | Cuadrícula, construcción, muebles y dibujo del local |
 | `scripts/characters/` | Personajes (CEO, empleados, visitas) y turnos |
 | `scripts/staff/`, `scripts/projects/`, `scripts/bank/` | Catálogos y funciones puras de cada sistema |
+| `scripts/game/` | Capas de `main.gd` (la escena de juego) |
 | `scripts/ui/` | Interfaz |
 | `scripts/debug/` | Herramientas de desarrollo |
 | `data/` | Datos de diseño (JSON) |
@@ -83,6 +84,13 @@ Solo para probar y balancear; no viajan en las exportaciones.
 - Autoloads, en este orden: `EventBus`, `Settings`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`,
   `Bank`, `Company`, `Events`, `Tutorial`, `SaveManager`; para desarrollo `Panku` y `DevTools`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
+- Los archivos grandes van en capas por herencia (`extends "res://…"`), de abajo hacia arriba; cada capa solo llama a las
+  de abajo y las variables y constantes viven en la primera. Una función nueva va en la capa de su tema; si necesita algo
+  de una capa de arriba, va arriba.
+  - `Staff`: `scripts/staff/staff_base.gd` → `staff_workplace` → `staff_traits` → `staff_teams` → `staff_people` →
+    `staff_hiring` → `scripts/autoload/staff.gd` (`_ready`, reloj, guardado).
+  - `main.gd`: `scripts/game/main_characters.gd` → `main_menus.gd` → `scripts/main.gd`.
+  - `Builder`: `scripts/office/builder_structure.gd` → `builder_furniture` → `builder_land` → `builder.gd` (habitaciones).
 
 ## Forma de trabajo
 
