@@ -268,11 +268,10 @@ def paint_canto(c):
     """El canto del tramo (x = 1 del modelo, el extremo de adelante) va en ciruela, como el
     corte de la «maqueta». En una pared seguida lo tapa el tramo siguiente; en una esquina, el
     poste."""
-    cap = c.select(part="wall", face=iso.X1)
-    if not cap.any():
-        return
-    side = c.face_side(iso.X1)
-    c.paint(cap, pal.LEFT if side == "left" else pal.RIGHT, CAP)
+    # Antes iba en ciruela (como el corte de una maqueta), pero en las esquinas donde una pared alta
+    # termina sobre una baja quedaba una barra oscura con un escalón: ahora el canto es pared, del
+    # color de la pared con su sombra, y lo oscuro es solo la tapa.
+    return
 
 
 def wall_piece(axis, tall):
@@ -675,6 +674,27 @@ CORNERS = {
 POST_W = 16  # el poste mide 16 px de ancho en pantalla (8×8 de planta)
 
 
+def post_combos():
+    """Todas las uniones que llevan poste: dos tramos o más en un vértice, salvo dos del mismo alto
+    en línea (ahí la pared sigue de largo). Cada una es (−x, −y, +x, +y) con n, l o t."""
+    combos = []
+    for a in "nlt":
+        for b in "nlt":
+            for c2 in "nlt":
+                for d in "nlt":
+                    neighbors = (a, b, c2, d)
+                    present = [n for n in neighbors if n != "n"]
+                    straight = (a == c2 != "n" and b == d == "n") or (b == d != "n" and a == c2 == "n")
+                    if len(present) >= 2 and not straight:
+                        combos.append(neighbors)
+    return combos
+
+
+def post_name(neighbors):
+    """Nombre del poste de una unión cualquiera: wall_post_<−x><−y><+x><+y> (el juego lo arma igual)."""
+    return "wall_post_" + "".join(neighbors)
+
+
 def post_piece(neighbors):
     """Poste de 8×8 px de planta en un vértice, del alto del vecino más alto. Se dibuja en un
     lienzo grande con los cuatro tramos vecinos completos (con su z y fundidos con el poste) y se
@@ -686,7 +706,7 @@ def post_piece(neighbors):
     c = iso.Canvas(big_w, big_h, origin, size=(1, 1), rotation=0, swap=False, kind="post", anchor=origin)
     # Donde una pared alta termina sobre una baja (esquinas izquierda y derecha) el poste es el
     # corte de la pared y va entero en ciruela, como el canto de la «maqueta» de la referencia.
-    ramp = CAP if neighbors in (CORNERS["wall_tall_corner_left"], CORNERS["wall_tall_corner_right"]) else WALL
+    ramp = WALL  # el poste es pared de arriba abajo; lo oscuro es solo la tapa
     post = c.box(-HALF, HALF, -HALF, HALF, 0, height - CAP_H, ramp, name="post")
     c.box(-HALF, HALF, -HALF, HALF, height - CAP_H, height, CAP, part=post)
     for code, along, ox, oy in ((neighbors[0], "x", -1.0, 0.0), (neighbors[1], "y", 0.0, -1.0),
@@ -1142,3 +1162,13 @@ def build_color(out_dir, color, files, names):
                               height=WALL_DATA["height"] if height > LOW else LOW_HEIGHT,
                               sort_after="tramos del vértice: Y del vértice + %g" % POST_SORT_BIAS))
         names.append(name)
+    if color == DEFAULT_COLOR:
+        # Postes para toda unión (L, T, cruz y cambios de alto), solo del color que usa el juego.
+        for neighbors in post_combos():
+            image, anchor = post_piece(neighbors)
+            height = max(POST_HEIGHTS[code] for code in neighbors)
+            files.append(iso.save(image, out_dir, post_name(neighbors), kind="post", anchor=list(anchor),
+                                  wall_color=color, anchor_at="vértice de la cuadrícula, en el piso",
+                                  neighbors=list(neighbors), neighbor_order="-x -y +x +y",
+                                  height=WALL_DATA["height"] if height > LOW else LOW_HEIGHT,
+                                  sort_after="tramos del vértice: Y del vértice + %g" % POST_SORT_BIAS))

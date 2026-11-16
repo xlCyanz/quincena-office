@@ -68,13 +68,22 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (sin cuarto, el primero libre), `rotate`/`sell_furniture_at(cell, quarter)` y `OfficeState.find_furniture_at(cell, quarter)` eligen el del
   cuarto bajo el ratón; las partidas viejas los ponen en el cuarto 0. Prueba `test_quarters`.
 - El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
-  fuera del local se dibuja terreno (`MapDecor`, hito 68). La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
+  fuera del local se dibuja terreno (`MapDecor`, hito 68). Paredes arriba / abajo (solo la vista, no se guarda):
+  botón «↕» de la barra o tecla P (`main.set_walls_up`, `are_walls_up`; `OfficeGrid.walls_up`, `is_tall_edge`) suben todas las piezas de borde a su
+  alto y lo colgado se ve a tamaño real; al elegir un objeto de pared en Construir suben solas (`main._apply_walls`). Con las paredes abajo, un
+  tramo del contorno va alto solo si es de atrás y no hay local detrás de él
+  (`OfficeGrid.is_back_edge`, `BEHIND_WALL_REACH`): con el local en L, el lado de un saliente va bajo. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
-  terreno: en la herramienta Terreno se arrastra un rectángulo en el mapa (`BuildController.set_land_rect`/`get_land_rect`, `land_changed`;
+  terreno: la herramienta Terreno marca lotes alrededor del local con su precio (`land.plot_size` 4×4 en `data/construction.json`, alineados con
+  la casilla (0, 0): `Builder.get_plot_cells`, `get_land_plots`; `BuildController.get_land_plots`, `refresh_land_plots`) y un clic en uno lo compra
+  (`buy_land_plot_at`, `Builder.buy_land_cells`); es la única forma de comprar en el juego: solo se marcan los lotes que tocan el local, así
+  que para llegar a uno de más afuera hay que comprar antes el que lo separa. Para pruebas y simulaciones sigue el rectángulo libre (`BuildController.set_land_rect`/`get_land_rect`, `land_changed`;
   Comprar en `BuildPanel`) y `Builder.quote_land_rect`/`buy_land_rect` (o `quote_land_cells`; `quote_land`/`buy_land` por lado siguen para
-  pruebas) toman sus casillas dentro del solar, fuera del local y de la calle de la entrada, conectadas al local ($150/m² más la cerámica a
+  pruebas) toman sus casillas dentro del solar y fuera del local, conectadas al local; si entre ellas va la casilla de frente a la puerta, la entrada
+  se corre derecho al borde nuevo con su puerta (`result["entrance"]`, `OfficeState.entrance`; ese pedazo se abre hacia el espacio de la entrada,
+  así la Recepción la conserva; los personajes toman la entrada nueva en `_refresh_entrance`) ($150/m² más la cerámica a
   mitad de precio, en `data/construction.json`). El contorno nuevo lleva pared; cada pedazo nuevo abre los bordes que comparte con un solo
   espacio viejo (`_edges_with_land`: el que no es habitación antes, si no el de más bordes), así no junta habitaciones; una pared con algo
   colgado queda cerrada. Solo se rechaza si se perdería una habitación. El mantenimiento se cobra por `lot.get_area()`.
@@ -526,7 +535,9 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `ground.png.import` con mipmaps y capas con `TEXTURE_FILTER_NEAREST_WITH_MIPMAPS`); el piso elige variante al azar fijo y el pasto, además,
   familia por zonas (`MapDecor.get_grass_family`: liso, tupido, manchones y claro); `is_style_row(fila, estilo)` dice si una fila dibuja un
   estilo. Sin atlas se pinta con `GroundPainter` como antes. Paredes: `EdgePieceView` dibuja `<pieza>_<tall|low>_<x|y>` (`get_sprite_name`)
-  y, encima, los postes de esquina de sus puntas (`OfficeGrid._place_corner_posts`, `EdgePieceView.get_corner_sprite(brazos)`: solo en las L).
+  y, encima, el poste de cada unión de sus puntas (`OfficeGrid._place_corner_posts`, `EdgePieceView.get_corner_sprite(brazos)`: toda unión de dos
+  tramos o más, L, T, cruz o cambio de alto, salvo dos del mismo alto en línea; `wall_post_<−x><−y><+x><+y>` con n, l o t, 68 en total, los
+  genera `walls.post_combos`). El canto de las paredes y los postes van del color de la pared; lo oscuro es solo la tapa.
   Árboles: `TreeView` elige `tree_0`…`tree_7` por la casilla y dibuja su `_shadow` al 30 %. Sin sprite, cada uno cae al arte provisional.
   Muebles de piso: `data/sprites.json` `furniture` (id del juego → base del sprite, `rotated`, `parts`; tabla `FURNITURE` de `export_game.py`),
   `SpriteLibrary.get_furniture_sprite(id, rotación, parte)`; `FurnitureView._draw_sprites` dibuja sombra y mueble con el apoyo en el centro de

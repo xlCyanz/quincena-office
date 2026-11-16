@@ -16,6 +16,8 @@ const VISITOR_SCENE: PackedScene = preload("res://scenes/visitor.tscn")
 const CLICK_TOLERANCE_PX: float = 8.0
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 
+# El jugador pidió las paredes arriba (botón ↕ o tecla P).
+var _walls_wanted: bool = false
 var ceo: Ceo
 ## Personaje de cada empleado, por id.
 var employees: Dictionary[int, Employee] = {}
@@ -104,9 +106,8 @@ func _ready() -> void:
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
-	_build_controller.land_changed.connect(func() -> void:
-		_build_panel.set_land_ready(_build_controller.can_buy_land()))
-	_build_panel.land_buy_requested.connect(func() -> void: _build_controller.buy_land())
+	_build_panel.tool_selected.connect(func(_tool: String) -> void: _apply_walls())
+	_build_panel.build_mode_changed.connect(func(_active: bool) -> void: _apply_walls())
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)
 	_hud.notice_clicked.connect(open_notice_target)
@@ -1129,6 +1130,41 @@ func _add_frame_button(menu_bar: Container) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(frame_office)
 	menu_bar.add_child(button)
+	# Paredes arriba / abajo: cuadrado, con su descripción emergente.
+	var walls := Button.new()
+	walls.name = "WallsButton"
+	walls.text = "↕"
+	walls.tooltip_text = "Paredes arriba / abajo (P)"
+	walls.toggle_mode = true
+	walls.custom_minimum_size = Vector2(Hud.MENU_BUTTON_SIZE.y, Hud.MENU_BUTTON_SIZE.y)
+	walls.focus_mode = Control.FOCUS_NONE
+	walls.toggled.connect(func(pressed: bool) -> void: set_walls_up(pressed))
+	menu_bar.add_child(walls)
+
+
+## Sube todas las paredes a su alto (para colgar cosas y ver lo colgado) o las vuelve a bajar
+## (se ve el interior). Es solo la vista; no se guarda.
+func set_walls_up(up: bool) -> void:
+	_walls_wanted = up
+	_apply_walls()
+
+
+## Indica si las paredes están arriba (por el botón o porque se está colgando algo).
+func are_walls_up() -> bool:
+	return _office_grid.walls_up
+
+
+# Las paredes van arriba si el jugador lo pidió o si en Construir está elegido un objeto de pared.
+func _apply_walls() -> void:
+	var hanging: bool = _build_panel.is_build_mode() and FurnitureCatalog.is_wall_mounted(_build_controller.tool)
+	var up: bool = _walls_wanted or hanging
+	var button: Button = menu_bar_button("WallsButton")
+	if button != null:
+		button.set_pressed_no_signal(_walls_wanted)
+	if up == _office_grid.walls_up:
+		return
+	_office_grid.walls_up = up
+	_rebuild_office()
 
 
 ## Encuadra la oficina completa (botón «Ver oficina» o tecla F), con animación si la
@@ -1159,7 +1195,7 @@ func _on_speed_pressed(index: int) -> void:
 # Esc: cierra lo abierto o abre el menú de pausa (handle_escape, hito 62).
 # Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
 # nada, porque el tiempo tiene que quedarse en pausa. F: ver la oficina completa
-# (funciona siempre). WASD y flechas mueven la cámara (OfficeCamera).
+# (funciona siempre). P: paredes arriba / abajo. WASD y flechas mueven la cámara (OfficeCamera).
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -1170,6 +1206,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if key.keycode == KEY_F:
 		frame_office()
+		get_viewport().set_input_as_handled()
+		return
+	if key.keycode == KEY_P and not _is_camera_locked():
+		set_walls_up(not _walls_wanted)
 		get_viewport().set_input_as_handled()
 		return
 	if _is_menu_open():

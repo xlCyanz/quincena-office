@@ -98,6 +98,12 @@ static func get_land() -> Dictionary:
 	return _catalog().get("land", {})
 
 
+## Tamaño de los lotes que la herramienta Terreno marca para comprar con un clic.
+static func get_land_plot_size() -> Vector2i:
+	var size: Array = get_land().get("plot_size", [4, 4])
+	return Vector2i(maxi(int(size[0]), 1), maxi(int(size[1]), 1))
+
+
 ## Precio del terreno por m², sin el piso.
 static func get_land_price() -> int:
 	return int(get_land().get("price_per_m2", 0))

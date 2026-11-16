@@ -56,14 +56,13 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_expect(build.get_selected_tool() == BuildController.TOOL_LAND and build.is_land_row_visible(), "Terreno elige la herramienta y su fila")
 	_expect(not _visible(build, "small_plant") and not _visible(build, BuildController.TOOL_WALL), "en Terreno no se ve nada más")
-	_expect(build.get_land_button("buy").is_visible_in_tree(), "se ve Comprar")
 	_expect(panel.get_global_rect().size.y < view_height * 0.25, "Terreno tapa menos de 25 %% de la pantalla: %d" % panel.get_global_rect().size.y)
 	var before: int = OfficeState.lot.get_area()
-	var corner: Vector2i = Vector2i(OfficeState.lot_rect.end.x, OfficeState.lot_rect.position.y)
-	(game.get_node("BuildController") as BuildController).set_land_rect(corner, corner + Vector2i(1, 1))
-	build.get_land_button("buy").pressed.emit()
+	var land: BuildController = game.get_node("BuildController")
+	_expect(not land.get_land_plots().is_empty(), "Terreno marca lotes para comprar")
+	land.buy_land_plot_at((land.get_land_plots()[0]["new_cells"] as Array)[0])
 	await get_tree().process_frame
-	_expect(OfficeState.lot.get_area() > before, "Comprar compra el terreno: %d → %d m²" % [before, OfficeState.lot.get_area()])
+	_expect(OfficeState.lot.get_area() > before, "un clic en un lote compra el terreno: %d → %d m²" % [before, OfficeState.lot.get_area()])
 
 	# Elegir una herramienta de otra sección la abre.
 	build.select_tool("work_area")

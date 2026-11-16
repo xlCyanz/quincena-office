@@ -11,8 +11,8 @@
 #   pasando otro piso encima.
 # - Tipo de habitación: clic en un espacio cerrado con puerta lo marca con ese tipo.
 # - Quitar habitación: clic en una habitación la deja sin tipo.
-# - Terreno: se arrastra un rectángulo en el mapa junto al local (se marca lo que se
-#   compraría y su precio) y se compra con buy_land (el botón Comprar de BuildPanel).
+# - Terreno: el mapa marca los lotes que tocan el local con su precio; solo esos se compran,
+#   con un clic (buy_land_plot_at). Los de más afuera aparecen al comprar el que tienen antes.
 # En modo construcción se escribe sobre cada habitación su nombre y si funciona.
 class_name BuildController
 extends Node2D
@@ -31,7 +31,11 @@ const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
-const LAND_HINT: String = "Arrastra en el mapa junto al local para elegir el terreno."
+const LAND_HINT: String = "Clic en un lote marcado para comprarlo. Los de más afuera aparecen al comprar el que tienen antes."
+## Lotes marcados de la herramienta Terreno: relleno si se puede comprar, si no, y el de bajo el ratón.
+const PLOT_OK := Color(0.4, 1.0, 0.5, 0.16)
+const PLOT_BAD := Color(1.0, 0.35, 0.3, 0.14)
+const PLOT_HOVER := Color(0.4, 1.0, 0.5, 0.38)
 ## Mejorar la computadora de un escritorio o una silla a su calidad siguiente (hito 46).
 const TOOL_UPGRADE: String = "upgrade"
 
@@ -76,8 +80,12 @@ var _preview_ok: bool = false
 var _apply_preview := Callable()
 # Terreno elegido en la fila de BuildPanel.
 # Esquinas del terreno elegido (vacío si no hay) y si se está arrastrando.
-var _land_corners: Array[Vector2i] = []
-var _land_dragging: bool = false
+# Casilla donde se apretó el botón (el clic compra si se suelta en el mismo lote).
+var _land_press := Vector2i.ZERO
+var _land_pressed: bool = false
+# Lotes que se pueden comprar con un clic (Builder.get_land_plots) y el que está bajo el ratón.
+var _plots: Array[Dictionary] = []
+var _hover_plot: int = -1
 # Zoom con el que se dibujaron los nombres de las habitaciones.
 var _label_zoom: float = 0.0
 
@@ -91,52 +99,59 @@ func set_active(active: bool) -> void:
 	_active = active
 	_dragging = false
 	_clear_preview()
+	refresh_land_plots()
 	queue_redraw()
+
+
+## Lotes marcados que se pueden comprar con un clic (con la herramienta Terreno).
+func get_land_plots() -> Array[Dictionary]:
+	return _plots
+
+
+## Vuelve a calcular los lotes marcados (al elegir la herramienta y después de comprar).
+func refresh_land_plots() -> void:
+	_plots = builder.get_land_plots() if _active and tool == TOOL_LAND else ([] as Array[Dictionary])
+	_hover_plot = -1
+	queue_redraw()
+
+
+## Compra con un clic el lote marcado que contiene esa casilla.
+func buy_land_plot_at(cell: Vector2i) -> Dictionary:
+	var index: int = _plot_at(cell)
+	if index < 0:
+		var none: Dictionary = {"ok": false, "message": LAND_HINT}
+		status_changed.emit(none["message"])
+		return none
+	var result: Dictionary = builder.buy_land_cells(_plots[index]["cells"])
+	if not result["ok"]:
+		# Lo que no deja comprar (dinero, una habitación que se perdería).
+		result = builder.quote_land_cells(_plots[index]["cells"])
+	status_changed.emit(result["message"])
+	refresh_land_plots()
+	_update_preview(false)
+	land_changed.emit()
+	return result
+
+
+# Índice del lote marcado que compraría esa casilla, o -1.
+func _plot_at(cell: Vector2i) -> int:
+	for index: int in range(_plots.size()):
+		if (_plots[index]["new_cells"] as Array).has(cell):
+			return index
+	return -1
 
 
 func is_active() -> bool:
 	return _active
 
 
-## Elige el terreno que se va a comprar: el rectángulo entre dos casillas.
-func set_land_rect(corner_a: Vector2i, corner_b: Vector2i) -> void:
-	_land_corners = [corner_a, corner_b]
-	if tool == TOOL_LAND:
-		_update_preview()
-	land_changed.emit()
-
-
-## Esquinas del terreno elegido ([] si no hay).
-func get_land_rect() -> Array[Vector2i]:
-	return _land_corners.duplicate()
-
-
-## Indica si hay un terreno elegido que se puede comprar.
-func can_buy_land() -> bool:
-	return _land_corners.size() == 2 and bool(builder.quote_land_rect(_land_corners[0], _land_corners[1])["ok"])
-
-
-## Compra el terreno elegido.
-func buy_land() -> Dictionary:
-	if _land_corners.size() != 2:
-		var hint: Dictionary = {"ok": false, "message": LAND_HINT}
-		status_changed.emit(hint["message"])
-		return hint
-	var result: Dictionary = builder.buy_land_rect(_land_corners[0], _land_corners[1])
-	if result["ok"]:
-		_land_corners.clear()
-	status_changed.emit(result["message"])
-	_update_preview(false)
-	land_changed.emit()
-	return result
-
-
 func set_tool(new_tool: String) -> void:
 	tool = new_tool
 	_dragging = false
-	_land_dragging = false
+	_land_pressed = false
+	refresh_land_plots()
 	_update_preview()
-	if tool == TOOL_LAND and _land_corners.is_empty():
+	if tool == TOOL_LAND:
 		status_changed.emit(LAND_HINT)
 	if _is_room_tool():
 		var missing: Array[String] = RoomRules.missing_mandatory(OfficeState.rooms)
@@ -200,26 +215,31 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-# Terreno: con el botón izquierdo se arrastra el rectángulo; al soltar queda elegido.
+# Terreno: un clic en un lote marcado lo compra. Solo se compran lotes marcados, que son los
+# que tocan el local: para llegar a uno de más afuera hay que comprar antes el que lo separa.
 func _land_input(event: InputEvent) -> void:
 	var cell: Vector2i = Vector2i(_pointer.round())
 	var button := event as InputEventMouseButton
 	if button != null and button.button_index == MOUSE_BUTTON_LEFT:
 		if button.pressed:
-			_land_dragging = true
-			_land_corners = [cell, cell]
-			_update_preview()
-		elif _land_dragging:
-			_land_dragging = false
-			_land_corners[1] = cell
-			_update_preview()
-			land_changed.emit()
+			_land_pressed = true
+			_land_press = cell
+		elif _land_pressed:
+			_land_pressed = false
+			var index: int = _plot_at(cell)
+			if index >= 0 and index == _plot_at(_land_press):
+				buy_land_plot_at(cell)
+			else:
+				status_changed.emit(LAND_HINT)
 		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseMotion and _land_dragging:
-		if _land_corners[1] != cell:
-			_land_corners[1] = cell
-			_update_preview()
-		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion:
+		var hover: int = _plot_at(cell)
+		if hover != _hover_plot:
+			_hover_plot = hover
+			if hover >= 0:
+				var plot: Dictionary = _plots[hover]
+				status_changed.emit(("Clic para comprar: " + String(plot["message"])) if plot["ok"] else String(plot["message"]))
+			queue_redraw()
 
 
 func _is_room_tool() -> bool:
@@ -249,11 +269,9 @@ func _update_preview(announce: bool = true) -> void:
 	var quote: Dictionary = {}
 	var info: Dictionary = FurnitureCatalog.get_item(tool)
 	if tool == TOOL_LAND:
-		if _land_corners.size() != 2:
-			queue_redraw()
-			return
-		quote = builder.quote_land_rect(_land_corners[0], _land_corners[1])
-		_preview_cells = quote["new_cells"] if quote["ok"] else quote["cells"]
+		# Los lotes marcados se dibujan aparte (_draw_land_plots).
+		queue_redraw()
+		return
 	elif _is_furniture_tool() and bool(info["wall_mounted"]):
 		# Objeto de pared: va en la pared más cercana al ratón, del lado donde está el ratón.
 		var slot: Array = _wall_slot()
@@ -428,6 +446,7 @@ func _draw() -> void:
 	if not _active:
 		return
 	_draw_room_labels()
+	_draw_land_plots()
 	var color: Color = PREVIEW_OK if _preview_ok else PREVIEW_BAD
 	for edge: Vector3i in _preview_edges:
 		var ends: Array[Vector2] = GridEdge.get_endpoints(edge)
@@ -450,6 +469,28 @@ func _draw() -> void:
 		var tip: Vector2 = center + Vector2(_preview_front) * 0.45
 		draw_line(_grid.grid_to_world(center), _grid.grid_to_world(tip), color, PREVIEW_LINE_WIDTH)
 		draw_circle(_grid.grid_to_world(tip), PREVIEW_LINE_WIDTH * 1.5, color)
+
+
+# Lotes marcados de la herramienta Terreno: sus casillas rellenas y su precio encima.
+func _draw_land_plots() -> void:
+	if tool != TOOL_LAND or _plots.is_empty():
+		return
+	var font: Font = ThemeDB.fallback_font
+	var zoom: float = get_canvas_transform().get_scale().x
+	for index: int in range(_plots.size()):
+		var plot: Dictionary = _plots[index]
+		var fill: Color = PLOT_HOVER if index == _hover_plot and plot["ok"] else (PLOT_OK if plot["ok"] else PLOT_BAD)
+		var center := Vector2.ZERO
+		var cells: Array = plot["new_cells"]
+		for cell: Vector2i in cells:
+			center += Vector2(cell)
+			draw_colored_polygon(IsoBox.grid_rect_corners(_grid, Vector2(cell) - Vector2(0.47, 0.47), Vector2(cell) + Vector2(0.47, 0.47)), fill)
+		draw_set_transform(_grid.grid_to_world(center / cells.size()), 0.0, Vector2.ONE / zoom)
+		var text: String = MoneyFormat.format(int(plot["cost"]))
+		var at := Vector2(-LABEL_WIDTH / 2.0, LABEL_FONT_SIZE * 0.35)
+		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH, LABEL_FONT_SIZE, LABEL_OUTLINE, LABEL_OUTLINE_COLOR)
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH, LABEL_FONT_SIZE, LABEL_OK_COLOR if plot["ok"] else LABEL_BAD_COLOR)
+		draw_set_transform(Vector2.ZERO)
 
 
 # Nombre de cada habitación y, debajo, si funciona.

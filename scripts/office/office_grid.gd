@@ -12,6 +12,15 @@ const NO_CELL := Vector2i(-1, -1)
 ## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos con zoom.
 const TILE_OVERLAP_PX: float = 1.0
 
+## Hasta cuántas casillas hacia atrás (x e y menores, lo que queda más arriba en pantalla) de la
+## casilla de fuera de un borde se mira si hay local: una pared alta ahí lo taparía.
+const BEHIND_WALL_REACH: int = 3
+
+## Paredes arriba: todas las piezas de borde se dibujan a su alto (para colgar y ver lo colgado);
+## abajo (lo normal), solo las de atrás y las demás bajitas para ver adentro. Es solo la vista:
+## quien lo cambia vuelve a llamar a build().
+var walls_up: bool = false
+
 var hovered_cell: Vector2i = NO_CELL
 
 var _floor_source_id: int = -1
@@ -132,7 +141,7 @@ func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
 		var view := EdgePieceView.new()
 		view.name = "%s_%d_%d_%d" % [edges[edge], edge.x, edge.y, edge.z]
 		_objects.add_child(view)
-		view.setup(self, edge, edges[edge], is_back_edge(edge))
+		view.setup(self, edge, edges[edge], is_tall_edge(edge))
 		views[edge] = view
 	_place_corner_posts(views)
 
@@ -161,12 +170,26 @@ func _edge_vertices(edge: Vector3i) -> Array[Array]:
 	return [[Vector2i(edge.x - 1, edge.y), EdgePieceView.ARM_PLUS_X], [Vector2i(edge.x, edge.y), EdgePieceView.ARM_MINUS_X]]
 
 
+## Indica si la pieza de un borde se dibuja a su alto: con las paredes arriba (walls_up),
+## todas; si no, solo las del contorno de atrás.
+func is_tall_edge(edge: Vector3i) -> bool:
+	return walls_up or is_back_edge(edge)
+
+
 ## Indica si un borde es del contorno de atrás: la casilla de fuera del local queda detrás
 ## (más arriba en pantalla) de la de dentro. Ahí las paredes van altas; las demás, bajas.
 func is_back_edge(edge: Vector3i) -> bool:
 	var cells: Array[Vector2i] = GridEdge.get_cells(edge)
 	# La segunda casilla de un borde siempre queda más abajo en pantalla que la primera.
-	return not _lot.has_point(cells[0]) and _lot.has_point(cells[1])
+	if _lot.has_point(cells[0]) or not _lot.has_point(cells[1]):
+		return false
+	# Con el local en forma de L (terreno comprado hacia adelante o a un lado) un tramo así puede
+	# tener local detrás: alto lo taparía, así que va bajo.
+	for back_x: int in range(BEHIND_WALL_REACH + 1):
+		for back_y: int in range(BEHIND_WALL_REACH + 1):
+			if _lot.has_point(cells[0] - Vector2i(back_x, back_y)):
+				return false
+	return true
 
 
 ## Añade un objeto (por ejemplo, un personaje) a la capa ordenada por Y.

@@ -32,6 +32,9 @@ const SIDE_WEST: String = "west"
 const SIDES: Array[String] = [SIDE_NORTH, SIDE_SOUTH, SIDE_EAST, SIDE_WEST]
 
 ## Casillas donde hay personajes (por ejemplo, el CEO): ahí no se pueden poner muebles.
+## Ninguna casilla (para _edges_with_land).
+const NO_CELL := Vector2i(-1000000, -1000000)
+
 var occupied_cells: Array[Vector2i] = []
 
 
@@ -647,10 +650,50 @@ func buy_land_rect(corner_a: Vector2i, corner_b: Vector2i) -> Dictionary:
 	return _commit_land(quote_land_rect(corner_a, corner_b))
 
 
+## Compra esas casillas si quote_land_cells lo permite.
+func buy_land_cells(cells: Array[Vector2i]) -> Dictionary:
+	return _commit_land(quote_land_cells(cells))
+
+
+## Casillas del lote (ConstructionCatalog.get_land_plot_size) en el que cae una casilla: el
+## solar se parte en lotes alineados con la casilla (0, 0).
+static func get_plot_cells(cell: Vector2i) -> Array[Vector2i]:
+	var size: Vector2i = ConstructionCatalog.get_land_plot_size()
+	var origin := Vector2i(floori(float(cell.x) / size.x) * size.x, floori(float(cell.y) / size.y) * size.y)
+	var cells: Array[Vector2i] = []
+	for y: int in range(size.y):
+		for x: int in range(size.x):
+			cells.append(origin + Vector2i(x, y))
+	return cells
+
+
+## Lotes que se pueden comprar ahora: los que tocan el local y tienen algo que comprar. Cada
+## uno es lo que da quote_land_cells para sus casillas (ok false si no alcanza el dinero o se
+## perdería una habitación; new_cells = lo que se compraría), más "origin" (su primera casilla).
+func get_land_plots() -> Array[Dictionary]:
+	var size: Vector2i = ConstructionCatalog.get_land_plot_size()
+	var area: Rect2i = OfficeState.lot_rect.grow_individual(size.x, size.y, size.x, size.y)
+	var plots: Array[Dictionary] = []
+	var seen: Dictionary[Vector2i, bool] = {}
+	for y: int in range(area.position.y, area.end.y, size.y):
+		for x: int in range(area.position.x, area.end.x, size.x):
+			var cells: Array[Vector2i] = get_plot_cells(Vector2i(x, y))
+			if seen.has(cells[0]):
+				continue
+			seen[cells[0]] = true
+			var quote: Dictionary = quote_land_cells(cells)
+			if (quote["new_cells"] as Array).is_empty():
+				continue
+			quote["origin"] = cells[0]
+			plots.append(quote)
+	return plots
+
+
 ## Calcula la compra de esas casillas sin hacerla: {"ok", "cost", "message", "cells" (las
 ## pedidas, para la vista previa), "new_cells" (las que se compran), "rooms", "edges"}.
-## Se compran las que están dentro del solar, no son del local, no tapan la calle de la
-## entrada y tocan el local (directamente o a través de otras que se compran); las demás se
+## Se compran las que están dentro del solar, no son del local y tocan el local; si entre
+## ellas va la casilla de frente a la puerta, la entrada se corre derecho al borde nuevo
+## ("entrance" en el resultado). Tocan el local (directamente o a través de otras que se compran); las demás se
 ## dejan afuera. El borde con el local se abre hacia un solo espacio por cada pedazo nuevo
 ## (el espacio común si lo toca; si no, la habitación con más borde): hacia los demás queda
 ## la pared, así ninguna habitación se junta con otro espacio. Un borde con algo colgado
@@ -660,7 +703,7 @@ func quote_land_cells(cells: Array[Vector2i]) -> Dictionary:
 	var street: Vector2i = OfficeState.get_outside_of_entrance()
 	var wanted: Dictionary[Vector2i, bool] = {}
 	for cell: Vector2i in cells:
-		if OfficeState.site_rect.has_point(cell) and not lot.has_point(cell) and cell != street:
+		if OfficeState.site_rect.has_point(cell) and not lot.has_point(cell):
 			wanted[cell] = true
 	var new_cells: Array[Vector2i] = _connected_to_lot(lot, wanted)
 	var land_cost: int = new_cells.size() * ConstructionCatalog.get_land_price()
@@ -681,9 +724,27 @@ func quote_land_cells(cells: Array[Vector2i]) -> Dictionary:
 		result["message"] = "No alcanza el dinero: %d m² cuestan %s." % [new_cells.size(), MoneyFormat.format(cost)]
 		return result
 	var new_lot: Lot = lot.with_cells(new_cells)
-	var new_edges: Dictionary[Vector3i, String] = _edges_with_land(new_lot, new_cells)
+	# Si se compra la casilla de frente a la puerta, la entrada se corre derecho hasta el
+	# borde nuevo (así no queda un hueco de calle encerrado en el local).
+	var entrance: Vector2i = OfficeState.entrance
+	var moves_entrance: bool = new_cells.has(street)
+	var outward: Vector2i = street - entrance
+	if moves_entrance:
+		entrance = street
+		while new_lot.has_point(entrance + outward):
+			entrance += outward
+		if not OfficeState.site_rect.has_point(entrance + outward):
+			result["message"] = "Hay que dejar una casilla libre frente a la entrada para salir a la calle."
+			return result
+	var new_edges: Dictionary[Vector3i, String] = _edges_with_land(new_lot, new_cells, street if moves_entrance else NO_CELL)
+	if moves_entrance:
+		var old_door: Vector3i = GridEdge.between(OfficeState.entrance, street)
+		var door_kind: String = String(OfficeState.edges.get(old_door, ConstructionCatalog.DOOR))
+		new_edges.erase(old_door)
+		new_edges[GridEdge.between(entrance, entrance + outward)] = door_kind
+		result["entrance"] = entrance
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(new_lot, new_edges)
-	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, OfficeState.entrance, OfficeState.furniture)
+	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, entrance, OfficeState.furniture)
 	var lost: Array[String] = _lost_rooms(rooms)
 	for type_id: String in lost:
 		if RoomCatalog.is_locked(type_id):
@@ -698,6 +759,8 @@ func quote_land_cells(cells: Array[Vector2i]) -> Dictionary:
 	if windows > 0:
 		message += " Se quitan %d %s del borde que se abre (+%s)." % [windows, "ventana" if windows == 1 else "ventanas",
 			MoneyFormat.format(int(result["window_refund"]))]
+	if moves_entrance:
+		message += " La puerta de entrada pasa al borde nuevo."
 	if not lost.is_empty():
 		var names: Array[String] = []
 		for type_id: String in lost:
@@ -719,6 +782,8 @@ func _commit_land(result: Dictionary) -> Dictionary:
 	var window_refund: int = int(result.get("window_refund", 0))
 	OfficeState.edges = result["edges"]
 	OfficeState.lot = OfficeState.lot.with_cells(new_cells)
+	if result.has("entrance"):
+		OfficeState.entrance = result["entrance"]
 	var floor_type: String = String(ConstructionCatalog.get_land().get("floor", ConstructionCatalog.BARE_FLOOR))
 	for cell: Vector2i in new_cells:
 		OfficeState.set_floor(cell, floor_type)
@@ -774,7 +839,7 @@ func _opened_windows(new_edges: Dictionary[Vector3i, String]) -> int:
 # pared y, de cada pedazo de terreno nuevo, se abre el borde hacia un solo espacio de antes
 # (el que no es habitación si lo toca; si no, el de más borde). Los demás bordes con el
 # local y los que tienen algo colgado quedan como estaban.
-func _edges_with_land(new_lot: Lot, new_cells: Array[Vector2i]) -> Dictionary[Vector3i, String]:
+func _edges_with_land(new_lot: Lot, new_cells: Array[Vector2i], street: Vector2i = NO_CELL) -> Dictionary[Vector3i, String]:
 	var edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
 	for edge: Vector3i in new_lot.get_outline():
 		if not edges.has(edge):
@@ -815,6 +880,10 @@ func _edges_with_land(new_lot: Lot, new_cells: Array[Vector2i]) -> Dictionary[Ve
 			var is_room: bool = not cells.is_empty() and RoomRules.room_index_at(OfficeState.rooms, cells[0]) >= 0
 			# El espacio común vale más que cualquier habitación; después, el de más borde.
 			var score: int = shared[space].size() + (0 if is_room else 100000)
+			# El pedazo que se lleva la casilla de frente a la puerta se abre hacia el espacio de la
+			# entrada (la Recepción, si la hay), que así sigue teniendo la entrada.
+			if piece.has(street) and cells.has(OfficeState.entrance):
+				score += 100000000
 			if score > best:
 				best = score
 				chosen = space

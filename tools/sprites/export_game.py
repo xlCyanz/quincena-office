@@ -38,6 +38,7 @@ from PIL import Image  # noqa: E402
 import sheet  # noqa: E402
 from pieces import character  # noqa: E402
 from pieces import desk as desk_piece  # noqa: E402
+from pieces import walls as wall_piece  # noqa: E402
 
 TILE = (128, 64)
 VARIANTS = 4
@@ -50,8 +51,6 @@ GROUND += [("path", "ground_path"), ("sidewalk", "ground_sidewalk"), ("road", "g
            ("road_line_x", "ground_road_line_x"), ("road_line_y", "ground_road_line_y")]
 
 EDGE_KINDS = ("wall", "door", "window", "glass_door")
-CORNERS = ("wall_tall_corner", "wall_tall_corner_left", "wall_tall_corner_right", "wall_tall_corner_front",
-           "wall_low_corner", "wall_low_corner_back", "wall_low_corner_left", "wall_low_corner_right")
 TREES = 8
 
 # Mueble del juego (id de data/furniture.json) -> (nombre del sprite, si tiene 4 rotaciones _r0.._r3).
@@ -173,8 +172,8 @@ def main(directory):
         for height in ("tall", "low"):
             for axis in ("x", "y"):
                 copy("%s_%s_%s" % (kind, height, axis), "walls")
-    for name in CORNERS:
-        copy(name, "walls")
+    for neighbors in wall_piece.post_combos():
+        copy(wall_piece.post_name(neighbors), "walls")
     for index in range(TREES):
         copy("tree_%d" % index, "trees")
         copy("tree_%d_shadow" % index, "trees")

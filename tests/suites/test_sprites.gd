@@ -47,13 +47,18 @@ func _check_library() -> void:
 	var plus_y: int = EdgePieceView.ARM_PLUS_Y
 	var minus_x: int = EdgePieceView.ARM_MINUS_X
 	var minus_y: int = EdgePieceView.ARM_MINUS_Y
-	_expect(EdgePieceView.get_corner_sprite({plus_x: true, plus_y: true}) == "wall_tall_corner", "esquina del fondo")
-	_expect(EdgePieceView.get_corner_sprite({minus_y: true, plus_x: false}) == "wall_tall_corner_left", "esquina izquierda")
-	_expect(EdgePieceView.get_corner_sprite({minus_x: true, plus_y: false}) == "wall_tall_corner_right", "esquina derecha")
-	_expect(EdgePieceView.get_corner_sprite({minus_x: false, minus_y: false}) == "wall_low_corner", "esquina del frente")
-	_expect(EdgePieceView.get_corner_sprite({plus_x: false, plus_y: false}) == "wall_low_corner_back", "L baja de atrás")
-	_expect(EdgePieceView.get_corner_sprite({plus_x: true, minus_x: true}) == "", "dos tramos en línea no llevan poste")
-	_expect(EdgePieceView.get_corner_sprite({plus_x: true, plus_y: true, minus_x: true}) == "", "una T no lleva poste")
+	# Poste de cada unión: wall_post_<−x><−y><+x><+y> con n (nada), l (bajo) o t (alto).
+	_expect(EdgePieceView.get_corner_sprite({plus_x: true, plus_y: true}) == "wall_post_nntt", "esquina del fondo")
+	_expect(EdgePieceView.get_corner_sprite({minus_y: true, plus_x: false}) == "wall_post_ntln", "esquina izquierda: alta que termina sobre baja")
+	_expect(EdgePieceView.get_corner_sprite({minus_x: true, plus_y: false}) == "wall_post_tnnl", "esquina derecha")
+	_expect(EdgePieceView.get_corner_sprite({minus_x: false, minus_y: false}) == "wall_post_llnn", "esquina del frente")
+	_expect(EdgePieceView.get_corner_sprite({minus_y: true, plus_x: true}) == "wall_post_nttn", "con paredes arriba, la izquierda con las dos altas")
+	_expect(EdgePieceView.get_corner_sprite({plus_x: true, minus_x: true}) == "" and EdgePieceView.get_corner_sprite({plus_y: false, minus_y: false}) == "",
+		"dos tramos del mismo alto en línea no llevan poste")
+	_expect(EdgePieceView.get_corner_sprite({plus_x: true, minus_x: false}) == "wall_post_lntn", "en línea con otro alto sí")
+	_expect(EdgePieceView.get_corner_sprite({plus_x: true, plus_y: true, minus_x: true}) == "wall_post_tntt", "una T lleva su poste")
+	_expect(EdgePieceView.get_corner_sprite({plus_x: false, plus_y: false, minus_x: false, minus_y: false}) == "wall_post_llll", "un cruce también")
+	_expect(EdgePieceView.get_corner_sprite({plus_x: true}) == "", "la punta de una pared suelta no lleva poste")
 	# Familias de pasto: fijas por casilla y salen las cuatro.
 	var seen: Dictionary[String, int] = {}
 	for x: int in range(60):
@@ -185,6 +190,32 @@ func _check_game() -> void:
 		"cuadro en pared del eje x: %s" % hung_sprites.get("painting_1", ""))
 	_expect(hung_sprites.get("wall_clock_2", "") == "wall_clock_y", "reloj en pared del eje y: %s" % hung_sprites.get("wall_clock_2", ""))
 	_expect(hung_sprites.get("painting_3", "?") == "", "de espaldas no hay sprite")
+	# Paredes arriba / abajo: con el botón ↕ todas van altas y lo colgado en una pared baja se ve a su tamaño.
+	var front_edge: Vector3i = OfficeState.get_entrance_edge()
+	_expect(not grid.is_tall_edge(front_edge) and not game.are_walls_up(), "al empezar las paredes de adelante van bajas")
+	game.set_walls_up(true)
+	await get_tree().process_frame
+	var all_tall: bool = true
+	for child: Node in grid.get_node("Objects").get_children():
+		if child is EdgePieceView and not child.is_queued_for_deletion():
+			all_tall = all_tall and (child as EdgePieceView).tall
+	_expect(game.are_walls_up() and grid.is_tall_edge(front_edge) and all_tall, "paredes arriba: todas a su alto")
+	_expect(game.menu_bar_button("WallsButton") != null and game.menu_bar_button("WallsButton").button_pressed
+		and not game.menu_bar_button("WallsButton").tooltip_text.is_empty(), "el botón ↕ queda marcado y tiene descripción")
+	game.set_walls_up(false)
+	await get_tree().process_frame
+	_expect(not game.are_walls_up() and not grid.is_tall_edge(front_edge), "paredes abajo otra vez")
+	# Al elegir un objeto de pared en Construir suben solas y al salir vuelven a como estaban.
+	var build_panel: BuildPanel = game.get_node("BuildPanel")
+	build_panel.set_build_mode(true)
+	build_panel.select_tool("painting")
+	await get_tree().process_frame
+	_expect(game.are_walls_up() and not game.menu_bar_button("WallsButton").button_pressed, "colgando algo las paredes suben solas")
+	build_panel.select_tool(BuildController.TOOL_WALL)
+	await get_tree().process_frame
+	_expect(not game.are_walls_up(), "con otra herramienta bajan")
+	build_panel.set_build_mode(false)
+	await get_tree().process_frame
 	# El CEO: camina mirando hacia donde va y, sentado frente a su computadora, teclea mirándola.
 	var ceo: Ceo = game.get("ceo")
 	_expect(SpriteLibrary.has_character_look(ceo.look), "el CEO tiene aspecto: %s" % ceo.look)

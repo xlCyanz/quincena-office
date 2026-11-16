@@ -152,7 +152,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 # Un objeto de pared es una placa delgada pegada a la cara de la pared, del lado de su
 # casilla (la pared queda detrás de su frente).
 func _setup_wall_item(cell: Vector2i) -> void:
-	_on_low_wall = not _grid.is_back_edge(FurnitureCatalog.get_wall_edge(cell, rotation_index))
+	_on_low_wall = not _grid.is_tall_edge(FurnitureCatalog.get_wall_edge(cell, rotation_index))
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
 	var center: Vector2 = Vector2(cell) - front * 0.5 + front * (EdgePieceView.THICKNESS / 2.0 + WALL_ITEM_DEPTH / 2.0)
 	var across := Vector2(absf(front.y), absf(front.x))

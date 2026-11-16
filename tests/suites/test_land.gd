@@ -119,8 +119,20 @@ func _check_refused() -> void:
 	quote = builder.quote_land(Builder.SIDE_EAST, 4, 3, 8)
 	_expect(not quote["ok"] and String(quote["message"]).contains("tocar el local"), "no sin tocar el local: %s" % quote["message"])
 	quote = builder.quote_land(Builder.SIDE_SOUTH, 3, 2, 2)
-	_expect(quote["ok"] and not (quote["new_cells"] as Array).has(OfficeState.get_outside_of_entrance()),
-		"la calle de la entrada se deja afuera: %s" % quote["message"])
+	# Frente a la puerta sí se compra: la entrada se corre derecho al borde nuevo (sin hueco de calle).
+	var street: Vector2i = OfficeState.get_outside_of_entrance()
+	var old_entrance: Vector2i = OfficeState.entrance
+	_expect(quote["ok"] and (quote["new_cells"] as Array).has(street) and quote["entrance"] == old_entrance + Vector2i(0, 2)
+		and String(quote["message"]).contains("puerta de entrada"), "se compra frente a la puerta y la entrada se corre: %s" % quote["message"])
+	var moved: Dictionary = builder.buy_land(Builder.SIDE_SOUTH, 3, 2, 2)
+	_expect(moved["ok"] and OfficeState.entrance == old_entrance + Vector2i(0, 2) and OfficeState.lot.has_point(street),
+		"la entrada queda en el borde nuevo: %s" % OfficeState.entrance)
+	_expect(ConstructionCatalog.is_door(OfficeState.get_edge(OfficeState.get_entrance_edge()))
+		and OfficeState.get_outside_of_entrance() == OfficeState.entrance + Vector2i(0, 1)
+		and not OfficeState.lot.has_point(OfficeState.get_outside_of_entrance()), "con su puerta hacia afuera")
+	_expect(OfficeState.get_edge(GridEdge.between(old_entrance, street)).is_empty(), "donde estaba la puerta queda abierto")
+	_expect(not _pathfinder().find_path(OfficeState.entrance, Vector2i(0, 0)).is_empty(), "de la entrada nueva se llega al local")
+	_new_game()
 	quote = builder.quote_land(Builder.SIDE_EAST, 0, 3, 0)
 	_expect(not quote["ok"], "medida mínima 1 × 1")
 	Economy.charge(Economy.balance - 100, "Prueba")
@@ -212,30 +224,60 @@ func _check_panel() -> void:
 	panel.select_tool(BuildController.TOOL_LAND)
 	_expect(panel.is_land_row_visible(), "la herramienta Terreno muestra su fila")
 	var controller: BuildController = game.get_node("BuildController")
-	_expect(panel.get_land_button("buy").disabled, "sin terreno elegido Comprar está deshabilitado")
 	var rect: Rect2i = OfficeState.lot_rect
 	var corner: Vector2i = Vector2i(rect.end.x, rect.position.y)
-	# Arrastrar con el ratón: apretar en una esquina, mover y soltar en la otra.
-	controller.set("_pointer", Vector2(corner))
+	# Arrastrar ya no elige terreno suelto: solo se compran los lotes marcados.
+	var free_area: int = OfficeState.lot.get_area()
+	controller.set("_pointer", Vector2(corner + Vector2i(9, 0)))
 	controller.call("_land_input", _mouse_button(true))
-	controller.set("_pointer", Vector2(corner + Vector2i(3, 3)))
+	controller.set("_pointer", Vector2(corner + Vector2i(12, 3)))
 	controller.call("_land_input", _mouse_button(false))
-	_expect(controller.get_land_rect() == ([corner, corner + Vector2i(3, 3)] as Array[Vector2i]), "arrastrar elige el terreno: %s" % [controller.get_land_rect()])
-	_expect(not status.is_empty() and status[-1].contains("$2,680"), "vista previa con el precio (16 m²): %s" % [status])
-	controller.set_land_rect(corner, corner + Vector2i(2, 3))
-	_expect(not panel.get_land_button("buy").disabled, "con terreno elegido Comprar se habilita")
-	controller.set_land_rect(corner, corner + Vector2i(2, 3))
-	_expect(status[-1].contains("$2,010"), "12 m²: %s" % status[-1])
-	controller.set_land_rect(corner + Vector2i(5, 0), corner + Vector2i(7, 2))
-	_expect(panel.get_land_button("buy").disabled and status[-1].contains("tocar el local"), "separado del local no se compra: %s" % status[-1])
-	controller.set_land_rect(corner, corner + Vector2i(2, 3))
-	panel.get_land_button("buy").pressed.emit()
-	await get_tree().process_frame
-	var bought: Vector2i = corner + Vector2i(1, 1)
-	_expect(OfficeState.lot.get_area() == 60 and grid.is_in_lot(bought), "comprado desde el panel")
-	_expect(status[-1].contains("Compraste 12 m²"), "aviso: %s" % status[-1])
-	_expect(controller.get_land_rect().is_empty() and panel.get_land_button("buy").disabled, "tras comprar no queda nada elegido")
+	_expect(OfficeState.lot.get_area() == free_area, "arrastrar lejos del local no compra nada")
+	_expect(not bool(controller.buy_land_plot_at(corner + Vector2i(9, 0))["ok"]), "un lote que no toca el local no se compra")
+	# Lotes marcados (fase 8): el solar se parte en lotes de 4×4 y los que tocan el local se compran con un clic.
+	var plots: Array[Dictionary] = controller.get_land_plots()
+	_expect(plots.size() >= 4, "hay lotes marcados alrededor del local: %d" % plots.size())
+	var all_touch: bool = true
+	for plot: Dictionary in plots:
+		all_touch = all_touch and not (plot["new_cells"] as Array).is_empty() and int(plot["cost"]) > 0
+	_expect(all_touch, "cada lote tiene casillas que comprar y su precio")
+	_expect(Builder.get_plot_cells(Vector2i(5, 6)).size() == 16 and Builder.get_plot_cells(Vector2i(5, 6))[0] == Vector2i(4, 4)
+		and Builder.get_plot_cells(Vector2i(-1, -1))[0] == Vector2i(-4, -4), "los lotes van alineados con la casilla (0, 0)")
+	var plot_cell: Vector2i = (plots[0]["new_cells"] as Array)[0]
+	var area: int = OfficeState.lot.get_area()
+	var price: int = int(plots[0]["cost"])
+	var balance: int = Economy.balance
+	# Un clic (apretar y soltar en la misma casilla) sobre un lote lo compra.
+	controller.set("_pointer", Vector2(plot_cell))
+	controller.call("_land_input", _mouse_button(true))
+	controller.call("_land_input", _mouse_button(false))
+	_expect(OfficeState.lot.get_area() == area + (plots[0]["new_cells"] as Array).size() and grid.is_in_lot(plot_cell)
+		and Economy.balance == balance - price, "un clic en un lote lo compra: %s" % status[-1])
+	_expect(status[-1].contains("Compraste"), "y avisa: %s" % status[-1])
+	var still: bool = false
+	for plot: Dictionary in controller.get_land_plots():
+		still = still or (plot["new_cells"] as Array).has(plot_cell)
+	_expect(not still and not controller.get_land_plots().is_empty(), "los lotes se vuelven a calcular")
+	# Cada lote marcado toca el local: uno de más afuera solo aparece al comprar el anterior.
+	var touching: bool = true
+	for plot: Dictionary in controller.get_land_plots():
+		var touches: bool = false
+		for cell: Vector2i in plot["new_cells"]:
+			for step: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				touches = touches or grid.is_in_lot(cell + step)
+		touching = touching and touches
+	_expect(touching, "todos los lotes marcados tocan el local")
+	# Sin dinero el lote se marca pero no se compra.
+	Economy.charge(Economy.balance - 100, "Prueba")
+	controller.refresh_land_plots()
+	var poor: Dictionary = controller.get_land_plots()[0]
+	area = OfficeState.lot.get_area()
+	var refused: Dictionary = controller.buy_land_plot_at((poor["new_cells"] as Array)[0])
+	_expect(not bool(poor["ok"]) and not bool(refused["ok"]) and String(refused["message"]).contains("No alcanza")
+		and OfficeState.lot.get_area() == area, "sin dinero no se compra: %s" % refused["message"])
+	_expect(not bool(controller.buy_land_plot_at(Vector2i(1, 1))["ok"]), "un clic dentro del local no compra nada")
 	panel.select_tool(BuildController.TOOL_WALL)
+	_expect(controller.get_land_plots().is_empty(), "con otra herramienta no hay lotes marcados")
 	_expect(not panel.is_land_row_visible(), "otra herramienta oculta la fila")
 	panel.set_build_mode(false)
 	game.queue_free()

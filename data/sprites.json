@@ -3388,50 +3388,6 @@
 				128
 			]
 		},
-		"wall_low_corner": {
-			"anchor": [
-				8.0,
-				24.0
-			],
-			"file": "walls/wall_low_corner.png",
-			"size": [
-				16,
-				28
-			]
-		},
-		"wall_low_corner_back": {
-			"anchor": [
-				8.0,
-				24.0
-			],
-			"file": "walls/wall_low_corner_back.png",
-			"size": [
-				16,
-				28
-			]
-		},
-		"wall_low_corner_left": {
-			"anchor": [
-				8.0,
-				24.0
-			],
-			"file": "walls/wall_low_corner_left.png",
-			"size": [
-				16,
-				28
-			]
-		},
-		"wall_low_corner_right": {
-			"anchor": [
-				8.0,
-				24.0
-			],
-			"file": "walls/wall_low_corner_right.png",
-			"size": [
-				16,
-				28
-			]
-		},
 		"wall_low_x": {
 			"anchor": [
 				36.0,
@@ -3454,45 +3410,749 @@
 				64
 			]
 		},
-		"wall_tall_corner": {
+		"wall_post_llll": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_llll.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_llln": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_llln.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lllt": {
 			"anchor": [
 				8.0,
 				124.0
 			],
-			"file": "walls/wall_tall_corner.png",
+			"file": "walls/wall_post_lllt.png",
 			"size": [
 				16,
 				128
 			]
 		},
-		"wall_tall_corner_front": {
+		"wall_post_llnl": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_llnl.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_llnn": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_llnn.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_llnt": {
 			"anchor": [
 				8.0,
 				124.0
 			],
-			"file": "walls/wall_tall_corner_front.png",
+			"file": "walls/wall_post_llnt.png",
 			"size": [
 				16,
 				128
 			]
 		},
-		"wall_tall_corner_left": {
+		"wall_post_lltl": {
 			"anchor": [
 				8.0,
 				124.0
 			],
-			"file": "walls/wall_tall_corner_left.png",
+			"file": "walls/wall_post_lltl.png",
 			"size": [
 				16,
 				128
 			]
 		},
-		"wall_tall_corner_right": {
+		"wall_post_lltn": {
 			"anchor": [
 				8.0,
 				124.0
 			],
-			"file": "walls/wall_tall_corner_right.png",
+			"file": "walls/wall_post_lltn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lltt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lltt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnll": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lnll.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lnlt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnnl": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lnnl.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lnnt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lntl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lntl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lntn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lntn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lntt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lntt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltll": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltll.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltln": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltln.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltlt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltnl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltnl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltnn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltnn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltnt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lttl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lttl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lttn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lttn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lttt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lttt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlll": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nlll.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nlln": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nlln.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nllt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nllt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlnt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nltl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nltl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nltn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nltn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nltt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nltt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnll": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nnll.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nnlt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nntl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nntl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nntt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nntt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntll": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntll.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntln": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntln.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntlt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntnl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntnl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nttl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nttl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nttn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nttn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nttt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nttt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlll": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlll.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlln": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlln.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tllt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tllt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlnl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlnl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlnn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlnn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlnt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tltl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tltl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tltn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tltn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tltt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tltt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnll": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnll.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnln": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnln.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnlt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnnl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnnl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnnt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tntl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tntl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tntt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tntt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttll": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttll.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttln": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttln.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttlt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttnl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttnl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttnn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttnn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttnt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tttl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tttl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tttn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tttn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tttt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tttt.png",
 			"size": [
 				16,
 				128

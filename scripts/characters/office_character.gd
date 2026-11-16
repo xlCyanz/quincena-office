@@ -235,6 +235,7 @@ func replan() -> void:
 
 # Como replan, esquivando las casillas avoid si se puede.
 func _replan_avoiding(avoid: Array[Vector2i]) -> void:
+	_refresh_entrance()
 	match activity:
 		Activity.WALKING_TO_DESK:
 			_walk_to(_seat_cell, Activity.WALKING_TO_DESK, [], avoid)
@@ -336,6 +337,7 @@ static func _facing_of(moved: Vector2) -> int:
 # Mira qué hay en su lugar: si es un asiento, hacia dónde queda sentado (hacia el escritorio
 # o mostrador que lo tiene delante, arrimado a él como su silla; si no, hacia el frente del asiento).
 func _refresh_seat() -> void:
+	_refresh_entrance()
 	_seat_facing = -1
 	_at_computer = false
 	_tuck = Vector2.ZERO
@@ -353,6 +355,12 @@ func _refresh_seat() -> void:
 					+ FurnitureView.get_seat_shift(_seat_cell)
 	_animate(0.0, Vector2.ZERO)
 	_update_position()
+
+
+# La entrada puede cambiar de lugar (terreno comprado frente a la puerta): toma la de ahora.
+func _refresh_entrance() -> void:
+	_entrance = OfficeState.entrance
+	_outside = OfficeState.get_outside_of_entrance()
 
 
 # Indica si se dibuja sentado en su asiento.

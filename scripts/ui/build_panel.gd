@@ -3,8 +3,8 @@
 # como Ajustes, añaden ahí su botón) o, en modo construcción, las herramientas, el
 # estado de la última acción y "Salir". Las herramientas van en secciones (Estructura,
 # Muebles, Habitaciones y Terreno): arriba se elige la sección y solo se ven las suyas, así
-# el panel tapa poco del mapa. Terreno (hito 25) se elige arrastrando en el mapa: la
-# sección muestra cómo hacerlo y Comprar.
+# el panel tapa poco del mapa. Terreno (hito 25) se compra con un clic en un lote
+# marcado en el mapa: la sección muestra cómo hacerlo.
 class_name BuildPanel
 extends CanvasLayer
 
@@ -13,7 +13,6 @@ signal build_mode_changed(active: bool)
 ## Se eligió una herramienta (ver BuildController).
 signal tool_selected(tool: String)
 ## Se pulsó Comprar en la fila del terreno.
-signal land_buy_requested
 
 ## Secciones del panel en orden: id → nombre del botón.
 const SECTION_STRUCTURE: String = "structure"
@@ -51,7 +50,6 @@ var _status_label: Label
 var _tool_buttons: Dictionary[String, Button] = {}
 var _exit_button: Button
 var _land_row: HFlowContainer
-var _buy_button: Button
 
 
 func _ready() -> void:
@@ -318,11 +316,6 @@ func is_land_row_visible() -> bool:
 	return _land_row.visible
 
 
-## Botones de la fila del terreno: "buy" (Comprar).
-func get_land_button(key: String) -> Button:
-	return _buy_button if key == "buy" else null
-
-
 func show_status(text: String) -> void:
 	_status_label.text = text
 
@@ -392,17 +385,7 @@ func _build_land_row(parent: Container) -> void:
 	var hint := Label.new()
 	hint.text = BuildController.LAND_HINT
 	_land_row.add_child(hint)
-	_buy_button = Button.new()
-	_buy_button.text = "Comprar"
-	_buy_button.disabled = true
-	_buy_button.pressed.connect(func() -> void: land_buy_requested.emit())
-	_land_row.add_child(_buy_button)
 	_land_row.visible = false
-
-
-## Habilita Comprar si hay un terreno elegido que se puede comprar.
-func set_land_ready(ready: bool) -> void:
-	_buy_button.disabled = not ready
 
 
 # La barra de menús cambió de alto (o la pantalla de tamaño): se guarda cuánto reserva abajo

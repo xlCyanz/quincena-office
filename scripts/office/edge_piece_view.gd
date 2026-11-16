@@ -13,6 +13,9 @@ const THICKNESS: float = 0.08
 const DOOR_INSET: float = 0.15
 
 ## Brazos de un vértice: hacia dónde sale de él cada tramo (para elegir el poste de esquina).
+## Orden de los brazos en el nombre de un poste: wall_post_<−x><−y><+x><+y>, cada uno n (nada),
+## l (tramo bajo) o t (alto). Lo arma igual tools/sprites/pieces/walls.py (post_name).
+const POST_ARM_ORDER: Array[int] = [2, 3, 0, 1]
 const ARM_PLUS_X: int = 0
 const ARM_PLUS_Y: int = 1
 const ARM_MINUS_X: int = 2
@@ -94,25 +97,19 @@ static func get_sprite_name(piece_kind: String, is_tall: bool, axis: int) -> Str
 
 
 ## Sprite del poste de un vértice según sus brazos (brazo → si ese tramo es alto), o "" si no
-## lleva: solo las esquinas en L (dos tramos perpendiculares).
+## lleva: toda unión de dos tramos o más (L, T, cruz, cambio de alto) salvo dos del mismo alto en línea.
 static func get_corner_sprite(arms: Dictionary) -> String:
-	if arms.size() != 2:
+	if arms.size() < 2:
 		return ""
-	var tall: bool = false
-	for arm: int in arms:
-		tall = tall or bool(arms[arm])
-	var suffix: String = ""
-	if arms.has(ARM_PLUS_X) and arms.has(ARM_PLUS_Y):
-		suffix = "" if tall else "_back"
-	elif arms.has(ARM_MINUS_Y) and arms.has(ARM_PLUS_X):
-		suffix = "_left"
-	elif arms.has(ARM_MINUS_X) and arms.has(ARM_PLUS_Y):
-		suffix = "_right"
-	elif arms.has(ARM_MINUS_X) and arms.has(ARM_MINUS_Y):
-		suffix = "_front" if tall else ""
-	else:
-		return ""
-	var sprite: String = "wall_%s_corner%s" % ["tall" if tall else "low", suffix]
+	# Dos tramos del mismo alto en línea: la pared sigue de largo, sin poste.
+	if arms.size() == 2:
+		if arms.has(ARM_PLUS_X) and arms.has(ARM_MINUS_X) and arms[ARM_PLUS_X] == arms[ARM_MINUS_X]:
+			return ""
+		if arms.has(ARM_PLUS_Y) and arms.has(ARM_MINUS_Y) and arms[ARM_PLUS_Y] == arms[ARM_MINUS_Y]:
+			return ""
+	var sprite: String = "wall_post_"
+	for arm: int in POST_ARM_ORDER:
+		sprite += "n" if not arms.has(arm) else ("t" if bool(arms[arm]) else "l")
 	return sprite if SpriteLibrary.has_sprite(sprite) else ""
 
 
