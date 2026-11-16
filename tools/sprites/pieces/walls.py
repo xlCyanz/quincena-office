@@ -438,28 +438,30 @@ def swung_leaf(c, spec, angle):
                 pal.LEFT, pal.BASE, door_handle(width * 64.0))
 
 
-def door_model(f, tall, kind="door", angle=0):
+def door_model(f, tall, kind="door", angle=0, skip=None, leaf=True):
     """Puerta alta: pared a los lados y encima del marco hasta 120, marco (jambas y cabezal de 4),
     hoja de 2 px con sus tableros (o mirilla), umbral y manija. angle: la hoja abierta hacia
-    adentro (0 = cerrada). Puerta baja: la alta cortada a 20 px sin la hoja."""
+    adentro (0 = cerrada). Puerta baja: la alta cortada a 20 px sin la hoja.
+    Para los postes: skip = "start" o "end" deja sin el pedacito de pared de esa punta (lo ocupa
+    el poste) y leaf=False la dibuja sin hoja (la hoja no pasa por Frame)."""
     spec = DOOR_TYPES[kind]
     frame = spec["frame"]
     wall, jamb, leaf0, leaf1 = door_layout(spec)
     height = WALL_TOP if tall else LOW
+    stub_top = DOOR_TOP if tall else height
+    if skip != "start":
+        wall_block(f, 0, wall, 0, stub_top, top=not tall)
+    if skip != "end":
+        wall_block(f, 1 - wall, 1, 0, stub_top, top=not tall)
     if tall:
-        wall_block(f, 0, wall, 0, DOOR_TOP, top=False)
-        wall_block(f, 1 - wall, 1, 0, DOOR_TOP, top=False)
         wall_block(f, 0, 1, DOOR_TOP, height)
-    else:
-        wall_block(f, 0, wall, 0, height)
-        wall_block(f, 1 - wall, 1, 0, height)
     jamb_top = OPENING if tall else height
     f.box(wall, jamb, -HALF, HALF, 0, jamb_top, frame, name="frame", part="frame")
     f.box(1 - jamb, 1 - wall, -HALF, HALF, 0, jamb_top, frame, name="frame", part="frame")
     if tall:
         f.box(wall, 1 - wall, -HALF, HALF, OPENING, DOOR_TOP, frame, name="frame", part="frame")
     f.box(leaf0, leaf1, -HALF, HALF, 0, SILL, spec["leaf"], name="sill")
-    if tall:
+    if tall and leaf:
         swung_leaf(f.c, spec, angle)
 
 
@@ -659,8 +661,12 @@ def window_model(f, tall, blind=None):
 
 # ---------------------------------------------------------------------------- esquinas
 
-# Vecinos de un vértice en el orden (−x, −y, +x, +y): n nada, t pared alta, l pared baja.
-POST_HEIGHTS = {"t": WALL_TOP, "l": LOW, "n": 0}
+# Vecinos de un vértice en el orden (−x, −y, +x, +y): n nada, t pared alta, l pared baja, h puerta
+# alta y d puerta baja. Los brazos de atrás (−x, −y) quedan detrás del poste: de ellos solo importa
+# el alto, así que una puerta ahí se nombra como pared (el juego hace lo mismo), salvo en la jamba
+# entre dos puertas seguidas en línea (wall_post_dndn, ndnd, hnhn, nhnh).
+POST_HEIGHTS = {"t": WALL_TOP, "l": LOW, "n": 0, "h": WALL_TOP, "d": LOW}
+DOOR_CODES = ("d", "h")
 CORNERS = {
     "wall_tall_corner": ("n", "n", "t", "t"),
     "wall_tall_corner_left": ("n", "t", "l", "n"),
@@ -672,22 +678,33 @@ CORNERS = {
     "wall_low_corner_right": ("l", "n", "n", "l"),
 }
 POST_W = 16  # el poste mide 16 px de ancho en pantalla (8×8 de planta)
+MULLION_GROW = 1 / 32.0  # cuánto más larga es la silueta de la jamba compartida (2 px)
+MULLION_EXTRA = 8  # px más de ancho del recorte de la jamba compartida
+MULLIONS = (("d", "n", "d", "n"), ("n", "d", "n", "d"), ("h", "n", "h", "n"), ("n", "h", "n", "h"))
+
+
+def is_mullion(neighbors):
+    """Dos puertas del mismo alto seguidas en línea: entre ellas va un poste de pared."""
+    return tuple(neighbors) in MULLIONS
 
 
 def post_combos():
     """Todas las uniones que llevan poste: dos tramos o más en un vértice, salvo dos del mismo alto
-    en línea (ahí la pared sigue de largo). Cada una es (−x, −y, +x, +y) con n, l o t."""
+    en línea (ahí la pared sigue de largo; una pared y una puerta del mismo alto también), más las
+    jambas compartidas de dos puertas en línea. Cada una es (−x, −y, +x, +y): atrás n, l o t y
+    adelante n, l, t, d o h."""
     combos = []
     for a in "nlt":
         for b in "nlt":
-            for c2 in "nlt":
-                for d in "nlt":
+            for c2 in "nltdh":
+                for d in "nltdh":
                     neighbors = (a, b, c2, d)
                     present = [n for n in neighbors if n != "n"]
-                    straight = (a == c2 != "n" and b == d == "n") or (b == d != "n" and a == c2 == "n")
+                    straight = (a != "n" and c2 != "n" and POST_HEIGHTS[a] == POST_HEIGHTS[c2] and b == d == "n") or \
+                               (b != "n" and d != "n" and POST_HEIGHTS[b] == POST_HEIGHTS[d] and a == c2 == "n")
                     if len(present) >= 2 and not straight:
                         combos.append(neighbors)
-    return combos
+    return combos + list(MULLIONS)
 
 
 def post_name(neighbors):
@@ -699,36 +716,49 @@ def post_piece(neighbors):
     """Poste de 8×8 px de planta en un vértice, del alto del vecino más alto. Se dibuja en un
     lienzo grande con los cuatro tramos vecinos completos (con su z y fundidos con el poste) y se
     guarda solo lo que cae dentro de la silueta del poste, recortado a 16 px de ancho con el
-    vértice en (8, alto − 4)."""
+    vértice en (8, alto − 4). Un vecino puerta se dibuja como puerta (jamba en vez de tapa); entre
+    dos puertas en línea queda un pedazo de pared con su tapa entre las dos jambas."""
     height = max(POST_HEIGHTS[code] for code in neighbors)
     big_w, big_h = 192, height + 112
     origin = (96.0, big_h - 56.0)
     c = iso.Canvas(big_w, big_h, origin, size=(1, 1), rotation=0, swap=False, kind="post", anchor=origin)
-    # Donde una pared alta termina sobre una baja (esquinas izquierda y derecha) el poste es el
-    # corte de la pared y va entero en ciruela, como el canto de la «maqueta» de la referencia.
     ramp = WALL  # el poste es pared de arriba abajo; lo oscuro es solo la tapa
     post = c.box(-HALF, HALF, -HALF, HALF, 0, height - CAP_H, ramp, name="post")
     c.box(-HALF, HALF, -HALF, HALF, height - CAP_H, height, CAP, part=post)
     for code, along, ox, oy in ((neighbors[0], "x", -1.0, 0.0), (neighbors[1], "y", 0.0, -1.0),
                                 (neighbors[2], "x", 0.0, 0.0), (neighbors[3], "y", 0.0, 0.0)):
-        if code != "n":
-            # Un tramo más bajo que el poste arranca en el borde del poste, no en el vértice: si no,
-            # su cara (del mismo plano que la del poste) tapa medio poste y en las esquinas ciruela
-            # queda una franja fría hasta el piso. Los del alto del poste siguen desde el vértice.
-            start, end = 0.0, 1.0
-            if POST_HEIGHTS[code] < height:
-                start, end = (0.0, 1.0 - HALF) if ox < 0 or oy < 0 else (HALF, 1.0)
-            wall_model(Frame(c, along, ox, oy, part=post), POST_HEIGHTS[code], start, end)
+        if code == "n":
+            continue
+        back = ox < 0 or oy < 0
+        if code in DOOR_CODES:
+            # Una puerta más baja que el poste va sin su pedacito de pared del lado del poste (queda
+            # dentro del poste); del mismo alto lo lleva, fundido con el poste.
+            skip = ("end" if back else "start") if POST_HEIGHTS[code] < height else None
+            door_model(Frame(c, along, ox, oy, part=post), code == "h", skip=skip, leaf=False)
+            continue
+        # Un tramo más bajo que el poste arranca en el borde del poste, no en el vértice: si no,
+        # su cara (del mismo plano que la del poste) tapa medio poste y en las esquinas ciruela
+        # queda una franja fría hasta el piso. Los del alto del poste siguen desde el vértice.
+        start, end = 0.0, 1.0
+        if POST_HEIGHTS[code] < height:
+            start, end = (0.0, 1.0 - HALF) if back else (HALF, 1.0)
+        wall_model(Frame(c, along, ox, oy, part=post), POST_HEIGHTS[code], start, end)
     image = np.array(c.finish(ground_outline=FLOOR_LINE))
     alone = iso.Canvas(big_w, big_h, origin, size=(1, 1), rotation=0, swap=False, kind="post", anchor=origin)
-    alone.box(-HALF, HALF, -HALF, HALF, 0, height, WALL)
+    # Entre dos puertas el poste toma además el contorno de las jambas que lo tocan (si no, queda una
+    # raya oscura de más entre él y la puerta de adelante): su silueta se alarga un poco hacia ellas.
+    grow = MULLION_GROW if is_mullion(neighbors) else 0.0
+    gx = grow if neighbors[0] != "n" else 0.0
+    gy = grow if neighbors[1] != "n" else 0.0
+    alone.box(-HALF - gx, HALF + gx, -HALF - gy, HALF + gy, 0, height, WALL)
     inside = np.array(alone.image)[..., 3] == 255
     image[~inside] = 0
-    x0 = int(origin[0]) - POST_W // 2
+    width = POST_W + (MULLION_EXTRA if grow else 0)
+    x0 = int(origin[0]) - width // 2
     y0 = int(origin[1]) - height - 4
     out_h = height + 8
-    crop = image[y0:y0 + out_h, x0:x0 + POST_W]
-    return sheet.Image.fromarray(np.ascontiguousarray(crop), "RGBA"), (POST_W / 2.0, out_h - 4.0)
+    crop = image[y0:y0 + out_h, x0:x0 + width]
+    return sheet.Image.fromarray(np.ascontiguousarray(crop), "RGBA"), (width / 2.0, out_h - 4.0)
 
 
 # ---------------------------------------------------------------------------- hojas de prueba

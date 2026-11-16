@@ -31,7 +31,9 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - **Panku Console 1.7.9** (`addons/panku_console/`, MIT, autoload `Panku`): consola en el juego con la tecla de la
   izquierda del 1. Los comandos propios están en `DevCommands` (`scripts/debug/dev_commands.gd`) con el nombre `qo`:
   `qo.help()`, `qo.add_money(50000)`, `qo.skip_days(3)`, `qo.skip_hours(5)`, `qo.set_mood(20)`, `qo.set_stress(90)`,
-  `qo.set_energy(10)`, `qo.event("birthday")`. Cada comando usa las funciones públicas de los sistemas; su texto de ayuda es una constante
+  `qo.set_energy(10)`, `qo.event("birthday")`. Los renglones de la consola sobre el juego se ven solo con la consola abierta; la opción
+  `console_overlay` de Ajustes («Mostrar la consola de desarrollo sobre el juego», solo aparece con Panku) los deja siempre
+  (`DevTools._apply_console_overlay`, con el modo «Screen Overlay» del addon). Cada comando usa las funciones públicas de los sistemas; su texto de ayuda es una constante
   `_HELP_<función>`. No se modifica el código del addon.
 - En una exportación release `DevTools` no hace nada y `panku/disable_on_release=true` quita el autoload `Panku`.
   Los presets (`export_presets.cfg`) excluyen `addons/panku_console/*`, `scripts/debug/*`, `tests/*` y `addons/quincena_export/*`, y el
@@ -54,6 +56,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
 - Todo sistema con estado implementa `export_state() -> Dictionary` e `import_state(state: Dictionary) -> void`.
 - Las paredes van en los bordes de las casillas, no ocupan casilla. Un borde es `Vector3i(x, y, eje)` (ver `GridEdge`);
   los caminos usan `AStarGrid2D` a doble resolución para que las paredes de borde bloqueen el paso.
+- Mudar la Oficina Ejecutiva (fase 8): marcarla en otro espacio cerrado con puerta, cuando ya hay una, es mudarla
+  (`Builder.quote_mark_room` → `quote_move_ceo_office`): hace falta ahí una silla sin dueño con el frente de un escritorio delante; el resultado
+  trae `confirm` y el modo construcción pregunta («Sí, mudar» / «No»: `BuildController.ask_confirm`/`answer_confirm`/`is_confirming`,
+  `confirm_changed`; `BuildPanel.show_confirm`, `get_confirm_button`). Al aceptar (`move_ceo_office`) la silla nueva pasa a ser del CEO, la de antes
+  queda libre y la oficina de antes sin marcar; `mark_room` sola no la muda. `main._on_office_changed` manda al CEO a su silla nueva.
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (zona cerrada por paredes y puertas, con puerta);
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
 - Suelo con detalle (`GroundPainter`, funciones puras): pisos y terreno se pintan con `DETAIL` (4) veces más píxeles por casilla (256×128) y
@@ -115,7 +122,8 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
 - Un puesto de trabajo (`Workstations`) es una silla delante del frente de un escritorio con computadora, ambos dentro
   de un Área de trabajo que funciona; cada escritorio sirve a una sola silla. Sus muebles no se venden ni giran mientras está ocupado.
-- Tiempo: 1 hora de juego = `GameConstants.SECONDS_PER_GAME_HOUR` (60 s reales a 1x; hasta el hito 69 eran 10 s). Las pruebas que
+- Tiempo: 1 hora de juego = `GameConstants.SECONDS_PER_GAME_HOUR` (60 s reales a 1x; hasta el hito 69 eran 10 s). Velocidades
+  `CLOCK_SPEEDS` 1x, 2x, 4x, 8x y 16x (botones del reloj, `Hud.SPEED_BUTTON_WIDTH`, y teclas 1 a 5). Las pruebas que
   esperan con topes en segundos (`test_ceo`, `test_workday`) los escalan por `SECONDS_PER_GAME_HOUR / 10`.
 - Jornada: `Staff.is_expected(key, día, hora)` dice quién debe estar en la oficina; `main.gd` se lo pasa cada hora a los
   personajes (`OfficeCharacter`, base de `Ceo` y `Employee`). Cada empleado tiene el turno de su equipo o, sin equipo, el horario
@@ -480,7 +488,7 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   finished, actions); sin estado carga como terminado y la empresa de prueba empieza sin él. `SaveManager` lo envuelve en
   `begin_load`/`finish_load`. `TutorialPanel` (capa 5): tarjeta arriba entre los paneles izquierdos y el reloj, marco y flecha que no atrapan clics.
 - Tutorial del negocio y ayuda (hito 64): 10 pasos; tras contratar siguen aceptar un contrato (`projects_accept` = Aceptar de la primera oferta),
-  la nómina con la velocidad (`speed_changed`: botón o tecla 1–3; resalta 2x), abrir el Banco (`bank_opened`) y entregar (`projects_deliver` =
+  la nómina con la velocidad (`speed_changed`: botón o tecla 1–5; resalta 2x), abrir el Banco (`bank_opened`) y entregar (`projects_deliver` =
   Entregar del primer contrato); termina con la primera entrega. Ayuda: `HelpButton.create(tema)` es el «?» (44 px, tooltip «Ayuda») en la
   cabecera de Personal, Proyectos, Horarios, Banco y Empresa y en la fila de secciones de Construir (`get_help_button()`); emite
   `EventBus.help_requested` y `HelpDialog` (capa 12, en `main.gd`, `get_help_dialog`) muestra el título y el texto de `data/help.json`
@@ -536,8 +544,10 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   familia por zonas (`MapDecor.get_grass_family`: liso, tupido, manchones y claro); `is_style_row(fila, estilo)` dice si una fila dibuja un
   estilo. Sin atlas se pinta con `GroundPainter` como antes. Paredes: `EdgePieceView` dibuja `<pieza>_<tall|low>_<x|y>` (`get_sprite_name`)
   y, encima, el poste de cada unión de sus puntas (`OfficeGrid._place_corner_posts`, `EdgePieceView.get_corner_sprite(brazos)`: toda unión de dos
-  tramos o más, L, T, cruz o cambio de alto, salvo dos del mismo alto en línea; `wall_post_<−x><−y><+x><+y>` con n, l o t, 68 en total, los
-  genera `walls.post_combos`). El canto de las paredes y los postes van del color de la pared; lo oscuro es solo la tapa.
+  tramos o más, L, T, cruz o cambio de alto, salvo dos del mismo alto en línea; `wall_post_<−x><−y><+x><+y>` con n, l, t, d (puerta baja) o
+  h (puerta alta), 208 en total, los genera `walls.post_combos`; `EdgePieceView.get_arm_code`). Un brazo de adelante (+x, +y) que es puerta se
+  dibuja en el poste como puerta (jamba, sin la tapa de pared); atrás solo cuenta el alto. Entre dos puertas del mismo alto en línea va un poste de
+  pared con su tapa entre las dos jambas (`wall_post_dndn`, `ndnd`, `hnhn`, `nhnh`; `walls.MULLIONS`). El canto de las paredes y los postes van del color de la pared; lo oscuro es solo la tapa.
   Árboles: `TreeView` elige `tree_0`…`tree_7` por la casilla y dibuja su `_shadow` al 30 %. Sin sprite, cada uno cae al arte provisional.
   Muebles de piso: `data/sprites.json` `furniture` (id del juego → base del sprite, `rotated`, `parts`; tabla `FURNITURE` de `export_game.py`),
   `SpriteLibrary.get_furniture_sprite(id, rotación, parte)`; `FurnitureView._draw_sprites` dibuja sombra y mueble con el apoyo en el centro de

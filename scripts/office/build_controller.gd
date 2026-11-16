@@ -21,6 +21,9 @@ extends Node2D
 signal status_changed(text: String)
 ## Cambió el terreno elegido con el ratón (o se compró).
 signal land_changed
+## Hay algo que confirmar antes de hacerlo (mudar la Oficina Ejecutiva): text es la pregunta;
+## vacío = ya no hay nada pendiente.
+signal confirm_changed(text: String)
 
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
@@ -83,6 +86,9 @@ var _apply_preview := Callable()
 # Casilla donde se apretó el botón (el clic compra si se suelta en el mismo lote).
 var _land_press := Vector2i.ZERO
 var _land_pressed: bool = false
+# Lo que se hace si el jugador confirma la pregunta pendiente.
+var _pending_confirm := Callable()
+var _pending_question: String = ""
 # Lotes que se pueden comprar con un clic (Builder.get_land_plots) y el que está bajo el ratón.
 var _plots: Array[Dictionary] = []
 var _hover_plot: int = -1
@@ -96,6 +102,8 @@ func setup(grid: OfficeGrid) -> void:
 
 ## Activa o desactiva el modo construcción.
 func set_active(active: bool) -> void:
+	if is_confirming():
+		answer_confirm(false)
 	_active = active
 	_dragging = false
 	_clear_preview()
@@ -145,7 +153,36 @@ func is_active() -> bool:
 	return _active
 
 
+## Deja una pregunta pendiente: se hace action si el jugador dice que sí (answer_confirm).
+func ask_confirm(question: String, action: Callable) -> Dictionary:
+	_pending_confirm = action
+	_pending_question = question
+	confirm_changed.emit(question)
+	return {"ok": false, "message": question}
+
+
+## Indica si hay una pregunta esperando respuesta.
+func is_confirming() -> bool:
+	return _pending_confirm.is_valid()
+
+
+## Responde la pregunta pendiente: con accept se hace; si no, se olvida.
+func answer_confirm(accept: bool) -> Dictionary:
+	var action: Callable = _pending_confirm
+	_pending_confirm = Callable()
+	_pending_question = ""
+	confirm_changed.emit("")
+	if not action.is_valid():
+		return {"ok": false, "message": ""}
+	var result: Dictionary = action.call() if accept else {"ok": false, "message": "No se mudó nada."}
+	status_changed.emit(result["message"])
+	_update_preview(false)
+	return result
+
+
 func set_tool(new_tool: String) -> void:
+	if is_confirming():
+		answer_confirm(false)
 	tool = new_tool
 	_dragging = false
 	_land_pressed = false
@@ -327,7 +364,13 @@ func _update_preview(announce: bool = true) -> void:
 			else:
 				var room_type: String = tool
 				quote = builder.quote_mark_room(room_type, cell)
-				_apply_preview = func() -> Dictionary: return builder.mark_room(room_type, cell)
+				if bool(quote.get("confirm", false)):
+					# Mudar la Oficina Ejecutiva: el clic pregunta y la respuesta la hace.
+					var question: String = String(quote["message"])
+					_apply_preview = func() -> Dictionary: return ask_confirm(question,
+						func() -> Dictionary: return builder.move_ceo_office(cell))
+				else:
+					_apply_preview = func() -> Dictionary: return builder.mark_room(room_type, cell)
 	elif tool == TOOL_SELL and _sell_targets_furniture(cell):
 		_preview_cells = _footprint_at(cell, quarter)
 		quote = builder.quote_sell_furniture_at(cell, quarter)

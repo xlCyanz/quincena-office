@@ -155,7 +155,7 @@ func _place_corner_posts(views: Dictionary[Vector3i, EdgePieceView]) -> void:
 	for edge: Vector3i in views:
 		for end: Array in _edge_vertices(edge):
 			var arms: Dictionary = corners.get_or_add(end[0], {})
-			arms[end[1]] = views[edge].tall
+			arms[end[1]] = EdgePieceView.get_arm_code(views[edge].kind, views[edge].tall)
 	for edge: Vector3i in views:
 		for end: Array in _edge_vertices(edge):
 			var sprite: String = EdgePieceView.get_corner_sprite(corners[end[0]])

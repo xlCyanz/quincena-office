@@ -14,12 +14,14 @@ const DOOR_INSET: float = 0.15
 
 ## Brazos de un vértice: hacia dónde sale de él cada tramo (para elegir el poste de esquina).
 ## Orden de los brazos en el nombre de un poste: wall_post_<−x><−y><+x><+y>, cada uno n (nada),
-## l (tramo bajo) o t (alto). Lo arma igual tools/sprites/pieces/walls.py (post_name).
+## l (tramo bajo), t (alto), d (puerta baja) o h (puerta alta). Lo arma igual
+## tools/sprites/pieces/walls.py (post_name).
 const POST_ARM_ORDER: Array[int] = [2, 3, 0, 1]
 const ARM_PLUS_X: int = 0
 const ARM_PLUS_Y: int = 1
 const ARM_MINUS_X: int = 2
 const ARM_MINUS_Y: int = 3
+const DOOR_CODES: Array[String] = ["d", "h"]
 
 var edge := Vector3i.ZERO
 var kind: String = ""
@@ -96,21 +98,48 @@ static func get_sprite_name(piece_kind: String, is_tall: bool, axis: int) -> Str
 	return "%s_%s_%s" % [piece_kind, "tall" if is_tall else "low", "x" if axis == GridEdge.AXIS_X else "y"]
 
 
-## Sprite del poste de un vértice según sus brazos (brazo → si ese tramo es alto), o "" si no
-## lleva: toda unión de dos tramos o más (L, T, cruz, cambio de alto) salvo dos del mismo alto en línea.
+## Código de un tramo en el nombre de un poste: t pared alta, l baja, h puerta alta, d puerta baja.
+## Las demás piezas (ventana, puerta de vidrio) cuentan como pared.
+static func get_arm_code(piece_kind: String, is_tall: bool) -> String:
+	if piece_kind == ConstructionCatalog.DOOR:
+		return "h" if is_tall else "d"
+	return "t" if is_tall else "l"
+
+
+## Sprite del poste de un vértice según sus brazos (brazo → código de get_arm_code, o si ese tramo
+## es alto), o "" si no lleva: toda unión de dos tramos o más (L, T, cruz, cambio de alto) salvo dos
+## del mismo alto en línea. Dos puertas del mismo alto en línea llevan una jamba compartida. Los
+## brazos de atrás (−x, −y) quedan detrás del poste: ahí una puerta se nombra como pared.
 static func get_corner_sprite(arms: Dictionary) -> String:
 	if arms.size() < 2:
 		return ""
-	# Dos tramos del mismo alto en línea: la pared sigue de largo, sin poste.
+	var codes: Dictionary[int, String] = {}
+	for arm: int in arms:
+		var value: Variant = arms[arm]
+		codes[arm] = value if value is String else ("t" if bool(value) else "l")
+	var mullion: bool = false
 	if arms.size() == 2:
-		if arms.has(ARM_PLUS_X) and arms.has(ARM_MINUS_X) and arms[ARM_PLUS_X] == arms[ARM_MINUS_X]:
-			return ""
-		if arms.has(ARM_PLUS_Y) and arms.has(ARM_MINUS_Y) and arms[ARM_PLUS_Y] == arms[ARM_MINUS_Y]:
-			return ""
+		for pair: Array in [[ARM_MINUS_X, ARM_PLUS_X], [ARM_MINUS_Y, ARM_PLUS_Y]]:
+			if not (codes.has(pair[0]) and codes.has(pair[1])):
+				continue
+			var a: String = codes[pair[0]]
+			var b: String = codes[pair[1]]
+			if a == b and a in DOOR_CODES:
+				mullion = true
+			elif _is_tall_code(a) == _is_tall_code(b):
+				# Dos tramos del mismo alto en línea: la pared sigue de largo, sin poste.
+				return ""
 	var sprite: String = "wall_post_"
 	for arm: int in POST_ARM_ORDER:
-		sprite += "n" if not arms.has(arm) else ("t" if bool(arms[arm]) else "l")
+		var code: String = codes.get(arm, "n")
+		if not mullion and (arm == ARM_MINUS_X or arm == ARM_MINUS_Y) and code in DOOR_CODES:
+			code = "t" if _is_tall_code(code) else "l"
+		sprite += code
 	return sprite if SpriteLibrary.has_sprite(sprite) else ""
+
+
+static func _is_tall_code(code: String) -> bool:
+	return code == "t" or code == "h"
 
 
 ## Agrega un poste de esquina en un punto del mundo; se dibuja encima del tramo.

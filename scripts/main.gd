@@ -106,6 +106,8 @@ func _ready() -> void:
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
+	_build_controller.confirm_changed.connect(_build_panel.show_confirm)
+	_build_panel.confirm_answered.connect(func(accept: bool) -> void: _build_controller.answer_confirm(accept))
 	_build_panel.tool_selected.connect(func(_tool: String) -> void: _apply_walls())
 	_build_panel.build_mode_changed.connect(func(_active: bool) -> void: _apply_walls())
 	_hud.pause_pressed.connect(_on_pause_pressed)
@@ -754,6 +756,9 @@ func open_notice_target(target: Dictionary) -> void:
 
 func _on_office_changed() -> void:
 	_rebuild_office()
+	# La silla del CEO puede haber cambiado (Oficina Ejecutiva mudada).
+	if ceo != null:
+		ceo.set_seat(_home_spot("ceo"))
 	for character: OfficeCharacter in get_characters():
 		character.replan()
 	_sync_visitors()
@@ -1193,7 +1198,7 @@ func _on_speed_pressed(index: int) -> void:
 
 # Atajos de teclado (un extra: los botones del reloj hacen lo mismo).
 # Esc: cierra lo abierto o abre el menú de pausa (handle_escape, hito 62).
-# Espacio: pausa · 1, 2, 3: velocidad 1x, 2x, 4x. En modo construcción no cambian
+# Espacio: pausa · 1 a 5: velocidad 1x, 2x, 4x, 8x, 16x. En modo construcción no cambian
 # nada, porque el tiempo tiene que quedarse en pausa. F: ver la oficina completa
 # (funciona siempre). P: paredes arriba / abajo. WASD y flechas mueven la cámara (OfficeCamera).
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -1217,7 +1222,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	match key.keycode:
 		KEY_SPACE:
 			GameClock.toggle_pause()
-		KEY_1, KEY_2, KEY_3:
+		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5:
 			GameClock.set_speed_index(key.keycode - KEY_1)
 			EventBus.ui_action.emit("speed_changed")
 		_:

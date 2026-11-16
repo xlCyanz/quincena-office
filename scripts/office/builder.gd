@@ -913,6 +913,9 @@ func quote_mark_room(type_id: String, cell: Vector2i) -> Dictionary:
 	var current: int = RoomRules.room_index_at(OfficeState.rooms, cell)
 	if current >= 0 and OfficeState.rooms[current]["type"] == type_id:
 		return _room_status(OfficeState.rooms[current], false)
+	if type_id == OfficeState.EXECUTIVE_OFFICE and not OfficeState.find_room(type_id).is_empty():
+		# Ya hay Oficina Ejecutiva en otro lado: marcarla aquí es mudarla (pide confirmar).
+		return quote_move_ceo_office(cell)
 	var problem: String = RoomRules.mark_problem(type_id, space, OfficeState.rooms, OfficeState.entrance)
 	if not problem.is_empty():
 		return _fail(0, problem)
@@ -932,6 +935,92 @@ func quote_mark_room(type_id: String, cell: Vector2i) -> Dictionary:
 
 func mark_room(type_id: String, cell: Vector2i) -> Dictionary:
 	return _commit_rooms(quote_mark_room(type_id, cell))
+
+
+## Mudar la Oficina Ejecutiva al espacio que contiene cell: ese espacio pasa a ser la Oficina
+## Ejecutiva, el CEO pasa a una silla libre que tenga delante el frente de un escritorio de ahí,
+## y la oficina de antes queda sin marcar (su silla, libre). Solo se puede si el espacio está
+## cerrado, tiene puerta y tiene esa silla con su escritorio. El resultado lleva "confirm": true:
+## quien lo muestra pregunta antes de hacerlo (move_ceo_office).
+func quote_move_ceo_office(cell: Vector2i) -> Dictionary:
+	var type_id: String = OfficeState.EXECUTIVE_OFFICE
+	var type_name: String = RoomCatalog.get_display_name(type_id)
+	if not OfficeState.lot.has_point(cell):
+		return _fail(0, "Esa casilla está fuera del local.")
+	var old_room: Dictionary = OfficeState.find_room(type_id)
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(OfficeState.lot, OfficeState.edges)
+	var space: Dictionary = spaces[RoomRules.space_index_at(spaces, cell)]
+	var cells: Array[Vector2i] = space["cells"]
+	if not old_room.is_empty() and RoomRules.shares_cells(old_room["cells"], cells):
+		return _room_status(old_room, false)
+	# Lo mismo que para marcarla, sin contar que ya hay una (es la que se muda).
+	var others: Array[Dictionary] = []
+	for room: Dictionary in OfficeState.rooms:
+		if room["type"] != type_id:
+			others.append(room)
+	var problem: String = RoomRules.mark_problem(type_id, space, others, OfficeState.entrance)
+	if not problem.is_empty():
+		return _fail(0, problem)
+	var seat: int = _free_seat_with_desk(cells)
+	if seat < 0:
+		return _fail(0, "Para mudar la %s ahí hace falta un escritorio con una silla libre delante." % type_name)
+	var furniture: Array[Dictionary] = []
+	for index: int in range(OfficeState.furniture.size()):
+		var item: Dictionary = OfficeState.furniture[index].duplicate()
+		if item["assigned_to"] == "ceo":
+			item["assigned_to"] = ""
+		if index == seat:
+			item["assigned_to"] = "ceo"
+		furniture.append(item)
+	var moved: Dictionary = {"type": type_id, "cells": cells.duplicate()}
+	var rooms: Array[Dictionary] = []
+	for room: Dictionary in others:
+		if not RoomRules.shares_cells(room["cells"], cells):
+			rooms.append(room)
+	rooms.append(moved)
+	# Corta: tiene que caber en una línea del modo construcción. Lo que le falte se dice al mudarla.
+	var message: String = "¿Mudar la %s aquí? El CEO pasa a esta silla; la de antes queda sin marcar." % type_name
+	var problems: Array[String] = RoomRules.function_problems(moved, furniture)
+	return {"ok": true, "cost": 0, "confirm": true, "message": message, "rooms": rooms, "furniture": furniture,
+		"seat": OfficeState.furniture[seat]["cell"], "problems": problems}
+
+
+## Muda la Oficina Ejecutiva si quote_move_ceo_office lo permite (ya confirmado).
+func move_ceo_office(cell: Vector2i) -> Dictionary:
+	var result: Dictionary = quote_move_ceo_office(cell)
+	if not result["ok"] or not result.has("rooms"):
+		return result
+	var furniture: Array[Dictionary] = result["furniture"]
+	var rooms: Array[Dictionary] = result["rooms"]
+	OfficeState.furniture = furniture
+	OfficeState.rooms = rooms
+	result.erase("furniture")
+	result.erase("rooms")
+	result.erase("confirm")
+	result["message"] = "La %s se mudó." % RoomCatalog.get_display_name(OfficeState.EXECUTIVE_OFFICE)
+	var problems: Array = result.get("problems", [])
+	if not problems.is_empty():
+		result["message"] += " Aún no funciona: %s." % ", ".join(problems)
+	EventBus.office_changed.emit()
+	return result
+
+
+# Índice de una silla sin dueño de esas casillas que tiene delante el frente de un escritorio
+# o mostrador también de esas casillas; -1 si no hay.
+func _free_seat_with_desk(cells: Array[Vector2i]) -> int:
+	for index: int in range(OfficeState.furniture.size()):
+		var item: Dictionary = OfficeState.furniture[index]
+		if not bool(FurnitureCatalog.get_item(item["id"]).get("is_seat", false)) or not String(item["assigned_to"]).is_empty():
+			continue
+		if not cells.has(item["cell"]):
+			continue
+		var desk: Dictionary = OfficeState.get_desk_facing(item["cell"])
+		if desk.is_empty():
+			continue
+		var front: Vector2i = FurnitureCatalog.FRONT_DIRECTIONS[int(desk["direction"])]
+		if cells.has(item["cell"] + front):
+			return index
+	return -1
 
 
 ## Quitar la habitación que contiene cell; el espacio queda sin tipo.
@@ -977,6 +1066,9 @@ func _room_status(room: Dictionary, ok_if_working: bool) -> Dictionary:
 func _commit_rooms(result: Dictionary) -> Dictionary:
 	if not result["ok"] or not result.has("rooms"):
 		return result
+	if bool(result.get("confirm", false)):
+		# Mudar la Oficina Ejecutiva no se hace sin preguntar: lo hace move_ceo_office.
+		return {"ok": false, "cost": 0, "confirm": true, "message": result["message"]}
 	var rooms: Array[Dictionary] = result["rooms"]
 	OfficeState.rooms = rooms
 	EventBus.office_changed.emit()

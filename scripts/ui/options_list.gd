@@ -13,7 +13,10 @@ const TOGGLES: Dictionary[String, String] = {
 	"pause_on_focus_loss": "Pausar cuando la ventana pierde el foco",
 	"smooth_camera": "Cámara suave",
 	"edge_pan": "Mover la cámara con el borde de la pantalla",
+	"console_overlay": "Mostrar la consola de desarrollo sobre el juego",
 }
+## Opciones que solo existen con la consola de desarrollo (no en una exportación).
+const DEV_TOGGLES: Array[String] = ["console_overlay"]
 
 var _toggles: Dictionary[String, CheckBox] = {}
 var _speed_button: OptionButton
@@ -63,6 +66,10 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	# Sin consola de desarrollo (una exportación) su opción no se muestra.
+	var has_console: bool = OS.is_debug_build() and get_tree().root.has_node("Panku")
+	for key: String in DEV_TOGGLES:
+		_toggles[key].visible = has_console
 	EventBus.settings_changed.connect(func(_key: String) -> void: refresh())
 	refresh()
 

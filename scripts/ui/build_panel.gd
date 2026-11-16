@@ -12,6 +12,8 @@ extends CanvasLayer
 signal build_mode_changed(active: bool)
 ## Se eligió una herramienta (ver BuildController).
 signal tool_selected(tool: String)
+## El jugador respondió la pregunta de confirmación (mudar la Oficina Ejecutiva).
+signal confirm_answered(accept: bool)
 ## Se pulsó Comprar en la fila del terreno.
 
 ## Secciones del panel en orden: id → nombre del botón.
@@ -47,6 +49,9 @@ var _category: String = ""
 var _open_button: Button
 var _panel: PanelContainer
 var _status_label: Label
+var _confirm_row: HBoxContainer
+var _confirm_yes: Button
+var _confirm_no: Button
 var _tool_buttons: Dictionary[String, Button] = {}
 var _exit_button: Button
 var _land_row: HFlowContainer
@@ -180,6 +185,20 @@ func _ready() -> void:
 	_status_label = Label.new()
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rows.add_child(_status_label)
+	# Pregunta de confirmación (mudar la Oficina Ejecutiva): Sí / No, oculta hasta que haga falta.
+	_confirm_row = HBoxContainer.new()
+	_confirm_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_confirm_row.add_theme_constant_override("separation", 8)
+	_confirm_row.visible = false
+	rows.add_child(_confirm_row)
+	_confirm_yes = Button.new()
+	_confirm_yes.text = "Sí, mudar"
+	_confirm_yes.pressed.connect(func() -> void: confirm_answered.emit(true))
+	_confirm_row.add_child(_confirm_yes)
+	_confirm_no = Button.new()
+	_confirm_no.text = "No"
+	_confirm_no.pressed.connect(func() -> void: confirm_answered.emit(false))
+	_confirm_row.add_child(_confirm_no)
 	_anchor_bottom_center(_panel)
 
 	_tool_buttons[BuildController.TOOL_WALL].button_pressed = true
@@ -318,6 +337,22 @@ func is_land_row_visible() -> bool:
 
 func show_status(text: String) -> void:
 	_status_label.text = text
+
+
+## Muestra los botones Sí / No de una pregunta (text vacío los oculta); la pregunta va en el estado.
+func show_confirm(text: String) -> void:
+	_confirm_row.visible = not text.is_empty()
+	if not text.is_empty():
+		_status_label.text = text
+
+
+## Botones de la pregunta de confirmación: "yes" o "no".
+func get_confirm_button(key: String) -> Button:
+	return _confirm_yes if key == "yes" else _confirm_no
+
+
+func is_confirm_visible() -> bool:
+	return _confirm_row.visible
 
 
 ## Barra de menús de abajo al centro (se oculta en modo construcción).

@@ -15,11 +15,21 @@ const MONITOR_GROUP: String = "Quincena"
 var commands: DevCommands = DevCommands.new()
 
 
+## Opción de Ajustes que deja siempre a la vista los renglones de la consola.
+const CONSOLE_OVERLAY_OPTION: String = "console_overlay"
+## Modos de la capa de renglones del addon (native_logger): siempre, o solo con la consola abierta.
+const OVERLAY_ALWAYS: int = 0
+const OVERLAY_WITH_CONSOLE: int = 1
+
 func _ready() -> void:
 	if not OS.is_debug_build():
 		return
 	_register_monitors()
 	_register_console_commands()
+	_apply_console_overlay()
+	EventBus.settings_changed.connect(func(key: String) -> void:
+		if key == CONSOLE_OVERLAY_OPTION:
+			_apply_console_overlay())
 
 
 ## Valores que se registran como monitores: {"Nombre visible": Callable que devuelve un número}.
@@ -58,6 +68,30 @@ func _register_monitors() -> void:
 		if not Performance.has_custom_monitor(id):
 			Performance.add_custom_monitor(id, sources[label])
 			_monitor_ids.append(id)
+
+
+# Renglones de la consola sobre el juego: siempre a la vista o solo con la consola abierta,
+# según la opción console_overlay. Usa lo que el addon ya ofrece (su opción «Screen Overlay»).
+func _apply_console_overlay() -> void:
+	var console: Node = get_node_or_null("/root/Panku")
+	if console == null:
+		return
+	var manager: Variant = console.get("module_manager")
+	if manager == null or not (manager as Object).has_method("get_module"):
+		return
+	var logger: Variant = (manager as Object).call("get_module", "native_logger")
+	if logger != null and (logger as Object).has_method("set_overlay_display_mode"):
+		var shown: bool = bool(Settings.get_value(CONSOLE_OVERLAY_OPTION))
+		(logger as Object).call("set_overlay_display_mode", OVERLAY_ALWAYS if shown else OVERLAY_WITH_CONSOLE)
+
+
+## Indica si los renglones de la consola están siempre a la vista (para las pruebas).
+func is_console_overlay_shown() -> bool:
+	var console: Node = get_node_or_null("/root/Panku")
+	if console == null:
+		return false
+	var logger: Variant = (console.get("module_manager") as Object).call("get_module", "native_logger")
+	return logger != null and int((logger as Object).get("output_overlay_display_mode")) == OVERLAY_ALWAYS
 
 
 # La consola es otro autoload (Panku). Se busca por ruta para no depender de él al compilar:

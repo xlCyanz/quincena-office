@@ -31,6 +31,9 @@ const LINK_SUFFIX: String = "  ›"
 ## Tamaño de los botones de la barra de menús de abajo (caben nueve en 1280 px).
 const MENU_BUTTON_SIZE := Vector2(124.0, 44.0)
 
+## Ancho mínimo de cada botón de velocidad del reloj.
+const SPEED_BUTTON_WIDTH: float = 34.0
+
 var _balance_label: Label
 var _reputation_label: Label
 var _value_label: Label
@@ -102,6 +105,8 @@ func _ready() -> void:
 	_pause_button.pressed.connect(func() -> void: pause_pressed.emit())
 	for index: int in range(GameConstants.CLOCK_SPEEDS.size()):
 		var button: Button = _add_toggle(speed_row, "%dx" % int(GameConstants.CLOCK_SPEEDS[index]))
+		# Cinco velocidades: más angostos que Pausa, para que el reloj no le quite lugar a lo de al lado.
+		button.custom_minimum_size.x = SPEED_BUTTON_WIDTH
 		button.pressed.connect(func() -> void: speed_pressed.emit(index))
 		_speed_buttons.append(button)
 	clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, int(MARGIN))

@@ -3426,6 +3426,160 @@
 				64
 			]
 		},
+		"wall_post_dndn": {
+			"anchor": [
+				12.0,
+				24.0
+			],
+			"file": "walls/wall_post_dndn.png",
+			"size": [
+				24,
+				28
+			]
+		},
+		"wall_post_hnhn": {
+			"anchor": [
+				12.0,
+				124.0
+			],
+			"file": "walls/wall_post_hnhn.png",
+			"size": [
+				24,
+				128
+			]
+		},
+		"wall_post_lldd": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lldd.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lldh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lldh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lldl": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lldl.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lldn": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lldn.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lldt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lldt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llhd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llhd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llhh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llhh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llhl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llhl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llhn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llhn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llld": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_llld.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lllh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lllh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_llll": {
 			"anchor": [
 				8.0,
@@ -3454,6 +3608,28 @@
 				124.0
 			],
 			"file": "walls/wall_post_lllt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llnd": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_llnd.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_llnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llnh.png",
 			"size": [
 				16,
 				128
@@ -3492,6 +3668,28 @@
 				128
 			]
 		},
+		"wall_post_lltd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lltd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_llth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_llth.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_lltl": {
 			"anchor": [
 				8.0,
@@ -3525,6 +3723,127 @@
 				128
 			]
 		},
+		"wall_post_lndd": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lndd.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lndh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lndh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lndl": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lndl.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lndt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lndt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnhd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnhd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnhh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnhh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnhl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnhl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnhn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnhn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnld": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lnld.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lnlh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnlh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_lnll": {
 			"anchor": [
 				8.0,
@@ -3547,6 +3866,28 @@
 				128
 			]
 		},
+		"wall_post_lnnd": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_lnnd.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_lnnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnnh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_lnnl": {
 			"anchor": [
 				8.0,
@@ -3564,6 +3905,28 @@
 				124.0
 			],
 			"file": "walls/wall_post_lnnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lntd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lntd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lnth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lnth.png",
 			"size": [
 				16,
 				128
@@ -3602,6 +3965,138 @@
 				128
 			]
 		},
+		"wall_post_ltdd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltdd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltdh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltdh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltdl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltdl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltdn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltdn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltdt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltdt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lthd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lthd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lthh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lthh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lthl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lthl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_lthn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lthn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltld": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltld.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltlh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltlh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_ltll": {
 			"anchor": [
 				8.0,
@@ -3630,6 +4125,28 @@
 				124.0
 			],
 			"file": "walls/wall_post_ltlt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltnd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltnd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltnh.png",
 			"size": [
 				16,
 				128
@@ -3668,6 +4185,28 @@
 				128
 			]
 		},
+		"wall_post_lttd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_lttd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ltth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ltth.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_lttl": {
 			"anchor": [
 				8.0,
@@ -3696,6 +4235,160 @@
 				124.0
 			],
 			"file": "walls/wall_post_lttt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ndnd": {
+			"anchor": [
+				12.0,
+				24.0
+			],
+			"file": "walls/wall_post_ndnd.png",
+			"size": [
+				24,
+				28
+			]
+		},
+		"wall_post_nhnh": {
+			"anchor": [
+				12.0,
+				124.0
+			],
+			"file": "walls/wall_post_nhnh.png",
+			"size": [
+				24,
+				128
+			]
+		},
+		"wall_post_nldd": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nldd.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nldh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nldh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nldl": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nldl.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nldn": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nldn.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nldt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nldt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlhd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlhd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlhh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlhh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlhl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlhl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlhn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlhn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlld": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nlld.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nllh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nllh.png",
 			"size": [
 				16,
 				128
@@ -3734,12 +4427,45 @@
 				128
 			]
 		},
+		"wall_post_nlnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlnh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_nlnt": {
 			"anchor": [
 				8.0,
 				124.0
 			],
 			"file": "walls/wall_post_nlnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nltd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nltd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nlth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nlth.png",
 			"size": [
 				16,
 				128
@@ -3778,6 +4504,116 @@
 				128
 			]
 		},
+		"wall_post_nndd": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nndd.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nndh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nndh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nndl": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nndl.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nndt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nndt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnhd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnhd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnhh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnhh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnhl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnhl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnld": {
+			"anchor": [
+				8.0,
+				24.0
+			],
+			"file": "walls/wall_post_nnld.png",
+			"size": [
+				16,
+				28
+			]
+		},
+		"wall_post_nnlh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnlh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_nnll": {
 			"anchor": [
 				8.0,
@@ -3800,6 +4636,28 @@
 				128
 			]
 		},
+		"wall_post_nntd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nntd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nnth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nnth.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_nntl": {
 			"anchor": [
 				8.0,
@@ -3817,6 +4675,138 @@
 				124.0
 			],
 			"file": "walls/wall_post_nntt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntdd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntdd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntdh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntdh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntdl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntdl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntdn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntdn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntdt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntdt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nthd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nthd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nthh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nthh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nthl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nthl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nthn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nthn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntld": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntld.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntlh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntlh.png",
 			"size": [
 				16,
 				128
@@ -3855,12 +4845,45 @@
 				128
 			]
 		},
+		"wall_post_ntnd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntnd.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_ntnl": {
 			"anchor": [
 				8.0,
 				124.0
 			],
 			"file": "walls/wall_post_ntnl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_nttd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_nttd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ntth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ntth.png",
 			"size": [
 				16,
 				128
@@ -3899,6 +4922,138 @@
 				128
 			]
 		},
+		"wall_post_tldd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tldd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tldh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tldh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tldl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tldl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tldn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tldn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tldt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tldt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlhd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlhd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlhh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlhh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlhl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlhl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlhn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlhn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlld": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlld.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tllh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tllh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_tlll": {
 			"anchor": [
 				8.0,
@@ -3927,6 +5082,28 @@
 				124.0
 			],
 			"file": "walls/wall_post_tllt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlnd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlnd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlnh.png",
 			"size": [
 				16,
 				128
@@ -3965,6 +5142,28 @@
 				128
 			]
 		},
+		"wall_post_tltd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tltd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tlth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tlth.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_tltl": {
 			"anchor": [
 				8.0,
@@ -3993,6 +5192,127 @@
 				124.0
 			],
 			"file": "walls/wall_post_tltt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tndd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tndd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tndh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tndh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tndl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tndl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tndn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tndn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tndt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tndt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnhd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnhd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnhh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnhh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnhl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnhl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnld": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnld.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnlh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnlh.png",
 			"size": [
 				16,
 				128
@@ -4031,6 +5351,28 @@
 				128
 			]
 		},
+		"wall_post_tnnd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnnd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnnh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_tnnl": {
 			"anchor": [
 				8.0,
@@ -4053,6 +5395,28 @@
 				128
 			]
 		},
+		"wall_post_tntd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tntd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tnth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tnth.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_tntl": {
 			"anchor": [
 				8.0,
@@ -4070,6 +5434,138 @@
 				124.0
 			],
 			"file": "walls/wall_post_tntt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttdd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttdd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttdh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttdh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttdl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttdl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttdn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttdn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttdt": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttdt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tthd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tthd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tthh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tthh.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tthl": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tthl.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tthn": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tthn.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttht": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttht.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttld": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttld.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttlh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttlh.png",
 			"size": [
 				16,
 				128
@@ -4108,6 +5604,28 @@
 				128
 			]
 		},
+		"wall_post_ttnd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttnd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttnh": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttnh.png",
+			"size": [
+				16,
+				128
+			]
+		},
 		"wall_post_ttnl": {
 			"anchor": [
 				8.0,
@@ -4136,6 +5654,28 @@
 				124.0
 			],
 			"file": "walls/wall_post_ttnt.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_tttd": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_tttd.png",
+			"size": [
+				16,
+				128
+			]
+		},
+		"wall_post_ttth": {
+			"anchor": [
+				8.0,
+				124.0
+			],
+			"file": "walls/wall_post_ttth.png",
 			"size": [
 				16,
 				128

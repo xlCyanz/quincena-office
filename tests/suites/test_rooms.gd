@@ -26,6 +26,7 @@ func _ready() -> void:
 	_check_mark_and_rules()
 	_check_requirements()
 	_check_walls_change_rooms()
+	await _check_move_ceo_office()
 	await _check_in_game_with_mouse()
 
 	finished.emit(_failures, _checks)
@@ -177,6 +178,68 @@ func _check_requirements() -> void:
 	OfficeState.furniture.remove_at(desk)
 	status = builder.room_status(_room_at(Vector2i(0, 0)))["message"]
 	_expect(chair >= 0 and status.contains("falta escritorio ejecutivo"), "Oficina Ejecutiva sin escritorio: %s" % status)
+
+
+# Mudar la Oficina Ejecutiva: marcarla en otro espacio pregunta antes y, con un escritorio y una
+# silla libre delante, pasa al CEO ahí y deja la oficina de antes sin marcar.
+func _check_move_ceo_office() -> void:
+	SaveManager.new_game()
+	Economy.earn(20000, "Prueba")
+	var builder := Builder.new()
+	var x: int = GridEdge.AXIS_X
+	var y: int = GridEdge.AXIS_Y
+	# Otro espacio cerrado con puerta: las casillas (3..5, 0..2).
+	_expect(builder.apply([_wall(3, 2, y), _wall(4, 2, y, ConstructionCatalog.DOOR), _wall(5, 2, y)])["ok"], "cerrar otra oficina")
+	var target := Vector2i(4, 1)
+	var old_seat: Vector2i = OfficeState.find_furniture_assigned_to("ceo")["cell"]
+	var result: Dictionary = builder.quote_mark_room("executive_office", target)
+	_expect(not result["ok"] and String(result["message"]).contains("silla libre"), "sin escritorio ni silla no se muda: %s" % result["message"])
+	builder.place("executive_desk", Vector2i(3, 0), 2)
+	result = builder.quote_mark_room("executive_office", target)
+	_expect(not result["ok"], "con escritorio pero sin silla tampoco")
+	builder.place("basic_chair", Vector2i(3, 1), 0)
+	result = builder.quote_mark_room("executive_office", target)
+	_expect(result["ok"] and bool(result.get("confirm", false)) and String(result["message"]).begins_with("¿Mudar")
+		and result["seat"] == Vector2i(3, 1), "con escritorio y silla pide confirmar: %s" % result["message"])
+	# Marcar sin confirmar no cambia nada.
+	result = builder.mark_room("executive_office", target)
+	_expect(not result["ok"] and _room_type_at(target) != "executive_office"
+		and OfficeState.find_furniture_assigned_to("ceo")["cell"] == old_seat, "sin confirmar no se muda")
+	# Con el ratón: el clic pregunta, No lo deja como estaba y Sí lo muda.
+	var game: Node = GAME_SCENE.instantiate()
+	add_child(game)
+	await get_tree().process_frame
+	GameClock.stop()
+	var panel: BuildPanel = game.get_node("BuildPanel")
+	var controller: BuildController = game.get_node("BuildController")
+	panel.set_build_mode(true)
+	panel.select_tool("executive_office")
+	controller.set("_pointer", Vector2(target))
+	controller.call("_update_preview", false)
+	_expect(not panel.is_confirm_visible(), "antes del clic no hay pregunta")
+	(controller.get("_apply_preview") as Callable).call()
+	_expect(controller.is_confirming() and panel.is_confirm_visible(), "el clic muestra la pregunta con Sí y No")
+	panel.get_confirm_button("no").pressed.emit()
+	_expect(not controller.is_confirming() and not panel.is_confirm_visible()
+		and OfficeState.find_furniture_assigned_to("ceo")["cell"] == old_seat, "No: todo queda como estaba")
+	controller.call("_update_preview", false)
+	(controller.get("_apply_preview") as Callable).call()
+	panel.get_confirm_button("yes").pressed.emit()
+	await get_tree().process_frame
+	_expect(_room_type_at(target) == "executive_office" and _room_type_at(Vector2i(1, 1)) != "executive_office",
+		"Sí: la Oficina Ejecutiva pasa al espacio nuevo y la de antes queda sin marcar")
+	_expect(OfficeState.find_furniture_assigned_to("ceo")["cell"] == Vector2i(3, 1), "el CEO tiene la silla nueva")
+	_expect(String(OfficeState.furniture[OfficeState.find_furniture_at(old_seat)]["assigned_to"]).is_empty(), "la silla de antes queda libre")
+	_expect((game.get("ceo") as Ceo).get_seat_cell() == Vector2i(3, 1), "y el personaje del CEO va a su silla nueva")
+	var count: int = 0
+	for room: Dictionary in OfficeState.rooms:
+		if room["type"] == "executive_office":
+			count += 1
+	_expect(count == 1, "sigue habiendo una sola Oficina Ejecutiva")
+	_expect(builder.quote_sell_furniture_at(old_seat)["ok"], "la silla vieja ya se puede vender")
+	panel.set_build_mode(false)
+	game.queue_free()
+	await get_tree().process_frame
 
 
 func _check_walls_change_rooms() -> void:

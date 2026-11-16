@@ -10,6 +10,7 @@ const REMOVED_WIDE_DESK: String = "wide_desk"
 const REMOVED_MID_COMPUTER: String = "mid_computer"
 ## Tipo de la Sala de servidores (data/rooms.json).
 const SERVER_ROOM: String = "server_room"
+const EXECUTIVE_OFFICE: String = "executive_office"
 ## Baño: sus inodoros dan la capacidad (hito 52).
 const BATHROOM: String = "bathroom"
 ## Sala de descanso: almuerzo dentro (hito 53).

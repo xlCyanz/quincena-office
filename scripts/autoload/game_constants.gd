@@ -34,8 +34,8 @@ const DAYS_PER_WEEK: int = 7
 ## Hora a la que empieza una partida nueva (el inicio de la jornada).
 const START_HOUR: int = 8
 
-## Velocidades del reloj, sin contar la pausa (1x, 2x y 4x).
-const CLOCK_SPEEDS: Array[float] = [1.0, 2.0, 4.0]
+## Velocidades del reloj, sin contar la pausa (1x, 2x, 4x, 8x y 16x).
+const CLOCK_SPEEDS: Array[float] = [1.0, 2.0, 4.0, 8.0, 16.0]
 
 ## Días del mes en que se paga la nómina.
 const PAYROLL_DAYS: Array[int] = [15, 30]

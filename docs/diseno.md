@@ -274,7 +274,7 @@ Un día de juego dura 24 minutos reales a velocidad normal: cada hora del reloj 
 | Elemento | Valor |
 | --- | --- |
 | Reloj | 24 horas, visible siempre junto con el día y la fecha |
-| Velocidades | Pausa, 1x, 2x y 4x |
+| Velocidades | Pausa, 1x, 2x, 4x, 8x y 16x (las dos últimas, agregadas en la fase 8) |
 | Un día de juego | 4 minutos a 1x; 1 minuto a 4x |
 | Mes | 30 días (1 hora real a 1x) |
 | Nómina | Cada 15 días: los días 15 y 30 de cada mes |

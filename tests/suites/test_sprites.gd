@@ -59,6 +59,15 @@ func _check_library() -> void:
 	_expect(EdgePieceView.get_corner_sprite({plus_x: true, plus_y: true, minus_x: true}) == "wall_post_tntt", "una T lleva su poste")
 	_expect(EdgePieceView.get_corner_sprite({plus_x: false, plus_y: false, minus_x: false, minus_y: false}) == "wall_post_llll", "un cruce también")
 	_expect(EdgePieceView.get_corner_sprite({plus_x: true}) == "", "la punta de una pared suelta no lleva poste")
+	_expect(EdgePieceView.get_arm_code(ConstructionCatalog.DOOR, false) == "d" and EdgePieceView.get_arm_code(ConstructionCatalog.DOOR, true) == "h"
+		and EdgePieceView.get_arm_code(ConstructionCatalog.WALL, true) == "t" and EdgePieceView.get_arm_code(ConstructionCatalog.GLASS_DOOR, false) == "l",
+		"códigos de brazo: puertas d/h, lo demás como pared")
+	_expect(EdgePieceView.get_corner_sprite({minus_x: "d", plus_x: "d"}) == "wall_post_dndn", "dos puertas bajas en línea: jamba compartida")
+	_expect(EdgePieceView.get_corner_sprite({minus_y: "h", plus_y: "h"}) == "wall_post_nhnh", "dos puertas altas en línea: jamba compartida")
+	_expect(EdgePieceView.get_corner_sprite({minus_x: "l", plus_x: "d"}) == "" and EdgePieceView.get_corner_sprite({minus_x: "d", plus_x: "l"}) == "",
+		"pared y puerta del mismo alto en línea: sin poste")
+	_expect(EdgePieceView.get_corner_sprite({minus_x: "t", plus_x: "t", plus_y: "d"}) == "wall_post_tntd", "puerta baja contra una pared alta: el poste la dibuja como puerta")
+	_expect(EdgePieceView.get_corner_sprite({minus_y: "d", plus_x: "l"}) == "wall_post_nlln", "una puerta atrás del poste cuenta como pared")
 	# Familias de pasto: fijas por casilla y salen las cuatro.
 	var seen: Dictionary[String, int] = {}
 	for x: int in range(60):

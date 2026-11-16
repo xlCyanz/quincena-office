@@ -22,8 +22,24 @@ func _ready() -> void:
 	SaveManager.save_dir = "user://test_saves"
 	_check_monitors()
 	_check_console()
+	_check_console_overlay()
 	_check_commands()
 	finished.emit(_failures, _checks)
+
+
+# Opción de Ajustes: los renglones de la consola sobre el juego, a la vista o no.
+func _check_console_overlay() -> void:
+	if not has_node("/root/Panku"):
+		return
+	_expect(not bool(Settings.get_defaults()["console_overlay"]), "por defecto la consola no se ve sobre el juego")
+	Settings.set_value("console_overlay", true)
+	_expect(DevTools.is_console_overlay_shown(), "con la opción, los renglones de la consola quedan a la vista")
+	Settings.set_value("console_overlay", false)
+	_expect(not DevTools.is_console_overlay_shown(), "sin la opción, solo se ven con la consola abierta")
+	var options := OptionsList.new()
+	add_child(options)
+	_expect(options.get_toggle("console_overlay").visible, "Ajustes muestra la opción cuando hay consola")
+	options.queue_free()
 
 
 func _expect(condition: bool, message: String) -> void:
