@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Pasa al juego los sprites que ya están conectados (por ahora: suelo, paredes y árboles).
+# Pasa al juego los sprites que ya están conectados (por ahora: suelo, paredes, árboles, muebles
+# de piso, objetos de pared y personajes).
 #
 #   python3 tools/sprites/export_game.py DIR
 #
@@ -11,6 +12,13 @@
 #                                cuando el zoom no es entero
 #   assets/sprites/walls/*.png   tramos de pared, puerta, ventana y puerta de vidrio, y los postes
 #   assets/sprites/trees/*.png   los árboles y sus sombras
+#   assets/sprites/furniture/*.png  los muebles de piso, las computadoras y sus sombras
+#   assets/sprites/wall_items/*.png los objetos de pared, para pared _x y _y
+#   assets/sprites/characters/*.png una hoja por aspecto (conjunto de ropa y paleta): una fila por
+#                                dirección (r0..r3) y una columna por cuadro (de pie, sentado, parado ×4,
+#                                caminar ×8 y tecleando ×4), en casillas de 128×128. Las paletas _v1 y _v2
+#                                se sacan aquí cambiando color por color (rampa de la base -> rampa de la
+#                                variante): el generador solo las dibuja de pie
 #   data/sprites.json            dónde está cada cosa y su punto de apoyo (lo lee SpriteLibrary)
 #
 # Después hay que dejar que Godot importe lo nuevo: Godot --headless --editor --quit
@@ -28,6 +36,7 @@ import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 
 import sheet  # noqa: E402
+from pieces import character  # noqa: E402
 
 TILE = (128, 64)
 VARIANTS = 4
@@ -43,6 +52,60 @@ EDGE_KINDS = ("wall", "door", "window", "glass_door")
 CORNERS = ("wall_tall_corner", "wall_tall_corner_left", "wall_tall_corner_right", "wall_tall_corner_front",
            "wall_low_corner", "wall_low_corner_back", "wall_low_corner_left", "wall_low_corner_right")
 TREES = 8
+
+# Mueble del juego (id de data/furniture.json) -> (nombre del sprite, si tiene 4 rotaciones _r0.._r3).
+# Los chicos usan la versión _q (ya al 60 %, para un cuarto de casilla). Los objetos de pared no van aquí.
+FURNITURE = {
+    "simple_desk": ("desk_simple", True), "executive_desk": ("executive_desk", True), "wide_desk": ("wide_desk", True),
+    "basic_chair": ("chair_basic", True), "ergonomic_chair": ("chair_ergonomic", True),
+    "small_plant": ("plant_small_q", False), "large_plant": ("plant_large", False),
+    "reception_counter": ("reception_counter", True), "waiting_sofa": ("waiting_sofa", True),
+    "trash_can": ("trash_can_q", False), "water_dispenser": ("water_dispenser_q", True),
+    "cleaning_closet": ("cleaning_closet", True), "server_rack": ("server_rack", True),
+    "basic_computer": ("computer_basic", True), "mid_computer": ("computer_mid", True),
+    "pro_computer": ("computer_pro", True), "second_monitor": ("second_monitor", True),
+    "meeting_table": ("meeting_table", False), "toilet": ("toilet", True), "sink": ("sink", True),
+    "coffee_maker": ("coffee_maker", True), "fridge": ("fridge", True), "microwave": ("microwave", True),
+    "printer": ("printer", True), "sofa": ("sofa", True), "ping_pong": ("ping_pong", True),
+    "vending_machine": ("vending_machine", True), "dining_table": ("dining_table", True),
+    "backup_battery": ("backup_battery", True), "filing_cabinet": ("filing_cabinet", True),
+    "floor_lamp": ("floor_lamp_q", False), "rug": ("rug", False), "aquarium": ("aquarium", True),
+}
+# Objeto de pared del juego -> dibujos posibles (el juego elige uno fijo por casilla); cada uno con _x y _y.
+WALL_ITEMS = {
+    "air_conditioner": ("air_conditioner",), "painting": ("painting", "painting_abstract", "painting_sea"),
+    "wall_clock": ("wall_clock",), "whiteboard": ("whiteboard",), "presentation_screen": ("presentation_screen",),
+}
+# Sillas: el asiento y el respaldo son imágenes aparte (<base>_seat_r0, <base>_back_r0), porque el
+# respaldo se dibuja delante o detrás de quien se sienta según la rotación.
+PARTS = ("chair_basic", "chair_ergonomic")
+
+# Personajes: cuadros de cada pose, en el orden de las columnas de la hoja.
+CHARACTER_CELL = (128, 128)
+CHARACTER_POSES = (("stand", 1), ("sit", 1), ("idle", character.IDLE_FRAMES), ("walk", character.WALK_FRAMES),
+                   ("type", character.TYPE_FRAMES))
+CHARACTER_VARIANTS = ("", "_v1", "_v2")
+
+
+def recolor(image, base, variant):
+    """Cambia la paleta de un cuadro: cada tono de cada capa de `base` por el mismo tono de `variant`."""
+    mapping = {}
+    for layer in character.LAYER_ORDER:
+        for old, new in zip(base.ramp(layer).colors, variant.ramp(layer).colors):
+            old, new = tuple(old), tuple(new)
+            if mapping.get(old, new) != new:
+                raise SystemExit("personajes: el color %s está en dos capas con destinos distintos" % (old,))
+            mapping[old] = new
+    arr = np.array(image)
+    out = arr.copy()
+    done = arr[..., 3] == 0
+    for old, new in mapping.items():
+        take = (arr[..., 0] == old[0]) & (arr[..., 1] == old[1]) & (arr[..., 2] == old[2]) & (arr[..., 3] > 0)
+        out[take, :3] = new
+        done |= take
+    if not done.all():
+        raise SystemExit("personajes: hay colores fuera de las rampas del aspecto")
+    return Image.fromarray(out)
 
 
 def bleed(tile):
@@ -111,19 +174,83 @@ def main(directory):
         copy("tree_%d" % index, "trees")
         copy("tree_%d_shadow" % index, "trees")
 
+    furniture = {}
+    for item, (base, rotated) in FURNITURE.items():
+        parts = base in PARTS
+        for suffix in (["_r%d" % r for r in range(4)] if rotated else [""]):
+            if parts:
+                copy(base + "_seat" + suffix, "furniture")
+                copy(base + "_back" + suffix, "furniture")
+            else:
+                copy(base + suffix, "furniture")
+            if os.path.isfile(os.path.join(directory, base + suffix + "_shadow.png")):
+                copy(base + suffix + "_shadow", "furniture")
+        furniture[item] = {"base": base, "rotated": rotated, "parts": parts}
+
+    wall_items = {}
+    for item, bases in WALL_ITEMS.items():
+        for base in bases:
+            for axis in ("x", "y"):
+                copy("%s_%s" % (base, axis), "wall_items")
+        wall_items[item] = {"sprites": list(bases), "base_z": manifest[bases[0] + "_x.png"]["base_z"]}
+
+    # ---- personajes
+    columns = sum(count for _pose, count in CHARACTER_POSES)
+    poses = {}
+    column = 0
+    for pose, count in CHARACTER_POSES:
+        poses[pose] = {"column": column, "frames": count}
+        column += count
+    characters_dir = os.path.join(ROOT, "assets", "sprites", "characters")
+    os.makedirs(characters_dir, exist_ok=True)
+    looks = {}
+    for style in character.STYLES:
+        frames = []  # (columna, fila, imagen)
+        for rotation in range(4):
+            column = 0
+            for pose, count in CHARACTER_POSES:
+                for frame in range(count):
+                    name = "character_%s%s_r%d" % (style.prefix, pose, rotation)
+                    if pose not in ("stand", "sit"):
+                        name += "_%d" % (frame + 1)
+                    image = load(name)
+                    if image.size != CHARACTER_CELL or manifest[name + ".png"]["anchor"] != [64.0, 112.0]:
+                        raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
+                    frames.append((column, rotation, image))
+                    column += 1
+        for suffix in CHARACTER_VARIANTS:
+            page = Image.new("RGBA", (CHARACTER_CELL[0] * columns, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
+            for column, row, image in frames:
+                if suffix:
+                    image = recolor(image, character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
+                page.paste(image, (column * CHARACTER_CELL[0], row * CHARACTER_CELL[1]))
+            page.save(os.path.join(characters_dir, style.name + suffix + ".png"))
+            looks[style.name + suffix] = "characters/%s%s.png" % (style.name, suffix)
+    copy("character_stand_shadow", "characters")
+
     data = {
         "_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = "
                        "px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count "
                        "variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo "
-                       "(anchor, en px del sprite) y tamaño.",
+                       "(anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, "
+                       "si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); "
+                       "la sombra es el nombre sin parte más _shadow. wall_items: objeto de pared -> dibujos "
+                       "(sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso "
+                       "empieza (base_z). characters: hojas de personajes (looks: "
+                       "aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y "
+                       "cuántos tiene; cell y anchor en px del sprite).",
         "scale": 2,
         "ground": {"file": "res://assets/tiles/ground.png", "tile": list(TILE), "styles": styles},
+        "characters": {"cell": list(CHARACTER_CELL), "anchor": [64, 112], "poses": poses, "looks": looks,
+                       "shadow": "character_stand_shadow"},
+        "furniture": furniture,
         "sprites": sprites,
+        "wall_items": wall_items,
     }
     with open(os.path.join(ROOT, "data", "sprites.json"), "w") as handle:
         json.dump(data, handle, indent="\t", sort_keys=True, ensure_ascii=False)
         handle.write("\n")
-    print("suelo: %d estilos · piezas: %d" % (len(styles), len(sprites)))
+    print("suelo: %d estilos · muebles: %d · aspectos: %d · piezas: %d" % (len(styles), len(furniture), len(looks), len(sprites)))
 
 
 if __name__ == "__main__":

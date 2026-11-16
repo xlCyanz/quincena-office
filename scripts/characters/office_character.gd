@@ -34,6 +34,15 @@ const ICON_RADIUS: float = 7.0
 const ICON_FONT_SIZE: int = 11
 ## Zona en la que un clic toca al personaje, relativa a su punto de apoyo (ya con BODY_SCALE).
 const CLICK_AREA := Rect2(-10.0, -52.0, 20.0, 56.0)
+## Sprites (fase 8): ciclos de caminar por casilla recorrida y segundos reales por cuadro
+## de las poses quietas.
+const WALK_CYCLES_PER_CELL: float = 1.5
+const FRAME_SECONDS: Dictionary[String, float] = {"idle": 0.45, "type": 0.14}
+## Dónde va el icono de estado sobre la cabeza del sprite, de pie y sentado.
+const SPRITE_ICON_STANDING := Vector2(11.0, -52.0)
+const SPRITE_ICON_SEATED := Vector2(11.0, -46.0)
+## Paletas de cada conjunto de ropa (la base, piel oscura y piel clara).
+const LOOK_VARIANTS: Array[String] = ["", "_v1", "_v2"]
 ## Ninguna casilla (para _release_cells).
 const NO_CELL := Vector2i(-1000000, -1000000)
 
@@ -47,6 +56,15 @@ var tie_color := Color(0.0, 0.0, 0.0, 0.0)
 var skin_color := Color("d9a47a")
 var hair_color := Color("3b2a20")
 
+## Aspecto: hoja de sprites del personaje (conjunto de ropa y paleta, ver make_look). Sin
+## aspecto, o si falta su hoja, se dibuja el muñeco provisional.
+var look: String = "":
+	set(value):
+		look = value
+		queue_redraw()
+## Si teclea cuando se sienta frente a una computadora (las visitas no).
+var can_type: bool = true
+
 var activity: Activity = Activity.AWAY
 ## Icono de estado que se dibuja sobre la cabeza ("" ninguno; claves de STATUS_ICONS).
 var status_icon: String = ""
@@ -55,6 +73,7 @@ var status_icon: String = ""
 var standing: bool = false:
 	set(value):
 		standing = value
+		_animate(0.0, Vector2.ZERO)
 		queue_redraw()
 ## Tiene prisa: camina GameConstants.CHARACTER_HURRY_FACTOR veces más rápido hasta llegar
 ## adonde va (llega tarde, el candidato al que llaman). Si no, camina normal.
@@ -79,6 +98,17 @@ var _held: Array[Vector2i] = []
 # Segundos (a 1x) que lleva esperando a que se libere la siguiente casilla.
 var _blocked_time: float = 0.0
 var _next_repath: float = GameConstants.CHARACTER_REPATH_WAIT
+# Lo que se dibuja con sprites: hacia dónde mira (0–3, como las rotaciones de los muebles),
+# pose y cuadro.
+var _facing: int = 2
+var _pose: String = "stand"
+var _frame: int = 0
+var _walk_phase: float = 0.0
+var _anim_time: float = 0.0
+# Su lugar tiene asiento: hacia dónde mira sentado (-1 si no hay) y si queda frente a una
+# computadora.
+var _seat_facing: int = -1
+var _at_computer: bool = false
 
 
 ## Prepara al personaje con lo que necesita de la oficina. Lo llama la escena de juego.
@@ -92,9 +122,32 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 	_entrance = entrance
 	_outside = outside
 	grid_position = Vector2(entrance)
+	# Cada uno empieza su animación en otro momento, así no se mueven todos a la vez.
+	_anim_time = float(absi(person_key.hash()) % 997) / 100.0
+	if not EventBus.office_changed.is_connected(_refresh_seat):
+		EventBus.office_changed.connect(_refresh_seat)
 	_set_activity(Activity.AWAY)
 	visible = false
 	_update_position()
+
+
+## Aspecto para una persona: conjunto de ropa (outfit "casual", "office" o "executive"; de
+## mujer si woman) y una de las paletas según number.
+static func make_look(woman: bool, outfit: String, number: int) -> String:
+	var base: String = outfit
+	if woman:
+		base = "woman" if outfit == "casual" else "woman_" + outfit
+	return base + LOOK_VARIANTS[posmod(number, LOOK_VARIANTS.size())]
+
+
+## Indica si un nombre completo es de mujer (por su primer nombre en data/names.json).
+static func is_woman_name(full_name: String) -> bool:
+	return StaffCatalog.get_first_names("female").has(full_name.get_slice(" ", 0))
+
+
+## Pose y dirección que se dibujan con sprites: {pose, facing, frame}.
+func get_sprite_state() -> Dictionary:
+	return {"pose": _pose, "facing": _facing, "frame": _frame}
 
 
 ## Casilla en la que está (la más cercana si va entre dos).
@@ -185,9 +238,15 @@ func _process(delta: float) -> void:
 	# Parado en una casilla que todavía no tiene (al cargar, al aparecer): la toma.
 	if _held.is_empty() and grid_position == Vector2(get_cell()):
 		_claim(get_cell(), true)
-	if _path.is_empty():
-		return
-	var scaled_delta: float = GameClock.get_time_scale() * delta
+	var before: Vector2 = grid_position
+	if not _path.is_empty():
+		_advance(GameClock.get_time_scale() * delta)
+	# Al llegar ya no camina: toma la pose de su lugar en este mismo cuadro.
+	_animate(delta, grid_position - before if not _path.is_empty() else Vector2.ZERO)
+
+
+# Avanza por el camino lo que da el tiempo de juego transcurrido.
+func _advance(scaled_delta: float) -> void:
 	var step: float = GameConstants.CHARACTER_WALK_SPEED * scaled_delta \
 		* (GameConstants.CHARACTER_HURRY_FACTOR if hurry else 1.0)
 	while step > 0.0 and not _path.is_empty():
@@ -223,7 +282,71 @@ func _process(delta: float) -> void:
 		_on_destination_reached()
 
 
+# Elige pose, dirección y cuadro del sprite según lo que hace; moved es lo que avanzó en
+# este cuadro, en casillas. Solo vuelve a dibujar si cambia algo.
+func _animate(delta: float, moved: Vector2) -> void:
+	if look.is_empty():
+		return
+	var pose: String = "idle"
+	var facing: int = _facing
+	var frame: int = 0
+	if moved != Vector2.ZERO:
+		pose = "walk"
+		facing = _facing_of(moved)
+		_walk_phase = fposmod(_walk_phase + moved.length() * WALK_CYCLES_PER_CELL, 1.0)
+		frame = int(_walk_phase * SpriteLibrary.get_character_frames(pose))
+	else:
+		if GameClock.get_time_scale() > 0.0:
+			_anim_time += delta
+		if activity == Activity.SEATED and not standing and _seat_facing >= 0:
+			pose = "type" if _at_computer and can_type else "sit"
+			facing = _seat_facing
+		if FRAME_SECONDS.has(pose):
+			frame = int(_anim_time / FRAME_SECONDS[pose]) % maxi(SpriteLibrary.get_character_frames(pose), 1)
+	if pose != _pose or facing != _facing or frame != _frame:
+		_pose = pose
+		_facing = facing
+		_frame = frame
+		queue_redraw()
+
+
+# Dirección (0–3) hacia la que avanza.
+static func _facing_of(moved: Vector2) -> int:
+	if absf(moved.x) >= absf(moved.y):
+		return 1 if moved.x > 0.0 else 3
+	return 2 if moved.y > 0.0 else 0
+
+
+# Mira qué hay en su lugar: si es un asiento, hacia dónde queda sentado (hacia el escritorio
+# con computadora que lo tiene delante, si lo hay; si no, hacia el frente del asiento).
+func _refresh_seat() -> void:
+	_seat_facing = -1
+	_at_computer = false
+	var index: int = OfficeState.find_furniture_at(_seat_cell)
+	if index < 0:
+		return
+	var seat: Dictionary = OfficeState.furniture[index]
+	var info: Dictionary = FurnitureCatalog.get_item(seat["id"])
+	if not bool(info.get("is_seat", false)) and not bool(info.get("waiting_seat", false)):
+		return
+	_seat_facing = posmod(int(seat["rotation"]), 4)
+	for direction: int in range(FurnitureCatalog.FRONT_DIRECTIONS.size()):
+		var desk_index: int = OfficeState.find_furniture_at(_seat_cell + FurnitureCatalog.FRONT_DIRECTIONS[direction])
+		if desk_index < 0:
+			continue
+		var desk: Dictionary = OfficeState.furniture[desk_index]
+		if String(desk.get("computer", "")).is_empty():
+			continue
+		if FurnitureCatalog.get_front(int(desk["rotation"])) == -FurnitureCatalog.FRONT_DIRECTIONS[direction]:
+			_seat_facing = direction
+			_at_computer = true
+			break
+	_animate(0.0, Vector2.ZERO)
+
+
 func _exit_tree() -> void:
+	if EventBus.office_changed.is_connected(_refresh_seat):
+		EventBus.office_changed.disconnect(_refresh_seat)
 	_release_cells()
 	_door_queue.erase(self)
 
@@ -385,6 +508,9 @@ func _on_destination_reached() -> void:
 
 func _set_activity(new_activity: Activity) -> void:
 	activity = new_activity
+	if activity == Activity.SEATED:
+		_refresh_seat()
+	_animate(0.0, Vector2.ZERO)
 	queue_redraw()
 
 
@@ -403,6 +529,8 @@ func _update_position() -> void:
 # Muñeco provisional. El origen es el punto de apoyo en el centro de su casilla.
 # Sentado, la cadera queda sobre el asiento y las piernas cuelgan por delante.
 func _draw() -> void:
+	if _draw_sprite():
+		return
 	var seated: bool = activity == Activity.SEATED and not standing
 	# Sentado, la cadera tiene que quedar sobre el asiento aunque el cuerpo se achique.
 	var lift: float = -SEAT_HEIGHT_PX * (1.0 - BODY_SCALE) if seated else 0.0
@@ -431,6 +559,21 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 	if not status_icon.is_empty():
 		_draw_status_icon(body * head_center + Vector2(9.0, -12.0))
+
+
+# Dibuja el personaje con su hoja de sprites: la sombra si está de pie, el cuadro de su pose
+# y el icono de estado. Devuelve false si no tiene aspecto o falta su hoja.
+func _draw_sprite() -> bool:
+	if not SpriteLibrary.has_character_look(look):
+		return false
+	var sitting: bool = _pose == "sit" or _pose == "type"
+	if not sitting:
+		SpriteLibrary.draw_character_shadow(self)
+	if not SpriteLibrary.draw_character(self, look, _pose, _facing, _frame):
+		return false
+	if not status_icon.is_empty():
+		_draw_status_icon(SPRITE_ICON_SEATED if sitting else SPRITE_ICON_STANDING)
+	return true
 
 
 # Globo con el signo del icono de estado, arriba a la derecha de la cabeza.

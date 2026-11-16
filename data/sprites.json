@@ -1,5 +1,225 @@
 {
-	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño.",
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso empieza (base_z). characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y cuántos tiene; cell y anchor en px del sprite).",
+	"characters": {
+		"anchor": [
+			64,
+			112
+		],
+		"cell": [
+			128,
+			128
+		],
+		"looks": {
+			"casual": "characters/casual.png",
+			"casual_v1": "characters/casual_v1.png",
+			"casual_v2": "characters/casual_v2.png",
+			"executive": "characters/executive.png",
+			"executive_v1": "characters/executive_v1.png",
+			"executive_v2": "characters/executive_v2.png",
+			"office": "characters/office.png",
+			"office_v1": "characters/office_v1.png",
+			"office_v2": "characters/office_v2.png",
+			"woman": "characters/woman.png",
+			"woman_executive": "characters/woman_executive.png",
+			"woman_executive_v1": "characters/woman_executive_v1.png",
+			"woman_executive_v2": "characters/woman_executive_v2.png",
+			"woman_office": "characters/woman_office.png",
+			"woman_office_v1": "characters/woman_office_v1.png",
+			"woman_office_v2": "characters/woman_office_v2.png",
+			"woman_v1": "characters/woman_v1.png",
+			"woman_v2": "characters/woman_v2.png"
+		},
+		"poses": {
+			"idle": {
+				"column": 2,
+				"frames": 4
+			},
+			"sit": {
+				"column": 1,
+				"frames": 1
+			},
+			"stand": {
+				"column": 0,
+				"frames": 1
+			},
+			"type": {
+				"column": 14,
+				"frames": 4
+			},
+			"walk": {
+				"column": 6,
+				"frames": 8
+			}
+		},
+		"shadow": "character_stand_shadow"
+	},
+	"furniture": {
+		"aquarium": {
+			"base": "aquarium",
+			"parts": false,
+			"rotated": true
+		},
+		"backup_battery": {
+			"base": "backup_battery",
+			"parts": false,
+			"rotated": true
+		},
+		"basic_chair": {
+			"base": "chair_basic",
+			"parts": true,
+			"rotated": true
+		},
+		"basic_computer": {
+			"base": "computer_basic",
+			"parts": false,
+			"rotated": true
+		},
+		"cleaning_closet": {
+			"base": "cleaning_closet",
+			"parts": false,
+			"rotated": true
+		},
+		"coffee_maker": {
+			"base": "coffee_maker",
+			"parts": false,
+			"rotated": true
+		},
+		"dining_table": {
+			"base": "dining_table",
+			"parts": false,
+			"rotated": true
+		},
+		"ergonomic_chair": {
+			"base": "chair_ergonomic",
+			"parts": true,
+			"rotated": true
+		},
+		"executive_desk": {
+			"base": "executive_desk",
+			"parts": false,
+			"rotated": true
+		},
+		"filing_cabinet": {
+			"base": "filing_cabinet",
+			"parts": false,
+			"rotated": true
+		},
+		"floor_lamp": {
+			"base": "floor_lamp_q",
+			"parts": false,
+			"rotated": false
+		},
+		"fridge": {
+			"base": "fridge",
+			"parts": false,
+			"rotated": true
+		},
+		"large_plant": {
+			"base": "plant_large",
+			"parts": false,
+			"rotated": false
+		},
+		"meeting_table": {
+			"base": "meeting_table",
+			"parts": false,
+			"rotated": false
+		},
+		"microwave": {
+			"base": "microwave",
+			"parts": false,
+			"rotated": true
+		},
+		"mid_computer": {
+			"base": "computer_mid",
+			"parts": false,
+			"rotated": true
+		},
+		"ping_pong": {
+			"base": "ping_pong",
+			"parts": false,
+			"rotated": true
+		},
+		"printer": {
+			"base": "printer",
+			"parts": false,
+			"rotated": true
+		},
+		"pro_computer": {
+			"base": "computer_pro",
+			"parts": false,
+			"rotated": true
+		},
+		"reception_counter": {
+			"base": "reception_counter",
+			"parts": false,
+			"rotated": true
+		},
+		"rug": {
+			"base": "rug",
+			"parts": false,
+			"rotated": false
+		},
+		"second_monitor": {
+			"base": "second_monitor",
+			"parts": false,
+			"rotated": true
+		},
+		"server_rack": {
+			"base": "server_rack",
+			"parts": false,
+			"rotated": true
+		},
+		"simple_desk": {
+			"base": "desk_simple",
+			"parts": false,
+			"rotated": true
+		},
+		"sink": {
+			"base": "sink",
+			"parts": false,
+			"rotated": true
+		},
+		"small_plant": {
+			"base": "plant_small_q",
+			"parts": false,
+			"rotated": false
+		},
+		"sofa": {
+			"base": "sofa",
+			"parts": false,
+			"rotated": true
+		},
+		"toilet": {
+			"base": "toilet",
+			"parts": false,
+			"rotated": true
+		},
+		"trash_can": {
+			"base": "trash_can_q",
+			"parts": false,
+			"rotated": false
+		},
+		"vending_machine": {
+			"base": "vending_machine",
+			"parts": false,
+			"rotated": true
+		},
+		"waiting_sofa": {
+			"base": "waiting_sofa",
+			"parts": false,
+			"rotated": true
+		},
+		"water_dispenser": {
+			"base": "water_dispenser_q",
+			"parts": false,
+			"rotated": true
+		},
+		"wide_desk": {
+			"base": "wide_desk",
+			"parts": false,
+			"rotated": true
+		}
+	},
 	"ground": {
 		"file": "res://assets/tiles/ground.png",
 		"styles": {
@@ -79,6 +299,1095 @@
 	},
 	"scale": 2,
 	"sprites": {
+		"air_conditioner_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/air_conditioner_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"air_conditioner_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/air_conditioner_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"aquarium_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r0.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r1": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r1.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r1_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r2.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r3": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r3.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"aquarium_r3_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/aquarium_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"backup_battery_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"backup_battery_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/backup_battery_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_basic_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_basic_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_ergonomic_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_ergonomic_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"character_stand_shadow": {
+			"anchor": [
+				64.0,
+				112.0
+			],
+			"file": "characters/character_stand_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"cleaning_closet_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/cleaning_closet_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"coffee_maker_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/coffee_maker_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_basic_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_basic_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_mid_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_mid_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"computer_pro_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/computer_pro_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"desk_simple_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/desk_simple_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"dining_table_r0": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r0.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r0_shadow": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r0_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r1": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r1.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r1_shadow": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r1_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r2": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r2.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r2_shadow": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r2_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r3": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r3.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"dining_table_r3_shadow": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/dining_table_r3_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
 		"door_low_x": {
 			"anchor": [
 				36.0,
@@ -120,6 +1429,292 @@
 			"file": "walls/door_tall_y.png",
 			"size": [
 				72,
+				160
+			]
+		},
+		"executive_desk_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r0.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r1": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r1.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r1_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r2.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r3": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r3.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"executive_desk_r3_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/executive_desk_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"filing_cabinet_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"filing_cabinet_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/filing_cabinet_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"floor_lamp_q": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/floor_lamp_q.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"floor_lamp_q_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/floor_lamp_q_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r0.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r0_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r1": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r1.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r1_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r1_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r2.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r2_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r3": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r3.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"fridge_r3_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/fridge_r3_shadow.png",
+			"size": [
+				128,
 				160
 			]
 		},
@@ -165,6 +1760,985 @@
 			"size": [
 				72,
 				160
+			]
+		},
+		"meeting_table": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/meeting_table.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"meeting_table_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/meeting_table_shadow.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"microwave_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"microwave_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/microwave_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"painting_abstract_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_abstract_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_abstract_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_abstract_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_sea_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_sea_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_sea_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_sea_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"ping_pong_r0": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r0.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r0_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r0_shadow.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r1": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r1.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r1_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r1_shadow.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r2": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r2.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r2_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r2_shadow.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r3": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r3.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"ping_pong_r3_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/ping_pong_r3_shadow.png",
+			"size": [
+				256,
+				192
+			]
+		},
+		"plant_large": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/plant_large.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"plant_large_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/plant_large_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"plant_small_q": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/plant_small_q.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"plant_small_q_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/plant_small_q_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"presentation_screen_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"printer_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"printer_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/printer_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"reception_counter_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r0.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r1": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r1.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r1_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r2.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r3": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r3.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"reception_counter_r3_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/reception_counter_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"rug": {
+			"anchor": [
+				128.0,
+				32.0
+			],
+			"file": "furniture/rug.png",
+			"size": [
+				256,
+				128
+			]
+		},
+		"second_monitor_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"second_monitor_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/second_monitor_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"server_rack_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r0.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r0_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r1": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r1.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r1_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r1_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r2.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r2_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r3": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r3.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"server_rack_r3_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/server_rack_r3_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"sink_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sink_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/sink_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"sofa_r0": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/sofa_r0.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r0_shadow": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/sofa_r0_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r1": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/sofa_r1.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r1_shadow": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/sofa_r1_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r2": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/sofa_r2.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r2_shadow": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/sofa_r2_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r3": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/sofa_r3.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"sofa_r3_shadow": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/sofa_r3_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"toilet_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"toilet_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/toilet_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"trash_can_q": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/trash_can_q.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"trash_can_q_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/trash_can_q_shadow.png",
+			"size": [
+				128,
+				128
 			]
 		},
 		"tree_0": {
@@ -343,6 +2917,204 @@
 				256
 			]
 		},
+		"vending_machine_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r0.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r0_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r1": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r1.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r1_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r1_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r2.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r2_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r3": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r3.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"vending_machine_r3_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/vending_machine_r3_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"waiting_sofa_r0": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r0.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r0_shadow": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r0_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r1": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r1.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r1_shadow": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r1_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r2": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r2.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r2_shadow": {
+			"anchor": [
+				64.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r2_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r3": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r3.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"waiting_sofa_r3_shadow": {
+			"anchor": [
+				128.0,
+				64.0
+			],
+			"file": "furniture/waiting_sofa_r3_shadow.png",
+			"size": [
+				192,
+				128
+			]
+		},
+		"wall_clock_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/wall_clock_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"wall_clock_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/wall_clock_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
 		"wall_low_corner": {
 			"anchor": [
 				8.0,
@@ -475,6 +3247,204 @@
 				160
 			]
 		},
+		"water_dispenser_q_r0": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r0.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r0_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r0_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r1": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r1.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r1_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r1_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r2": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r2.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r2_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r2_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r3": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r3.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"water_dispenser_q_r3_shadow": {
+			"anchor": [
+				64.0,
+				128.0
+			],
+			"file": "furniture/water_dispenser_q_r3_shadow.png",
+			"size": [
+				128,
+				160
+			]
+		},
+		"whiteboard_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/whiteboard_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"whiteboard_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/whiteboard_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"wide_desk_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r0.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r0_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r1": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r1.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r1_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r1_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r2.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r2_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r3": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r3.png",
+			"size": [
+				192,
+				160
+			]
+		},
+		"wide_desk_r3_shadow": {
+			"anchor": [
+				128.0,
+				96.0
+			],
+			"file": "furniture/wide_desk_r3_shadow.png",
+			"size": [
+				192,
+				160
+			]
+		},
 		"window_low_x": {
 			"anchor": [
 				36.0,
@@ -517,6 +3487,40 @@
 			"size": [
 				72,
 				160
+			]
+		}
+	},
+	"wall_items": {
+		"air_conditioner": {
+			"base_z": 48,
+			"sprites": [
+				"air_conditioner"
+			]
+		},
+		"painting": {
+			"base_z": 48,
+			"sprites": [
+				"painting",
+				"painting_abstract",
+				"painting_sea"
+			]
+		},
+		"presentation_screen": {
+			"base_z": 50,
+			"sprites": [
+				"presentation_screen"
+			]
+		},
+		"wall_clock": {
+			"base_z": 48,
+			"sprites": [
+				"wall_clock"
+			]
+		},
+		"whiteboard": {
+			"base_z": 48,
+			"sprites": [
+				"whiteboard"
 			]
 		}
 	}

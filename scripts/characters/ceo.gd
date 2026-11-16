@@ -10,3 +10,4 @@ func _init() -> void:
 	display_name = "El CEO"
 	shirt_color = Color("e8e4dc")
 	tie_color = Color("b03a2e")
+	look = "executive"

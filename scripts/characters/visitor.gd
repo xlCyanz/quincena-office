@@ -19,6 +19,8 @@ func configure(visit: Dictionary) -> void:
 	display_name = "Cliente de %s" % visit["offer"]["client"]
 	shirt_color = SUIT_COLOR
 	tie_color = TIE_COLOR
+	can_type = false
+	look = make_look(visit_id % 2 == 1, "executive" if (visit_id >> 1) % 2 == 0 else "office", visit_id)
 	queue_redraw()
 
 
@@ -30,4 +32,6 @@ func configure_candidate(candidate: Dictionary) -> void:
 	shirt_color = CANDIDATE_SHIRT_COLOR
 	tie_color = Color(0.0, 0.0, 0.0, 0.0)
 	standing = true
+	can_type = false
+	look = make_look(String(candidate.get("sex", "")) == "female", "office", int(candidate["id"]))
 	queue_redraw()

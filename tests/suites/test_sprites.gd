@@ -1,5 +1,5 @@
-# Prueba de los sprites conectados al juego (fase 8): suelo, paredes con sus postes de esquina
-# y árboles se dibujan con las imágenes de data/sprites.json (SpriteLibrary).
+# Prueba de los sprites conectados al juego (fase 8): suelo, paredes con sus postes de esquina,
+# árboles, muebles de piso y personajes se dibujan con las imágenes de data/sprites.json (SpriteLibrary).
 extends Node
 
 signal finished(failures: int, checks: int)
@@ -13,6 +13,8 @@ var _checks: int = 0
 func _ready() -> void:
 	SaveManager.save_dir = "user://test_saves"
 	_check_library()
+	_check_furniture()
+	_check_characters()
 	await _check_game()
 	finished.emit(_failures, _checks)
 
@@ -62,6 +64,47 @@ func _check_library() -> void:
 	_expect(MapDecor.get_grass_family(Vector2i(7, 9)) == MapDecor.get_grass_family(Vector2i(7, 9)), "la familia de una casilla no cambia")
 
 
+# Cada mueble de piso tiene su sprite en las 4 rotaciones; las sillas van en asiento y respaldo.
+func _check_furniture() -> void:
+	for id: String in FurnitureCatalog.get_ids():
+		for rotation: int in range(4):
+			var sprite: String = SpriteLibrary.get_furniture_sprite(id, rotation)
+			if FurnitureCatalog.is_wall_mounted(id):
+				_expect(sprite.is_empty(), "%s (de pared) no está entre los muebles de piso" % id)
+				for axis: int in [GridEdge.AXIS_X, GridEdge.AXIS_Y]:
+					var hung: String = SpriteLibrary.get_wall_item_sprite(id, axis, rotation)
+					_expect(SpriteLibrary.get_texture(hung) != null and hung.ends_with("_x" if axis == GridEdge.AXIS_X else "_y"),
+						"%s tiene sprite para el eje %d: «%s»" % [id, axis, hung])
+				_expect(SpriteLibrary.get_wall_item_base(id) > 0.0, "%s empieza sobre el piso" % id)
+				continue
+			_expect(SpriteLibrary.get_texture(sprite) != null, "%s r%d tiene sprite: «%s»" % [id, rotation, sprite])
+			if FurnitureView.has_backrest(id):
+				_expect(sprite.contains("_seat") and SpriteLibrary.get_furniture_sprite(id, rotation, "back").contains("_back"),
+					"%s r%d va en asiento y respaldo" % [id, rotation])
+			if id != "rug":
+				_expect(not SpriteLibrary.get_furniture_sprite(id, rotation, "shadow").is_empty(), "%s r%d tiene sombra" % [id, rotation])
+	_expect(SpriteLibrary.get_furniture_sprite("basic_chair", 5) == SpriteLibrary.get_furniture_sprite("basic_chair", 1),
+		"la rotación da la vuelta")
+	_expect(SpriteLibrary.get_furniture_sprite("small_plant", 0).ends_with("_q"), "el mueble chico usa su versión de cuarto de casilla")
+	_expect(SpriteLibrary.get_furniture_sprite("no_existe", 0).is_empty(), "un mueble desconocido no da sprite")
+
+
+# Hojas de personajes: los 6 conjuntos en sus 3 paletas, con todas las poses.
+func _check_characters() -> void:
+	for woman: bool in [false, true]:
+		for outfit: String in ["casual", "office", "executive"]:
+			for number: int in range(3):
+				var look: String = OfficeCharacter.make_look(woman, outfit, number)
+				_expect(SpriteLibrary.has_character_look(look), "hay hoja para %s" % look)
+	_expect(OfficeCharacter.make_look(true, "casual", 0) == "woman" and OfficeCharacter.make_look(false, "office", 4) == "office_v1",
+		"nombres de los aspectos")
+	_expect(not SpriteLibrary.has_character_look("no_existe"), "un aspecto desconocido no tiene hoja")
+	_expect(SpriteLibrary.get_character_frames("walk") == 8 and SpriteLibrary.get_character_frames("idle") == 4
+		and SpriteLibrary.get_character_frames("type") == 4 and SpriteLibrary.get_character_frames("sit") == 1
+		and SpriteLibrary.get_character_frames("no_existe") == 0, "cuadros de cada pose")
+	_expect(OfficeCharacter.is_woman_name("Ana García") and not OfficeCharacter.is_woman_name("Carlos García"), "el nombre dice si es mujer")
+
+
 func _check_game() -> void:
 	SaveManager.new_game()
 	var game: Node = GAME_SCENE.instantiate()
@@ -103,5 +146,58 @@ func _check_game() -> void:
 			"árbol con sprite y sombra: %s" % tree.get_sprite())
 		kinds[tree.get_sprite()] = true
 	_expect(trees.size() > 0 and kinds.size() > 3, "árboles de varias clases: %d" % kinds.size())
+	# Muebles: cada pieza de piso se dibuja con su sprite.
+	var furniture_views: int = 0
+	for child: Node in grid.get_node("Objects").get_children():
+		if child is FurnitureView and not child.is_queued_for_deletion():
+			var piece: FurnitureView = child
+			if FurnitureCatalog.is_wall_mounted(piece.item_id):
+				continue
+			furniture_views += 1
+			_expect(SpriteLibrary.has_sprite(piece.get_sprite()), "%s usa un sprite: «%s»" % [piece.name, piece.get_sprite()])
+	_expect(furniture_views >= 2, "hay muebles dibujados: %d" % furniture_views)
+	# Objetos de pared: con sprite en las caras que se ven de frente (miran a +x o +y); de espaldas, el dibujo provisional.
+	OfficeState.furniture.append({"id": "painting", "cell": Vector2i(0, 4), "rotation": 1})
+	OfficeState.furniture.append({"id": "wall_clock", "cell": Vector2i(4, 0), "rotation": 2})
+	OfficeState.furniture.append({"id": "painting", "cell": Vector2i(2, 1), "rotation": 3})
+	EventBus.office_changed.emit()
+	await get_tree().process_frame
+	var hung_sprites: Dictionary[String, String] = {}
+	for child: Node in grid.get_node("Objects").get_children():
+		if child is FurnitureView and not child.is_queued_for_deletion() and FurnitureCatalog.is_wall_mounted((child as FurnitureView).item_id):
+			hung_sprites["%s_%d" % [(child as FurnitureView).item_id, (child as FurnitureView).rotation_index]] = (child as FurnitureView).get_sprite()
+	_expect(String(hung_sprites.get("painting_1", "")).begins_with("painting") and String(hung_sprites.get("painting_1", "")).ends_with("_x"),
+		"cuadro en pared del eje x: %s" % hung_sprites.get("painting_1", ""))
+	_expect(hung_sprites.get("wall_clock_2", "") == "wall_clock_y", "reloj en pared del eje y: %s" % hung_sprites.get("wall_clock_2", ""))
+	_expect(hung_sprites.get("painting_3", "?") == "", "de espaldas no hay sprite")
+	# El CEO: camina mirando hacia donde va y, sentado frente a su computadora, teclea mirándola.
+	var ceo: Ceo = game.get("ceo")
+	_expect(SpriteLibrary.has_character_look(ceo.look), "el CEO tiene aspecto: %s" % ceo.look)
+	ceo.update_routine(true)
+	GameClock.start()
+	var walked: Dictionary[String, bool] = {}
+	var guard: int = 0
+	var facing_ok: bool = true
+	while ceo.activity != OfficeCharacter.Activity.SEATED and guard < 4000:
+		var before: Vector2 = ceo.grid_position
+		await get_tree().process_frame
+		guard += 1
+		var walking: Dictionary = ceo.get_sprite_state()
+		walked[String(walking["pose"])] = true
+		# En un tramo recto (no en el cuadro en que dobla) mira hacia donde avanzó.
+		var moved: Vector2 = ceo.grid_position - before
+		if String(walking["pose"]) == "walk" and (moved.x == 0.0) != (moved.y == 0.0):
+			facing_ok = facing_ok and FurnitureCatalog.get_front(int(walking["facing"])) == Vector2i(moved.sign())
+	_expect(facing_ok, "camina mirando hacia donde va")
+	GameClock.stop()
+	_expect(walked.has("walk"), "caminando usa la animación de caminar")
+	var seated: Dictionary = ceo.get_sprite_state()
+	_expect(String(seated["pose"]) == "type", "sentado frente a su computadora teclea: %s" % seated["pose"])
+	var desk_cell: Vector2i = ceo.get_seat_cell() + FurnitureCatalog.get_front(int(seated["facing"]))
+	var desk: int = OfficeState.find_furniture_at(desk_cell)
+	_expect(desk >= 0 and not String(OfficeState.furniture[desk].get("computer", "")).is_empty(), "mira hacia su computadora")
+	ceo.standing = true
+	_expect(String(ceo.get_sprite_state()["pose"]) == "idle", "de pie en su lugar no teclea")
+	ceo.standing = false
 	game.queue_free()
 	await get_tree().process_frame

@@ -39,6 +39,17 @@ const LAMP_POLE_COLOR := Color("5a5148")
 ## Muebles chicos: ocupan un cuarto de su casilla y sus hojas y pantallas se dibujan a esta escala.
 const SMALL_SCALE: float = 0.6
 
+## Con segundo monitor la computadora se corre esto (en casillas) hacia el otro lado del
+## escritorio; el sprite del monitor ya viene dibujado en su lado.
+const COMPUTER_SHIFT: float = 0.15
+## Hacia dónde queda el lado del segundo monitor (+x del modelo del sprite) en cada rotación.
+const MONITOR_SIDES: Array[Vector2] = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]
+
+## Sprite de un objeto de pared en una pared baja: se achica a esta escala y baja hasta
+## quedar pegado al piso (LOW_WALL_ITEM_BASE_PX).
+const LOW_WALL_SPRITE_SCALE: float = 0.5
+const SALT_WALL_ITEM: int = 71
+
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
 
@@ -59,6 +70,10 @@ var _high := Vector2.ZERO
 var _scale: float = 1.0
 # Objeto de pared en una pared baja (no de atrás).
 var _on_low_wall: bool = false
+# Punto de apoyo del sprite en la cuadrícula (centro de la casilla de anclaje o del cuarto).
+var _anchor := Vector2.ZERO
+# En una silla: el respaldo queda detrás del asiento (se dibuja antes y lleva la sombra).
+var _back_first: bool = false
 
 
 ## Coloca el mueble a partir de su entrada en OfficeState.furniture. piece elige qué
@@ -80,12 +95,14 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 	for cell: Vector2i in footprint:
 		_low = _low.min(Vector2(cell))
 		_high = _high.max(Vector2(cell))
+	_anchor = _low
 	_low -= Vector2(0.5, 0.5)
 	_high += Vector2(0.5, 0.5)
 	quarter = FurnitureCatalog.get_quarter(item)
 	_scale = 1.0
 	if quarter >= 0:
 		var center: Vector2 = Vector2(footprint[0]) + FurnitureCatalog.get_quarter_offset(quarter)
+		_anchor = center
 		_low = center - Vector2(0.25, 0.25)
 		_high = center + Vector2(0.25, 0.25)
 		_scale = SMALL_SCALE
@@ -96,9 +113,11 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN) -> voi
 	if String(_info.get("shape", "")) == "rug":
 		# Se pisa: se dibuja antes que quien camina encima.
 		sort_point = _low
+	var back: Array[Vector2] = _strip(-Vector2(FurnitureCatalog.get_front(rotation_index)), BACKREST_DEPTH)
+	var back_point: Vector2 = (back[0] + back[1]) / 2.0
+	_back_first = back_point.x + back_point.y < sort_point.x + sort_point.y
 	if part == PART_BACKREST:
-		var back: Array[Vector2] = _strip(-Vector2(FurnitureCatalog.get_front(rotation_index)), BACKREST_DEPTH)
-		sort_point = (back[0] + back[1]) / 2.0
+		sort_point = back_point
 	position = grid.grid_to_world(sort_point) - Vector2(0.0, SORT_BIAS_PX)
 	queue_redraw()
 
@@ -113,6 +132,8 @@ func _setup_wall_item(cell: Vector2i) -> void:
 	var half: Vector2 = across * (WALL_ITEM_WIDTH / 2.0) + Vector2(absf(front.x), absf(front.y)) * (WALL_ITEM_DEPTH / 2.0)
 	_low = center - half
 	_high = center + half
+	# El sprite se apoya en el punto medio del borde, en el piso.
+	_anchor = Vector2(cell) - front * 0.5
 	position = _grid.grid_to_world(center + front * 0.1)
 	queue_redraw()
 
@@ -122,7 +143,53 @@ static func has_backrest(item_id_to_check: String) -> bool:
 	return String(FurnitureCatalog.get_item(item_id_to_check).get("shape", "")) == "chair"
 
 
+## Nombre del sprite que dibuja esta pieza ("" si usa el dibujo provisional).
+func get_sprite() -> String:
+	if FurnitureCatalog.is_wall_mounted(item_id):
+		# Solo hay dibujo de las caras que se ven de frente (las que miran a +x o a +y).
+		var facing: Vector2i = FurnitureCatalog.get_front(rotation_index)
+		if facing.x + facing.y < 0:
+			return ""
+		var cell := Vector2i((_anchor + Vector2(facing) * 0.5).round())
+		var pick: int = int(MapDecor.noise(cell, SALT_WALL_ITEM) * 1000.0)
+		return SpriteLibrary.get_wall_item_sprite(item_id, FurnitureCatalog.get_wall_edge(cell, rotation_index).z, pick)
+	if has_backrest(item_id):
+		return SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "back" if part == PART_BACKREST else "seat")
+	return SpriteLibrary.get_furniture_sprite(item_id, rotation_index)
+
+
+# Dibuja la pieza con sus sprites (sombra, mueble y lo que lleva encima). Devuelve false
+# si no hay sprite para este mueble.
+func _draw_sprites() -> bool:
+	var sprite: String = get_sprite()
+	if sprite.is_empty():
+		return false
+	var at: Vector2 = _local(_anchor)
+	if FurnitureCatalog.is_wall_mounted(item_id):
+		if not _on_low_wall:
+			return SpriteLibrary.draw(self, sprite, at)
+		var drop: float = SpriteLibrary.get_wall_item_base(item_id) * LOW_WALL_SPRITE_SCALE - LOW_WALL_ITEM_BASE_PX
+		return SpriteLibrary.draw_scaled(self, sprite, at + Vector2(0.0, drop), LOW_WALL_SPRITE_SCALE)
+	if not has_backrest(item_id) or (part == PART_BACKREST) == _back_first:
+		SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, rotation_index, "shadow"), at)
+	SpriteLibrary.draw(self, sprite, at)
+	if not computer_id.is_empty():
+		# La computadora va sobre el centro del escritorio (el sprite ya trae la altura).
+		var center: Vector2 = (_low + _high) / 2.0
+		var computer_at: Vector2 = center
+		if not monitor_id.is_empty():
+			computer_at -= MONITOR_SIDES[posmod(rotation_index, 4)] * COMPUTER_SHIFT
+			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(monitor_id, rotation_index, "shadow"), _local(center))
+		SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index, "shadow"), _local(computer_at))
+		SpriteLibrary.draw(self, SpriteLibrary.get_furniture_sprite(computer_id, rotation_index), _local(computer_at))
+		if not monitor_id.is_empty():
+			SpriteLibrary.draw(self, SpriteLibrary.get_furniture_sprite(monitor_id, rotation_index), _local(center))
+	return true
+
+
 func _draw() -> void:
+	if _draw_sprites():
+		return
 	var height: float = _info.get("height", 16.0)
 	var color: Color = _info.get("color", Color.WHITE)
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))

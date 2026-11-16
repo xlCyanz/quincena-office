@@ -523,7 +523,21 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   estilo. Sin atlas se pinta con `GroundPainter` como antes. Paredes: `EdgePieceView` dibuja `<pieza>_<tall|low>_<x|y>` (`get_sprite_name`)
   y, encima, los postes de esquina de sus puntas (`OfficeGrid._place_corner_posts`, `EdgePieceView.get_corner_sprite(brazos)`: solo en las L).
   Árboles: `TreeView` elige `tree_0`…`tree_7` por la casilla y dibuja su `_shadow` al 30 %. Sin sprite, cada uno cae al arte provisional.
-  Faltan muebles, personajes, objetos de pared, sombra de las paredes y las animaciones. Prueba `test_sprites`.
+  Muebles de piso: `data/sprites.json` `furniture` (id del juego → base del sprite, `rotated`, `parts`; tabla `FURNITURE` de `export_game.py`),
+  `SpriteLibrary.get_furniture_sprite(id, rotación, parte)`; `FurnitureView._draw_sprites` dibuja sombra y mueble con el apoyo en el centro de
+  la casilla de anclaje (los chicos, su versión `_q` en el centro del cuarto), la computadora y el segundo monitor sobre el centro del escritorio
+  (con monitor la computadora se corre `COMPUTER_SHIFT`) y las sillas en dos piezas (`_seat` y `_back`, la de atrás lleva la sombra).
+  Personajes: una hoja por aspecto en `assets/sprites/characters/` (6 conjuntos × 3 paletas; fila = dirección, columna = cuadro de `poses`:
+  stand, sit, idle ×4, walk ×8, type ×4; las paletas `_v1`/`_v2` las saca `export_game.py` cambiando rampa por rampa). `OfficeCharacter.look`
+  (`make_look(mujer, "casual"|"office"|"executive", número)`; CEO de traje, `Employee._look_for` por cargo, nombre e id, visitas y candidatos
+  en `Visitor`); `_animate` elige pose, dirección (0–3 como las rotaciones) y cuadro: camina según lo recorrido (`WALK_CYCLES_PER_CELL`),
+  sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
+  `can_type` false en visitas), si no `sit`, y de pie `idle`; solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
+  Objetos de pared (`wall_items` en `data/sprites.json`: dibujos y `base_z`; `SpriteLibrary.get_wall_item_sprite(id, eje, elección)`):
+  `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; solo las caras que se ven de frente (frente
+  a +x o +y; de espaldas sigue el dibujo provisional); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a
+  `LOW_WALL_SPRITE_SCALE` pegado al piso. La pantalla de presentaciones se dibuja de dos bordes de ancho centrada en el suyo (en el juego ocupa uno).
+  Faltan manchas de suciedad, sombra de las paredes y las animaciones de puertas y pantallas. Prueba `test_sprites`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 
 ## Forma de trabajo

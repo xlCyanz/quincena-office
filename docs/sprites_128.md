@@ -126,7 +126,7 @@ Cuadro, reloj, pizarra, pantalla de presentaciones y aire acondicionado se cuelg
 - Lienzo 64×128, base del objeto a 24 px del mundo (48 px de sprite) sobre el piso.
 - En las paredes bajas el juego los dibuja chicos y pegados abajo: no hace falta otra versión.
 - Nombres: `painting_x` (paisaje), `painting_abstract_x` y `painting_sea_x` (tres dibujos del cuadro),
-  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor grande colgado, de marco negro delgado, que ocupa dos bordes seguidos de la misma pared, de media pared a casi el techo: lienzo de 128×192, x de 0 a 2, con el apoyo en (64, 160), el punto medio de los dos bordes en el piso; en el juego aún es de un borde, ocuparlo doble se decide al conectar los sprites; variantes encendidas con una presentación para la Sala de reuniones: `presentation_screen_chart_x`, `_pie_x` y `_title_x`) y
+  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor grande colgado, de marco negro delgado, que ocupa dos bordes seguidos de la misma pared, de media pared a casi el techo: lienzo de 128×192, x de 0 a 2, con el apoyo en (64, 160), el punto medio de los dos bordes en el piso; en el juego ocupa un solo borde (decidido al conectar los sprites): se dibuja centrada en él y sobresale medio borde a cada lado; variantes encendidas con una presentación para la Sala de reuniones: `presentation_screen_chart_x`, `_pie_x` y `_title_x`) y
   `air_conditioner_x`, más sus `_y`. Apoyo (32, 112), el
   punto medio del borde en el piso como en los tramos; el objeto sale de la cara de la pared (4 px de la línea del
   borde) y mide de alto el `height` de `data/furniture.json` × 2. En las paredes `_x` los dibujos van espejados
@@ -177,7 +177,8 @@ interiores) van **bajitas** para ver adentro.
 - Hechos (`tools/sprites/pieces/character.py`): cabeza grande, cuerpo robusto y dos ojos oscuros; de pie y sentado en 4
   direcciones con 6 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
   `character_woman_office_` y `character_woman_executive_`; cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
-  que solo cambian la paleta. Faltan caminar y sentado trabajando.
+  que solo cambian la paleta. Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8`, `_idle_r<n>_1`…`_4` y
+  `_type_r<n>_1`…`_4` (sentado tecleando). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.
 
 ## 10. Árboles y otros
 
