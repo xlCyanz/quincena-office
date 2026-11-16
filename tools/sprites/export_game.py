@@ -111,6 +111,26 @@ def recolor(image, base, variant):
         raise SystemExit("personajes: hay colores fuera de las rampas del aspecto")
     return Image.fromarray(out)
 
+# Sillas con las que se arma «sentado en su silla»: mueble del juego -> base del sprite.
+SEATED_CHAIRS = {"basic_chair": "chair_basic", "ergonomic_chair": "chair_ergonomic"}
+
+
+def check_chair_colors(directory):
+    """Ningún tono de una silla puede ser también de la ropa, la piel o el pelo de un personaje."""
+    used = {}
+    for style in character.STYLES:
+        for variant, look in character.LOOKS[style.name].items():
+            for layer in character.LAYER_ORDER:
+                for color in look.ramp(layer).colors:
+                    used[tuple(color)] = "%s%s (%s)" % (style.name, variant, layer)
+    for base in SEATED_CHAIRS.values():
+        for rotation in range(4):
+            arr = np.array(Image.open(os.path.join(directory, "%s_r%d.png" % (base, rotation))).convert("RGBA"))
+            for color in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0):
+                key = tuple(int(v) for v in color)
+                if key in used:
+                    raise SystemExit("%s usa el color %s, que también es de %s" % (base, key, used[key]))
+
 
 def bleed(tile):
     """Repite 1 px hacia afuera el color del borde del rombo (4 vecinos)."""
@@ -207,34 +227,61 @@ def main(directory):
         wall_items[item] = {"sprites": list(bases), "base_z": manifest[bases[0] + "_x.png"]["base_z"]}
 
     # ---- personajes
-    columns = sum(count for _pose, count in CHARACTER_POSES)
+    # Además de las poses sueltas, cada hoja lleva «sentado en su silla» por cada silla: la silla
+    # entera, la persona (ya con su paleta) y encima la parte de la silla que la tapa.
+    chair_poses = [(pose, count) for pose, count in CHARACTER_POSES if pose in ("sit", "type")]
+    all_poses = list(CHARACTER_POSES)
+    for item, base in SEATED_CHAIRS.items():
+        all_poses += [("%s_%s" % (pose, item), count) for pose, count in chair_poses]
+    columns = sum(count for _pose, count in all_poses)
     poses = {}
     column = 0
-    for pose, count in CHARACTER_POSES:
+    for pose, count in all_poses:
         poses[pose] = {"column": column, "frames": count}
         column += count
     characters_dir = os.path.join(ROOT, "assets", "sprites", "characters")
     os.makedirs(characters_dir, exist_ok=True)
+    check_chair_colors(directory)
+    chairs = {}
+    for item, base in SEATED_CHAIRS.items():
+        for rotation in range(4):
+            whole = Image.new("RGBA", CHARACTER_CELL, (0, 0, 0, 0))
+            source = load("%s_r%d" % (base, rotation))
+            whole.paste(source.crop((0, 0, CHARACTER_CELL[0], CHARACTER_CELL[1] - character.CHAIR_SHIFT)),
+                        (0, character.CHAIR_SHIFT))
+            chairs[(item, rotation)] = whole
     looks = {}
     for style in character.STYLES:
-        frames = []  # (columna, fila, imagen)
+        frames = []  # (columna, fila, persona, silla entera o None, parte de la silla que tapa o None)
         for rotation in range(4):
             column = 0
-            for pose, count in CHARACTER_POSES:
+            for pose, count in all_poses:
+                plain = pose.split("_")[0]
+                item = pose[len(plain) + 1:]
                 for frame in range(count):
-                    name = "character_%s%s_r%d" % (style.prefix, pose, rotation)
-                    if pose not in ("stand", "sit"):
+                    name = "character_%s%s_r%d" % (style.prefix, plain, rotation)
+                    if plain not in ("stand", "sit"):
                         name += "_%d" % (frame + 1)
                     image = load(name)
                     if image.size != CHARACTER_CELL or manifest[name + ".png"]["anchor"] != [64.0, 112.0]:
                         raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
-                    frames.append((column, rotation, image))
+                    chair = over = None
+                    if item:
+                        chair = chairs[(item, rotation)]
+                        over = Image.open(os.path.join(directory, character.CHAIR_DIR,
+                                                       "%s_%s.png" % (name, SEATED_CHAIRS[item]))).convert("RGBA")
+                    frames.append((column, rotation, image, chair, over))
                     column += 1
         for suffix in CHARACTER_VARIANTS:
             page = Image.new("RGBA", (CHARACTER_CELL[0] * columns, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
-            for column, row, image in frames:
+            for column, row, image, chair, over in frames:
                 if suffix:
                     image = recolor(image, character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
+                if chair is not None:
+                    joined = chair.copy()
+                    joined.alpha_composite(image)
+                    joined.alpha_composite(over)
+                    image = joined
                 page.paste(image, (column * CHARACTER_CELL[0], row * CHARACTER_CELL[1]))
             page.save(os.path.join(characters_dir, style.name + suffix + ".png"))
             looks[style.name + suffix] = "characters/%s%s.png" % (style.name, suffix)
@@ -253,7 +300,8 @@ def main(directory):
                        "(sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso "
                        "empieza (base_z). characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y "
-                       "cuántos tiene; cell y anchor en px del sprite).",
+                       "cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; "
+                       "cell y anchor en px del sprite).",
         "scale": 2,
         "ground": {"file": "res://assets/tiles/ground.png", "tile": list(TILE), "styles": styles},
         "characters": {"cell": list(CHARACTER_CELL), "anchor": [64, 112], "poses": poses, "looks": looks,

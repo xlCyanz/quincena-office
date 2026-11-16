@@ -176,6 +176,13 @@ static func has_character_look(look: String) -> bool:
 	return looks.has(look)
 
 
+## Indica si las hojas de personajes traen esa pose (por ejemplo "type_basic_chair": tecleando
+## sentado en la silla básica, con la silla dibujada).
+static func has_character_pose(pose: String) -> bool:
+	var poses: Dictionary = get_data().get("characters", {}).get("poses", {})
+	return poses.has(pose)
+
+
 ## Cuadros de una pose de personaje ("stand", "sit", "idle", "walk", "type"); 0 si no existe.
 static func get_character_frames(pose: String) -> int:
 	var poses: Dictionary = get_data().get("characters", {}).get("poses", {})

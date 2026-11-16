@@ -43,8 +43,12 @@ LARGE_ITEM = ITEMS["large_plant"]
 
 # Tapizado rojo de STYLE.md. Su brillo de la tabla (bc3f41) casi no se distingue de la base: el
 # reflejo del cojín abultado lleva un rojo más claro, para que el bulto se lea.
-FABRIC = pal.style("upholstery_red", name="chair_red")
-FABRIC.replace(pal.LIGHT, pal.hex_to_rgb("df5a55"))
+# Tapizado rojo de la silla básica: un tono más oscuro que el rojo de la guía, que es también el
+# de la corbata de los personajes. Los cuadros de «sentado en su silla» cambian la paleta de la
+# persona color por color y ningún tono de una silla puede coincidir con uno de la ropa, la piel
+# o el pelo (lo comprueba tools/sprites/export_game.py).
+FABRIC = pal.style_ramp("a8323b", side="86262f", shadow="6c1e1f", outline="3a0b1c", deep="5f0f09", light="cf4f4b",
+                        name="chair_red")
 # Asiento de la ergonómica: azul oscuro (el color de data/furniture.json, 2a3b4f, más saturado)
 # con las caras de la guía; contorno casi negro.
 FABRIC_ERGO = pal.style_ramp("33507a", outline="0e1626", light="4f73a3", name="chair_navy")

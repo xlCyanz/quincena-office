@@ -41,6 +41,9 @@ const FRAME_SECONDS: Dictionary[String, float] = {"idle": 0.45, "type": 0.14}
 ## Dónde va el icono de estado sobre la cabeza del sprite, de pie y sentado.
 const SPRITE_ICON_STANDING := Vector2(11.0, -52.0)
 const SPRITE_ICON_SEATED := Vector2(11.0, -46.0)
+## Sentado de espaldas: franja del sprite que se dibuja, desde el asiento (24 px de sprite sobre los
+## pies, menos lo que tapa el cojín) hacia arriba.
+const SEATED_BACK_BAND := Vector2(21.0, 128.0)
 ## Franja del sprite sentado con los antebrazos y las manos, en px del sprite sobre los pies.
 const HANDS_BAND := Vector2(41.0, 52.0)
 ## Paletas de cada conjunto de ropa (la base, piel oscura y piel clara).
@@ -96,6 +99,9 @@ var _path: Array[Vector2i] = []
 static var _occupants: Dictionary = {}
 # Fila en la puerta: quienes esperan en la calle para entrar, por orden de llegada.
 static var _door_queue: Array = []
+# Sillas que se dibujan junto con quien está sentado (casilla → personaje): la silla no se
+# dibuja aparte (FurnitureView lo consulta con draws_chair_at).
+static var _chairs_drawn: Dictionary = {}
 # Casillas del local que ocupa este personaje.
 var _held: Array[Vector2i] = []
 # Segundos (a 1x) que lleva esperando a que se libere la siguiente casilla.
@@ -112,6 +118,9 @@ var _anim_time: float = 0.0
 # computadora.
 var _seat_facing: int = -1
 var _at_computer: bool = false
+# Mueble de su asiento ("" si no hay): con él se busca el cuadro «sentado en esa silla».
+var _seat_item: String = ""
+var _claimed_chair := Vector2i(-1000000, -1000000)
 # Cuánto se arrima al escritorio que tiene delante cuando está sentado, en casillas.
 var _tuck := Vector2.ZERO
 # Pieza que dibuja las manos sobre el escritorio (ver _draw_hands).
@@ -157,6 +166,35 @@ static func make_look(woman: bool, outfit: String, number: int) -> String:
 ## Indica si un nombre completo es de mujer (por su primer nombre en data/names.json).
 static func is_woman_name(full_name: String) -> bool:
 	return StaffCatalog.get_first_names("female").has(full_name.get_slice(" ", 0))
+
+
+## Indica si la silla de esa casilla se dibuja junto con quien está sentado en ella.
+static func draws_chair_at(cell: Vector2i) -> bool:
+	var who: Variant = _chairs_drawn.get(cell)
+	return who != null and is_instance_valid(who)
+
+
+# Pose con la silla dibujada («sentado en su silla») si las hojas la traen; si no, la pose suelta.
+func _drawn_pose() -> String:
+	if (_pose == "sit" or _pose == "type") and not _seat_item.is_empty():
+		var joined: String = "%s_%s" % [_pose, _seat_item]
+		if SpriteLibrary.has_character_pose(joined):
+			return joined
+	return _pose
+
+
+# Avisa a las sillas si esta se dibuja ahora con su ocupante (o deja de hacerlo).
+func _update_chair_claim() -> void:
+	var cell: Vector2i = _seat_cell if visible and SpriteLibrary.has_character_look(look) and _drawn_pose() != _pose else NO_CELL
+	if cell == _claimed_chair:
+		return
+	if _chairs_drawn.get(_claimed_chair) == self:
+		_chairs_drawn.erase(_claimed_chair)
+	_claimed_chair = cell
+	if cell != NO_CELL:
+		_chairs_drawn[cell] = self
+	if is_inside_tree():
+		get_tree().call_group(FurnitureView.CHAIR_GROUP, "queue_redraw")
 
 
 ## Pose y dirección que se dibujan con sprites: {pose, facing, frame}.
@@ -325,6 +363,7 @@ func _animate(delta: float, moved: Vector2) -> void:
 		queue_redraw()
 		if _hands != null:
 			_hands.queue_redraw()
+	_update_chair_claim()
 
 
 # Dirección (0–3) hacia la que avanza.
@@ -340,6 +379,7 @@ func _refresh_seat() -> void:
 	_refresh_entrance()
 	_seat_facing = -1
 	_at_computer = false
+	_seat_item = ""
 	_tuck = Vector2.ZERO
 	var index: int = OfficeState.find_furniture_at(_seat_cell)
 	if index >= 0:
@@ -347,6 +387,7 @@ func _refresh_seat() -> void:
 		var info: Dictionary = FurnitureCatalog.get_item(seat["id"])
 		if bool(info.get("is_seat", false)) or bool(info.get("waiting_seat", false)):
 			_seat_facing = posmod(int(seat["rotation"]), 4)
+			_seat_item = String(seat["id"])
 			var desk: Dictionary = OfficeState.get_desk_facing(_seat_cell) if FurnitureView.has_backrest(seat["id"]) else {}
 			if not desk.is_empty():
 				_seat_facing = int(desk["direction"])
@@ -373,7 +414,7 @@ func _is_sitting() -> bool:
 # repite la franja de los antebrazos ordenada justo después del escritorio.
 func _draw_hands() -> void:
 	if _hands_shown():
-		SpriteLibrary.draw_character(_hands, look, _pose, _facing, _frame, -_hands.position, HANDS_BAND)
+		SpriteLibrary.draw_character(_hands, look, _drawn_pose(), _facing, _frame, -_hands.position, HANDS_BAND)
 
 
 func _hands_shown() -> bool:
@@ -381,6 +422,10 @@ func _hands_shown() -> bool:
 
 
 func _exit_tree() -> void:
+	if _chairs_drawn.get(_claimed_chair) == self:
+		_chairs_drawn.erase(_claimed_chair)
+		get_tree().call_group(FurnitureView.CHAIR_GROUP, "queue_redraw")
+	_claimed_chair = NO_CELL
 	if EventBus.office_changed.is_connected(_refresh_seat):
 		EventBus.office_changed.disconnect(_refresh_seat)
 	_release_cells()
@@ -612,7 +657,12 @@ func _draw_sprite() -> bool:
 	var sitting: bool = _pose == "sit" or _pose == "type"
 	if not sitting:
 		SpriteLibrary.draw_character_shadow(self)
-	if not SpriteLibrary.draw_character(self, look, _pose, _facing, _frame):
+	# Sentado de espaldas a la cámara, las piernas quedan del otro lado del asiento: se dibuja solo
+	# de la cadera para arriba (si no, los pies se ven encima de la silla).
+	var pose: String = _drawn_pose()
+	# Sin cuadro con silla (un asiento que no es silla), de espaldas se dibuja de la cadera para arriba.
+	var band: Vector2 = SEATED_BACK_BAND if sitting and pose == _pose and (_facing == 0 or _facing == 3) else Vector2.ZERO
+	if not SpriteLibrary.draw_character(self, look, pose, _facing, _frame, Vector2.ZERO, band):
 		return false
 	if not status_icon.is_empty():
 		_draw_status_icon(SPRITE_ICON_SEATED if sitting else SPRITE_ICON_STANDING)

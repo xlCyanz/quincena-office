@@ -182,7 +182,8 @@ interiores) van **bajitas** para ver adentro.
   direcciones con 6 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
   `character_woman_office_` y `character_woman_executive_`; cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
   que solo cambian la paleta. Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8`, `_idle_r<n>_1`…`_4` y
-  `_type_r<n>_1`…`_4` (sentado tecleando). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.
+  `_type_r<n>_1`…`_4` (sentado tecleando). Por cada cuadro sentado y cada silla, `character_chairs/<cuadro>_<silla>.png` es la parte de la
+  silla que queda delante de la persona: con ella se arma el cuadro «sentado en su silla» (silla entera + persona + esa parte). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.
 
 ## 10. Árboles y otros
 

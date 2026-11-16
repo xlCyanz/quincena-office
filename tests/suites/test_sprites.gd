@@ -122,6 +122,10 @@ func _check_characters() -> void:
 	_expect(SpriteLibrary.get_character_frames("walk") == 8 and SpriteLibrary.get_character_frames("idle") == 4
 		and SpriteLibrary.get_character_frames("type") == 4 and SpriteLibrary.get_character_frames("sit") == 1
 		and SpriteLibrary.get_character_frames("no_existe") == 0, "cuadros de cada pose")
+	for chair: String in ["basic_chair", "ergonomic_chair"]:
+		_expect(SpriteLibrary.has_character_pose("sit_" + chair) and SpriteLibrary.get_character_frames("type_" + chair) == 4,
+			"hay cuadros de sentado y tecleando en %s" % chair)
+	_expect(not SpriteLibrary.has_character_pose("sit_waiting_sofa"), "en un asiento que no es silla, la pose suelta")
 	_expect(OfficeCharacter.is_woman_name("Ana García") and not OfficeCharacter.is_woman_name("Carlos García"), "el nombre dice si es mujer")
 
 
@@ -242,8 +246,12 @@ func _check_game() -> void:
 	var desk_cell: Vector2i = ceo.get_seat_cell() + FurnitureCatalog.get_front(int(seated["facing"]))
 	var desk: int = OfficeState.find_furniture_at(desk_cell)
 	_expect(desk >= 0 and not String(OfficeState.furniture[desk].get("computer", "")).is_empty(), "mira hacia su computadora")
+	# Sentado se dibuja junto con su silla (un solo cuadro): la silla no se dibuja aparte.
+	_expect(OfficeCharacter.draws_chair_at(ceo.get_seat_cell()), "la silla del CEO se dibuja con él")
 	ceo.standing = true
 	_expect(String(ceo.get_sprite_state()["pose"]) == "idle", "de pie en su lugar no teclea")
+	_expect(not OfficeCharacter.draws_chair_at(ceo.get_seat_cell()), "de pie, la silla vuelve a dibujarse sola")
 	ceo.standing = false
+	_expect(OfficeCharacter.draws_chair_at(ceo.get_seat_cell()), "y al sentarse otra vez, con él")
 	game.queue_free()
 	await get_tree().process_frame

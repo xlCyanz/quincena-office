@@ -48,6 +48,7 @@ from PIL import Image
 import iso
 import palette as pal
 import sheet
+from pieces import chair_plant
 
 PX = 1.0 / iso.Z_METRIC  # 1 px del cuerpo en casillas
 CENTER = 0.5  # el personaje se para en el centro de la casilla
@@ -1488,6 +1489,63 @@ def build_sheet(out_dir, figures):
     page.save(os.path.join(folder, "character.png"))
 
 
+# ---------------------------------------------------------------------- sentado en su silla
+#
+# El juego dibuja a quien se sienta junto con su silla en un solo cuadro. Para armarlo sin mezclar
+# los dos modelos se comparan sus profundidades pixel a pixel (los dos lienzos usan la misma
+# casilla, con el centro en (0.5, 0.5)): de cada cuadro sentado se guarda, por cada silla, la
+# parte de la silla que queda DELANTE de la persona (respaldo visto de espaldas, apoyabrazos,
+# asiento y pie delante de las piernas). El cuadro final es silla entera + persona + esa parte;
+# lo compone tools/sprites/export_game.py, que antes le cambia la paleta solo a la persona.
+CHAIR_SPECS = (chair_plant.BASIC, chair_plant.ERGO)
+CHAIR_DIR = "character_chairs"
+# El lienzo de la silla tiene el centro de la casilla 16 px más arriba que el del personaje.
+CHAIR_SHIFT = 16
+# Lo que la silla tiene que ganarle a la persona para taparla (en casillas de profundidad): el
+# muslo apoya justo sobre el cojín y la rodilla cae al filo del asiento: con poco margen el canto
+# del cojín cruza sobre las piernas vistas de frente. El respaldo, visto de espaldas, gana de sobra.
+CHAIR_BIAS = 8.0 / 64.0
+_chair_cache = {}
+
+
+def chair_arrays(spec, rotation):
+    """(imagen, profundidad) de una silla en el lienzo del personaje."""
+    key = (spec["name"], rotation)
+    if key not in _chair_cache:
+        c = chair_plant.chair_canvas(spec, rotation)
+        image = np.array(c.image)
+        depth = np.array(c.crop(c.depth), dtype=np.float64)
+        depth[image[..., 3] == 0] = -1.0e9
+        moved_image = np.zeros_like(image)
+        moved_depth = np.full(depth.shape, -1.0e9)
+        moved_image[CHAIR_SHIFT:] = image[:-CHAIR_SHIFT]
+        moved_depth[CHAIR_SHIFT:] = depth[:-CHAIR_SHIFT]
+        if image[-CHAIR_SHIFT:, :, 3].any():
+            raise AssertionError("%s_r%d no cabe en el lienzo del personaje" % key)
+        _chair_cache[key] = (moved_image, moved_depth)
+    return _chair_cache[key]
+
+
+def chair_name(name, spec):
+    return "%s_%s" % (name, spec["name"])
+
+
+def save_chair_overlays(fig, name, rotation, out_dir):
+    """Guarda, por cada silla, lo que de ella tapa a este cuadro sentado."""
+    folder = os.path.join(out_dir, CHAIR_DIR)
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+    person = np.array(fig.c.image)
+    person_depth = np.array(fig.c.crop(fig.c.depth), dtype=np.float64)
+    seen = person[..., 3] > 0
+    for spec in CHAIR_SPECS:
+        chair, chair_depth = chair_arrays(spec, rotation)
+        over = seen & (chair[..., 3] > 0) & (chair_depth > person_depth + CHAIR_BIAS)
+        image = np.zeros_like(chair)
+        image[over] = chair[over]
+        Image.fromarray(image, "RGBA").save(os.path.join(folder, chair_name(name, spec) + ".png"))
+
+
 def build(out_dir):
     files = []
     figures = []
@@ -1507,6 +1565,8 @@ def build(out_dir):
                 if pose.sit:
                     meta["seat_z"] = SIT_SEAT_Z
                 files.append(iso.save(fig.c, out_dir, name, **meta))
+                if pose.sit:
+                    save_chair_overlays(fig, name, rotation, out_dir)
                 export_layers(fig, build_one(rotation, looks[""], pose, hair=False, style=style), layers_dir, name)
                 figures.append((name, fig))
         # Animaciones: un sprite por cuadro, <nombre>_1 … _N (el manifiesto da frame y frames).
@@ -1522,6 +1582,8 @@ def build(out_dir):
                     if pose.sit:
                         meta["seat_z"] = SIT_SEAT_Z
                     files.append(iso.save(fig.c, out_dir, name, **meta))
+                    if pose.sit:
+                        save_chair_overlays(fig, name, rotation, out_dir)
                     export_layers(fig, None, layers_dir, name)
                     frames.append((name, fig))
         base = dict(figures)["character_%sstand_r1" % style.prefix]

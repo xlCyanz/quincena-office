@@ -548,7 +548,11 @@ Solo para probar y balancear; no son parte del juego. Investigación de por qué
   (`make_look(mujer, "casual"|"office"|"executive", número)`; CEO de traje, `Employee._look_for` por cargo, nombre e id, visitas y candidatos
   en `Visitor`); `_animate` elige pose, dirección (0–3 como las rotaciones) y cuadro: camina según lo recorrido (`WALK_CYCLES_PER_CELL`),
   sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
-  `can_type` false en visitas), si no `sit`, y de pie `idle`; solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
+  `can_type` false en visitas), si no `sit`, y de pie `idle`; sentado en una silla se dibuja junto con ella en un solo cuadro (poses
+  `sit_<silla>` y `type_<silla>` de la hoja, `_drawn_pose`): el generador compara la profundidad de silla y persona y guarda qué parte de la
+  silla tapa a cada cuadro (`character_chairs/`, `character.save_chair_overlays`), y `export_game.py` compone silla + persona con su paleta +
+  esa parte; mientras tanto la silla no se dibuja aparte (`OfficeCharacter.draws_chair_at`, grupo `FurnitureView.CHAIR_GROUP`), solo su sombra.
+  Ningún tono de una silla puede ser de la ropa, la piel o el pelo (`check_chair_colors`); solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
   Sentado frente a un escritorio o mostrador (`OfficeState.get_desk_facing(casilla)`: `{direction, computer}`), la silla y quien se sienta se
   dibujan arrimados `FurnitureView.SEAT_TUCK` (0.3 casillas) y mirándolo (`get_sprite_rotation`, `OfficeCharacter._tuck`; `grid_position` no cambia);
   mirando a +x o +y, la pieza hija `Hands` (el personaje tiene `y_sort_enabled`) repite la franja de antebrazos `HANDS_BAND` ordenada tras el

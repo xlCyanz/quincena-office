@@ -1,5 +1,5 @@
 {
-	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso empieza (base_z). characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y cuántos tiene; cell y anchor en px del sprite).",
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso empieza (base_z). characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; cell y anchor en px del sprite).",
 	"characters": {
 		"anchor": [
 			64,
@@ -38,12 +38,28 @@
 				"column": 1,
 				"frames": 1
 			},
+			"sit_basic_chair": {
+				"column": 18,
+				"frames": 1
+			},
+			"sit_ergonomic_chair": {
+				"column": 23,
+				"frames": 1
+			},
 			"stand": {
 				"column": 0,
 				"frames": 1
 			},
 			"type": {
 				"column": 14,
+				"frames": 4
+			},
+			"type_basic_chair": {
+				"column": 19,
+				"frames": 4
+			},
+			"type_ergonomic_chair": {
+				"column": 24,
 				"frames": 4
 			},
 			"walk": {

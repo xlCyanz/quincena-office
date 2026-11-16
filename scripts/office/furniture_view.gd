@@ -53,6 +53,9 @@ const SALT_WALL_ITEM: int = 71
 ## (en casillas) y mirándolo, con quien se sienta (OfficeCharacter usa lo mismo).
 const SEAT_TUCK: float = 0.3
 
+## Grupo de las piezas de las sillas: se redibujan cuando alguien se sienta o se levanta.
+const CHAIR_GROUP: String = "chair_views"
+
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
 ## Tira de un mueble largo (de 1 casilla de ancho y varias de largo) con sprite: cada casilla
@@ -116,6 +119,7 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 	_high += Vector2(0.5, 0.5)
 	_sprite_rotation = rotation_index
 	if has_backrest(item_id):
+		add_to_group(CHAIR_GROUP)
 		var desk: Dictionary = OfficeState.get_desk_facing(footprint[0])
 		if not desk.is_empty() and not get_sprite().is_empty():
 			_sprite_rotation = int(desk["direction"])
@@ -246,6 +250,11 @@ func _draw_sprites() -> bool:
 	if sprite.is_empty():
 		return false
 	var at: Vector2 = _local(_anchor)
+	if has_backrest(item_id) and OfficeCharacter.draws_chair_at(footprint[0]):
+		# Quien está sentado ahí se dibuja junto con la silla: aquí queda solo la sombra.
+		if (part == PART_BACKREST) == _back_first:
+			SpriteLibrary.draw_shadow(self, SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "shadow"), at)
+		return true
 	if FurnitureCatalog.is_wall_mounted(item_id):
 		if not _on_low_wall:
 			return SpriteLibrary.draw(self, sprite, at)
