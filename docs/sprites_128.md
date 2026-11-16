@@ -179,8 +179,10 @@ interiores) van **bajitas** para ver adentro.
   trabajando (2). Sentado, la cadera a 24 px de sprite sobre el piso.
 - Piezas intercambiables (pelo, piel, camisa, pantalón) en capas aparte ayudan a tener muchos empleados distintos.
 - Hechos (`tools/sprites/pieces/character.py`): cabeza grande, cuerpo robusto y dos ojos oscuros; de pie y sentado en 4
-  direcciones con 6 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
-  `character_woman_office_` y `character_woman_executive_`; cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
+  direcciones con 8 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
+  `character_woman_office_`, `character_woman_executive_`, `character_cleaning_` y `character_woman_cleaning_` (overol verde de
+  limpieza; solo ellos tienen además `_mop_r<n>_1`…`_4`, trapeando con el suape, y `_mopwalk_r<n>_1`…`_8`, caminando con él: capas
+  `stick` y `mop`; el cubo es `mop_bucket` en `services.py`); cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
   que solo cambian la paleta. Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8`, `_idle_r<n>_1`…`_4` y
   `_type_r<n>_1`…`_4` (sentado tecleando). Por cada cuadro sentado y cada silla, `character_chairs/<cuadro>_<silla>.png` es la parte de la
   silla que queda delante de la persona: con ella se arma el cuadro «sentado en su silla» (silla entera + persona + esa parte). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.

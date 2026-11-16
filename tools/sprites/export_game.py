@@ -71,6 +71,8 @@ CHARACTER_CELL = (128, 128)
 CHARACTER_POSES = (("stand", 1), ("sit", 1), ("idle", character.IDLE_FRAMES), ("walk", character.WALK_FRAMES),
                    ("type", character.TYPE_FRAMES))
 CHARACTER_VARIANTS = ("", "_v1", "_v2")
+# Poses del suape, solo del personal de limpieza: van en una hoja aparte (<aspecto>_tools.png).
+TOOL_POSES = (("mop", character.MOP_FRAMES), ("mopwalk", character.MOPWALK_FRAMES))
 
 
 def recolor(image, base, variant):
@@ -267,7 +269,33 @@ def main(directory):
                 page.paste(image, (column * CHARACTER_CELL[0], row * CHARACTER_CELL[1]))
             page.save(os.path.join(characters_dir, style.name + suffix + ".png"))
             looks[style.name + suffix] = "characters/%s%s.png" % (style.name, suffix)
+    tool_poses = {}
+    column = 0
+    for pose, count in TOOL_POSES:
+        tool_poses[pose] = {"column": column, "frames": count}
+        column += count
+    tool_looks = {}
+    for style in character.STYLES:
+        if style.name not in character.CLEANING_STYLES:
+            continue
+        for suffix in CHARACTER_VARIANTS:
+            page = Image.new("RGBA", (CHARACTER_CELL[0] * column, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
+            for rotation in range(4):
+                for pose, count in TOOL_POSES:
+                    for frame in range(count):
+                        name = "character_%s%s_r%d_%d" % (style.prefix, pose, rotation, frame + 1)
+                        image = load(name)
+                        if image.size != CHARACTER_CELL or manifest[name + ".png"]["anchor"] != [64.0, 112.0]:
+                            raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
+                        if suffix:
+                            image = recolor(image, character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
+                        page.paste(image, ((tool_poses[pose]["column"] + frame) * CHARACTER_CELL[0],
+                                           rotation * CHARACTER_CELL[1]))
+            page.save(os.path.join(characters_dir, style.name + suffix + "_tools.png"))
+            tool_looks[style.name + suffix] = "characters/%s%s_tools.png" % (style.name, suffix)
     copy("character_stand_shadow", "characters")
+    copy("mop_bucket", "characters")
+    copy("mop_bucket_shadow", "characters")
 
     data = {
         "_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = "
@@ -283,10 +311,13 @@ def main(directory):
                        "empieza (base_z). characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y "
                        "cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; "
+                       "tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal "
+                       "de limpieza; bucket: el cubo que se dibuja junto a quien trapea; "
                        "cell y anchor en px del sprite).",
         "scale": 2,
         "ground": {"file": "res://assets/tiles/ground.png", "tile": list(TILE), "styles": styles},
         "characters": {"cell": list(CHARACTER_CELL), "anchor": [64, 112], "poses": poses, "looks": looks,
+                       "tool_poses": tool_poses, "tool_looks": tool_looks, "bucket": "mop_bucket",
                        "shadow": "character_stand_shadow"},
         "furniture": furniture,
         "seats": seats,

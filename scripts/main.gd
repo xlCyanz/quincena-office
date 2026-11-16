@@ -146,9 +146,10 @@ func _restore_scene_state(state: Dictionary) -> void:
 	_on_character_left_office()
 
 
-# Cada minuto de juego revisa quién entra; cada wander_minutes mueve a los que dan vueltas.
+# Cada minuto de juego revisa quién entra; cada wander_minutes mueve a los que dan vueltas y cada
+# mop_minutes a la limpieza.
 func _process(_delta: float) -> void:
-	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty() \
+	if _arrivals.is_empty() and _departures.is_empty() and _early.is_empty() and not _cleaners_on_duty \
 			and Staff.appointments.is_empty() and appointment_visitors.is_empty():
 		return
 	var now: int = get_arrival_minute()
@@ -166,7 +167,9 @@ func _process(_delta: float) -> void:
 			due = true
 	var wander: bool = not _early.is_empty() and now % int(StaffCatalog.get_arrivals("wander_minutes")) == 0 \
 		and OfficeState.get_working_room(OfficeState.BREAK_ROOM).is_empty()
-	if due or wander:
+	# La limpieza trapea por partes: cada mop_minutes pasa a otra casilla.
+	var mop: bool = _cleaners_on_duty and now % maxi(1, int(StaffCatalog.get_cleaning("mop_minutes"))) == 0
+	if due or wander or mop:
 		_update_routines()
 
 

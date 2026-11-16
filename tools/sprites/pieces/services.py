@@ -5,6 +5,8 @@
 #   cleaning_closet_r0..r3   armario de limpieza gris azulado de dos puertas con rejillas y un cartel
 #                            amarillo, con un balde y un trapeador al lado
 #   server_rack_r0..r3       rack negro con servidores de luces verdes y azules tras la puerta de malla
+#   mop_bucket               cubo amarillo de trapear con ruedas y escurridor gris (sin rotaciones): el
+#                            juego lo pone junto a quien trapea (OfficeCharacter)
 #   <cada uno>_shadow        sombra en el piso, aparte
 #   _sheets/services.png     hoja de contacto
 import numpy as np
@@ -38,6 +40,9 @@ LED_G = RACK.add("6fe08a")
 LED_B = RACK.add("3fd0f0")
 LED_A = RACK.add("f0b030")
 MESH = RACK.add("5b646e")
+WRINGER = pal.style_ramp("7d868f", outline="22262b", name="bucket_wringer")
+WHEEL = pal.style_ramp("33363c", outline="0e0f12", name="bucket_wheel")
+DIRTY_WATER = pal.style_ramp("8fb3c4", outline="2b3a44", name="bucket_water")
 
 
 # ---------------------------------------------------------------------------- inodoro
@@ -191,6 +196,26 @@ def rack_shadow_shapes():
     return [("bar", 0.5, 0.28, 0.5, 0.72, 0.3, 0, RACK_TOP)]
 
 
+# ---------------------------------------------------------------------------- cubo de trapear
+
+BUCKET_TOP = 17
+
+
+def mop_bucket():
+    """Cubo amarillo sobre cuatro ruedas, con agua y el escurridor gris atrás."""
+    c = iso.Canvas.furniture((1, 1), 28, 0)
+    for x, y in ((0.39, 0.39), (0.61, 0.39), (0.39, 0.63), (0.61, 0.63)):
+        c.cylinder(x, y, 0.03, 0, 3, WHEEL, name="wheel")
+    c.cylinder(0.5, 0.52, 0.13, 3, BUCKET_TOP, BUCKET, radius_top=0.15, open_top=True, name="bucket")
+    c.cylinder(0.5, 0.52, 0.12, 3, BUCKET_TOP - 4, DIRTY_WATER, name="water")
+    c.box(g(0.42), g(0.58), g(0.34), g(0.44), BUCKET_TOP - 2, BUCKET_TOP + 6, WRINGER, name="wringer")
+    return c
+
+
+def bucket_shadow_shapes():
+    return [("disc", 0.5, 0.52, 0.16, 0, BUCKET_TOP)]
+
+
 # ---------------------------------------------------------------------------- principal
 
 def build(out_dir):
@@ -200,4 +225,5 @@ def build(out_dir):
     s.rotations(cleaning_closet, "cleaning_closet", closet_shadow_shapes(), height=CLOSET_ITEM["height"],
                 curved=True)
     s.rotations(server_rack, "server_rack", rack_shadow_shapes(), height=RACK_ITEM["height"])
+    s.keep(mop_bucket(), "mop_bucket", bucket_shadow_shapes(), height=14)
     return s.sheet("services")

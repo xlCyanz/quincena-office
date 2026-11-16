@@ -118,10 +118,10 @@ func _check_furniture() -> void:
 		and SpriteLibrary.get_seat_x("no_existe") < 0.0, "dónde queda el teclado de cada sprite")
 
 
-# Los 6 conjuntos de personajes en sus 3 paletas, con todas las poses.
+# Los 8 conjuntos de personajes en sus 3 paletas, con todas las poses.
 func _check_characters() -> void:
 	for woman: bool in [false, true]:
-		for outfit: String in ["casual", "office", "executive"]:
+		for outfit: String in ["casual", "office", "executive", "cleaning"]:
 			for number: int in range(3):
 				var look: String = OfficeCharacter.make_look(woman, outfit, number)
 				_expect(SpriteLibrary.has_character_look(look), "hay hoja para %s" % look)

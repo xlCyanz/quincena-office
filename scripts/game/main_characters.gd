@@ -8,6 +8,8 @@ const VISITOR_SCENE: PackedScene = preload("res://scenes/visitor.tscn")
 ## Distancia máxima entre apretar y soltar para que cuente como clic.
 const CLICK_TOLERANCE_PX: float = 8.0
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
+## Sin lugar (p. ej. donde trapear).
+const NO_SPOT := Vector2i(-9999, -9999)
 
 # Paredes arriba pedidas por el jugador (botón ↕ o tecla P).
 var _walls_wanted: bool = false
@@ -33,6 +35,8 @@ var _departures: Dictionary[String, int] = {}
 var _early: Dictionary[String, bool] = {}
 # Último minuto (o tramo de vueltas) revisado de las llegadas.
 var _last_arrival_check: int = -1
+# Hay alguien de limpieza trapeando: cada mop_minutes cambia de lugar (main._process).
+var _cleaners_on_duty: bool = false
 
 # El reloj estaba en pausa antes de abrir construcción o Ajustes.
 var _was_paused_before_menu: bool = false
@@ -281,18 +285,51 @@ func _on_dirt_changed() -> void:
 	_sync_employees()
 
 
-# Destino de un empleado: la limpieza en su turno va a la habitación que limpia; los demás, a su silla.
+# Destino de un empleado: la limpieza en su turno trapea por partes (_cleaning_spot); los demás, a su silla.
 func _spot_of(employee: Dictionary) -> Vector2i:
-	var room_index: int = Staff.get_cleaning_room(employee)
-	if room_index >= 0:
-		# Varios limpiando la misma habitación: cada uno en su casilla.
-		var before: int = 0
-		for other: Dictionary in Staff.employees:
-			if int(other["id"]) < int(employee["id"]) and Staff.get_cleaning_room(other) == room_index:
-				before += 1
-		var near: Array[Vector2i] = _cells_near(OfficeState.get_room_spot(room_index), before + 1)
-		return near[mini(before, near.size() - 1)]
+	if is_cleaning_now(employee):
+		var spot: Vector2i = _cleaning_spot(employee, get_arrival_minute())
+		if spot != NO_SPOT:
+			return spot
 	return _seat_of(Staff.employee_key(employee["id"]))
+
+
+## Indica si alguien es de limpieza y le toca estar ahora (trapea con su cubo).
+func is_cleaning_now(employee: Dictionary) -> bool:
+	return not employee.is_empty() and employee["role"] == String(StaffCatalog.get_cleaning("role")) and Staff.is_expected_now(Staff.employee_key(employee["id"]))
+
+
+## Dónde trapea ahora alguien de limpieza: una casilla libre que cambia cada mop_minutes, en la
+## habitación que limpia (la más sucia) o, sin nada sucio, recorriendo las habitaciones
+## (mop_spots_per_room casillas en cada una). Solo visual: la suciedad la quita Staff. NO_SPOT si no hay dónde.
+func _cleaning_spot(employee: Dictionary, now: int) -> Vector2i:
+	var minutes: int = maxi(1, int(StaffCatalog.get_cleaning("mop_minutes")))
+	@warning_ignore("integer_division")
+	var turn: int = now / minutes
+	# Varios de limpieza: cada uno en otra casilla (y, recorriendo, en otra habitación).
+	var before: int = 0
+	for other: Dictionary in Staff.employees:
+		if int(other["id"]) < int(employee["id"]) and is_cleaning_now(other):
+			before += 1
+	var room_index: int = Staff.get_cleaning_room(employee)
+	if room_index < 0:
+		var rooms: Array[int] = []
+		for index: int in range(OfficeState.rooms.size()):
+			if OfficeState.rooms[index]["type"] != Workstations.CLEANING_ROOM:
+				rooms.append(index)
+		if rooms.is_empty():
+			return NO_SPOT
+		@warning_ignore("integer_division")
+		var round_index: int = turn / maxi(1, int(StaffCatalog.get_cleaning("mop_spots_per_room")))
+		room_index = rooms[posmod(round_index + before, rooms.size())]
+	var taken: Array[Vector2i] = OfficeState.get_blocking_cells()
+	var free: Array[Vector2i] = []
+	for cell: Vector2i in OfficeState.rooms[room_index]["cells"]:
+		if cell != OfficeState.entrance and not taken.has(cell) and pathfinder.is_walkable(cell):
+			free.append(cell)
+	if free.is_empty():
+		return NO_SPOT
+	return free[posmod(hash([int(employee["id"]), turn]) + before * 7, free.size())]
 
 
 # Hasta count casillas libres alrededor de spot (spot primero), las más cercanas caminando; nunca la entrada.
@@ -456,6 +493,7 @@ func _update_routines() -> void:
 	var hour_start: int = Staff.get_absolute_hour() * 60
 	_arrivals.clear()
 	_departures.clear()
+	_cleaners_on_duty = false
 	for character: OfficeCharacter in get_characters():
 		var leaving: bool = character is Employee and _departing.has(character)
 		if leaving:
@@ -475,6 +513,11 @@ func _update_routines() -> void:
 			next_rest += 1
 		else:
 			character.set_seat(_home_spot(character.person_key))
+		var mopping: bool = false
+		if character is Employee and not eating and not resting.has(character.person_key):
+			mopping = is_cleaning_now(Staff.get_employee_by_key(character.person_key))
+		character.cleaning = mopping
+		_cleaners_on_duty = _cleaners_on_duty or mopping
 		character.update_routine(eating or Staff.is_expected_now(character.person_key))
 	_update_ceo_button()
 

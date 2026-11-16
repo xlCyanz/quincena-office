@@ -1,5 +1,6 @@
 # Personajes (docs/sprites_128.md, sección 9; STYLE.md): cabeza grande y cuerpo robusto, 4 direcciones,
-# de pie, sentado y animaciones, en 6 conjuntos de ropa (STYLES) y 3 paletas (VARIANTS).
+# de pie, sentado y animaciones, en 8 conjuntos de ropa (STYLES) y 3 paletas (VARIANTS). El personal de
+# limpieza (CLEANING_STYLES) tiene además trapear (mop) y caminar con el suape (mopwalk).
 # Lienzo 128×128 con los pies en (64, 112); sentado, la cadera a SIT_SEAT_Z sobre el piso.
 # Modelo SDF en px del cuerpo (lat, fwd, z) girado TURN hacia la cámara; sombreado, contorno y
 # detalles se pintan aquí pixel a pixel. build se revisa a sí mismo (review) y falla si algo no cumple.
@@ -37,8 +38,11 @@ class Pose(object):
     swing (corrimiento de codo, muñeca y mano), hands (sube la mano), bob (sube el cuerpo),
     breath (suben hombros y cabeza)."""
 
-    def __init__(self, name, sit, arm, height, feet=None, swing=None, hands=None, bob=0.0, breath=0.0):
+    def __init__(self, name, sit, arm, height, feet=None, swing=None, hands=None, bob=0.0, breath=0.0, arms=None,
+                 tool=None):
         self.name = name
+        self.arms = arms or {}  # brazo propio por lado: (hombro, codo, muñeca, mano) sin el bob ni la respiración
+        self.tool = tool  # suape: {"top", "bottom", "head"} en px del cuerpo (sin el bob)
         self.sit = sit
         drop = SIT_DROP if sit else 0.0
         self.bob = float(bob)
@@ -57,6 +61,8 @@ class Pose(object):
 
     def arm_points(self, sign):
         lift = self.bob + self.breath
+        if sign in self.arms:
+            return [(p[0], p[1], p[2] + lift) for p in self.arms[sign]]
         swing = (0.0,) + tuple(self.swing.get(sign, (0.0, 0.0, 0.0)))
         up = (0.0, 0.0, 0.4 * self.hands.get(sign, 0.0), self.hands.get(sign, 0.0))
         return [(sign * p[0], p[1] + swing[i], p[2] + lift + up[i]) for i, p in enumerate(self.arm[:4])]
@@ -103,10 +109,62 @@ def type_poses():
 
 ANIMATIONS = (("walk", walk_poses), ("idle", idle_poses), ("type", type_poses))
 
+# ---- suape (solo el personal de limpieza: CLEANING_STYLES)
+MOP_FRAMES = 4
+MOPWALK_FRAMES = WALK_FRAMES
+MOP_SWING = 7.0  # cuánto va de un lado a otro la mopa en el piso (px del cuerpo)
+MOP_TOP = (2.0, 6.0, 64.0)  # punta de arriba del palo trapeando
+MOP_REACH = 23.0  # a qué distancia al frente queda la mopa
+MOP_HEAD = (10.5, 6.0, 2.6)  # radios de la mopa (lat, fwd, alto)
+STICK_R = 1.7
+
+
+def _arm_to(sign, hand, out=15.0):
+    """Brazo de un lado que llega con la mano a `hand`: el codo sale hacia afuera y abajo."""
+    shoulder = (sign * 13.6, 0.0, 57.0)
+    elbow = (sign * out, (shoulder[1] + hand[1]) / 2.0 - 1.0, (shoulder[2] + hand[2]) / 2.0 - 4.0)
+    wrist = tuple(hand[i] + (elbow[i] - hand[i]) * 0.18 for i in range(3))
+    return (shoulder, elbow, wrist, hand)
+
+
+def _on_stick(top, bottom, t):
+    return tuple(top[i] + (bottom[i] - top[i]) * t for i in range(3))
+
+
+def mop_poses():
+    """Trapeando: las dos manos en el palo (la derecha arriba) y la mopa va y viene en el piso."""
+    poses = []
+    for i in range(MOP_FRAMES):
+        swing = MOP_SWING * math.sin(2.0 * math.pi * i / MOP_FRAMES + math.pi / 4.0)
+        top = (MOP_TOP[0] + 0.25 * swing, MOP_TOP[1], MOP_TOP[2])
+        bottom = (swing, MOP_REACH, MOP_HEAD[2])
+        arms = {1.0: _arm_to(1.0, _on_stick(top, bottom, 0.12)), -1.0: _arm_to(-1.0, _on_stick(top, bottom, 0.36))}
+        tool = {"top": top, "bottom": bottom, "head": (swing, MOP_REACH + 1.0, MOP_HEAD[2])}
+        poses.append(Pose("mop", False, STAND.arm, STAND.height, arms=arms, tool=tool, breath=0.4 * (i % 2)))
+    return poses
+
+
+def mopwalk_poses():
+    """Caminando con el suape parado en la mano derecha (sin balancear ese brazo)."""
+    poses = []
+    for pose in walk_poses():
+        hand = (16.6, 5.0, CUFF_Z - 2.0)
+        top = (hand[0], hand[1] + 1.0, hand[2] + 24.0)
+        bottom = (hand[0], hand[1] + 3.0, MOP_HEAD[2] + 3.0)
+        arms = {1.0: _arm_to(1.0, hand, out=16.4)}
+        swing = {-1.0: pose.swing.get(-1.0, (0.0, 0.0, 0.0))}
+        poses.append(Pose("mopwalk", False, STAND.arm, STAND.height, feet=pose.feet, swing=swing, bob=pose.bob,
+                          arms=arms, tool={"top": top, "bottom": bottom, "head": (bottom[0], bottom[1] + 0.5, bottom[2])}))
+    return poses
+
+
+TOOL_ANIMATIONS = (("mop", mop_poses), ("mopwalk", mopwalk_poses))
+CLEANING_STYLES = ("cleaning", "woman_cleaning")  # conjuntos con las poses del suape
+
 OUTLINE, DEEP, RIGHT, LEFT, BASE, LIGHT = pal.OUTLINE, pal.DEEP, pal.RIGHT, pal.LEFT, pal.BASE, pal.LIGHT
 
 # Capas, de atrás hacia adelante para componerlas (LAYER_ORDER).
-LAYER_ORDER = ("shoes", "pants", "shirt", "jacket", "skin", "accent", "face", "hair")
+LAYER_ORDER = ("shoes", "pants", "shirt", "jacket", "skin", "accent", "face", "hair", "stick", "mop")
 LAYER_ID = dict((name, index) for index, name in enumerate(LAYER_ORDER))
 
 # Bandas de luz por capa: (umbral mínimo de n·luz, tono), de más a menos luz. Izquierda = base,
@@ -118,6 +176,8 @@ BANDS = {
     "jacket": ((0.20, BASE), (-0.40, LEFT), (-9.0, RIGHT)),
     "skin": ((0.93, LIGHT), (-0.45, BASE), (-9.0, LEFT)),
     "hair": ((0.90, LIGHT), (-0.05, BASE), (-9.0, RIGHT)),
+    "stick": ((0.30, BASE), (-0.30, LEFT), (-9.0, RIGHT)),
+    "mop": ((0.60, LIGHT), (-0.10, BASE), (-9.0, LEFT)),
 }
 
 # Capas que se sombrean con la luz horizontal (Figure.horizontal_light).
@@ -139,6 +199,10 @@ def layer_ramp(base, light=0.35, name=None):
     return pal.ramp(base, outline=dark, deep=deep, light=bright, shine=bright, name=name)
 
 
+STICK_COLOR = "4a8fd8"  # palo del suape
+MOP_COLOR = "cfcab9"  # hilos de la mopa
+
+
 class Look(object):
     """Una rampa por capa de un empleado; una instancia por variante (el lienzo distingue por objeto)."""
 
@@ -151,6 +215,9 @@ class Look(object):
         self.shoes = layer_ramp(shoes, light=0.40, name="shoes")
         self.accent = layer_ramp(accent, light=0.30, name="accent")
         self.face = pal.palette(["1e1420", "fbf6ee"], name="face")  # pupila y blanco del ojo
+        # Suape (el mismo en todos los aspectos): palo azul y mopa de hilos gris claro.
+        self.stick = layer_ramp(STICK_COLOR, light=0.35, name="stick")
+        self.mop = layer_ramp(MOP_COLOR, light=0.25, name="mop")
 
     def ramp(self, layer):
         return getattr(self, layer)
@@ -174,7 +241,8 @@ class Style(object):
 
 
 # executive = traje con camisa y corbata; office = camisa de manga larga y corbata; woman = vestido;
-# woman_office = blusa y falda; woman_executive = saco y falda; casual = camiseta y jeans.
+# woman_office = blusa y falda; woman_executive = saco y falda; casual = camiseta y jeans;
+# cleaning / woman_cleaning = uniforme de limpieza: overol de una pieza con cuello y cinturón.
 STYLES = (
     Style("casual", ""),
     Style("office", "office_", long_sleeve=True, tucked=True, collar=True, tie=True),
@@ -184,10 +252,13 @@ STYLES = (
     Style("executive", "executive_", long_sleeve=True, collar=True, tie=True, jacket=True),
     Style("woman_executive", "woman_executive_", long_sleeve=True, collar=True, skirt=True, long_hair=True,
           waist=0.10, jacket=True),
+    Style("cleaning", "cleaning_", tucked=True, collar=True),
+    Style("woman_cleaning", "woman_cleaning_", tucked=True, collar=True, long_hair=True, waist=0.10),
 )
 STYLE_BY_NAME = dict((style.name, style) for style in STYLES)
 
 DARK_SHOES = "3e2c28"
+CLEANING_UNIFORM = "4f8a5b"  # verde del overol de limpieza
 # "" = base, "_v1" = piel oscura y pelo negro, "_v2" = piel clara y pelo claro (solo cambia la paleta).
 LOOKS = {
     "casual": {
@@ -214,6 +285,17 @@ LOOKS = {
         "": Look(skin="f0b07a", hair="8a3b22", shirt="f1eee6", pants="7c2f3c", shoes=DARK_SHOES),
         "_v1": Look(skin="8a5234", hair="241a1c", shirt="f1eee6", pants="2c3458", shoes=DARK_SHOES),
         "_v2": Look(skin="f8d0a8", hair="e6b04a", shirt="cfe2f4", pants="5c6072", shoes=DARK_SHOES),
+    },
+    # Uniforme de limpieza: el mismo verde para todos (camisa y pantalón = overol).
+    "cleaning": {
+        "": Look(skin="f0b07a", hair="4a2c1c", shirt=CLEANING_UNIFORM, pants=CLEANING_UNIFORM, shoes=DARK_SHOES),
+        "_v1": Look(skin="8a5234", hair="241a1c", shirt=CLEANING_UNIFORM, pants=CLEANING_UNIFORM, shoes=DARK_SHOES),
+        "_v2": Look(skin="f8d0a8", hair="df823d", shirt=CLEANING_UNIFORM, pants=CLEANING_UNIFORM, shoes=DARK_SHOES),
+    },
+    "woman_cleaning": {
+        "": Look(skin="f0b07a", hair="8a3b22", shirt=CLEANING_UNIFORM, pants=CLEANING_UNIFORM, shoes=DARK_SHOES),
+        "_v1": Look(skin="8a5234", hair="241a1c", shirt=CLEANING_UNIFORM, pants=CLEANING_UNIFORM, shoes=DARK_SHOES),
+        "_v2": Look(skin="f8d0a8", hair="e6b04a", shirt=CLEANING_UNIFORM, pants=CLEANING_UNIFORM, shoes=DARK_SHOES),
     },
     "woman_office": {
         "": Look(skin="f0b07a", hair="8a3b22", shirt="f1eee6", pants="3a3f5a", shoes=DARK_SHOES),
@@ -821,6 +903,8 @@ def build_model(fig, hair=True):
         else:
             sleeve = f_capsule(shoulder, hem, 5.6, 5.4)
         fig.solid("arm_" + side, "jacket" if fig.style.jacket else "shirt", sleeve, box)
+    if pose.tool:
+        build_mop(fig, pose)
     # Cuello, cabeza y orejas.
     neck, head_z = pose.neck_z, pose.head_z
     fig.solid("neck", "skin", f_capsule((0.0, 0.0, neck - 2.0), (0.0, 0.3, neck + 6.0), 4.3),
@@ -834,6 +918,21 @@ def build_model(fig, hair=True):
                   (sign * ear - 2.7, sign * ear + 2.7, -3.6, 2.6, head_z - 7.4, head_z + 0.4))
     if hair:
         build_hair(fig)
+
+
+def build_mop(fig, pose):
+    """Suape: palo de top a bottom y la mopa de hilos (un óvalo chato) abajo."""
+    lift = pose.bob
+    top, bottom, head = ((p[0], p[1], p[2] + lift) for p in (pose.tool["top"], pose.tool["bottom"], pose.tool["head"]))
+    points = (top, bottom)
+    box = (min(p[0] for p in points) - 2.0, max(p[0] for p in points) + 2.0,
+           min(p[1] for p in points) - 2.0, max(p[1] for p in points) + 2.0,
+           min(p[2] for p in points) - 2.0, max(p[2] for p in points) + 2.0)
+    fig.solid("stick", "stick", f_capsule(top, bottom, STICK_R), box)
+    rx, ry, rz = MOP_HEAD
+    fig.solid("mop", "mop", f_ellipsoid(head, (rx, ry, rz + 0.6)),
+              (head[0] - rx - 0.5, head[0] + rx + 0.5, head[1] - ry - 0.5, head[1] + ry + 0.5,
+               max(head[2] - rz - 0.6, 0.0), head[2] + rz + 1.0))
 
 
 def stand_leg(pose, sign, r_top, r_low, hip_lat, hip_z):
@@ -1244,6 +1343,8 @@ def verify(fig, name):
     # Apoyo: los pies (sentado, la cadera) sobre (64, 112) y el alto de la pose a su escala.
     low_x, low_y = fig.screen(0.0, shoe_fwd(pose) + 2.0, 0.0)
     reach = 0.5 * max([abs(pose.foot(sign)[0]) for sign in (-1.0, 1.0)])  # caminando, el pie de adelante baja más
+    if pose.tool:
+        reach += MOP_REACH  # la mopa en el piso queda más adelante (más abajo en pantalla) que los pies
     if not low_y - reach <= ys.max() + 1 <= low_y + 6 + reach:
         problems.append("la fila más baja es %d (pies en %.1f)" % (ys.max(), low_y))
     tall = FEET[1] - ys.min()
@@ -1492,6 +1593,18 @@ def build(out_dir):
                         save_chair_overlays(fig, name, rotation, out_dir)
                     export_layers(fig, None, layers_dir, name)
                     frames.append((name, fig))
+        if style.name in CLEANING_STYLES:
+            for kind, make in TOOL_ANIMATIONS:
+                poses = make()
+                for rotation in range(4):
+                    for index, pose in enumerate(poses):
+                        fig = build_one(rotation, looks[""], pose, style=style)
+                        name = "character_%s%s_r%d_%d" % (style.prefix, kind, rotation, index + 1)
+                        problems += verify(fig, name)
+                        files.append(iso.save(fig.c, out_dir, name, pose=kind, style=style.name, frame=index + 1,
+                                              frames=len(poses), layers=list(LAYER_ORDER)))
+                        export_layers(fig, None, layers_dir, name)
+                        frames.append((name, fig))
         base = dict(figures)["character_%sstand_r1" % style.prefix]
         for suffix in ("_v1", "_v2"):
             fig = build_one(1, looks[suffix], style=style)

@@ -8,6 +8,8 @@ const HAIR_TONES: Array[Color] = [Color("3b2a20"), Color("1e1a18"), Color("8a5a2
 
 ## Cargos de traje y de oficina; los demás, de oficina uno de cada tres y si no casual.
 const EXECUTIVE_ROLES: Array[String] = ["manager", "executive"]
+## El personal de limpieza lleva su uniforme (overol verde).
+const CLEANING_ROLE: String = "cleaner"
 const OFFICE_ROLES: Array[String] = ["team_leader", "salesperson", "accountant", "receptionist"]
 
 var employee_id: int = 0
@@ -38,7 +40,9 @@ func update_role(employee: Dictionary) -> void:
 func _look_for(employee: Dictionary) -> String:
 	var role: String = String(employee["role"])
 	var outfit: String = "casual"
-	if EXECUTIVE_ROLES.has(role):
+	if role == CLEANING_ROLE:
+		outfit = "cleaning"
+	elif EXECUTIVE_ROLES.has(role):
 		outfit = "executive"
 	elif OFFICE_ROLES.has(role) or employee_id % 3 == 0:
 		outfit = "office"

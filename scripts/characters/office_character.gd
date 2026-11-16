@@ -32,7 +32,10 @@ const ICON_FONT_SIZE: int = 11
 const CLICK_AREA := Rect2(-10.0, -52.0, 20.0, 56.0)
 ## Ciclos de caminar por casilla y segundos reales por cuadro de las poses quietas.
 const WALK_CYCLES_PER_CELL: float = 1.5
-const FRAME_SECONDS: Dictionary[String, float] = {"idle": 0.45, "type": 0.14}
+const FRAME_SECONDS: Dictionary[String, float] = {"idle": 0.45, "type": 0.14, "mop": 0.3}
+## Dónde queda el cubo de quien trapea: casillas a su izquierda y hacia atrás.
+const BUCKET_SIDE: float = 0.42
+const BUCKET_BACK: float = 0.12
 ## Posición del icono de estado sobre la cabeza, de pie y sentado.
 const SPRITE_ICON_STANDING := Vector2(11.0, -52.0)
 const SPRITE_ICON_SEATED := Vector2(11.0, -46.0)
@@ -112,6 +115,17 @@ var _claimed_chair := Vector2i(-1000000, -1000000)
 var _tuck := Vector2.ZERO
 # Pieza que dibuja las manos sobre el escritorio (_draw_hands).
 var _hands: Node2D
+# Cubo de trapear: pieza aparte para ordenarse con los muebles (_draw_bucket).
+var _bucket: Node2D
+## Personal de limpieza en su turno: camina con el suape y, parado en su lugar, trapea con el
+## cubo al lado (si su aspecto tiene esas poses).
+var cleaning: bool = false:
+	set(value):
+		if value == cleaning:
+			return
+		cleaning = value
+		_animate(0.0, Vector2.ZERO)
+		_update_position()
 
 
 ## Prepara al personaje (lo llama la escena). outside es la casilla de la calle frente a la
@@ -133,6 +147,10 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 		_hands.name = "Hands"
 		_hands.draw.connect(_draw_hands)
 		add_child(_hands)
+		_bucket = Node2D.new()
+		_bucket.name = "Bucket"
+		_bucket.draw.connect(_draw_bucket)
+		add_child(_bucket)
 	if not EventBus.office_changed.is_connected(_refresh_seat):
 		EventBus.office_changed.connect(_refresh_seat)
 	_set_activity(Activity.AWAY)
@@ -140,7 +158,7 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 	_update_position()
 
 
-## Aspecto: conjunto de ropa ("casual", "office" o "executive"; de mujer si woman) y paleta según number.
+## Aspecto: conjunto de ropa ("casual", "office", "executive" o "cleaning"; de mujer si woman) y paleta según number.
 static func make_look(woman: bool, outfit: String, number: int) -> String:
 	var base: String = outfit
 	if woman:
@@ -327,7 +345,7 @@ func _animate(delta: float, moved: Vector2) -> void:
 	var facing: int = _facing
 	var frame: int = 0
 	if moved != Vector2.ZERO:
-		pose = "walk"
+		pose = "mopwalk" if _has_mop() else "walk"
 		facing = _facing_of(moved)
 		_walk_phase = fposmod(_walk_phase + moved.length() * WALK_CYCLES_PER_CELL, 1.0)
 		frame = int(_walk_phase * SpriteLibrary.get_character_frames(pose))
@@ -337,6 +355,10 @@ func _animate(delta: float, moved: Vector2) -> void:
 		if _is_sitting():
 			pose = "type" if _at_computer and can_type else "sit"
 			facing = _seat_facing
+		elif is_mopping():
+			pose = "mop"
+			# Cada casilla hacia otro lado, así se le ve trapear de frente y de espaldas.
+			facing = posmod(_seat_cell.x + 3 * _seat_cell.y, 4)
 		if FRAME_SECONDS.has(pose):
 			frame = int(_anim_time / FRAME_SECONDS[pose]) % maxi(SpriteLibrary.get_character_frames(pose), 1)
 	if pose != _pose or facing != _facing or frame != _frame:
@@ -346,6 +368,7 @@ func _animate(delta: float, moved: Vector2) -> void:
 		queue_redraw()
 		if _hands != null:
 			_hands.queue_redraw()
+		_place_bucket()
 	_update_chair_claim()
 
 
@@ -385,6 +408,35 @@ func _refresh_seat() -> void:
 func _refresh_entrance() -> void:
 	_entrance = OfficeState.entrance
 	_outside = OfficeState.get_outside_of_entrance()
+
+
+# Lleva el suape: de limpieza en su turno y con las poses del suape en su aspecto.
+func _has_mop() -> bool:
+	return cleaning and SpriteLibrary.has_tool_look(look)
+
+
+## Indica si está trapeando: llegó a su lugar (que no es un asiento) con el suape.
+func is_mopping() -> bool:
+	return _has_mop() and activity == Activity.SEATED and not _is_sitting()
+
+
+# El cubo, a la izquierda de hacia donde mira y un poco atrás; solo se ve mientras trapea.
+func _place_bucket() -> void:
+	if _bucket == null or _grid == null:
+		return
+	_bucket.visible = is_mopping() and not SpriteLibrary.get_bucket_sprite().is_empty()
+	if not _bucket.visible:
+		return
+	var front := Vector2(FurnitureCatalog.get_front(_facing))
+	var side := Vector2(front.y, -front.x)
+	_bucket.position = _grid.grid_to_world(grid_position + side * BUCKET_SIDE - front * BUCKET_BACK) - position
+	_bucket.queue_redraw()
+
+
+func _draw_bucket() -> void:
+	var sprite: String = SpriteLibrary.get_bucket_sprite()
+	SpriteLibrary.draw_shadow(_bucket, sprite + "_shadow")
+	SpriteLibrary.draw(_bucket, sprite)
 
 
 # Indica si se dibuja sentado en su asiento.
@@ -622,6 +674,7 @@ func _update_position() -> void:
 		# Justo después del escritorio de delante (el mueble se ordena 1 px antes de su centro).
 		_hands.position = _grid.grid_to_world(Vector2(_seat_cell + FurnitureCatalog.get_front(maxi(_seat_facing, 0)))) - position
 		_hands.queue_redraw()
+	_place_bucket()
 
 
 # Muñeco provisional; origen en el apoyo. Sentado, la cadera sobre el asiento y las piernas por delante.

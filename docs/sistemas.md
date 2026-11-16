@@ -201,8 +201,12 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   alcanza (`Bank.get_due_on_first`, `Staff.estimate_payroll`). Suciedad en cada habitación (`room["dirt"]`, 0–100, la sigue en `RoomRules.reconcile`,
   falta = 0): cada hora trabajada en un puesto suma 1 a la habitación del puesto (la mitad con `trash_can`, zafacón $30); desde 50 la meta de ánimo
   de quienes trabajan ahí baja 10 (`Staff.works_in_dirty_room`). `cleaner` ($500, desde el inicio) tiene su puesto en un armario (`is_closet`) dentro
-  de un Cuarto de limpieza (`Workstations.CLEANING_ROOM`, uno por armario); en su turno quita 25/h × factor a la habitación más sucia y `main.gd` lo
-  manda ahí (`Staff.get_cleaning_room`). `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas según el ancho (hito 65).
+  de un Cuarto de limpieza (`Workstations.CLEANING_ROOM`, uno por armario); en su turno quita 25/h × factor a la habitación más sucia
+  (`Staff.get_cleaning_room`). Se ve trapeando por partes (solo visual): `main_characters._cleaning_spot` le da una casilla libre que cambia cada
+  `mop_minutes` (20) en esa habitación o, sin nada sucio, recorre las habitaciones (`mop_spots_per_room` casillas en cada una; `is_cleaning_now`,
+  `_cleaners_on_duty` hace que `main._process` lo mueva). `OfficeCharacter.cleaning`: camina con el suape (pose `mopwalk`) y en su lugar trapea
+  (`mop`, `is_mopping`, mirando a un lado distinto por casilla) con el cubo al lado (pieza hija `Bucket`, `SpriteLibrary.get_bucket_sprite`).
+  Prueba `test_cleaning_view`. `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas según el ancho (hito 65).
 - Competencia (`competition` en `data/staff.json`): cada medianoche (`Staff._update_morale`) otra empresa puede ofrecerle a un SemiSenior o
   Senior, o a un líder, gerente o ejecutivo (cuentan como Senior), su sueldo +15–30 % (`outside_offer`: `{salary, until_day}`, 5 días).
   `Staff.get_offer_chance`: Senior 1 %/día, SemiSenior 0.5 %, ×3 si gana menos que su nivel, ×0.3 desde el 110 %, leal ×0.25, ambicioso ×2.
@@ -477,9 +481,11 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `SpriteLibrary.get_furniture_sprite(id, rotación, parte)`; `FurnitureView._draw_sprites` dibuja sombra y mueble con el apoyo en el centro de
   la casilla de anclaje (los chicos, su versión `_q` en el centro del cuarto), la computadora y el segundo monitor sobre el centro del escritorio
   (con monitor la computadora se corre `COMPUTER_SHIFT`) y las sillas en dos piezas (`_seat` y `_back`, la de atrás lleva la sombra).
-  Personajes: una hoja por aspecto en `assets/sprites/characters/` (6 conjuntos × 3 paletas; fila = dirección, columna = cuadro de `poses`:
-  stand, sit, idle ×4, walk ×8, type ×4; las paletas `_v1`/`_v2` las saca `export_game.py` cambiando rampa por rampa). `OfficeCharacter.look`
-  (`make_look(mujer, "casual"|"office"|"executive", número)`; CEO de traje, `Employee._look_for` por cargo, nombre e id, visitas y candidatos
+  Personajes: una hoja por aspecto en `assets/sprites/characters/` (8 conjuntos × 3 paletas; fila = dirección, columna = cuadro de `poses`:
+  stand, sit, idle ×4, walk ×8, type ×4; las paletas `_v1`/`_v2` las saca `export_game.py` cambiando rampa por rampa). El personal de limpieza
+  tiene además una hoja `<aspecto>_tools.png` con `mop` ×4 y `mopwalk` ×8 (`characters.tool_poses`/`tool_looks`; `SpriteLibrary.has_tool_look`;
+  `draw_character` la usa sola) y el cubo `mop_bucket` (`characters.bucket`). `OfficeCharacter.look`
+  (`make_look(mujer, "casual"|"office"|"executive"|"cleaning", número)`; CEO de traje, `Employee._look_for` por cargo (el personal de limpieza con su overol verde, `cleaning`), nombre e id, visitas y candidatos
   en `Visitor`); `_animate` elige pose, dirección (0–3 como las rotaciones) y cuadro: camina según lo recorrido (`WALK_CYCLES_PER_CELL`),
   sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
   `can_type` false en visitas), si no `sit`, y de pie `idle`; sentado en una silla se dibuja junto con ella en un solo cuadro (poses

@@ -169,7 +169,9 @@
 		"max_dirt": 100,
 		"dirty_from": 50,
 		"dirty_mood": -10,
-		"clean_per_hour": 25
+		"clean_per_hour": 25,
+		"mop_minutes": 20,
+		"mop_spots_per_room": 3
 	},
 	"competition": {
 		"chances": { "semi_senior": 0.005, "senior": 0.01 },

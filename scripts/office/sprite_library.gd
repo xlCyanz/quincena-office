@@ -171,16 +171,35 @@ static func has_character_look(look: String) -> bool:
 	return looks.has(look)
 
 
-## Indica si las hojas traen esa pose (p. ej. "type_basic_chair", con la silla dibujada).
+## Indica si las hojas traen esa pose (p. ej. "type_basic_chair", con la silla dibujada, o "mop" del suape).
 static func has_character_pose(pose: String) -> bool:
-	var poses: Dictionary = get_data().get("characters", {}).get("poses", {})
-	return poses.has(pose)
+	return not _pose_table(pose).is_empty()
 
 
-## Cuadros de una pose ("stand", "sit", "idle", "walk", "type"); 0 si no existe.
+## Cuadros de una pose ("stand", "sit", "idle", "walk", "type", "mop", "mopwalk"); 0 si no existe.
 static func get_character_frames(pose: String) -> int:
-	var poses: Dictionary = get_data().get("characters", {}).get("poses", {})
-	return int(poses[pose]["frames"]) if poses.has(pose) else 0
+	var poses: Dictionary = _pose_table(pose)
+	return int(poses[pose]["frames"]) if not poses.is_empty() else 0
+
+
+## Indica si ese aspecto tiene las poses del suape (hoja aparte, solo el personal de limpieza).
+static func has_tool_look(look: String) -> bool:
+	return get_data().get("characters", {}).get("tool_looks", {}).has(look)
+
+
+## Sprite del cubo que va junto a quien trapea ("" si no hay).
+static func get_bucket_sprite() -> String:
+	return String(get_data().get("characters", {}).get("bucket", ""))
+
+
+# Tabla de poses donde está esa pose: la de las hojas comunes o la de las herramientas; vacía si no.
+static func _pose_table(pose: String) -> Dictionary:
+	var characters: Dictionary = get_data().get("characters", {})
+	for table: String in ["poses", "tool_poses"]:
+		var poses: Dictionary = characters.get(table, {})
+		if poses.has(pose):
+			return poses
+	return {}
 
 
 ## Dibuja un cuadro de personaje con los pies en `at` (aspecto, pose, dirección 0–3, cuadro).
@@ -188,11 +207,16 @@ static func get_character_frames(pose: String) -> int:
 static func draw_character(canvas: CanvasItem, look: String, pose: String, rotation: int, frame: int,
 		at: Vector2 = Vector2.ZERO, band: Vector2 = Vector2.ZERO) -> bool:
 	var characters: Dictionary = get_data().get("characters", {})
-	var looks: Dictionary = characters.get("looks", {})
 	var poses: Dictionary = characters.get("poses", {})
+	var looks: Dictionary = characters.get("looks", {})
+	var key: String = "character:" + look
+	if not poses.has(pose):
+		# Poses del suape: en la hoja de herramientas del aspecto.
+		poses = characters.get("tool_poses", {})
+		looks = characters.get("tool_looks", {})
+		key = "tools:" + look
 	if not looks.has(look) or not poses.has(pose):
 		return false
-	var key: String = "character:" + look
 	if not _textures.has(key):
 		var path: String = FOLDER + String(looks[look])
 		_textures[key] = (load(path) as Texture2D) if ResourceLoader.exists(path) else null
