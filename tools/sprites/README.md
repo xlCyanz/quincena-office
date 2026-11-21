@@ -454,3 +454,17 @@ iso.save(tile(0), out_dir, "floor_ceramic_0", material="ceramic", variant=0, bas
 - `check.py` no puede decir si algo «se ve bien»: mide formato, geometría, tonos y costuras. Mirar siempre los PNG.
 - Las alturas de pared (120, 92, 100, 20), el apoyo de pared (36, alto − 18) y el del objeto de pared (32, 112) salen
   de la tabla de la guía y de la regla «planta pegada abajo y apoyo en su centro»; la guía no los escribe uno por uno.
+
+## Sprites dibujados aparte (`art/`)
+
+`art/<categoría>/<pieza>/` guarda los sprites que no salen de `generate.py`: sus PNG, el documento editable de
+cada uno (`.moana.json`, del motor Moana), el `build.py` que los genera y un `manifest.json` con el apoyo de
+cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo nombre.
+
+| Carpeta | Qué tiene |
+| --- | --- |
+| `art/furniture/desk_simple/` | Escritorio sencillo: `desk_simple_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/desk_long/` | Escritorio largo (2×1): `desk_long_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` solo da planta, lienzo y largo del tablero |
+
+`build.py` corre con el Python de Moana, no con el del sistema (ver su cabecera).

@@ -4,7 +4,8 @@
 #   python3 tools/sprites/export_game.py DIR
 #
 # DIR es la carpeta de generate.py (PNG y manifest*.json). Escribe assets/tiles/ground.png,
-# assets/sprites/ y data/sprites.json (apoyos; lo lee SpriteLibrary).
+# assets/sprites/ y data/sprites.json (apoyos; lo lee SpriteLibrary). Los PNG de tools/sprites/art/
+# (dibujados aparte, una carpeta por pieza) reemplazan a los de DIR con el mismo nombre.
 # Después: Godot --headless --editor --quit
 import json
 import os
@@ -23,6 +24,24 @@ import sheet  # noqa: E402
 from pieces import character  # noqa: E402
 from pieces import desk as desk_piece  # noqa: E402
 from pieces import walls as wall_piece  # noqa: E402
+
+# Sprites dibujados aparte: art/<categoría>/<pieza>/ con sus PNG y un manifest.json con el apoyo de
+# cada uno. Reemplazan al de generate.py del mismo nombre.
+ART_DIR = os.path.join(HERE, "art")
+
+
+def art_sprites():
+    """Nombre del PNG -> (ruta, entrada de su manifest.json) para todo lo que hay en art/."""
+    found = {}
+    for folder, _dirs, files in sorted(os.walk(ART_DIR)):
+        if "manifest.json" not in files:
+            continue
+        with open(os.path.join(folder, "manifest.json")) as handle:
+            for name, entry in json.load(handle)["sprites"].items():
+                if name in found:
+                    raise SystemExit("%s está en dos carpetas de art/" % name)
+                found[name] = (os.path.join(folder, name), entry)
+    return found
 
 TILE = (128, 64)
 VARIANTS = 4
@@ -161,12 +180,19 @@ def main(directory):
     # ---- piezas sueltas
     sprites = {}
 
+    art = art_sprites()
+
     def copy(name, folder):
         target = os.path.join(ROOT, "assets", "sprites", folder)
         os.makedirs(target, exist_ok=True)
-        image = load(name)
-        shutil.copyfile(os.path.join(directory, name + ".png"), os.path.join(target, name + ".png"))
-        entry = manifest.get(name + ".png", {})
+        if name + ".png" in art:
+            source, entry = art[name + ".png"]
+            image = Image.open(source).convert("RGBA")
+        else:
+            source = os.path.join(directory, name + ".png")
+            image = load(name)
+            entry = manifest.get(name + ".png", {})
+        shutil.copyfile(source, os.path.join(target, name + ".png"))
         if "anchor" not in entry:
             raise SystemExit("%s no tiene anchor en el manifiesto" % name)
         sprites[name] = {"file": "%s/%s.png" % (folder, name), "anchor": [float(v) for v in entry["anchor"]],
@@ -191,7 +217,8 @@ def main(directory):
                 copy(base + "_back" + suffix, "furniture")
             else:
                 copy(base + suffix, "furniture")
-            if os.path.isfile(os.path.join(directory, base + suffix + "_shadow.png")):
+            shadow = base + suffix + "_shadow"
+            if shadow + ".png" in art or os.path.isfile(os.path.join(directory, shadow + ".png")):
                 copy(base + suffix + "_shadow", "furniture")
         furniture[item] = {"base": base, "rotated": rotated, "parts": parts}
     for item, by_computer in DESK_SETS.items():

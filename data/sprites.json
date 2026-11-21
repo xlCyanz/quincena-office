@@ -1545,7 +1545,7 @@
 			"file": "furniture/desk_long_r0_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_r1": {
@@ -1567,7 +1567,7 @@
 			"file": "furniture/desk_long_r1_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_r2": {
@@ -1589,7 +1589,7 @@
 			"file": "furniture/desk_long_r2_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_r3": {
@@ -1611,7 +1611,7 @@
 			"file": "furniture/desk_long_r3_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_simple_r0": {
