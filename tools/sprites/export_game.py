@@ -143,7 +143,7 @@ def main(directory):
     manifest = sheet.manifest(directory)
 
     def load(name):
-        path = os.path.join(directory, name + ".png")
+        path = sheet.find(directory, name + ".png") or os.path.join(directory, name + ".png")
         if not os.path.isfile(path):
             raise SystemExit("Falta %s: corre antes generate.py --out %s" % (path, directory))
         return Image.open(path).convert("RGBA")

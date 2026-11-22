@@ -106,7 +106,7 @@ class Office(object):
         self.directory = directory
         self.seed = seed
         self.manifest = sheet.manifest(directory)
-        self.art = sheet.art_sprites()  # escritorios y computadoras: los dibuja Moana
+        self.art = sheet.art_sprites()  # lo que dibuja Moana (escritorios, computadoras, terreno)
         cols = OFFICE_COLS + 2 * GRASS
         rows = OFFICE_ROWS + 2 * GRASS
         self.scene = PreviewScene(cols, rows, BACKGROUND, top=24, margin=24)
@@ -138,7 +138,7 @@ class Office(object):
     def floors(self):
         rng = np.random.RandomState(self.seed)
         ceramic = [self.img("floor_ceramic_%d" % i) for i in range(4)]
-        grass = [self.img("ground_grass_%d" % i) for i in range(4)]
+        grass = [self.img("ground_grass_plain_%d" % i) for i in range(4)]
         for sy in range(self.scene.rows):
             for sx in range(self.scene.cols):
                 x, y = sx - GRASS, sy - GRASS

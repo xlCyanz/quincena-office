@@ -1,17 +1,12 @@
-# Pisos y terreno (docs/sprites_128.md, sección 5; estilo de tools/sprites/STYLE.md).
+# Pisos de adentro (docs/sprites_128.md, sección 5; estilo de tools/sprites/STYLE.md).
 #
 #   floor_ceramic_0..3   cerámica blanca: 2×2 losas en damero de dos blancos, junta gris de 1 px,
 #                        bisel claro arriba y gris abajo, esquinas redondeadas y reflejo en diagonal
 #   floor_wood_0..3      8 tablas angostas de madera naranja con cortes escalonados, moteado y vetas
 #   floor_carpet_0..3    alfombra lila de pared a pared: ruido de dominós en 4 tonos, algo agrupado
 #   floor_bare_0..3      concreto (sin piso): grises cálidos de poco contraste, poros y una grieta fina
-#   ground_grass_<familia>_0..3    pasto del solar en 4 familias que empalman: plain, patchy, lush y sunny
-#   ground_outside_<familia>_0..3  lo mismo fuera del solar, 15 % más oscuro
-#   ground_path_0..3     camino de grava: muchas piedras con cara clara, lado y contorno-sombra
-#   ground_sidewalk_0..3 acera: una losa por casilla con junta en el borde y bisel
-#   ground_road_0..3     calle: asfalto de granos sueltos
-#   ground_road_line_x_0..3 / _y_0..3  calle con la línea amarilla por el medio a lo largo de x o de y
 #
+# El terreno de afuera (pasto, camino, acera y calle) se dibuja con Moana en tools/sprites/art/ground/.
 # Las 4 variantes de cada material comparten el borde y tienen la MISMA cantidad de pixeles por color.
 # Se dibuja en la rejilla isométrica (grid.iu, grid.iv): celda = 1 px, así las líneas salen 2:1.
 import os
@@ -25,7 +20,6 @@ import pattern
 import sheet
 
 CONSTRUCTION = iso.load_json("data/construction.json")
-MAP = iso.load_json("data/map.json")
 VARIANTS = 4
 CELL = 64  # px de eje por casilla
 ANCHOR = [64, 96]  # punto de apoyo de una casilla de piso (centro del rombo)
@@ -336,84 +330,6 @@ CARPET = pal.palette(["777a9a", "7d80a0", "8688a4", "8e8fa8"], name="carpet")
 CARPET_RECIPE = Noise((0.24, 0.26, 0.38), 0.55, ((8, 1.0),), 5100)
 
 
-# ---------------------------------------------------------------------- pasto
-
-GRASS_BASE, GRASS_SECOND = CONSTRUCTION["terrain"]["colors"]  # 5f8a4c, 567e44 (dibujo provisional)
-L = pal.LEAVES
-
-
-def grass_palette(factor, name):
-    """Verdes de la rampa de hojas × factor de brillo (1 el solar, 0.85 afuera)."""
-    colors = [
-        pal.mix(L[pal.RIGHT], L[pal.LEFT], 0.75),  # mancha oscura
-        pal.mix(L[pal.LEFT], L[pal.SOFT], 0.45),   # borde de la mancha
-        L[pal.SOFT],                               # pasto (81a73a)
-        pal.mix(L[pal.SOFT], L[pal.BASE], 0.4),    # mancha clara
-        L[pal.RIGHT],                              # pie de las matas y trazos (4c6029)
-        L[pal.BASE],                               # brizna (9ecc42)
-        L[pal.LIGHT],                              # punta de la brizna (cbf166)
-    ]
-    if factor != 1.0:
-        colors = [pal.mix("000000", color, factor) for color in colors]
-    return pal.palette(colors, name=name)
-
-
-(G_DARK, G_MID, G_BASE, G_LIGHT, G_DEEP, G_BLADE, G_TIP) = range(7)
-GRASS = grass_palette(1.0, "grass")
-OUTSIDE = grass_palette(0.85, "outside")  # pasto fuera del solar: 15 % más oscuro
-BLADE_COLORS = {"t": G_TIP, "b": G_BLADE, "d": G_DEEP}
-# Matas: briznas juntas, más claras arriba, con el pie oscuro.
-TUFT_TALL = shape_pixels(("..tt....",
-                          "..bb..tt",
-                          "ttbb..bb",
-                          "bbbbttbb",
-                          "bbbbbbbb",
-                          "dddddddd"), BLADE_COLORS)
-TUFT_FAN = shape_pixels(("tt....tt",
-                         "bb..ttbb",
-                         "bbttbbbb",
-                         "bbbbbb..",
-                         "dddddd.."), BLADE_COLORS)
-TUFT_BIG = shape_pixels(("tt..",
-                         "bbtt",
-                         "bbbb",
-                         "dddd"), BLADE_COLORS)
-TUFT_SMALL = shape_pixels(("tt",
-                           "bb",
-                           "dd"), BLADE_COLORS)
-# Matitas oscuras de pasto tupido (briznas en ^ y en zigzag), sin punta clara.
-STROKE_A = shape_pixels(("..dd..",
-                         "dd..dd"), BLADE_COLORS)
-STROKE_B = shape_pixels(("dd..dd..",
-                         "..dd..dd"), BLADE_COLORS)
-# Manchas más chicas que la casilla (5 y 9 nudos) para que no se vea la retícula.
-GRASS_PERIODS = ((5, 0.6), (9, 0.4))
-GRASS_CLUMP = 1.0  # solo las manchas: bordes nítidos, sin grano suelto
-# Familias de pasto: comparten el anillo del borde (GRASS_RING), así cualquier casilla empalma.
-# (nombre, partes de mancha oscura, su borde y pasto (el resto claro), formas, separación, semilla)
-GRASS_BLEND = 6  # franja en que la mancha de cada casilla se funde con el borde común
-GRASS_RING = Noise((0.06, 0.06, 0.70), GRASS_CLUMP, GRASS_PERIODS, 6000)
-GRASS_FAMILIES = (
-    ("plain", (0.03, 0.05, 0.80), (TUFT_BIG, TUFT_SMALL, TUFT_SMALL, STROKE_A, STROKE_B), 12.0, 6100),
-    ("patchy", (0.17, 0.09, 0.60), (TUFT_TALL, TUFT_BIG, TUFT_SMALL, STROKE_B, STROKE_A, STROKE_A), 9.0, 6200),
-    ("lush", (0.10, 0.10, 0.62), (TUFT_TALL, TUFT_TALL, TUFT_FAN, TUFT_FAN, TUFT_BIG, TUFT_BIG, TUFT_BIG,
-                                  TUFT_SMALL, TUFT_SMALL, TUFT_SMALL, STROKE_A, STROKE_B, STROKE_A, STROKE_B), 6.5, 6300),
-    ("sunny", (0.02, 0.06, 0.52), (TUFT_SMALL, TUFT_SMALL, STROKE_A), 14.0, 6400),
-)
-# Parte del mapa de cada familia en la vista de prueba.
-GRASS_FAMILY_SHARES = {"plain": 0.40, "patchy": 0.22, "lush": 0.23, "sunny": 0.15}
-
-
-def grass_recipes(seed_offset):
-    return [(name, Noise(shares, GRASS_CLUMP, GRASS_PERIODS, seed + seed_offset, shapes, spacing, G_BASE,
-                         ring=GRASS_RING, blend=GRASS_BLEND))
-            for name, shares, shapes, spacing, seed in GRASS_FAMILIES]
-
-
-GRASS_RECIPES = grass_recipes(0)
-OUTSIDE_RECIPES = grass_recipes(500)
-
-
 # ---------------------------------------------------------------------- concreto (sin piso)
 
 # 4 grises cálidos de poco contraste, algún poro y una grieta fina en 2:1.
@@ -426,78 +342,6 @@ CRACK = shape_pixels(("pp....",
 BARE_RECIPE = Noise((0.2, 0.3, 0.32), 0.6, ((4, 0.7), (8, 0.3)), 7000, (CRACK, PORE, PORE, PORE, PORE), 7.0, B_B)
 
 
-# ---------------------------------------------------------------------- grava (camino)
-
-# Grava de grises cálidos con piedras de 2 a 6 px: cara clara, lado oscuro y contorno-sombra abajo.
-(P_D, P_M, P_B, P_L, P_OUTLINE, P_SIDE, P_STONE, P_TOP) = range(8)
-PATH = pal.palette(["988c76", "a59a84", "afa38c", "bcb19b", "6e6453", "a89d87", "c8bea8", "e0d8c4"],
-                   name="path")
-STONE_COLORS = {"t": P_TOP, "s": P_STONE, "m": P_SIDE, "o": P_OUTLINE}
-STONE_LARGE = shape_pixels(("..tttt..",
-                            "ttttssmm",
-                            "ssssssmm",
-                            "ssssmmmm",
-                            "..oooooo"), STONE_COLORS)
-STONE_MID = shape_pixels(("tttt..",
-                          "ttssmm",
-                          "ssmmmm",
-                          "oooooo"), STONE_COLORS)
-STONE_FLAT = shape_pixels(("ttssss",
-                           "ssssmm",
-                           "..oooo"), STONE_COLORS)
-STONE_SMALL = shape_pixels(("tsmm",
-                            "oooo"), STONE_COLORS)
-STONE_TINY = shape_pixels(("ts",
-                           "oo"), STONE_COLORS)
-PATH_SHAPES = (STONE_LARGE, STONE_LARGE, STONE_LARGE, STONE_MID, STONE_MID, STONE_MID, STONE_MID, STONE_FLAT,
-               STONE_FLAT, STONE_FLAT, STONE_FLAT, STONE_SMALL, STONE_SMALL, STONE_SMALL, STONE_SMALL, STONE_TINY,
-               STONE_TINY, STONE_TINY, STONE_TINY, STONE_TINY)
-PATH_RECIPE = Noise((0.2, 0.3, 0.3), 0.3, ((6, 1.0),), 7500, PATH_SHAPES, 5.0, P_B)
-
-
-# ---------------------------------------------------------------------- acera
-
-# Una losa por casilla: junta de 1 celda por lado (2 px entre casillas), bisel y gris claro moteado.
-(S_D, S_M, S_B, S_L, S_JOINT, S_SHADE, S_LIGHT) = range(7)
-SIDEWALK = pal.palette(["9e9d97", "a3a29c", "a8a7a1", "adaca6", "7d7c77", "93928c", "bfbeb8"], name="sidewalk")
-
-
-def sidewalk_fixed(grid):
-    fixed = np.full(grid.mask.shape, -1, dtype=np.int16)
-    fixed[(grid.iv == 1) | (grid.iu == 1)] = S_LIGHT
-    fixed[(grid.iv == CELL - 2) | (grid.iu == CELL - 2)] = S_SHADE
-    fixed[(grid.iu == 0) | (grid.iv == 0) | (grid.iu == CELL - 1) | (grid.iv == CELL - 1)] = S_JOINT
-    return np.where(grid.mask, fixed, -1)
-
-
-SIDEWALK_RECIPE = Noise((0.2, 0.3, 0.32), 0.5, ((4, 1.0),), 8000, (), fixed=sidewalk_fixed)
-
-
-# ---------------------------------------------------------------------- calle
-
-# Asfalto de granos sueltos en 3 tonos; la línea es una franja amarilla de 4 celdas a lo largo de
-# un eje (x = u, y = v).
-(R_D, R_M, R_B, R_L, R_LINE, R_WORN) = range(6)
-ROAD = pal.palette(["3f4248", "44474d", "494c52", "55585e", MAP["road_line_color"], "c4b56a"], name="road")
-ROAD_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000)
-LINE_WIDTH = 4
-
-
-def road_line_fixed(axis):
-    def fixed(grid):
-        across = grid.iv if axis == "x" else grid.iu
-        along = grid.iu if axis == "x" else grid.iv
-        band = (across >= CELL // 2 - LINE_WIDTH // 2) & (across < CELL // 2 + LINE_WIDTH // 2)
-        worn = pattern.hash2(along, across, 9500) < 0.12
-        out = np.where(band, np.where(worn, R_WORN, R_LINE), -1).astype(np.int16)
-        return np.where(grid.mask, out, -1)
-    return fixed
-
-
-ROAD_LINE_X_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000, fixed=road_line_fixed("x"))
-ROAD_LINE_Y_RECIPE = Noise((0.28, 0.34, 0.30), 0.25, ((8, 1.0),), 9000, fixed=road_line_fixed("y"))
-
-
 # ---------------------------------------------------------------------- generar
 
 MATERIALS = [
@@ -507,21 +351,7 @@ MATERIALS = [
     ("floor_carpet", noise_material(CARPET_RECIPE, "floor_carpet"), CARPET, "carpet",
      CONSTRUCTION["floors"]["carpet"]["colors"]),
     ("floor_bare", noise_material(BARE_RECIPE, "floor_bare"), BARE, "bare", CONSTRUCTION["bare_floor"]["colors"]),
-] + [
-    ("ground_grass_%s" % family, noise_material(recipe, "ground_grass_%s" % family), GRASS, "grass",
-     [GRASS_BASE, GRASS_SECOND]) for family, recipe in GRASS_RECIPES
-] + [
-    ("ground_outside_%s" % family, noise_material(recipe, "ground_outside_%s" % family), OUTSIDE, "outside",
-     MAP["styles"]["outside"]) for family, recipe in OUTSIDE_RECIPES
-] + [
-    ("ground_path", noise_material(PATH_RECIPE, "ground_path"), PATH, "path", MAP["styles"]["path"]),
-    ("ground_sidewalk", noise_material(SIDEWALK_RECIPE, "ground_sidewalk"), SIDEWALK, "sidewalk",
-     MAP["styles"]["sidewalk"]),
-    ("ground_road", noise_material(ROAD_RECIPE, "ground_road"), ROAD, "road", MAP["styles"]["road"]),
-    ("ground_road_line_x", noise_material(ROAD_LINE_X_RECIPE, "ground_road_line_x"), ROAD, "road_line",
-     MAP["styles"]["road"]),
-    ("ground_road_line_y", noise_material(ROAD_LINE_Y_RECIPE, "ground_road_line_y"), ROAD, "road_line",
-     MAP["styles"]["road"]),
+
 ]
 
 
@@ -539,26 +369,6 @@ def build_material(out_dir, name, tile, colors, material, base_colors):
     return files, images, tiles
 
 
-def fill_families(scene, images, prefix, seed, area=None):
-    """Llena casillas con familias de pasto por zonas (ruido suave, GRASS_FAMILY_SHARES) y variante
-    al azar fijo por casilla."""
-    families = [name for name, _shares, _shapes, _spacing, _seed in GRASS_FAMILIES]
-    x0, y0, x1, y1 = area if area is not None else (0, 0, scene.cols, scene.rows)
-    cells = [(x, y) for y in range(y0, y1) for x in range(x0, x1)]
-    xs = np.array([x for x, _y in cells], dtype=float)
-    ys = np.array([y for _x, y in cells], dtype=float)
-    # Ruido suave sobre todo el mapa (periodo grande, para que no se repita en la vista).
-    zone = pattern.value_noise(xs / 32.0, ys / 32.0, period=8, seed=seed) * 0.8 + \
-        pattern.hash2(xs.astype(int), ys.astype(int), seed) * 0.2
-    limits = np.cumsum([GRASS_FAMILY_SHARES[name] for name in families])
-    ranks = np.argsort(np.argsort(zone)) / float(len(cells))
-    rng = np.random.RandomState(seed)
-    for (x, y), rank in zip(cells, ranks):
-        family = families[min(int(np.searchsorted(limits, rank, side="right")), len(families) - 1)]
-        tiles = images["%s_%s" % (prefix, family)]
-        scene.floor(tiles[rng.randint(len(tiles))], x, y)
-
-
 def review_sheets(out_dir, images):
     """Hojas de revisión en _sheets/: mosaicos de cada material, la hoja del grupo y un solar de prueba."""
     folder = os.path.join(out_dir, "_sheets")
@@ -568,19 +378,12 @@ def review_sheets(out_dir, images):
         short = name.split("_", 1)[1]
         sheet.tile_mosaic(tiles, 5, 5, seed=3, scale=3).save(os.path.join(folder, "floors_%s_x3.png" % short))
         sheet.tile_mosaic(tiles, 12, 12, seed=5, scale=1).save(os.path.join(folder, "floors_%s_x1.png" % short))
-    # Solar de prueba con todos los suelos.
-    lot = sheet.Scene(14, 14, top=16, margin=8)
-    fill_families(lot, images, "ground_outside", 10)
-    fill_families(lot, images, "ground_grass", 11, area=(1, 1, 13, 9))
-    lot.fill_floor(images["floor_ceramic"], seed=12, area=(3, 2, 9, 4))
-    lot.fill_floor(images["floor_wood"], seed=13, area=(3, 4, 6, 7))
-    lot.fill_floor(images["floor_carpet"], seed=14, area=(6, 4, 9, 7))
-    lot.fill_floor(images["floor_bare"], seed=15, area=(9, 2, 11, 7))
-    lot.fill_floor(images["ground_path"], seed=16, area=(6, 7, 8, 9))
-    lot.fill_floor(images["ground_sidewalk"], seed=17, area=(0, 9, 14, 10))
-    lot.fill_floor(images["ground_road"], seed=18, area=(0, 10, 14, 14))
-    for x in range(0, 14, 3):
-        lot.fill_floor(images["ground_road_line_x"], seed=19 + x, area=(x, 12, min(x + 2, 14), 13))
+    # Habitación de prueba con los cuatro pisos.
+    lot = sheet.Scene(8, 6, top=16, margin=8)
+    lot.fill_floor(images["floor_ceramic"], seed=12, area=(0, 0, 4, 3))
+    lot.fill_floor(images["floor_wood"], seed=13, area=(4, 0, 8, 3))
+    lot.fill_floor(images["floor_carpet"], seed=14, area=(0, 3, 4, 6))
+    lot.fill_floor(images["floor_bare"], seed=15, area=(4, 3, 8, 6))
     items = []
     for name, tiles in images.items():
         items += [("%s_%d" % (name, i), image.crop((0, 64, 128, 128))) for i, image in enumerate(tiles)]
@@ -592,23 +395,6 @@ def review_sheets(out_dir, images):
         page.paste(part.convert("RGBA"), ((page.size[0] - part.size[0]) // 2, top))
         top += part.size[1]
     page.save(os.path.join(folder, "floors.png"))
-    # Pasto solo: una familia contra las cuatro mezcladas, 16×16 casillas a ×1.
-    for label, prefix in (("one", "ground_grass_patchy"), ("mixed", None)):
-        field = sheet.Scene(16, 16, top=8, margin=8)
-        if prefix:
-            field.fill_floor(images[prefix], seed=21)
-        else:
-            fill_families(field, images, "ground_grass", 21)
-        field.render(1).save(os.path.join(folder, "grass_%s_x1.png" % label))
-
-
-def check_shared_ring(images, prefix):
-    """Todas las familias de pasto deben tener el mismo anillo del borde (si no, no empalman)."""
-    grid = iso.tile_grid()
-    ring = grid.mask & ((grid.iu == 0) | (grid.iv == 0) | (grid.iu == CELL - 1) | (grid.iv == CELL - 1))
-    rings = [np.array(image)[ring] for name, tiles in images.items() if name.startswith(prefix) for image in tiles]
-    if not all(np.array_equal(rings[0], other) for other in rings[1:]):
-        raise ValueError("%s: las familias no comparten el anillo del borde" % prefix)
 
 
 def build(out_dir):
@@ -618,7 +404,5 @@ def build(out_dir):
         more, images[name], tiles = build_material(out_dir, name, tile, colors, material, base_colors)
         files += more
         print("  %s: repetición %.3f" % (name, repetition(tiles, colors)))
-    check_shared_ring(images, "ground_grass_")
-    check_shared_ring(images, "ground_outside_")
     review_sheets(out_dir, images)
     return files

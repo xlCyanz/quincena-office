@@ -1,0 +1,197 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada casilla de suelo de esta carpeta; lo escribe build.py y export_game.py arma con ellas el atlas assets/tiles/ground.png.",
+ "sprites": {
+  "ground_grass_plain_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_plain_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_plain_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_plain_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_patchy_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_patchy_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_patchy_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_patchy_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_lush_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_lush_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_lush_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_lush_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_sunny_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_sunny_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_sunny_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_grass_sunny_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_plain_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_plain_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_plain_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_plain_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_patchy_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_patchy_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_patchy_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_patchy_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_lush_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_lush_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_lush_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_lush_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_sunny_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_sunny_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_sunny_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_outside_sunny_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  }
+ }
+}

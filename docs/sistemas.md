@@ -479,7 +479,8 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 ## Arte con sprites (fase 8)
 
 - Sprites conectados (fase 8, `SpriteLibrary`, funciones estáticas; `data/sprites.json` lo escribe `tools/sprites/export_game.py DIR`
-  a partir de la carpeta de `generate.py`, junto con `assets/tiles/ground.png` y `assets/sprites/`; después `Godot --headless --import`):
+  a partir de la carpeta de `generate.py` y de `tools/sprites/art/` (lo dibujado con Moana: escritorios, computadoras y terreno de afuera),
+  junto con `assets/tiles/ground.png` y `assets/sprites/`; después `Godot --headless --import`):
   los sprites van a 2 px por px del mundo (`GroundPainter.DETAIL` 2) y `SpriteLibrary.draw(canvas, nombre, punto)` los dibuja a la mitad con
   su apoyo en el punto. Suelo: `OfficeGrid._build_sprite_tile_set` arma el TileSet con el atlas (una fila por estilo, 4 variantes;
   `ground.png.import` con mipmaps y capas con `TEXTURE_FILTER_NEAREST_WITH_MIPMAPS`); el piso elige variante al azar fijo y el pasto, además,

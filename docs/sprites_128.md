@@ -64,12 +64,16 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 | `floor_wood_*` | Madera | `8f6b4a`, `7d5c3f` | 4 tablones paralelos a un eje isométrico, separados por una línea oscura de 1 px; veta de 2–3 tonos en trazos largos; cortes de tablón escalonados (no todos en la misma fila). |
 | `floor_carpet_*` | Alfombra | `5b6f8a`, `52657e` | 2×2 cuadros de alfombra con borde apenas marcado y trama fina ordenada (dither 2×2), sin brillo. |
 | `floor_bare_*` | Sin piso (concreto) | `8c8a86`, `807e7a` | Concreto liso con poros sueltos y alguna grieta fina; muy poco contraste. |
-| `ground_grass_<familia>_*` | Pasto del solar | `5f8a4c`, `567e44` | 4 familias (`plain` liso, `patchy` manchones, `lush` tupido, `sunny` claro), cada una con sus 4 variantes y **el mismo anillo del borde en las 16**, así cualquier casilla empalma con cualquier otra. Manchas más chicas que la casilla y matas de briznas más claras arriba. Sin flores (se ven repetidas). El juego elige la familia por zonas (ruido suave sobre el mapa: liso 40 %, tupido 23 %, manchones 22 %, claro 15 %) y la variante al azar: así no se ve un solo dibujo repetido. |
-| `ground_outside_<familia>_*` | Pasto fuera del solar | el pasto 15 % más oscuro | Igual que el pasto (mismas familias), más apagado. |
-| `ground_path_*` | Camino de grava | grises cálidos | Piedritas de 2×1 a 3×2 px con su sombra de 1 px abajo-derecha. |
-| `ground_sidewalk_*` | Acera | grises claros | Losas grandes (1 por casilla) con junta de 2 px en el borde. |
-| `ground_road_*` | Calle | asfalto gris oscuro | Granos sueltos de 1 px, 2–3 tonos. |
-| `ground_road_line_*` | Calle con línea | igual que la calle | Línea blanca discontinua de 4 px de ancho por el centro, a lo largo de un eje isométrico; el juego corta la línea cada tantas casillas, así que hacer una casilla **con** línea y usar `ground_road_*` donde no va. |
+| `ground_grass_<familia>_*` | Pasto del solar | `81a73a`, `719236`, briznas `9ecc42`/`cbf166` | 4 familias (`plain` liso, `patchy` manchones, `lush` tupido, `sunny` claro), cada una con sus 4 variantes y **el mismo anillo del borde en las 16**, así cualquier casilla empalma con cualquier otra. Manchas suaves (suma de ondas periódicas, sin rombos), borde de cada mancha tramado y matas de briznas con su sombra de 1 px. Sin flores (se ven repetidas). El juego elige la familia por zonas (ruido suave sobre el mapa: liso 40 %, tupido 23 %, manchones 22 %, claro 15 %) y la variante al azar. |
+| `ground_outside_<familia>_*` | Pasto fuera del solar | el pasto 15 % más oscuro | Igual que el pasto (mismas familias y anillo propio común a las 16), más apagado. |
+| `ground_path_*` | Camino de grava | grises cálidos `afa38c`, `bcb19b` | Piedras de 2×1 a 6×3 px con luz arriba y sombra de 1 px abajo, sobre grava fina en 4 tonos. |
+| `ground_sidewalk_*` | Acera | grises claros `a8a7a1` | Una losa por casilla: junta de 2 px en el borde, bisel claro arriba y sombra abajo, moteado de áridos. |
+| `ground_road_*` | Calle | asfalto `494c52`, `44474d` | Asfalto en 4 tonos con granos de árido claros y manchas de alquitrán. |
+| `ground_road_line_*` | Calle con línea | igual que la calle; línea `e0cf78` | Línea amarilla de 4 px de ancho por el centro, a lo largo del eje (`_x` o `_y`), algo gastada; el juego la corta cada tantas casillas usando `ground_road_*` donde no va. |
+
+El terreno de afuera (`ground_*`) se dibuja con Moana en `tools/sprites/art/ground/` (`_ground_kit.py`: rejilla
+isométrica periódica, anillo común, mezcla de cortes y comprobaciones de brillo y de anillo); los `floor_*` siguen
+en `tools/sprites/pieces/floors.py`.
 
 ## 6. Muebles
 

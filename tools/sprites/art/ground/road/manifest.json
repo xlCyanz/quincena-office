@@ -1,0 +1,77 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada casilla de suelo de esta carpeta; lo escribe build.py y export_game.py arma con ellas el atlas assets/tiles/ground.png.",
+ "sprites": {
+  "ground_road_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_x_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_x_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_x_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_x_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_y_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_y_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_y_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "ground_road_line_y_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  }
+ }
+}

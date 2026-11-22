@@ -473,6 +473,9 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/furniture/desk_long_basic/`, `desk_long_pro1/`–`pro3/` | Escritorio largo con su computadora en un solo sprite (`_desk_sets.py`): `desk_long_<conjunto>_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/computer_laptop/` | Laptop plateada (solo sobre el escritorio ejecutivo): `computer_laptop_r0`–`_r3` y sus `_shadow`; su modelo en `_laptop.py` |
 | `art/furniture/glass_meeting_table/` | Mesa de reuniones de vidrio (2×2): `glass_meeting_table_r0`–`_r3` y sus `_shadow` |
+| `art/ground/grass/` | Pasto del solar y de fuera: `ground_grass_<familia>_0`–`_3` y `ground_outside_<familia>_0`–`_3` (familias `plain`, `patchy`, `lush`, `sunny`) |
+| `art/ground/path/`, `sidewalk/`, `road/` | Camino de grava, acera y calle (`ground_road_*`, `ground_road_line_x_*`, `ground_road_line_y_*`) |
+| `art/ground/_ground_kit.py` | Lo común del terreno: rejilla isométrica periódica, anillo del borde compartido, documento Moana por tonos y las comprobaciones de costura y brillo |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
 | `art/furniture/_computer_kit.py`, `_computers.py` | Lo que va encima de un escritorio: documento de piezas sueltas, sombra de contacto y las piezas de cada computadora |
 
