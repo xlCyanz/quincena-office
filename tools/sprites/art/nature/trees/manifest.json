@@ -1,0 +1,101 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "tree_0.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_0_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_1.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_1_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_2.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_2_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_3.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_3_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_4.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_4_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_5.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_5_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_6.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_6_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_7.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  },
+  "tree_7_shadow.png": {
+   "anchor": [
+    64,
+    224
+   ]
+  }
+ }
+}

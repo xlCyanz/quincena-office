@@ -1,0 +1,161 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "bush_0.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_0_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_1.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_1_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "bush_2_shadow.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "bush_3.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_3_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_4.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_4_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "bush_5.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "bush_5_shadow.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "hedge_cube.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "hedge_cube_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "hedge_long_r0.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "hedge_long_r0_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "hedge_long_r1.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_long_r1_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r0.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r0_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r1.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r1_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r2.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r2_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r3.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "hedge_corner_r3_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  }
+ }
+}
