@@ -1,0 +1,17 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "meeting_table.png": {
+   "anchor": [
+    128,
+    96
+   ]
+  },
+  "meeting_table_shadow.png": {
+   "anchor": [
+    128,
+    96
+   ]
+  }
+ }
+}

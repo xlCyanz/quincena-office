@@ -57,11 +57,7 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      asiento, respaldo de tres cojines con botón y brazos gruesos enrollados; dispensador de agua de gabinete blanco
      con panel oscuro (llaves roja y azul) y rejillas, y bidón grande celeste casi transparente con tres aros y
      brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
-   - *Trabajo* (`pieces/office_extra.py`): (el escritorio amplio se quitó);
-     ejecutivo de nogal con dos cajoneras de tiradores dorados, panel de tres tableros hundidos del lado de la visita y
-     tablero grueso con filo dorado; impresora gris clara (pantalla celeste, hoja saliendo) sobre un mueble gris oscuro;
-     archivero de metal de cuatro cajones con etiqueta crema; gabinete de baterías gris pizarra con pantalla verde,
-     luces y cuatro módulos; mesa de reuniones redonda de madera naranja con moldura sobre una columna negra.
+   - *Trabajo*: con Moana (`art/furniture/`: escritorios, impresora, archivero, baterías y mesa de reuniones; ver el README).
    - *Sala de descanso* (`pieces/break_room.py`): sofá lila de dos cojines, brazos rectos y patas de madera; nevera
      blanca con congelador arriba y tiradores grises; microondas y cafetera negros (jarra de vidrio con café) sobre un
      mueble bajo naranja de dos puertas con mesón gris claro; máquina expendedora roja con vitrina de golosinas de

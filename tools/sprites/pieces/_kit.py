@@ -1,4 +1,4 @@
-# Ayudas compartidas por office_extra.py, break_room.py y services.py (con "_" generate.py no lo carga).
+# Ayudas compartidas por break_room.py y services.py (con "_" generate.py no lo carga).
 import os
 
 import numpy as np
