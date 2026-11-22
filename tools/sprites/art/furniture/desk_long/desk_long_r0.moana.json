@@ -2160,7 +2160,7 @@
           "color": "wood_top"
         },
         {
-          "id": "pedestal_r0_panel_y",
+          "id": "pedestal_r0_panel_py",
           "type": "polygon",
           "points": [
             [
@@ -2183,7 +2183,7 @@
           "color": "wood_right"
         },
         {
-          "id": "pedestal_r0_panel_y_in",
+          "id": "pedestal_r0_panel_py_in",
           "type": "polygon",
           "points": [
             [
@@ -2206,7 +2206,7 @@
           "color": "wood_left"
         },
         {
-          "id": "pedestal_r0_panel_y_lit",
+          "id": "pedestal_r0_panel_py_lit",
           "type": "polygon",
           "points": [
             [
@@ -2229,7 +2229,7 @@
           "color": "wood_top"
         },
         {
-          "id": "pedestal_r0_panel_x",
+          "id": "pedestal_r0_panel_px",
           "type": "polygon",
           "points": [
             [
@@ -2252,7 +2252,7 @@
           "color": "wood_dark"
         },
         {
-          "id": "pedestal_r0_panel_x_in",
+          "id": "pedestal_r0_panel_px_in",
           "type": "polygon",
           "points": [
             [
@@ -2275,7 +2275,7 @@
           "color": "wood_right"
         },
         {
-          "id": "pedestal_r0_panel_x_lit",
+          "id": "pedestal_r0_panel_px_lit",
           "type": "polygon",
           "points": [
             [

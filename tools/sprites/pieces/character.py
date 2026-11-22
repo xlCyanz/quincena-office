@@ -1457,8 +1457,8 @@ def build_sheet(out_dir, figures):
         os.makedirs(folder)
 
     def load(file_name):
-        path = os.path.join(out_dir, file_name)
-        return sheet.load(path) if os.path.isfile(path) else None
+        path = sheet.find(out_dir, file_name)
+        return sheet.load(path) if path else None
 
     tiles = [t for t in (load("floor_ceramic_%d.png" % i) for i in range(4)) if t is not None] or [sheet.plain_tile()]
     scene = sheet.Scene(5, 3, top=110, margin=12)

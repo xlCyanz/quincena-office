@@ -41,7 +41,7 @@ RANK_BACK = 4
 RANK_PERSON = 5
 
 # Grupos de la hoja de contacto, en orden.
-GROUPS = ("floors", "walls", "desk", "chair_plant", "character")
+GROUPS = ("floors", "walls", "chair_plant", "character")
 
 
 class PreviewScene(sheet.Scene):
@@ -106,6 +106,7 @@ class Office(object):
         self.directory = directory
         self.seed = seed
         self.manifest = sheet.manifest(directory)
+        self.art = sheet.art_sprites()  # escritorios y computadoras: los dibuja Moana
         cols = OFFICE_COLS + 2 * GRASS
         rows = OFFICE_ROWS + 2 * GRASS
         self.scene = PreviewScene(cols, rows, BACKGROUND, top=24, margin=24)
@@ -114,13 +115,15 @@ class Office(object):
     def img(self, name):
         if name not in self._cache:
             path = os.path.join(self.directory, name + ".png")
+            if name + ".png" in self.art:
+                path = self.art[name + ".png"][0]
             if not os.path.isfile(path):
                 raise SystemExit("Falta %s: corre antes generate.py --out %s" % (path, self.directory))
             self._cache[name] = sheet.load(path)
         return self._cache[name]
 
     def anchor(self, name, default=(64, 96)):
-        entry = self.manifest.get(name + ".png", {})
+        entry = self.art[name + ".png"][1] if name + ".png" in self.art else self.manifest.get(name + ".png", {})
         return tuple(entry.get("anchor", default))
 
     def g(self, x, y):

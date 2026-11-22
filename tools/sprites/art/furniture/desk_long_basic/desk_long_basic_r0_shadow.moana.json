@@ -1,0 +1,270 @@
+{
+  "schema_version": "1.0",
+  "id": "desk_long_basic_r0_shadow",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 192,
+    "height": 192,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_desk_long_basic",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#3C1300FF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#6E2E0CFF"
+      },
+      {
+        "id": "wood_light",
+        "rgba": "#EDA85DFF"
+      },
+      {
+        "id": "wood_top",
+        "rgba": "#DF823DFF"
+      },
+      {
+        "id": "wood_grain",
+        "rgba": "#CE7433FF"
+      },
+      {
+        "id": "wood_left",
+        "rgba": "#A7622EFF"
+      },
+      {
+        "id": "wood_right",
+        "rgba": "#864E25FF"
+      },
+      {
+        "id": "wood_dark",
+        "rgba": "#5E371AFF"
+      },
+      {
+        "id": "wood_deep",
+        "rgba": "#432712FF"
+      },
+      {
+        "id": "brass",
+        "rgba": "#E9B949FF"
+      },
+      {
+        "id": "brass_dark",
+        "rgba": "#9C6A1EFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      },
+      {
+        "id": "shadow_soft",
+        "rgba": "#4A4E62FF"
+      },
+      {
+        "id": "wood_shade",
+        "rgba": "#B26831FF"
+      },
+      {
+        "id": "pc_ink",
+        "rgba": "#4A3F2CFF"
+      },
+      {
+        "id": "pc_ink_in",
+        "rgba": "#8A7A58FF"
+      },
+      {
+        "id": "case_light",
+        "rgba": "#F6EED8FF"
+      },
+      {
+        "id": "case_top",
+        "rgba": "#E4D6B4FF"
+      },
+      {
+        "id": "case_grain",
+        "rgba": "#C9BC9EFF"
+      },
+      {
+        "id": "case_left",
+        "rgba": "#ABA087FF"
+      },
+      {
+        "id": "case_right",
+        "rgba": "#89806CFF"
+      },
+      {
+        "id": "case_dark",
+        "rgba": "#605A4CFF"
+      },
+      {
+        "id": "case_deep",
+        "rgba": "#444036FF"
+      },
+      {
+        "id": "glass_light",
+        "rgba": "#9DB8BEFF"
+      },
+      {
+        "id": "glass_top",
+        "rgba": "#6B8A92FF"
+      },
+      {
+        "id": "glass_grain",
+        "rgba": "#5E7980FF"
+      },
+      {
+        "id": "glass_left",
+        "rgba": "#50686EFF"
+      },
+      {
+        "id": "glass_right",
+        "rgba": "#405358FF"
+      },
+      {
+        "id": "glass_dark",
+        "rgba": "#2D3A3DFF"
+      },
+      {
+        "id": "glass_deep",
+        "rgba": "#20292CFF"
+      },
+      {
+        "id": "key",
+        "rgba": "#C9B88FFF"
+      },
+      {
+        "id": "led",
+        "rgba": "#6FE08AFF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "floor_footprint",
+      "type": "polygon",
+      "points": [
+        [
+          64,
+          96
+        ],
+        [
+          192,
+          160
+        ],
+        [
+          128,
+          192
+        ],
+        [
+          0,
+          128
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "mask_id": "floor_footprint",
+      "operations": [
+        {
+          "id": "shadow_top_inner",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              117
+            ],
+            [
+              162,
+              157
+            ],
+            [
+              134,
+              171
+            ],
+            [
+              54,
+              131
+            ]
+          ],
+          "color": "shadow_soft"
+        },
+        {
+          "id": "shadow_pedestal",
+          "type": "polygon",
+          "points": [
+            [
+              150,
+              143
+            ],
+            [
+              172,
+              154
+            ],
+            [
+              132,
+              174
+            ],
+            [
+              110,
+              163
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_leg0",
+          "type": "polygon",
+          "points": [
+            [
+              80,
+              108
+            ],
+            [
+              90,
+              113
+            ],
+            [
+              80,
+              118
+            ],
+            [
+              70,
+              113
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_leg1",
+          "type": "polygon",
+          "points": [
+            [
+              50,
+              123
+            ],
+            [
+              60,
+              128
+            ],
+            [
+              50,
+              133
+            ],
+            [
+              40,
+              128
+            ]
+          ],
+          "color": "shadow_ink"
+        }
+      ]
+    }
+  ]
+}

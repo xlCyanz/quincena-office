@@ -976,7 +976,7 @@
           "color": "wood_top"
         },
         {
-          "id": "pedestal_r3_panel_y",
+          "id": "pedestal_r3_panel_py",
           "type": "polygon",
           "points": [
             [
@@ -999,7 +999,7 @@
           "color": "wood_dark"
         },
         {
-          "id": "pedestal_r3_panel_y_in",
+          "id": "pedestal_r3_panel_py_in",
           "type": "polygon",
           "points": [
             [
@@ -1022,7 +1022,7 @@
           "color": "wood_right"
         },
         {
-          "id": "pedestal_r3_panel_y_lit",
+          "id": "pedestal_r3_panel_py_lit",
           "type": "polygon",
           "points": [
             [

@@ -90,12 +90,24 @@ class DeskSpec:
     model: Optional[Callable[["DeskSpec"], tuple[list["Box"], "Box"]]] = None  # sin él, ``standard_model``
     colors: Optional[dict[str, str]] = None  # sin ella, ``COLORS``
     contact: tuple[str, ...] = ("pedestal", "leg0", "leg1")  # piezas con sombra de contacto en el piso
+    on_top: Optional[Callable[["DeskSpec"], list["Box"]]] = None  # lo que va encima del tablero (computadoras)
+    max_colors: int = 16  # la guía pide 8–16 por mueble; un escritorio con su computadora son dos
+    seat: Optional[float] = None  # dónde se sienta la persona (casillas desde la punta -x); sin él, el teclado
 
     def parts(self) -> tuple[list["Box"], "Box"]:
         return (self.model or standard_model)(self)
 
     def palette(self) -> dict[str, str]:
         return self.colors or COLORS
+
+    def seat_x(self) -> Optional[float]:
+        """Centro del teclado a lo largo del modelo, en casillas: ahí dibuja el juego a quien se sienta."""
+        if self.seat is not None:
+            return self.seat
+        parts, _ = self.parts()
+        parts = parts + (self.on_top(self) if self.on_top else [])
+        keys = [b for b in parts if b.name == "keyboard"]
+        return round((keys[0].x0 + keys[0].x1) / 2 / CELL, 4) if keys else None
 
 
 @dataclass
@@ -144,7 +156,9 @@ class View:
         return (x, y, z)
 
     def visible(self, normal: Vec) -> bool:
-        return self.rot_vec(normal) in ((1, 0, 0), (0, 1, 0), (0, 0, 1))
+        """Se ven la cara de arriba y las verticales que miran hacia +x/+y (también las giradas)."""
+        x, y, z = self.rot_vec(normal)
+        return z > 0 if z else x + y > 1e-6
 
 
 def poly(op_id: str, color: str, points: list[Point]) -> Op:
@@ -190,7 +204,8 @@ ROLES = {
 def resolve(color: str, normal: Vec, mat: str = "wood") -> str:
     if not color.startswith("@"):
         return color
-    side = {(0, 1, 0): "left", (1, 0, 0): "right"}.get(normal, "top")
+    x, y, z = normal
+    side = "top" if z else ("left" if y >= x else "right")
     return f"{mat}_{ROLES[side][color]}"
 
 
@@ -220,8 +235,24 @@ class Box:
     decals: list[Decal] = field(default_factory=list)
     mat: str = "wood"  # prefijo de sus colores en la paleta
     chamfer: float = 0  # > 0: esquinas verticales cortadas en diagonal (piezas chicas y redondeadas)
+    quad: Optional[list[tuple[float, float]]] = None  # planta girada: 4 esquinas (rotación 0) en vez de x0..y1
+    ink: str = ""  # prefijo de sus colores de contorno (``<ink>ink`` y ``<ink>ink_in``)
+
+    @classmethod
+    def prism(cls, name: str, quad: list[tuple[float, float]], z0: float, z1: float, **kw: object) -> "Box":
+        """Pieza de planta cualquiera (cuadrilátero convexo), p. ej. una pantalla girada."""
+        xs, ys = [q[0] for q in quad], [q[1] for q in quad]
+        return cls(name, min(xs), max(xs), min(ys), max(ys), z0, z1, quad=quad, **kw)  # type: ignore[arg-type]
+
+    def corners(self, v: "View") -> list[tuple[float, float]]:
+        assert self.quad is not None
+        return [v.rot(x, y) for x, y in self.quad]
 
     def rotated(self, v: View) -> tuple[float, float, float, float, float, float]:
+        if self.quad:
+            pts = self.corners(v)
+            xs, ys = [q[0] for q in pts], [q[1] for q in pts]
+            return min(xs), max(xs), min(ys), max(ys), self.z0, self.z1
         ax, ay = v.rot(self.x0, self.y0)
         bx, by = v.rot(self.x1, self.y1)
         return min(ax, bx), max(ax, bx), min(ay, by), max(ay, by), self.z0, self.z1
@@ -342,8 +373,9 @@ def faces(box: Box, v: View) -> list[Op]:
     tones = ("top", "left", "right") if box.tone >= 0 else ("dark", "deep", "deep")
     top_c, left_c, right_c = (f"{m}_{t}" for t in tones)
     n = f"{box.name}_r{v.r}"
-    if box.chamfer:
-        ops = rounded_faces(box, v, n, (top_c, left_c, right_c))
+    if box.chamfer or box.quad:
+        maker = prism_faces if box.quad else rounded_faces
+        ops = maker(box, v, n, (top_c, left_c, right_c))
         for d in box.decals:
             if v.visible(d.normal):
                 pts = [p(*v.rot(cx, cy), cz) for cx, cy, cz in d.corners]
@@ -412,7 +444,31 @@ def silhouette(box: Box, v: View) -> list[Point]:
     x0, x1, y0, y1, z0, z1 = box.rotated(v)
     if box.chamfer:
         return hull(octagon(box, v, z0) + octagon(box, v, z1))
+    if box.quad:
+        return hull([p(x, y, z) for x, y in box.corners(v) for z in (z0, z1)])
     return [p(x0, y0, z1), p(x1, y0, z1), p(x1, y0, z0), p(x1, y1, z0), p(x0, y1, z0), p(x0, y1, z1)]
+
+
+def prism_faces(box: Box, v: View, n: str, colors: tuple[str, str, str]) -> list[Op]:
+    """Caras de una pieza de planta girada: los lados que miran al espectador y la tapa, con brillo."""
+    p = v.p
+    _, _, _, _, z0, z1 = box.rotated(v)
+    top_c, left_c, right_c = colors
+    pts = box.corners(v)
+    cx, cy = sum(q[0] for q in pts) / 4, sum(q[1] for q in pts) / 4
+    ops: list[Op] = []
+    for i in range(4):
+        (ax, ay), (bx, by) = pts[i], pts[(i + 1) % 4]
+        nx, ny = by - ay, ax - bx  # normal de la arista, hacia afuera
+        if nx * ((ax + bx) / 2 - cx) + ny * ((ay + by) / 2 - cy) < 0:
+            nx, ny = -nx, -ny
+        if nx + ny <= 1e-6:
+            continue
+        color = left_c if ny >= nx else right_c
+        ops.append(poly(f"{n}_side{i}", color, [p(ax, ay, z1), p(bx, by, z1), p(bx, by, z0), p(ax, ay, z0)]))
+        ops.append(band(f"{n}_side{i}_lit", f"{box.mat}_light", p(ax, ay, z1), p(bx, by, z1), 1, up=1))
+    ops.append(poly(f"{n}_top", top_c, [p(x, y, z1) for x, y in pts]))
+    return ops
 
 
 def rounded_faces(box: Box, v: View, n: str, colors: tuple[str, str, str]) -> list[Op]:
@@ -437,6 +493,7 @@ def outline(box: Box, v: View, color: str = "ink_in", tag: str = "ink") -> list[
     las caras de su pieza, así marca también el borde contra las piezas de atrás (en tono suave;
     el borde exterior del mueble lo repasa después ``outer_ink`` en el tono fuerte)."""
     shape = silhouette(box, v)
+    color = box.ink + color
     return [
         poly(f"{box.name}_r{v.r}_{tag}_{k}", color, [(x + dx, y + dy) for x, y in shape])
         for k, (dx, dy) in MOVES.items()
@@ -463,6 +520,20 @@ def doc(spec: DeskSpec, doc_id: str, masks: list[Op], layers: list[Op]) -> dict[
 
 def view(spec: DeskSpec, r: int) -> View:
     return View(r, spec.size[0] * CELL, spec.size[1] * CELL, spec.canvas)
+
+
+def contact_ops(parts: list[Box], names: tuple[str, ...], v: View, z: float, color: str,
+                shift: tuple[float, float] = (1, 0)) -> list[Op]:
+    """Sombra de contacto: planta de cada pieza nombrada, 1 unidad más ancha y corrida, a la altura z."""
+    p = v.p
+    ops = []
+    for b in parts:
+        if b.name not in names:
+            continue
+        x0, x1, y0, y1, _, _ = b.rotated(v)
+        x0, x1, y0, y1 = x0 - 1 + shift[0], x1 + 1 + shift[0], y0 - 1 + shift[1], y1 + 1 + shift[1]
+        ops.append(poly(f"contact_{b.name}", color, [p(x0, y0, z), p(x1, y0, z), p(x1, y1, z), p(x0, y1, z)]))
+    return ops
 
 
 def outer_ink(spec: DeskSpec, pieces: list[Box], v: View) -> tuple[list[Op], list[Op]]:
@@ -493,7 +564,8 @@ def desk_document(spec: DeskSpec, r: int) -> dict[str, object]:
                           "points": [list(pt) for pt in [p(bx1, by0, bz1), p(bx1, by1, bz1), p(bx1, by1, bz0), p(bx1, by0, bz0)]]})
     masks = [*receivers, {"id": "under_top", "type": "union", "masks": [m["id"] for m in receivers]}]
     # Fuera del mueble: todo el lienzo menos la silueta de cada pieza.
-    pieces = [*under, top]
+    above = sorted(spec.on_top(spec), key=lambda b: depth(b, v)) if spec.on_top else []
+    pieces = [*under, top, *above]
     outer_masks, outer = outer_ink(spec, pieces, v)
     masks += outer_masks
     under_shadow = [
@@ -505,8 +577,17 @@ def desk_document(spec: DeskSpec, r: int) -> dict[str, object]:
         {"id": "body", "name": "Patas, faldón y cajonera", "operations": body},
         {"id": "under_shadow", "name": "Sombra del tablero", "mask_id": "under_top", "operations": under_shadow},
         {"id": "tabletop", "name": "Tablero", "operations": [*outline(top, v), *faces(top, v)]},
-        {"id": "outer_ink", "name": "Contorno exterior", "mask_id": "outside", "operations": outer},
     ]
+    if above:
+        # Sombra de contacto de lo de encima, recortada al tablero, y luego las piezas.
+        masks.append({"id": "top_face", "type": "polygon",
+                      "points": [list(pt) for pt in [p(x0, y0, top.z1), p(x1, y0, top.z1), p(x1, y1, top.z1), p(x0, y1, top.z1)]]})
+        layers += [
+            {"id": "on_top_contact", "name": "Sombra sobre el tablero", "mask_id": "top_face",
+             "operations": contact_ops(above, spec.contact, v, top.z1, "wood_shade")},
+            {"id": "on_top", "name": "Encima del tablero", "operations": [op for b in above for op in [*outline(b, v), *faces(b, v)]]},
+        ]
+    layers.append({"id": "outer_ink", "name": "Contorno exterior", "mask_id": "outside", "operations": outer})
     return doc(spec, f"{spec.name}_r{r}", masks, layers)
 
 
@@ -546,8 +627,8 @@ def check(spec: DeskSpec, name: str, image: Image.Image) -> list[str]:
     if {a for *_, a in pixels} - {0, 255}:
         problems.append(f"{name}: alfa distinto de 0 y 255")
     colors = {px for px in pixels if px[3] == 255}
-    if len(colors) > 16:
-        problems.append(f"{name}: {len(colors)} colores (máx. 16)")
+    if len(colors) > spec.max_colors:
+        problems.append(f"{name}: {len(colors)} colores (máx. {spec.max_colors})")
     return problems
 
 
@@ -597,8 +678,12 @@ def main(spec: DeskSpec, here: Path, document: Optional[Documents] = None, shado
             anchors[f"{name}.png"] = {"anchor": anchor}
             problems += check(spec, name, image)
             print(f"{name}.png  apoyo {anchor}  recuadro {image.getbbox()}")
-    manifest = {"_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y "
-                               "export_game.py lo pasa al juego.", "sprites": anchors}
+    manifest: dict[str, object] = {
+        "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta y, si tiene, dónde se sienta la persona "
+                       "(seat, casillas desde la punta -x del modelo); lo escribe build.py y export_game.py lo pasa "
+                       "al juego.", "sprites": anchors}
+    if spec.seat_x() is not None:
+        manifest["seats"] = {spec.name: spec.seat_x()}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.preview:
         preview(spec, images, out / f"{spec.name}_preview.png")

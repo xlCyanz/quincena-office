@@ -22,27 +22,10 @@ from PIL import Image  # noqa: E402
 
 import sheet  # noqa: E402
 from pieces import character  # noqa: E402
-from pieces import desk as desk_piece  # noqa: E402
 from pieces import walls as wall_piece  # noqa: E402
 
 # Sprites dibujados aparte: art/<categoría>/<pieza>/ con sus PNG y un manifest.json con el apoyo de
 # cada uno. Reemplazan al de generate.py del mismo nombre.
-ART_DIR = os.path.join(HERE, "art")
-
-
-def art_sprites():
-    """Nombre del PNG -> (ruta, entrada de su manifest.json) para todo lo que hay en art/."""
-    found = {}
-    for folder, _dirs, files in sorted(os.walk(ART_DIR)):
-        if "manifest.json" not in files:
-            continue
-        with open(os.path.join(folder, "manifest.json")) as handle:
-            for name, entry in json.load(handle)["sprites"].items():
-                if name in found:
-                    raise SystemExit("%s está en dos carpetas de art/" % name)
-                found[name] = (os.path.join(folder, name), entry)
-    return found
-
 TILE = (128, 64)
 VARIANTS = 4
 GRASS_FAMILIES = ("plain", "patchy", "lush", "sunny")
@@ -180,7 +163,7 @@ def main(directory):
     # ---- piezas sueltas
     sprites = {}
 
-    art = art_sprites()
+    art = sheet.art_sprites()
 
     def copy(name, folder):
         target = os.path.join(ROOT, "assets", "sprites", folder)
@@ -228,7 +211,7 @@ def main(directory):
                     copy("%s_r%d" % (base, rotation), "furniture")
                     copy("%s_r%d_shadow" % (base, rotation), "furniture")
         furniture[item]["sets"] = by_computer
-    seats = dict((name, round(value, 4)) for name, value in desk_piece.seats().items())
+    seats = dict((name, round(value, 4)) for name, value in sheet.art_seats().items())
 
     wall_items = {}
     for item, bases in WALL_ITEMS.items():

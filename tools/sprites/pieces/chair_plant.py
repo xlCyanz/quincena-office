@@ -783,8 +783,8 @@ def build_plants(out_dir):
 # ---------------------------------------------------------------------- hojas de revisión
 
 def _load(out_dir, name):
-    path = os.path.join(out_dir, name)
-    return sheet.load(path) if os.path.isfile(path) else None
+    path = sheet.find(out_dir, name)
+    return sheet.load(path) if path else None
 
 
 def build_sheets(out_dir):

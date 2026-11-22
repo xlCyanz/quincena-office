@@ -345,7 +345,7 @@
 		"desk_long": 1.0,
 		"desk_long_basic": 0.9688,
 		"desk_long_pro1": 1.0,
-		"desk_long_pro2": 0.8125,
+		"desk_long_pro2": 1.0312,
 		"desk_long_pro3": 0.9688
 	},
 	"sprites": {
@@ -1193,7 +1193,7 @@
 			"file": "furniture/desk_long_basic_r0_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_basic_r1": {
@@ -1215,7 +1215,7 @@
 			"file": "furniture/desk_long_basic_r1_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_basic_r2": {
@@ -1237,7 +1237,7 @@
 			"file": "furniture/desk_long_basic_r2_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_basic_r3": {
@@ -1259,7 +1259,7 @@
 			"file": "furniture/desk_long_basic_r3_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro1_r0": {
@@ -1281,7 +1281,7 @@
 			"file": "furniture/desk_long_pro1_r0_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro1_r1": {
@@ -1303,7 +1303,7 @@
 			"file": "furniture/desk_long_pro1_r1_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro1_r2": {
@@ -1325,7 +1325,7 @@
 			"file": "furniture/desk_long_pro1_r2_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro1_r3": {
@@ -1347,7 +1347,7 @@
 			"file": "furniture/desk_long_pro1_r3_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro2_r0": {
@@ -1369,7 +1369,7 @@
 			"file": "furniture/desk_long_pro2_r0_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro2_r1": {
@@ -1391,7 +1391,7 @@
 			"file": "furniture/desk_long_pro2_r1_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro2_r2": {
@@ -1413,7 +1413,7 @@
 			"file": "furniture/desk_long_pro2_r2_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro2_r3": {
@@ -1435,7 +1435,7 @@
 			"file": "furniture/desk_long_pro2_r3_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro3_r0": {
@@ -1457,7 +1457,7 @@
 			"file": "furniture/desk_long_pro3_r0_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro3_r1": {
@@ -1479,7 +1479,7 @@
 			"file": "furniture/desk_long_pro3_r1_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro3_r2": {
@@ -1501,7 +1501,7 @@
 			"file": "furniture/desk_long_pro3_r2_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_pro3_r3": {
@@ -1523,7 +1523,7 @@
 			"file": "furniture/desk_long_pro3_r3_shadow.png",
 			"size": [
 				192,
-				160
+				192
 			]
 		},
 		"desk_long_r0": {

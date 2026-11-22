@@ -507,7 +507,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   mirando a +x o +y, la pieza hija `Hands` (el personaje tiene `y_sort_enabled`) repite la franja de antebrazos `HANDS_BAND` ordenada tras el
   escritorio. El asiento de las sillas va a 24 px de sprite (la cadera del personaje) y el teclado al borde del escritorio. Un mueble largo
   (1×N) se dibuja en una tira por casilla (`PART_SLICE`, `get_slice_count`) para ordenarse bien con paredes y personas.
-  Computadoras (`tools/sprites/pieces/desk.py`): sobre el escritorio sencillo o el ejecutivo, un sprite aparte (`computer_basic`, `computer_pro`,
+  Computadoras (dibujadas con Moana en `tools/sprites/art/furniture/`): sobre el escritorio sencillo o el ejecutivo, un sprite aparte (`computer_basic`, `computer_pro`,
   128×160 con apoyo (64, 128)) en el centro del mueble; el escritorio largo se dibuja entero con lo que lleva (`sets` de su entrada en
   `data/sprites.json`: `desk_long_basic`, `desk_long_pro1`/`pro2`/`pro3` según las pantallas extra; con tres la torre va debajo de la mesa;
   `SpriteLibrary.get_desk_set_sprite`). `seats` dice a qué altura del modelo queda el teclado de cada sprite y `FurnitureView.get_seat_shift(casilla)`

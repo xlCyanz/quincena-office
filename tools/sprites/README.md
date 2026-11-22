@@ -13,7 +13,7 @@ python3 tools/sprites/check.py DIR [--verbose] [--group grupo[,grupo]]   # RESUL
 python3 tools/sprites/selftest.py --out DIR         # prueba propia del motor (unos 12 s)
 ```
 
-`generate.py --only desk --check` revisa **solo** los archivos de ese grupo (lo mismo `check.py DIR --group desk`), así
+`generate.py --only decor --check` revisa **solo** los archivos de ese grupo (lo mismo `check.py DIR --group decor`), así
 no se mezclan los fallos de lo que otro esté generando en la misma carpeta. `selftest.py` mide el motor (rombo, lienzos,
 apoyo, escalera 2:1 de 60 cajas × 4 rotaciones, tonos exactos, giro, texturas 1:1, curvas sin huecos, empalme de
 paredes), dibuja piezas de ejemplo con sus hojas `sheet_*.png` y rompe a propósito 36 cosas para comprobar que
@@ -343,7 +343,9 @@ Un mueble de 2×1 o 2×2 va con su apoyo y su planta girada: `scene.add(img, x, 
 Guardar las vistas con nombre `sheet_*.png` y abrirlas con la herramienta Read. Mirar siempre ampliado ×3 o ×4, sobre
 un piso, y corregir lo que se vea mal.
 
-## Ejemplo completo: `pieces/desk.py`
+## Ejemplo completo: un mueble de 1×1
+
+El escritorio ya no sale de este generador (se dibuja con Moana, ver `art/`); queda como ejemplo de la API.
 
 ```python
 # Escritorio simple en sus 4 rotaciones.
@@ -406,7 +408,7 @@ def build(out_dir):
 ```
 
 ```
-python3 tools/sprites/generate.py --out DIR --only desk --check
+python3 tools/sprites/generate.py --out DIR --only <grupo> --check
 ```
 
 Un piso (las 4 variantes comparten juntas y bisel; solo cambian las manchas, con la misma cantidad por tono):
@@ -468,7 +470,8 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/furniture/executive_desk/` | Escritorio ejecutivo (2×1, nogal): `executive_desk_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/computer_basic/` | Computadora básica (todo en uno crema): `computer_basic_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/computer_pro/` | Computadora pro (pantalla plana y torre): `computer_pro_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/desk_long_basic/`, `desk_long_pro1/`–`pro3/` | Escritorio largo con su computadora en un solo sprite (`_desk_sets.py`): `desk_long_<conjunto>_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
-| `art/furniture/_computer_kit.py` | Lo que va encima de un escritorio: documento de piezas sueltas y sombra de contacto sobre el tablero |
+| `art/furniture/_computer_kit.py`, `_computers.py` | Lo que va encima de un escritorio: documento de piezas sueltas, sombra de contacto y las piezas de cada computadora |
 
 `build.py` corre con el Python de Moana, no con el del sistema (ver su cabecera).

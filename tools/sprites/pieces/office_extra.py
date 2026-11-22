@@ -1,7 +1,5 @@
 # Muebles de oficina extra (estilo de tools/sprites/STYLE.md):
 #
-#   executive_desk_r0..r3      2×1: escritorio ejecutivo de nogal: dos cajoneras enteras, panel con
-#                              tableros hundidos del lado de la visita y tablero grueso con filo dorado
 #   printer_r0..r3             impresora multifunción gris clara sobre un mueble bajo con puerta
 #   filing_cabinet_r0..r3      archivero de metal de cuatro cajones con tirador y etiqueta
 #   backup_battery_r0..r3      gabinete de baterías gris oscuro: pantalla, luces y cuatro módulos
@@ -9,28 +7,21 @@
 #   <cada uno>_shadow          sombra en el piso, aparte
 #   _sheets/office_extra.png   hoja de contacto
 #
-# El escritorio tiene la superficie en z = 44 (iso.DESK_TOP), como el sencillo, aunque su `height` sea 26.
+# El escritorio ejecutivo lo dibuja Moana (art/furniture/executive_desk/).
 import numpy as np
 
 import iso
 import palette as pal
-from pieces import desk as simple
 from pieces._kit import Saver, drawers, g, grid, inside, plain, sunken
 
 ITEMS = iso.load_json("data/furniture.json")["items"]
-EXEC = ITEMS["executive_desk"]
 PRINTER = ITEMS["printer"]
 FILING = ITEMS["filing_cabinet"]
 BATTERY = ITEMS["backup_battery"]
 MEETING = ITEMS["meeting_table"]
 
-U = simple.U
-TOP = iso.DESK_TOP
+U = 1.0 / 32.0  # 1/32 de casilla
 
-WOOD = pal.style("wood_orange", name="wide_desk_wood")
-WALNUT = pal.style_ramp("a0603a", outline="2a1206", light="bd7a4c", name="executive_walnut")
-WALNUT_LINE = WALNUT.add("4a2410")
-BRASS = WALNUT.add("e0b84a")  # filo dorado del tablero y tiradores
 METAL = pal.style_ramp("aeb5b9", outline="2f3437", name="filing_metal")
 METAL_LINE = METAL.add("5f676b")
 METAL_HANDLE = METAL.add("e8ecee")
@@ -53,60 +44,6 @@ BATTERY_HANDLE = BATTERY_BODY.add("8c96a0")
 TABLE_WOOD = pal.style("wood_orange", name="meeting_wood")
 TABLE_EDGE = TABLE_WOOD.add("743b0e")
 COLUMN = pal.style_ramp("4a4f55", outline="141619", name="meeting_column")
-
-
-# ---------------------------------------------------------------------------- escritorio ejecutivo
-
-EXEC_SLAB = 7
-EXEC_PED = ((2 * U, 15 * U), (49 * U, 62 * U))
-EXEC_Y = (4 * U, 28 * U)
-
-
-def exec_top_side(ctx):
-    """Canto del tablero con filo dorado de 1 px a media altura."""
-    a, b, w, h = grid(ctx)
-    index = plain(ctx)
-    return np.where(b == np.floor(h / 2.0), BRASS, index)
-
-
-def exec_panel(ctx):
-    """Panel de la visita: tres tableros hundidos."""
-    a, b, w, h = grid(ctx)
-    index = plain(ctx)
-    count = 3
-    step = (w - 4) / float(count)
-    for k in range(count):
-        a0 = np.floor(2 + k * step) + 2
-        a1 = np.floor(2 + (k + 1) * step) - 2
-        index = sunken(index, a, b, a0, a1, 4, h - 4, WALNUT_LINE, pal.LIGHT)
-    return np.where(b < 2, WALNUT_LINE, index)
-
-
-def exec_side(ctx):
-    a, b, w, h = grid(ctx)
-    index = sunken(plain(ctx), a, b, 3, w - 3, 4, h - 4, WALNUT_LINE, pal.LIGHT)
-    return np.where(b < 2, WALNUT_LINE, index)
-
-
-def executive_desk(rotation):
-    c = iso.Canvas.furniture(EXEC["size"], EXEC["height"], rotation)
-    under = TOP - EXEC_SLAB
-    peds = None
-    for x0, x1 in EXEC_PED:
-        pid = c.box(x0, x1, EXEC_Y[0], EXEC_Y[1], 0, under, WALNUT,
-                    tex={iso.FRONT: drawers(3, WALNUT_LINE, BRASS, margin=1, foot=3), "sides": exec_side,
-                         iso.BACK: exec_side},
-                    name="pedestals" if peds is None else None, part=peds, flat=False)
-        peds = pid if peds is None else peds
-    # Panel de la visita (atrás, +y).
-    c.box(EXEC_PED[0][1], EXEC_PED[1][0], 24 * U, 27 * U, 4, under, WALNUT, tex={iso.BACK: exec_panel},
-          shade={iso.FRONT: -1}, name="modesty", flat=False)
-    c.box(1 * U, 63 * U, 2 * U, 30 * U, under, TOP, WALNUT, tex={"sides": exec_top_side}, name="top", flat=False)
-    return c
-
-
-def exec_shadow_shapes():
-    return [("bar", 0.2, 0.5, 1.8, 0.5, 0.42, 0, TOP)]
 
 
 # ---------------------------------------------------------------------------- impresora
@@ -256,7 +193,6 @@ def meeting_shadow_shapes():
 
 def build(out_dir):
     s = Saver(out_dir)
-    s.rotations(executive_desk, "executive_desk", exec_shadow_shapes(), height=EXEC["height"])
     s.rotations(printer, "printer", printer_shadow_shapes(), height=PRINTER["height"])
     s.rotations(filing_cabinet, "filing_cabinet", filing_shadow_shapes(), height=FILING["height"])
     s.rotations(backup_battery, "backup_battery", battery_shadow_shapes(), height=BATTERY["height"])

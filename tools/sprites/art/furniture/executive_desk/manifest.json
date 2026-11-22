@@ -1,5 +1,5 @@
 {
- "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta y, si tiene, dónde se sienta la persona (seat, casillas desde la punta -x del modelo); lo escribe build.py y export_game.py lo pasa al juego.",
  "sprites": {
   "executive_desk_r0.png": {
    "anchor": [

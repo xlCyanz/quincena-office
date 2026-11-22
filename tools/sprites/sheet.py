@@ -1,5 +1,6 @@
 # Vistas de revisión (no son arte): ampliar, fondos, hojas de contacto y escenas por casilla
 # con el orden de dibujo del juego (por Y de pantalla).
+import json
 import os
 
 import numpy as np
@@ -212,3 +213,44 @@ def tile_mosaic(tiles, cols=4, rows=4, seed=0, scale=3, color=BACKGROUND):
     scene = Scene(cols, rows, color=color, top=16, margin=8)
     scene.fill_floor(tiles, seed)
     return scene.render(scale)
+
+
+ART_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "art")
+
+
+def art_manifests():
+    """(carpeta, manifest.json) de cada pieza dibujada con Moana en art/."""
+    found = []
+    for folder, _dirs, files in sorted(os.walk(ART_DIR)):
+        if "manifest.json" in files:
+            with open(os.path.join(folder, "manifest.json")) as handle:
+                found.append((folder, json.load(handle)))
+    return found
+
+
+def art_sprites():
+    """Nombre del PNG -> (ruta, entrada de su manifest.json) para todo lo que hay en art/."""
+    found = {}
+    for folder, manifest in art_manifests():
+        for name, entry in manifest["sprites"].items():
+            if name in found:
+                raise SystemExit("%s está en dos carpetas de art/" % name)
+            found[name] = (os.path.join(folder, name), entry)
+    return found
+
+
+def art_seats():
+    """Base del sprite -> dónde se sienta la persona (casillas), según los manifest de art/."""
+    seats = {}
+    for _folder, manifest in art_manifests():
+        seats.update(manifest.get("seats", {}))
+    return seats
+
+
+def find(out_dir, file_name):
+    """Ruta de un PNG: la carpeta de generate.py o, si no está, la pieza de Moana en art/ (o None)."""
+    path = os.path.join(out_dir, file_name)
+    if os.path.isfile(path):
+        return path
+    art = art_sprites().get(file_name)
+    return art[0] if art else None

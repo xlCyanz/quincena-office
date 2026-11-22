@@ -1,0 +1,56 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta y, si tiene, dónde se sienta la persona (seat, casillas desde la punta -x del modelo); lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "desk_long_pro3_r0.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "desk_long_pro3_r0_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "desk_long_pro3_r1.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "desk_long_pro3_r1_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "desk_long_pro3_r2.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "desk_long_pro3_r2_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "desk_long_pro3_r3.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  },
+  "desk_long_pro3_r3_shadow.png": {
+   "anchor": [
+    128,
+    128
+   ]
+  }
+ },
+ "seats": {
+  "desk_long_pro3": 0.9688
+ }
+}

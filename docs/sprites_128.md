@@ -84,7 +84,7 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
   - Muebles simétricos (planta, zafacón, lámpara, rack…) pueden tener una sola imagen.
 - **Muebles chicos** (`small`: planta pequeña, zafacón, dispensador de agua, lámpara de pie): el juego los dibuja al 60 %
   en un cuarto de la casilla. Dibujarlos en 128×128 como si ocuparan la casilla entera; el juego los achica.
-- **Computadoras** (dos niveles): `computer_basic` (todo en uno crema, teclado y ratón crema) y `computer_pro` (monitor plano negro de
+- **Computadoras** (dos niveles; con Moana en `tools/sprites/art/furniture/`, como los escritorios): `computer_basic` (todo en uno crema, teclado y ratón crema) y `computer_pro` (monitor plano negro de
   34×25 px con pie de 8, torre negra con luz azul, teclado y ratón negros) van **encima** de un escritorio: lienzo de 128×160 con el apoyo
   en (64, 128), dibujados a la altura de la superficie del escritorio (22 px del mundo = 44 px de sprite sobre el piso).
 - **Escritorio largo** (`desk_long_r0`–`_r3`, 2×1, tablero de 92 px centrado en sus dos casillas): se dibuja entero con lo que lleva encima,
@@ -111,9 +111,9 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
   cliente); `waiting_sofa_r0`–`_r3` (2×1, respaldo de 38 px: más que su `height` de 12); `water_dispenser_r0`–`_r3`
   y `water_dispenser_q_r0`–`_r3` (chico: grifos solo al frente); `trash_can` y `trash_can_q` (chico y simétrico, 26 px de alto: más que su `height` de 10). Cada
   uno con su `_shadow`.
-- Trabajo (`tools/sprites/pieces/office_extra.py`): `executive_desk_r0`–`_r3` (2×1, superficie
+- Trabajo: `executive_desk_r0`–`_r3` (Moana, `tools/sprites/art/furniture/executive_desk/`; 2×1, superficie
   en z = 44 como el escritorio sencillo para que las computadoras se apoyen igual, aunque el ejecutivo tenga `height` 26);
-  `printer_r0`–`_r3` (impresora sobre un mueble bajo), `filing_cabinet_r0`–`_r3`, `backup_battery_r0`–`_r3` y
+  en `tools/sprites/pieces/office_extra.py`, `printer_r0`–`_r3` (impresora sobre un mueble bajo), `filing_cabinet_r0`–`_r3`, `backup_battery_r0`–`_r3` y
   `meeting_table` (2×2, redonda: una sola imagen).
 - Sala de descanso (`tools/sprites/pieces/break_room.py`): `sofa_r0`–`_r3` (2×1), `fridge_r0`–`_r3`,
   `microwave_r0`–`_r3` y `coffee_maker_r0`–`_r3` (cada uno sobre su mueble bajo de cocina, que ocupa la casilla),

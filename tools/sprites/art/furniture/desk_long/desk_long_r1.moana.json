@@ -2390,7 +2390,7 @@
           "color": "brass"
         },
         {
-          "id": "pedestal_r1_panel_x",
+          "id": "pedestal_r1_panel_px",
           "type": "polygon",
           "points": [
             [
@@ -2413,7 +2413,7 @@
           "color": "wood_right"
         },
         {
-          "id": "pedestal_r1_panel_x_in",
+          "id": "pedestal_r1_panel_px_in",
           "type": "polygon",
           "points": [
             [
@@ -2436,7 +2436,7 @@
           "color": "wood_left"
         },
         {
-          "id": "pedestal_r1_panel_x_lit",
+          "id": "pedestal_r1_panel_px_lit",
           "type": "polygon",
           "points": [
             [

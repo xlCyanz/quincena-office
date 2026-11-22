@@ -16,7 +16,7 @@ sys.path.insert(0, str(HERE.parent))
 from _desk_kit import DeskSpec, main  # noqa: E402
 
 # Lienzo del juego actual (data/sprites.json): 192 x 192, apoyo (64, 128) y (128, 128).
-SPEC = DeskSpec(name="desk_long", size=(2, 1), canvas=(192, 192), top_x=(9, 55))
+SPEC = DeskSpec(name="desk_long", size=(2, 1), canvas=(192, 192), top_x=(9, 55), seat=1.0)  # al medio del tablero
 
 if __name__ == "__main__":
     raise SystemExit(main(SPEC, HERE))
