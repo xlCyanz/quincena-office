@@ -482,7 +482,11 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/furniture/plant_small_q/`, `plant_large/` | Plantas chica (mueble chico, ya a su tamaño) y grande, con `_shadow`; piezas en `_plants.py` (hoja, maceta) sobre `_chair_kit.py` |
 | `art/nature/trees/` | Árboles del mapa: `tree_0`–`tree_7` y sus `_shadow` |
 | `art/nature/bushes/` | Arbustos y setos (aún no los usa el juego): `bush_0`–`_5`, `hedge_cube`, `hedge_long_r0`/`_r1`, `hedge_corner_r0`–`_r3` y sus `_shadow` |
-| `art/nature/_tree_kit.py` | Árboles: trazado de rayos sobre bultos de hojas, cápsulas y conos con borde rizado por ruido; luz por bulto y por copa, sombra bajo lo que tapa, contorno y documento Moana en orden de pintor (menos rectángulos) |
+| `art/nature/_tree_kit.py` | Árboles: trazado de rayos sobre bultos de hojas, cápsulas y conos con borde rizado por ruido; luz por bulto y por copa, sombra bajo lo que tapa, contorno y documento Moana en orden de pintor (`art/_painter.py`) |
+| `art/furniture/floor_lamp_q/` | Lámpara de pie (mueble chico, ya a su tamaño) y su `_shadow`, sobre `_chair_kit.py` |
+| `art/furniture/aquarium/` | Pecera (2×1): `aquarium_r0`–`_r3` y sus `_shadow`, sobre `_chair_kit.py` (`PieceSpec` con planta, lienzo y giros) |
+| `art/furniture/rug/` | Alfombra (2×2, plana): `rug`; el diseño se pinta por coordenadas de la planta |
+| `art/_painter.py` | Documento Moana en orden de pintor (cada color tapa a los que van debajo): para piezas con mucha textura que no caben en el límite de nodos de Moana |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
 | `art/furniture/_computer_kit.py`, `_computers.py` | Lo que va encima de un escritorio: documento de piezas sueltas, sombra de contacto y las piezas de cada computadora |
 

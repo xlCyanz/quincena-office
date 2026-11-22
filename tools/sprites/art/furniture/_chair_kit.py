@@ -30,8 +30,12 @@ from typing import Callable, Optional
 import numpy as np
 from PIL import Image
 
-from _desk_kit import View
-from moana import api
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from _desk_kit import View  # noqa: E402
+from _painter import document as painter_document  # noqa: E402
+from moana import api  # noqa: E402
 
 CELL = 32  # unidades por casilla
 CANVAS = (128, 128)
@@ -423,7 +427,7 @@ def moana_render(doc: dict[str, object]) -> np.ndarray:
 
 def shadow_rgba(spec: ChairSpec, v: View) -> np.ndarray:
     """Sombra de un tono en el piso, recortada a la planta; cada forma se corre con su altura."""
-    h, w = CANVAS
+    w, h = v.canvas
     ys, xs = np.mgrid[0:h, 0:w]
     ox, oy = v.origin
     rx, ry = xs + 0.5 - ox, ys + 0.5 - oy
@@ -451,7 +455,8 @@ def shadow_rgba(spec: ChairSpec, v: View) -> np.ndarray:
                 du, dv = ub - ua, vb - va
                 along = np.clip(((gu - su - ua) * du + (gv - sv - va) * dv) / (du * du + dv * dv), 0.0, 1.0)
                 mask |= (gu - su - ua - du * along) ** 2 + (gv - sv - va - dv * along) ** 2 <= r * r
-    mask &= (gu >= 0) & (gu < 1) & (gv >= 0) & (gv < 1)
+    fu, fv = v.world[0] / CELL, v.world[1] / CELL
+    mask &= (gu >= 0) & (gu < fu) & (gv >= 0) & (gv < fv)
     out = np.zeros((h, w, 4), dtype=np.uint8)
     hexa = spec.shadow_color
     out[mask, :3] = [int(hexa[i:i + 2], 16) for i in (1, 3, 5)]
@@ -585,7 +590,8 @@ def main(spec: ChairSpec, here: Path) -> int:
 
 @dataclass
 class PieceSpec:
-    """Mueble de una sola imagen (sin rotaciones ni capas): planta, maceta…"""
+    """Mueble sin capas: planta, lámpara, pecera… ``rotations`` (0,) da ``<nombre>.png``; si son varias,
+    ``<nombre>_r<n>.png`` (el modelo, en rotación 0, se gira dentro de la planta ``size``)."""
 
     name: str
     mats: dict[str, Mat]
@@ -593,13 +599,20 @@ class PieceSpec:
     shadow: list[tuple]
     shadow_color: str = "#1A1C26FF"
     max_colors: int = 16
+    size: tuple[int, int] = (1, 1)  # planta en casillas (rotación 0)
+    canvas: tuple[int, int] = CANVAS
+    rotations: tuple[int, ...] = (0,)
+    painter: bool = False  # documento en orden de pintor (../_painter.py), para piezas con mucha textura
+
+    def view(self, r: int) -> View:
+        return View(r, self.size[0] * CELL, self.size[1] * CELL, self.canvas)
 
     def palette(self) -> list[tuple[str, str]]:
         return ChairSpec.palette(self)  # type: ignore[arg-type]
 
 
 def main_piece(spec: PieceSpec, here: Path) -> int:
-    """Genera ``<nombre>.png`` y ``<nombre>_shadow.png`` (rotación 0) con su manifest.json."""
+    """Genera la imagen y la sombra de cada rotación (ver ``PieceSpec``) con su manifest.json."""
     parser = argparse.ArgumentParser(description=f"Genera {spec.name} y su sombra con Moana.")
     parser.add_argument("--out", type=Path, default=here, help="carpeta de salida (por defecto, la del build.py)")
     parser.add_argument("--preview", action="store_true", help=f"escribe también {spec.name}_preview.png")
@@ -607,29 +620,41 @@ def main_piece(spec: PieceSpec, here: Path) -> int:
     out: Path = args.out
     out.mkdir(parents=True, exist_ok=True)
     problems: list[str] = []
-    v = view(0)
-    image = to_rgba(finish(render(spec.model(), v), spec.mats), spec)  # type: ignore[arg-type]
-    shadow = shadow_rgba(spec, v)  # type: ignore[arg-type]
-    colors = {tuple(c) for c in image[image[..., 3] == 255][:, :3]}
-    if len(colors) > spec.max_colors:
-        problems.append(f"{spec.name}: {len(colors)} colores (máx. {spec.max_colors})")
-    alpha = image[..., 3] > 0
-    if alpha[0].any() or alpha[-1].any() or alpha[:, 0].any() or alpha[:, -1].any():
-        problems.append(f"{spec.name}: toca el borde del lienzo")
     sprites = {}
-    for file_name, img in ((spec.name, image), (f"{spec.name}_shadow", shadow)):
-        doc = document(file_name, img)
-        (out / f"{file_name}.moana.json").write_text(json.dumps(doc, ensure_ascii=False) + "\n", encoding="utf-8")
-        drawn = moana_render(doc)
-        if not np.array_equal(drawn, img):
-            problems.append(f"{file_name}: Moana no da los mismos pixeles que el dibujo")
-        Image.fromarray(drawn, "RGBA").save(out / f"{file_name}.png")
-        sprites[f"{file_name}.png"] = {"anchor": list(v.anchor)}
+    shown: list[np.ndarray] = []
+    for r in spec.rotations:
+        v = spec.view(r)
+        base = spec.name if spec.rotations == (0,) else f"{spec.name}_r{r}"
+        image = to_rgba(finish(render(spec.model(), v, spec.canvas), spec.mats), spec)  # type: ignore[arg-type]
+        shadow = shadow_rgba(spec, v)  # type: ignore[arg-type]
+        colors = {tuple(c) for c in image[image[..., 3] == 255][:, :3]}
+        if len(colors) > spec.max_colors:
+            problems.append(f"{base}: {len(colors)} colores (máx. {spec.max_colors})")
+        alpha = image[..., 3] > 0
+        if alpha[0].any() or alpha[-1].any() or alpha[:, 0].any() or alpha[:, -1].any():
+            problems.append(f"{base}: toca el borde del lienzo")
+        for file_name, img in ((base, image), (f"{base}_shadow", shadow)):
+            doc = painter_document(file_name, img) if spec.painter else document(file_name, img)
+            (out / f"{file_name}.moana.json").write_text(json.dumps(doc, ensure_ascii=False) + "\n", encoding="utf-8")
+            drawn = moana_render(doc)
+            if not np.array_equal(drawn, img):
+                problems.append(f"{file_name}: Moana no da los mismos pixeles que el dibujo")
+            Image.fromarray(drawn, "RGBA").save(out / f"{file_name}.png")
+            sprites[f"{file_name}.png"] = {"anchor": list(v.anchor)}
+        comp = shadow.copy()
+        comp[alpha] = image[alpha]
+        shown.append(comp)
     manifest = {"_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py "
                                "lo pasa al juego.", "sprites": sprites}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.preview:
-        preview(spec, [[image, shadow]], out / f"{spec.name}_preview.png")  # type: ignore[arg-type]
+        w, h = spec.canvas
+        sheet = Image.new("RGBA", (w * len(shown) * 4, h * 4), (70, 72, 80, 255))
+        for k, img in enumerate(shown):
+            cell = Image.new("RGBA", spec.canvas, (70, 72, 80, 255))
+            cell.alpha_composite(Image.fromarray(img, "RGBA"))
+            sheet.paste(cell.resize((w * 4, h * 4), Image.NEAREST), (k * w * 4, 0))
+        sheet.save(out / f"{spec.name}_preview.png")
     for line in problems:
         print("FALLO:", line)
     print("RESULTADO:", "OK" if not problems else f"{len(problems)} fallos")

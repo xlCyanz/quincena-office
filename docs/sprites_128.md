@@ -121,10 +121,12 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
 - **Mesa de reuniones de vidrio** (`glass_meeting_table_r0`–`_r3`, Moana, 2×2, lienzo 256×192 con apoyo (128, 96)): tablero
   aguamarina sobre marco y patas de cromo; como el PNG no admite transparencia a medias, el marco que se ve a través del vidrio
   va pintado encima en un tono más oscuro.
-- Decoración (`tools/sprites/pieces/decor.py`): `floor_lamp` y `floor_lamp_q` (la lámpara chica ya al 60 %), una sola
-  imagen por ser simétrica; `rug` (2×2, una sola imagen); `aquarium_r0`–`_r3` (mueble con puertas al frente y tanque
-  encima, 56 px de sprite de alto: más que su `height` de 20, para que se lea como pecera). Cada uno con su `_shadow`
-  salvo la alfombra.
+- Decoración (Moana, `tools/sprites/art/furniture/floor_lamp_q/`, `rug/` y `aquarium/`): `floor_lamp_q` (lámpara
+  chica ya al 60 %, una sola imagen por ser simétrica; pantalla encendida, clara abajo); `rug` (2×2, una sola imagen,
+  diseño plano llevado al rombo: borde de grecas y medallón de rombos con cuatro puntas); `aquarium_r0`–`_r3` (mueble
+  con puertas al frente y tanque encima, 56 px de sprite de alto: más que su `height` de 20, para que se lea como pecera;
+  marco negro en las aristas, franja de aire bajo la tapa y reflejos en el vidrio). Cada uno con su `_shadow` salvo la
+  alfombra.
 - Recepción (`tools/sprites/pieces/reception.py`): `reception_counter_r0`–`_r3` (2×1: mesa de trabajo sobre dos
   cajoneras de metal del lado de la recepcionista, que es el frente, y panel alto con mesón crema del lado del
   cliente); `waiting_sofa_r0`–`_r3` (2×1, respaldo de 38 px: más que su `height` de 12); `water_dispenser_r0`–`_r3`

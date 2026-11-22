@@ -50,9 +50,7 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      soportes cortos abajo; encendido (Sala de reuniones) muestra una diapositiva clara con barra de título azul:
      barras, torta con leyenda o portada con logo, que se arma en 12 cuadros (`_play_1` a `_12`); aire acondicionado split largo y bajo, frente blanco verdoso,
      tapa gris con panel claro, rejilla negra abajo y luz roja.
-   - *Decoración de piso* (`pieces/decor.py`): lámpara de pie de base negra, poste de metal y pantalla crema en
-     cono; alfombra vino con borde crema de grecas, filete dorado y medallón en rombo azul; pecera sobre un mueble de
-     madera naranja con dos puertas, agua azul más oscura abajo, arena, plantas, piedras, peces y tapa negra.
+   - *Decoración de piso*: con Moana (`art/furniture/floor_lamp_q/`, `rug/`, `aquarium/`, ver el README).
    - *Recepción* (`pieces/reception.py`): mostrador con mesa de trabajo de tablero naranja sobre dos cajoneras de
      metal gris del lado de la recepcionista y, del lado del cliente, panel de madera lisa con postes de aluminio en
      las esquinas y mesón crema con un timbre dorado; sofá de espera rojo alto y mullido con faldón, tres cojines de

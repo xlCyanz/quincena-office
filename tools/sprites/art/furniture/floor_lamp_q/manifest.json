@@ -1,0 +1,17 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "floor_lamp_q.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "floor_lamp_q_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  }
+ }
+}

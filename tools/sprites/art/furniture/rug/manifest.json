@@ -1,0 +1,11 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "rug.png": {
+   "anchor": [
+    128,
+    32
+   ]
+  }
+ }
+}
