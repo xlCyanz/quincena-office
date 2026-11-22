@@ -91,6 +91,11 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   (herramienta Mejorar) la cambia en su lugar cobrando la diferencia, también en un puesto ocupado o la silla del CEO. El bono de un puesto es
   computadora + pantallas extra (`Workstations.get_desk_bonus`, `bonus_of`, `bonuses_by_owner` con caché). `data/rooms.json` acepta la silla
   ergonómica donde pedía silla y el escritorio largo donde pedía escritorio.
+- Laptop y mesa de vidrio (hito 70, diseño 21.6; `data/furniture.json`): laptop (`laptop`, $1,800, `production_bonus` 0.2) con `desks`
+  = los escritorios donde cabe (`["executive_desk"]`; vacío = cualquiera): `FurnitureCatalog.get_desks`/`fits_desk`, que revisa
+  `Builder.quote_install_computer`. Sin `upgrade_to` ni `extra_monitors`; Mejorar dice que no se puede mejorar (no «es la mejor»).
+  Mesa de reuniones de vidrio (`glass_meeting_table`, 2×2, $2,000, `ambiance` 6): `data/rooms.json` la acepta como mesa de la Sala de
+  reuniones. Sprites `computer_laptop` y `glass_meeting_table` (con rotaciones) de `tools/sprites/art/furniture/`.
 - Impresora, pizarra y ventanas (hito 55): impresora ($350, `accountant_boost` 1.25 en `data/furniture.json`): en el Área de trabajo donde está la
   silla de un contador (`Staff.get_printer_factor`) multiplica sus descuentos de mantenimiento y de tasa y el cobro del pago atrasado (`withhold` con
   `by_accountant`: días ÷ factor, 3 → 2; se resuelve en `Events._resolve`). Pizarra (de pared, $250, `meeting_board`): en una Sala de reuniones que

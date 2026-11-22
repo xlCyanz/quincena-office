@@ -1,0 +1,237 @@
+{
+  "schema_version": "1.0",
+  "id": "glass_meeting_table_r3_shadow",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 256,
+    "height": 192,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_glass_meeting_table",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#1E3438FF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#4F7A80FF"
+      },
+      {
+        "id": "glass_light",
+        "rgba": "#E8FBFCFF"
+      },
+      {
+        "id": "glass_top",
+        "rgba": "#9CD2D6FF"
+      },
+      {
+        "id": "glass_grain",
+        "rgba": "#7FB4BAFF"
+      },
+      {
+        "id": "glass_left",
+        "rgba": "#759EA0FF"
+      },
+      {
+        "id": "glass_right",
+        "rgba": "#5E7E80FF"
+      },
+      {
+        "id": "glass_dark",
+        "rgba": "#42585AFF"
+      },
+      {
+        "id": "glass_deep",
+        "rgba": "#2F3F40FF"
+      },
+      {
+        "id": "chrome_light",
+        "rgba": "#F2F5F8FF"
+      },
+      {
+        "id": "chrome_top",
+        "rgba": "#9EA4ACFF"
+      },
+      {
+        "id": "chrome_grain",
+        "rgba": "#8B9097FF"
+      },
+      {
+        "id": "chrome_left",
+        "rgba": "#767B81FF"
+      },
+      {
+        "id": "chrome_right",
+        "rgba": "#5F6267FF"
+      },
+      {
+        "id": "chrome_dark",
+        "rgba": "#424548FF"
+      },
+      {
+        "id": "chrome_deep",
+        "rgba": "#2F3134FF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      },
+      {
+        "id": "shadow_soft",
+        "rgba": "#4A4E62FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "floor_footprint",
+      "type": "polygon",
+      "points": [
+        [
+          128,
+          64
+        ],
+        [
+          256,
+          128
+        ],
+        [
+          128,
+          192
+        ],
+        [
+          0,
+          128
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "mask_id": "floor_footprint",
+      "operations": [
+        {
+          "id": "shadow_top_inner",
+          "type": "polygon",
+          "points": [
+            [
+              148,
+              86
+            ],
+            [
+              224,
+              124
+            ],
+            [
+              116,
+              178
+            ],
+            [
+              40,
+              140
+            ]
+          ],
+          "color": "shadow_soft"
+        },
+        {
+          "id": "shadow_leg0",
+          "type": "polygon",
+          "points": [
+            [
+              50,
+              133
+            ],
+            [
+              58,
+              137
+            ],
+            [
+              50,
+              141
+            ],
+            [
+              42,
+              137
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_leg1",
+          "type": "polygon",
+          "points": [
+            [
+              114,
+              165
+            ],
+            [
+              122,
+              169
+            ],
+            [
+              114,
+              173
+            ],
+            [
+              106,
+              169
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_leg2",
+          "type": "polygon",
+          "points": [
+            [
+              146,
+              85
+            ],
+            [
+              154,
+              89
+            ],
+            [
+              146,
+              93
+            ],
+            [
+              138,
+              89
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_leg3",
+          "type": "polygon",
+          "points": [
+            [
+              210,
+              117
+            ],
+            [
+              218,
+              121
+            ],
+            [
+              210,
+              125
+            ],
+            [
+              202,
+              121
+            ]
+          ],
+          "color": "shadow_ink"
+        }
+      ]
+    }
+  ]
+}

@@ -471,6 +471,8 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/furniture/computer_basic/` | Computadora básica (todo en uno crema): `computer_basic_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/computer_pro/` | Computadora pro (pantalla plana y torre): `computer_pro_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/desk_long_basic/`, `desk_long_pro1/`–`pro3/` | Escritorio largo con su computadora en un solo sprite (`_desk_sets.py`): `desk_long_<conjunto>_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/computer_laptop/` | Laptop plateada (solo sobre el escritorio ejecutivo): `computer_laptop_r0`–`_r3` y sus `_shadow`; su modelo en `_laptop.py` |
+| `art/furniture/glass_meeting_table/` | Mesa de reuniones de vidrio (2×2): `glass_meeting_table_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
 | `art/furniture/_computer_kit.py`, `_computers.py` | Lo que va encima de un escritorio: documento de piezas sueltas, sombra de contacto y las piezas de cada computadora |
 

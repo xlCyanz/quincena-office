@@ -140,6 +140,11 @@ func quote_install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 	var item: Dictionary = OfficeState.furniture[index].duplicate()
 	if not String(item["computer"]).is_empty():
 		return _fail(0, "Ese escritorio ya tiene computadora.")
+	if not FurnitureCatalog.fits_desk(computer_id, item["id"]):
+		var desk_names: Array[String] = []
+		for desk_id: String in FurnitureCatalog.get_desks(computer_id):
+			desk_names.append(String(FurnitureCatalog.get_item(desk_id)["name"]).to_lower())
+		return _fail(0, "%s solo va sobre un %s." % [FurnitureCatalog.get_item(computer_id)["name"], " o ".join(desk_names)])
 	var cost: int = FurnitureCatalog.get_price(computer_id)
 	if not Economy.can_afford(cost):
 		return _fail(cost, "No alcanza el dinero: cuesta $%d." % cost)
@@ -202,7 +207,7 @@ func quote_upgrade(cell: Vector2i) -> Dictionary:
 	var new_id: String = FurnitureCatalog.get_upgrade(old_id)
 	var old_name: String = FurnitureCatalog.get_item(old_id)["name"]
 	if new_id.is_empty():
-		if field == "computer":
+		if field == "computer" and FurnitureCatalog.get_desks(old_id).is_empty():
 			return _fail(0, "%s es la mejor que hay." % old_name)
 		return _fail(0, "%s no se puede mejorar." % old_name)
 	var cost: int = maxi(0, FurnitureCatalog.get_price(new_id) - FurnitureCatalog.get_price(old_id))

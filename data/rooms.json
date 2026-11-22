@@ -27,7 +27,7 @@
 			"min_area": 9,
 			"unlocked_by_offer": true,
 			"required": [
-				{ "name": "Mesa de reuniones", "items": ["meeting_table"] }
+				{ "name": "Mesa de reuniones", "items": ["meeting_table", "glass_meeting_table"] }
 			],
 			"color": "8a6fc9"
 		},

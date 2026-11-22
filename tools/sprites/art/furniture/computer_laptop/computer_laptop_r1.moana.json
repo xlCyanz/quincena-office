@@ -1,0 +1,1359 @@
+{
+  "schema_version": "1.0",
+  "id": "computer_laptop_r1",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 128,
+    "height": 160,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_computer_laptop",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#000000FF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#1A2226FF"
+      },
+      {
+        "id": "case_light",
+        "rgba": "#F2F6F8FF"
+      },
+      {
+        "id": "case_top",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "case_grain",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "case_left",
+        "rgba": "#4F636BFF"
+      },
+      {
+        "id": "case_right",
+        "rgba": "#43565CFF"
+      },
+      {
+        "id": "case_dark",
+        "rgba": "#313E44FF"
+      },
+      {
+        "id": "case_deep",
+        "rgba": "#242D32FF"
+      },
+      {
+        "id": "lid_light",
+        "rgba": "#E5EAEEFF"
+      },
+      {
+        "id": "lid_top",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "lid_grain",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "lid_left",
+        "rgba": "#B4C2CAFF"
+      },
+      {
+        "id": "lid_right",
+        "rgba": "#9DAFB9FF"
+      },
+      {
+        "id": "lid_dark",
+        "rgba": "#5B717CFF"
+      },
+      {
+        "id": "lid_deep",
+        "rgba": "#313E44FF"
+      },
+      {
+        "id": "screen",
+        "rgba": "#21455FFF"
+      },
+      {
+        "id": "key",
+        "rgba": "#242D32FF"
+      },
+      {
+        "id": "pad",
+        "rgba": "#5B717CFF"
+      },
+      {
+        "id": "led",
+        "rgba": "#6FE08AFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "sil_lid",
+      "type": "polygon",
+      "points": [
+        [
+          82,
+          38
+        ],
+        [
+          84,
+          39
+        ],
+        [
+          84,
+          69
+        ],
+        [
+          40,
+          91
+        ],
+        [
+          38,
+          90
+        ],
+        [
+          38,
+          60
+        ]
+      ]
+    },
+    {
+      "id": "sil_base",
+      "type": "polygon",
+      "points": [
+        [
+          82,
+          68
+        ],
+        [
+          112,
+          83
+        ],
+        [
+          112,
+          86
+        ],
+        [
+          68,
+          108
+        ],
+        [
+          38,
+          93
+        ],
+        [
+          38,
+          90
+        ]
+      ]
+    },
+    {
+      "id": "canvas_all",
+      "type": "rect",
+      "box": [
+        0,
+        0,
+        128,
+        160
+      ]
+    },
+    {
+      "id": "outside",
+      "type": "subtract",
+      "masks": [
+        "canvas_all",
+        "sil_lid",
+        "sil_base"
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "body",
+      "name": "Piezas",
+      "operations": [
+        {
+          "id": "lid_r1_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              37
+            ],
+            [
+              84,
+              38
+            ],
+            [
+              84,
+              68
+            ],
+            [
+              40,
+              90
+            ],
+            [
+              38,
+              89
+            ],
+            [
+              38,
+              59
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "lid_r1_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              39
+            ],
+            [
+              84,
+              40
+            ],
+            [
+              84,
+              70
+            ],
+            [
+              40,
+              92
+            ],
+            [
+              38,
+              91
+            ],
+            [
+              38,
+              61
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "lid_r1_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              81,
+              38
+            ],
+            [
+              83,
+              39
+            ],
+            [
+              83,
+              69
+            ],
+            [
+              39,
+              91
+            ],
+            [
+              37,
+              90
+            ],
+            [
+              37,
+              60
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "lid_r1_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              38
+            ],
+            [
+              85,
+              39
+            ],
+            [
+              85,
+              69
+            ],
+            [
+              41,
+              91
+            ],
+            [
+              39,
+              90
+            ],
+            [
+              39,
+              60
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "lid_r1_left",
+          "type": "polygon",
+          "points": [
+            [
+              38,
+              60
+            ],
+            [
+              40,
+              61
+            ],
+            [
+              40,
+              91
+            ],
+            [
+              38,
+              90
+            ]
+          ],
+          "color": "lid_left"
+        },
+        {
+          "id": "lid_r1_right",
+          "type": "polygon",
+          "points": [
+            [
+              84,
+              39
+            ],
+            [
+              40,
+              61
+            ],
+            [
+              40,
+              91
+            ],
+            [
+              84,
+              69
+            ]
+          ],
+          "color": "lid_right"
+        },
+        {
+          "id": "lid_r1_top",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              38
+            ],
+            [
+              84,
+              39
+            ],
+            [
+              40,
+              61
+            ],
+            [
+              38,
+              60
+            ]
+          ],
+          "color": "lid_top"
+        },
+        {
+          "id": "lid_r1_screen_edge",
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              40
+            ],
+            [
+              41,
+              62
+            ],
+            [
+              41,
+              88
+            ],
+            [
+              83,
+              68
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "lid_r1_screen",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              42
+            ],
+            [
+              42,
+              62
+            ],
+            [
+              42,
+              87
+            ],
+            [
+              82,
+              67
+            ]
+          ],
+          "color": "screen"
+        },
+        {
+          "id": "lid_r1_lit_left",
+          "type": "polygon",
+          "points": [
+            [
+              38,
+              59
+            ],
+            [
+              40,
+              60
+            ],
+            [
+              40,
+              61
+            ],
+            [
+              38,
+              60
+            ]
+          ],
+          "color": "lid_light"
+        },
+        {
+          "id": "lid_r1_lit_right",
+          "type": "polygon",
+          "points": [
+            [
+              40,
+              60
+            ],
+            [
+              84,
+              38
+            ],
+            [
+              84,
+              39
+            ],
+            [
+              40,
+              61
+            ]
+          ],
+          "color": "lid_light"
+        },
+        {
+          "id": "lid_r1_lit_corner",
+          "type": "rect",
+          "box": [
+            40,
+            61,
+            41,
+            91
+          ],
+          "color": "lid_light"
+        },
+        {
+          "id": "base_r1_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              67
+            ],
+            [
+              112,
+              82
+            ],
+            [
+              112,
+              85
+            ],
+            [
+              68,
+              107
+            ],
+            [
+              38,
+              92
+            ],
+            [
+              38,
+              89
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "base_r1_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              69
+            ],
+            [
+              112,
+              84
+            ],
+            [
+              112,
+              87
+            ],
+            [
+              68,
+              109
+            ],
+            [
+              38,
+              94
+            ],
+            [
+              38,
+              91
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "base_r1_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              81,
+              68
+            ],
+            [
+              111,
+              83
+            ],
+            [
+              111,
+              86
+            ],
+            [
+              67,
+              108
+            ],
+            [
+              37,
+              93
+            ],
+            [
+              37,
+              90
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "base_r1_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              68
+            ],
+            [
+              113,
+              83
+            ],
+            [
+              113,
+              86
+            ],
+            [
+              69,
+              108
+            ],
+            [
+              39,
+              93
+            ],
+            [
+              39,
+              90
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "base_r1_left",
+          "type": "polygon",
+          "points": [
+            [
+              38,
+              90
+            ],
+            [
+              68,
+              105
+            ],
+            [
+              68,
+              108
+            ],
+            [
+              38,
+              93
+            ]
+          ],
+          "color": "case_left"
+        },
+        {
+          "id": "base_r1_right",
+          "type": "polygon",
+          "points": [
+            [
+              112,
+              83
+            ],
+            [
+              68,
+              105
+            ],
+            [
+              68,
+              108
+            ],
+            [
+              112,
+              86
+            ]
+          ],
+          "color": "case_right"
+        },
+        {
+          "id": "base_r1_top",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              68
+            ],
+            [
+              112,
+              83
+            ],
+            [
+              68,
+              105
+            ],
+            [
+              38,
+              90
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_keys",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              78
+            ],
+            [
+              59,
+              98
+            ],
+            [
+              45,
+              90
+            ],
+            [
+              83,
+              72
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "base_r1_row0",
+          "type": "polygon",
+          "points": [
+            [
+              95,
+              78
+            ],
+            [
+              57,
+              96
+            ],
+            [
+              57,
+              97
+            ],
+            [
+              95,
+              79
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_row1",
+          "type": "polygon",
+          "points": [
+            [
+              91,
+              76
+            ],
+            [
+              53,
+              94
+            ],
+            [
+              53,
+              95
+            ],
+            [
+              91,
+              77
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_row2",
+          "type": "polygon",
+          "points": [
+            [
+              87,
+              74
+            ],
+            [
+              49,
+              92
+            ],
+            [
+              49,
+              93
+            ],
+            [
+              87,
+              75
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col3",
+          "type": "polygon",
+          "points": [
+            [
+              94,
+              80
+            ],
+            [
+              93,
+              80
+            ],
+            [
+              79,
+              74
+            ],
+            [
+              80,
+              73
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col4",
+          "type": "polygon",
+          "points": [
+            [
+              90,
+              82
+            ],
+            [
+              89,
+              82
+            ],
+            [
+              75,
+              76
+            ],
+            [
+              76,
+              75
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col5",
+          "type": "polygon",
+          "points": [
+            [
+              86,
+              84
+            ],
+            [
+              85,
+              84
+            ],
+            [
+              71,
+              78
+            ],
+            [
+              72,
+              77
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col6",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              86
+            ],
+            [
+              81,
+              86
+            ],
+            [
+              67,
+              80
+            ],
+            [
+              68,
+              79
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col7",
+          "type": "polygon",
+          "points": [
+            [
+              78,
+              88
+            ],
+            [
+              77,
+              88
+            ],
+            [
+              63,
+              82
+            ],
+            [
+              64,
+              81
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col8",
+          "type": "polygon",
+          "points": [
+            [
+              74,
+              90
+            ],
+            [
+              73,
+              90
+            ],
+            [
+              59,
+              84
+            ],
+            [
+              60,
+              83
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col9",
+          "type": "polygon",
+          "points": [
+            [
+              70,
+              92
+            ],
+            [
+              69,
+              92
+            ],
+            [
+              55,
+              86
+            ],
+            [
+              56,
+              85
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col10",
+          "type": "polygon",
+          "points": [
+            [
+              66,
+              94
+            ],
+            [
+              65,
+              94
+            ],
+            [
+              51,
+              88
+            ],
+            [
+              52,
+              87
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_col11",
+          "type": "polygon",
+          "points": [
+            [
+              62,
+              96
+            ],
+            [
+              61,
+              96
+            ],
+            [
+              47,
+              90
+            ],
+            [
+              48,
+              89
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "base_r1_touchpad",
+          "type": "polygon",
+          "points": [
+            [
+              95,
+              88
+            ],
+            [
+              79,
+              96
+            ],
+            [
+              72,
+              93
+            ],
+            [
+              88,
+              85
+            ]
+          ],
+          "color": "pad"
+        },
+        {
+          "id": "base_r1_touchpad_shade",
+          "type": "polygon",
+          "points": [
+            [
+              95,
+              88
+            ],
+            [
+              79,
+              96
+            ],
+            [
+              77,
+              96
+            ],
+            [
+              93,
+              88
+            ]
+          ],
+          "color": "case_dark"
+        },
+        {
+          "id": "base_r1_power",
+          "type": "polygon",
+          "points": [
+            [
+              72,
+              104
+            ],
+            [
+              70,
+              105
+            ],
+            [
+              70,
+              106
+            ],
+            [
+              72,
+              105
+            ]
+          ],
+          "color": "led"
+        },
+        {
+          "id": "base_r1_lit_left",
+          "type": "polygon",
+          "points": [
+            [
+              38,
+              89
+            ],
+            [
+              68,
+              104
+            ],
+            [
+              68,
+              105
+            ],
+            [
+              38,
+              90
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "base_r1_lit_right",
+          "type": "polygon",
+          "points": [
+            [
+              68,
+              104
+            ],
+            [
+              112,
+              82
+            ],
+            [
+              112,
+              83
+            ],
+            [
+              68,
+              105
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "base_r1_lit_corner",
+          "type": "rect",
+          "box": [
+            68,
+            105,
+            69,
+            108
+          ],
+          "color": "case_light"
+        }
+      ]
+    },
+    {
+      "id": "outer_ink",
+      "name": "Contorno exterior",
+      "mask_id": "outside",
+      "operations": [
+        {
+          "id": "lid_r1_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              37
+            ],
+            [
+              84,
+              38
+            ],
+            [
+              84,
+              68
+            ],
+            [
+              40,
+              90
+            ],
+            [
+              38,
+              89
+            ],
+            [
+              38,
+              59
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "lid_r1_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              39
+            ],
+            [
+              84,
+              40
+            ],
+            [
+              84,
+              70
+            ],
+            [
+              40,
+              92
+            ],
+            [
+              38,
+              91
+            ],
+            [
+              38,
+              61
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "lid_r1_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              81,
+              38
+            ],
+            [
+              83,
+              39
+            ],
+            [
+              83,
+              69
+            ],
+            [
+              39,
+              91
+            ],
+            [
+              37,
+              90
+            ],
+            [
+              37,
+              60
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "lid_r1_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              38
+            ],
+            [
+              85,
+              39
+            ],
+            [
+              85,
+              69
+            ],
+            [
+              41,
+              91
+            ],
+            [
+              39,
+              90
+            ],
+            [
+              39,
+              60
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "base_r1_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              67
+            ],
+            [
+              112,
+              82
+            ],
+            [
+              112,
+              85
+            ],
+            [
+              68,
+              107
+            ],
+            [
+              38,
+              92
+            ],
+            [
+              38,
+              89
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "base_r1_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              69
+            ],
+            [
+              112,
+              84
+            ],
+            [
+              112,
+              87
+            ],
+            [
+              68,
+              109
+            ],
+            [
+              38,
+              94
+            ],
+            [
+              38,
+              91
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "base_r1_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              81,
+              68
+            ],
+            [
+              111,
+              83
+            ],
+            [
+              111,
+              86
+            ],
+            [
+              67,
+              108
+            ],
+            [
+              37,
+              93
+            ],
+            [
+              37,
+              90
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "base_r1_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              68
+            ],
+            [
+              113,
+              83
+            ],
+            [
+              113,
+              86
+            ],
+            [
+              69,
+              108
+            ],
+            [
+              39,
+              93
+            ],
+            [
+              39,
+              90
+            ]
+          ],
+          "color": "ink"
+        }
+      ]
+    }
+  ]
+}

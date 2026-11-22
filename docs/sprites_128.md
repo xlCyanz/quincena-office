@@ -102,6 +102,14 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 | Mesa de reuniones, ping pong | 2×2 | 12–20 | 256×192 |
 | Alfombra | 2×2 | 1 | 256×128 (solo el rombo, como un piso) |
 
+- **Laptop** (`computer_laptop_r0`–`_r3`, Moana, `_laptop.py`): sigue una laptop isométrica de pixel art clásica, con sus
+  colores: base gris claro de 22×15 unidades y 3 px con cantos oscuros y brillo blanco arriba, teclado como bloque oscuro con
+  una rejilla clara de 1 px, touchpad grande con la mitad de adelante en sombra, y la tapa recta (vertical, para que sus
+  aristas queden en escalera 2:1 limpia) de 30 px con bisel claro fino, línea oscura y pantalla azul petróleo lisa. Mismo
+  lienzo y apoyo que las otras computadoras. Solo va sobre el escritorio ejecutivo.
+- **Mesa de reuniones de vidrio** (`glass_meeting_table_r0`–`_r3`, Moana, 2×2, lienzo 256×192 con apoyo (128, 96)): tablero
+  aguamarina sobre marco y patas de cromo; como el PNG no admite transparencia a medias, el marco que se ve a través del vidrio
+  va pintado encima en un tono más oscuro.
 - Decoración (`tools/sprites/pieces/decor.py`): `floor_lamp` y `floor_lamp_q` (la lámpara chica ya al 60 %), una sola
   imagen por ser simétrica; `rug` (2×2, una sola imagen); `aquarium_r0`–`_r3` (mueble con puertas al frente y tanque
   encima, 56 px de sprite de alto: más que su `height` de 20, para que se lea como pecera). Cada uno con su `_shadow`

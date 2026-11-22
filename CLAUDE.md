@@ -98,4 +98,4 @@ Solo para probar y balancear; no viajan en las exportaciones.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/`, la suma a `SUITES`, anota su sistema en `docs/sistemas.md` y su estado en
   `docs/hitos.md`.
-- Hitos 0–69 completados (fases 1–7 y los agregados de la 21.6); la fase 8 (arte y sonido) está en curso.
+- Hitos 0–70 completados (fases 1–7 y los agregados de la 21.6); la fase 8 (arte y sonido) está en curso.

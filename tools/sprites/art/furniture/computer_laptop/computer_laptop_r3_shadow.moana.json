@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0",
+  "id": "computer_laptop_r3_shadow",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 128,
+    "height": 160,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_computer_laptop",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#000000FF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#1A2226FF"
+      },
+      {
+        "id": "case_light",
+        "rgba": "#F2F6F8FF"
+      },
+      {
+        "id": "case_top",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "case_grain",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "case_left",
+        "rgba": "#4F636BFF"
+      },
+      {
+        "id": "case_right",
+        "rgba": "#43565CFF"
+      },
+      {
+        "id": "case_dark",
+        "rgba": "#313E44FF"
+      },
+      {
+        "id": "case_deep",
+        "rgba": "#242D32FF"
+      },
+      {
+        "id": "lid_light",
+        "rgba": "#E5EAEEFF"
+      },
+      {
+        "id": "lid_top",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "lid_grain",
+        "rgba": "#C1CCD0FF"
+      },
+      {
+        "id": "lid_left",
+        "rgba": "#B4C2CAFF"
+      },
+      {
+        "id": "lid_right",
+        "rgba": "#9DAFB9FF"
+      },
+      {
+        "id": "lid_dark",
+        "rgba": "#5B717CFF"
+      },
+      {
+        "id": "lid_deep",
+        "rgba": "#313E44FF"
+      },
+      {
+        "id": "screen",
+        "rgba": "#21455FFF"
+      },
+      {
+        "id": "key",
+        "rgba": "#242D32FF"
+      },
+      {
+        "id": "pad",
+        "rgba": "#5B717CFF"
+      },
+      {
+        "id": "led",
+        "rgba": "#6FE08AFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "desk_top",
+      "type": "polygon",
+      "points": [
+        [
+          66,
+          55
+        ],
+        [
+          106,
+          75
+        ],
+        [
+          46,
+          105
+        ],
+        [
+          6,
+          85
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "mask_id": "desk_top",
+      "operations": [
+        {
+          "id": "shadow_base",
+          "type": "polygon",
+          "points": [
+            [
+              62,
+              59
+            ],
+            [
+              96,
+              76
+            ],
+            [
+              48,
+              100
+            ],
+            [
+              14,
+              83
+            ]
+          ],
+          "color": "shadow_ink"
+        }
+      ]
+    }
+  ]
+}

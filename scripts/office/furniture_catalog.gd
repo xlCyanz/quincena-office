@@ -144,6 +144,7 @@ static func _load() -> void:
 			"is_monitor": bool(raw.get("is_monitor", false)),
 			"max_monitors": int(raw.get("max_monitors", 0)),
 			"extra_monitors": bool(raw.get("extra_monitors", false)),
+			"desks": Array(raw.get("desks", []), TYPE_STRING, "", null),
 			"energy_per_work_hour": int(raw.get("energy_per_work_hour", 0)),
 			"mood_bonus": int(raw.get("mood_bonus", 0)),
 			"presentation_screen": bool(raw.get("presentation_screen", false)),
@@ -231,6 +232,17 @@ static func get_monitor_count(item: Dictionary) -> int:
 	if String(item.get("monitor", "")).is_empty():
 		return 0
 	return maxi(int(item.get("monitors", 1)), 1)
+
+
+## Escritorios en los que cabe una computadora: vacío = en cualquiera.
+static func get_desks(computer_id: String) -> Array[String]:
+	return get_item(computer_id).get("desks", [] as Array[String])
+
+
+## Indica si una computadora se puede poner sobre ese escritorio (la laptop, solo en el ejecutivo).
+static func fits_desk(computer_id: String, desk_id: String) -> bool:
+	var desks: Array[String] = get_desks(computer_id)
+	return desks.is_empty() or desks.has(desk_id)
 
 
 ## Bono de producción (computadora o pantalla extra).
