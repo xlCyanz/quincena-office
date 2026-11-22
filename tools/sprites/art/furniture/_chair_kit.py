@@ -1,4 +1,4 @@
-"""Sillas de oficina con Moana: modelo de sólidos convexos, rasterizado propio y documento por tonos.
+"""Sillas y plantas con Moana: modelo de sólidos convexos, rasterizado propio y documento por tonos.
 
 Las sillas son curvas (cojín abultado, ruedas, columna), así que no se arman con las cajas de
 ``_desk_kit``: cada pieza es un sólido convexo de caras planas (prisma de planta redondeada, cilindro,
@@ -90,6 +90,7 @@ class Solid:
     faces: list[list[Vec3]]
     center: Vec3
     lit: bool = False  # brillo de 1 px en el borde de arriba de sus caras de arriba
+    two_sided: bool = False  # hoja: se ven las dos caras (la normal se da vuelta hacia quien mira)
     texture: Optional[Callable[[np.ndarray, np.ndarray, np.ndarray, np.ndarray], np.ndarray]] = None
     # texture(x, y, z, tono) -> tono: detalles por coordenadas del modelo (costuras, malla)
 
@@ -151,11 +152,15 @@ def upright(part: str, group: str, mat: str, cx: float, hx: float, y0: float, y1
 
 
 def cylinder(part: str, group: str, mat: str, cx: float, cy: float, r: float, z0: float, z1: float,
-             sides: int = 10, **kw: object) -> Solid:
-    ring = [(cx + r * math.cos(2 * math.pi * k / sides), cy + r * math.sin(2 * math.pi * k / sides))
-            for k in range(sides)]
-    lower = [(x, y, z0) for x, y in ring]
-    upper = [(x, y, z1) for x, y in ring]
+             sides: int = 10, r_top: Optional[float] = None, **kw: object) -> Solid:
+    """Cilindro (o tronco de cono con ``r_top``) vertical de z0 a z1."""
+    top = r if r_top is None else r_top
+
+    def ring(radius: float, z: float) -> list[Vec3]:
+        return [(cx + radius * math.cos(2 * math.pi * k / sides), cy + radius * math.sin(2 * math.pi * k / sides), z)
+                for k in range(sides)]
+
+    lower, upper = ring(r, z0), ring(top, z1)
     return Solid(part, group, mat, [lower[::-1], upper] + _ring_faces(lower, upper), (cx, cy, (z0 + z1) / 2),
                  **kw)  # type: ignore[arg-type]
 
@@ -228,7 +233,10 @@ def render(solids: list[Solid], v: View, canvas: tuple[int, int] = CANVAS) -> Fr
             if np.linalg.norm(normal) < 1e-9:
                 normal = np.cross(pts[2] - pts[0], pts[-1] - pts[0])
             normal = normal / (np.linalg.norm(normal) or 1.0)
-            if np.dot(normal, pts.mean(axis=0) - center) < 0:
+            if solid.two_sided:
+                if np.dot(normal, view_dir) < 0:
+                    normal = -normal
+            elif np.dot(normal, pts.mean(axis=0) - center) < 0:
                 normal = -normal
             # El modelo mide z en px y x, y en unidades de 2 px: la normal "real" pesa z a la mitad.
             real = normal * np.array([1.0, 1.0, 0.5])
@@ -567,6 +575,61 @@ def main(spec: ChairSpec, here: Path) -> int:
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.preview:
         preview(spec, rows, out / f"{spec.name}_preview.png")
+    for line in problems:
+        print("FALLO:", line)
+    print("RESULTADO:", "OK" if not problems else f"{len(problems)} fallos")
+    return 1 if problems else 0
+
+
+# ---------------------------------------------------------------------------- piezas sueltas (plantas)
+
+@dataclass
+class PieceSpec:
+    """Mueble de una sola imagen (sin rotaciones ni capas): planta, maceta…"""
+
+    name: str
+    mats: dict[str, Mat]
+    model: Callable[[], list[Solid]]
+    shadow: list[tuple]
+    shadow_color: str = "#1A1C26FF"
+    max_colors: int = 16
+
+    def palette(self) -> list[tuple[str, str]]:
+        return ChairSpec.palette(self)  # type: ignore[arg-type]
+
+
+def main_piece(spec: PieceSpec, here: Path) -> int:
+    """Genera ``<nombre>.png`` y ``<nombre>_shadow.png`` (rotación 0) con su manifest.json."""
+    parser = argparse.ArgumentParser(description=f"Genera {spec.name} y su sombra con Moana.")
+    parser.add_argument("--out", type=Path, default=here, help="carpeta de salida (por defecto, la del build.py)")
+    parser.add_argument("--preview", action="store_true", help=f"escribe también {spec.name}_preview.png")
+    args = parser.parse_args()
+    out: Path = args.out
+    out.mkdir(parents=True, exist_ok=True)
+    problems: list[str] = []
+    v = view(0)
+    image = to_rgba(finish(render(spec.model(), v), spec.mats), spec)  # type: ignore[arg-type]
+    shadow = shadow_rgba(spec, v)  # type: ignore[arg-type]
+    colors = {tuple(c) for c in image[image[..., 3] == 255][:, :3]}
+    if len(colors) > spec.max_colors:
+        problems.append(f"{spec.name}: {len(colors)} colores (máx. {spec.max_colors})")
+    alpha = image[..., 3] > 0
+    if alpha[0].any() or alpha[-1].any() or alpha[:, 0].any() or alpha[:, -1].any():
+        problems.append(f"{spec.name}: toca el borde del lienzo")
+    sprites = {}
+    for file_name, img in ((spec.name, image), (f"{spec.name}_shadow", shadow)):
+        doc = document(file_name, img)
+        (out / f"{file_name}.moana.json").write_text(json.dumps(doc, ensure_ascii=False) + "\n", encoding="utf-8")
+        drawn = moana_render(doc)
+        if not np.array_equal(drawn, img):
+            problems.append(f"{file_name}: Moana no da los mismos pixeles que el dibujo")
+        Image.fromarray(drawn, "RGBA").save(out / f"{file_name}.png")
+        sprites[f"{file_name}.png"] = {"anchor": list(v.anchor)}
+    manifest = {"_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py "
+                               "lo pasa al juego.", "sprites": sprites}
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    if args.preview:
+        preview(spec, [[image, shadow]], out / f"{spec.name}_preview.png")  # type: ignore[arg-type]
     for line in problems:
         print("FALLO:", line)
     print("RESULTADO:", "OK" if not problems else f"{len(problems)} fallos")

@@ -92,6 +92,9 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
   estrella con ruedas y columna de metal; asiento a 24 px (la cadera del personaje sentado). Cada rotación va entera, en capas
   `_seat_r<n>` y `_back_r<n>` (el juego dibuja el respaldo encima en r0 y r3, debajo en r1 y r2) y con `_r<n>_depth.png`, la
   profundidad por pixel que usa `character.py` para la parte de la silla que tapa a quien se sienta.
+- **Plantas** (con Moana en `tools/sprites/art/furniture/plant_small_q/` y `plant_large/`, mismo kit que las sillas; hojas de dos caras con
+  nervio claro y las mitades algo caídas): `plant_small_q` (mata de hojas anchas en tres pisos sobre maceta de barro, ya a su tamaño de
+  mueble chico) y `plant_large` (arbolito de hojas ovaladas en espiral, maceta blanca de franja roja sobre su plato), cada una con `_shadow`.
 - **Computadoras** (dos niveles; con Moana en `tools/sprites/art/furniture/`, como los escritorios): `computer_basic` (todo en uno crema, teclado y ratón crema) y `computer_pro` (monitor plano negro de
   34×25 px con pie de 8, torre negra con luz azul, teclado y ratón negros) van **encima** de un escritorio: lienzo de 128×160 con el apoyo
   en (64, 128), dibujados a la altura de la superficie del escritorio (22 px del mundo = 44 px de sprite sobre el piso).

@@ -5,7 +5,7 @@ import numpy as np
 
 import iso
 import sheet
-from pieces import chair_plant
+from pieces import _shadow
 
 
 def g(v):
@@ -72,7 +72,7 @@ class Saver:
     def keep(self, c, name, shapes, **meta):
         c.finish()
         self.files.append(iso.save(c, self.out_dir, name, **meta))
-        self.files.append(chair_plant.save_shadow(c, self.out_dir, name + "_shadow", shapes))
+        self.files.append(_shadow.save_shadow(c, self.out_dir, name + "_shadow", shapes))
         self.items.append((name, sheet.on_background(c.image, scale=1)))
 
     def rotations(self, fn, name, shapes, **meta):

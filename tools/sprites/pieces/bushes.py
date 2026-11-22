@@ -17,7 +17,7 @@ import iso
 import palette as pal
 from pieces._kit import Saver, g
 import sheet
-from pieces import chair_plant
+from pieces import _shadow
 from pieces.trees import GREEN, blotch_field, crown, despeckle, dome, dots, lump, painted, quantize
 
 BERRY_RED = pal.style_ramp("d6452e", outline="5a140a", name="bush_berries_red")
@@ -122,7 +122,7 @@ class CleanSaver(Saver):
         c.finish()
         despeckle(c)
         self.files.append(iso.save(c, self.out_dir, name, **meta))
-        self.files.append(chair_plant.save_shadow(c, self.out_dir, name + "_shadow", shapes))
+        self.files.append(_shadow.save_shadow(c, self.out_dir, name + "_shadow", shapes))
         self.items.append((name, sheet.on_background(c.image, scale=1)))
 
 

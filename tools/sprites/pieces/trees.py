@@ -23,7 +23,7 @@ from PIL import Image
 import iso
 import palette as pal
 import sheet
-from pieces import chair_plant
+from pieces import _shadow
 
 BARK = pal.style_ramp("9a6238", outline="3a1e0c", name="tree_bark")
 BARK_LINE = BARK.add("7a4a28")
@@ -454,7 +454,7 @@ def build(out_dir):
         c.finish()
         despeckle(c)
         files.append(iso.save(c, out_dir, name))
-        files.append(chair_plant.save_shadow(c, out_dir, name + "_shadow", shapes))
+        files.append(_shadow.save_shadow(c, out_dir, name + "_shadow", shapes))
         items.append((name, sheet.on_background(c.image, scale=1)))
         base = c.image.convert("RGBA")
         for f, frame in enumerate(fall_frames(base, name, 100 + k), start=1):

@@ -29,7 +29,6 @@ BACKGROUND = (46, 52, 64)
 SORT_BIAS_WORLD_PX = 1.0
 SEAT_INSET = 0.15
 BACKREST_DEPTH = 0.18
-SMALL_SCALE = 0.6
 FRONTS = {0: (0, -1), 1: (1, 0), 2: (0, 1), 3: (-1, 0)}
 
 # Rango de desempate (menor = antes) para cosas con la misma Y de orden.
@@ -41,7 +40,7 @@ RANK_BACK = 4
 RANK_PERSON = 5
 
 # Grupos de la hoja de contacto, en orden.
-GROUPS = ("walls", "chair_plant", "character")
+GROUPS = ("walls", "character")
 
 
 class PreviewScene(sheet.Scene):
@@ -91,12 +90,6 @@ def with_opacity(image, opacity):
     arr = np.array(image.convert("RGBA"))
     arr[..., 3] = (arr[..., 3].astype(np.float64) * opacity).astype(np.uint8)
     return Image.fromarray(arr)
-
-
-def scaled(image, anchor, factor):
-    """El sprite achicado sin suavizar (como un mueble chico del juego) y su apoyo nuevo."""
-    size = (int(round(image.size[0] * factor)), int(round(image.size[1] * factor)))
-    return image.resize(size, Image.NEAREST), (anchor[0] * factor, anchor[1] * factor)
 
 
 class Office(object):
@@ -212,14 +205,13 @@ class Office(object):
                               self.anchor("chair_basic_r%d_shadow" % rotation))
 
     def small(self, name, x, y, quarter):
-        """Mueble chico al 60 % en un cuarto de la casilla (FurnitureCatalog.get_quarter_offset)."""
+        """Mueble chico (sprite _q, ya a su tamaño final) en un cuarto de la casilla
+        (FurnitureCatalog.get_quarter_offset)."""
         ox = ((quarter % 2) - 0.5) * 0.5
         oy = ((quarter // 2) - 0.5) * 0.5
         at = self.g(x + 0.5 + ox, y + 0.5 + oy)
-        image, anchor = scaled(self.img(name), self.anchor(name), SMALL_SCALE)
-        self.scene.put(image, at, anchor, at, RANK_FURNITURE, -2 * SORT_BIAS_WORLD_PX)
-        shadow, s_anchor = scaled(self.img(name + "_shadow"), self.anchor(name + "_shadow"), SMALL_SCALE)
-        self.scene.put_shadow(shadow, at, s_anchor)
+        self.scene.put(self.img(name), at, self.anchor(name), at, RANK_FURNITURE, -2 * SORT_BIAS_WORLD_PX)
+        self.scene.put_shadow(self.img(name + "_shadow"), at, self.anchor(name + "_shadow"))
 
     # ------------------------------------------------------------------ personas
 
@@ -241,9 +233,9 @@ class Office(object):
         self.desk(4, 3, 0)
         # Plantas: la grande en la esquina del fondo, dos chicas en una casilla y otra suelta.
         self.furniture("plant_large", 0, 0)
-        self.small("plant_small", 5, 0, 0)
-        self.small("plant_small", 5, 0, 3)
-        self.small("plant_small", 0, 4, 1)
+        self.small("plant_small_q", 5, 0, 0)
+        self.small("plant_small_q", 5, 0, 3)
+        self.small("plant_small_q", 0, 4, 1)
         # Personas: las 4 direcciones y las variantes de paleta; una afuera, frente a la puerta baja.
         self.person("character_stand_r1", 2, 0)
         self.person("character_stand_r2", 3, 4)

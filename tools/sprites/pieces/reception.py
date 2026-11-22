@@ -18,7 +18,7 @@ import numpy as np
 import iso
 import palette as pal
 import sheet
-from pieces import chair_plant
+from pieces import _shadow
 
 ITEMS = iso.load_json("data/furniture.json")["items"]
 COUNTER_ITEM = ITEMS["reception_counter"]
@@ -310,7 +310,7 @@ def build(out_dir):
     def keep(c, name, shapes, **meta):
         c.finish()
         files.append(iso.save(c, out_dir, name, **meta))
-        files.append(chair_plant.save_shadow(c, out_dir, name + "_shadow", shapes))
+        files.append(_shadow.save_shadow(c, out_dir, name + "_shadow", shapes))
         items.append((name, sheet.on_background(c.image, scale=1)))
 
     for rotation in range(4):

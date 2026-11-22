@@ -16,7 +16,7 @@ import numpy as np
 import iso
 import palette as pal
 import sheet
-from pieces import chair_plant
+from pieces import _shadow
 
 ITEMS = iso.load_json("data/furniture.json")["items"]
 LAMP_ITEM = ITEMS["floor_lamp"]
@@ -242,7 +242,7 @@ def build(out_dir):
         c.finish()
         files.append(iso.save(c, out_dir, name, height=LAMP_ITEM["height"], small=True,
                               final_size=scale < 1.0, curved=True))
-        files.append(chair_plant.save_shadow(c, out_dir, name + "_shadow", lamp_shadow_shapes(scale)))
+        files.append(_shadow.save_shadow(c, out_dir, name + "_shadow", lamp_shadow_shapes(scale)))
         items.append((name, sheet.on_background(c.image, scale=1)))
     c = rug()
     c.finish()
@@ -253,7 +253,7 @@ def build(out_dir):
         c.finish()
         name = "aquarium_r%d" % rotation
         files.append(iso.save(c, out_dir, name, height=AQUARIUM_ITEM["height"]))
-        files.append(chair_plant.save_shadow(c, out_dir, name + "_shadow", aquarium_shadow_shapes()))
+        files.append(_shadow.save_shadow(c, out_dir, name + "_shadow", aquarium_shadow_shapes()))
         items.append((name, sheet.on_background(c.image, scale=1)))
     contact(out_dir, items)
     return files
