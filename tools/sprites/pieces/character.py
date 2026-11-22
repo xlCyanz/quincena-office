@@ -14,7 +14,6 @@ from PIL import Image
 import iso
 import palette as pal
 import sheet
-from pieces import chair_plant
 
 PX = 1.0 / iso.Z_METRIC  # 1 px del cuerpo en casillas
 CENTER = 0.5  # el personaje se para en el centro de la casilla
@@ -1505,23 +1504,28 @@ def build_sheet(out_dir, figures):
 # ---------------------------------------------------------------------- sentado en su silla
 # Se comparan profundidades pixel a pixel (misma casilla, centro en (0.5, 0.5)) y se guarda por
 # silla la parte que queda DELANTE de la persona; export_game.py compone silla + persona + esa parte.
-CHAIR_SPECS = (chair_plant.BASIC, chair_plant.ERGO)
+# Las sillas las dibuja Moana (art/furniture/chair_*), que deja junto a cada rotación su profundidad.
+CHAIRS = ("chair_basic", "chair_ergonomic")
 CHAIR_DIR = "character_chairs"
 # El lienzo de la silla tiene el centro de la casilla 16 px más arriba que el del personaje.
 CHAIR_SHIFT = 16
 # Margen de profundidad (casillas) que la silla le gana a la persona para taparla; con poco, el
 # canto del cojín cruza sobre las piernas vistas de frente.
 CHAIR_BIAS = 8.0 / 64.0
+# <silla>_r<n>_depth.png: profundidad × DEPTH_SCALE − DEPTH_OFFSET (0 = vacío); ver art/furniture/_chair_kit.py.
+DEPTH_SCALE = 10000.0
+DEPTH_OFFSET = 1.0
 _chair_cache = {}
 
 
-def chair_arrays(spec, rotation):
+def chair_arrays(chair, rotation):
     """(imagen, profundidad) de una silla en el lienzo del personaje."""
-    key = (spec["name"], rotation)
+    key = (chair, rotation)
     if key not in _chair_cache:
-        c = chair_plant.chair_canvas(spec, rotation)
-        image = np.array(c.image)
-        depth = np.array(c.crop(c.depth), dtype=np.float64)
+        path, _entry = sheet.art_sprites()["%s_r%d.png" % key]
+        image = np.array(Image.open(path).convert("RGBA"))
+        raw = np.array(Image.open(path[:-len(".png")] + "_depth.png"), dtype=np.float64)
+        depth = np.where(raw > 0, raw / DEPTH_SCALE - DEPTH_OFFSET, -1.0e9)
         depth[image[..., 3] == 0] = -1.0e9
         moved_image = np.zeros_like(image)
         moved_depth = np.full(depth.shape, -1.0e9)
@@ -1533,8 +1537,8 @@ def chair_arrays(spec, rotation):
     return _chair_cache[key]
 
 
-def chair_name(name, spec):
-    return "%s_%s" % (name, spec["name"])
+def chair_name(name, chair):
+    return "%s_%s" % (name, chair)
 
 
 def save_chair_overlays(fig, name, rotation, out_dir):
@@ -1545,7 +1549,7 @@ def save_chair_overlays(fig, name, rotation, out_dir):
     person = np.array(fig.c.image)
     person_depth = np.array(fig.c.crop(fig.c.depth), dtype=np.float64)
     seen = person[..., 3] > 0
-    for spec in CHAIR_SPECS:
+    for spec in CHAIRS:
         chair, chair_depth = chair_arrays(spec, rotation)
         over = seen & (chair[..., 3] > 0) & (chair_depth > person_depth + CHAIR_BIAS)
         image = np.zeros_like(chair)

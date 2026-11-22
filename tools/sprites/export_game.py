@@ -64,8 +64,8 @@ WALL_ITEMS = {
 # Escritorio dibujado entero con su computadora -> sprite según las pantallas extra (0, 1, 2).
 DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
                            "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}
-# Sillas: asiento y respaldo aparte (<base>_seat_r0, <base>_back_r0); el respaldo va delante o
-# detrás de quien se sienta según la rotación.
+# Sillas (las dibuja Moana en art/furniture/chair_*): asiento y respaldo aparte (<base>_seat_r0,
+# <base>_back_r0); el respaldo va delante o detrás de quien se sienta según la rotación.
 PARTS = ("chair_basic", "chair_ergonomic")
 
 # Personajes: cuadros de cada pose, en el orden de las columnas de la hoja.
@@ -111,7 +111,8 @@ def check_chair_colors(directory):
                     used[tuple(color)] = "%s%s (%s)" % (style.name, variant, layer)
     for base in SEATED_CHAIRS.values():
         for rotation in range(4):
-            arr = np.array(Image.open(os.path.join(directory, "%s_r%d.png" % (base, rotation))).convert("RGBA"))
+            path = sheet.find(directory, "%s_r%d.png" % (base, rotation))
+            arr = np.array(Image.open(path).convert("RGBA"))
             for color in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0):
                 key = tuple(int(v) for v in color)
                 if key in used:

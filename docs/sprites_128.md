@@ -87,6 +87,11 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
   - Muebles simétricos (planta, zafacón, lámpara, rack…) pueden tener una sola imagen.
 - **Muebles chicos** (`small`: planta pequeña, zafacón, dispensador de agua, lámpara de pie): el juego los dibuja al 60 %
   en un cuarto de la casilla. Dibujarlos en 128×128 como si ocuparan la casilla entera; el juego los achica.
+- **Sillas de oficina** (con Moana en `tools/sprites/art/furniture/chair_basic/` y `chair_ergonomic/`, kit `_chair_kit.py`):
+  `chair_basic` (roja, respaldo acolchado con panel) y `chair_ergonomic` (azul, apoyabrazos y respaldo alto de malla), sobre base de
+  estrella con ruedas y columna de metal; asiento a 24 px (la cadera del personaje sentado). Cada rotación va entera, en capas
+  `_seat_r<n>` y `_back_r<n>` (el juego dibuja el respaldo encima en r0 y r3, debajo en r1 y r2) y con `_r<n>_depth.png`, la
+  profundidad por pixel que usa `character.py` para la parte de la silla que tapa a quien se sienta.
 - **Computadoras** (dos niveles; con Moana en `tools/sprites/art/furniture/`, como los escritorios): `computer_basic` (todo en uno crema, teclado y ratón crema) y `computer_pro` (monitor plano negro de
   34×25 px con pie de 8, torre negra con luz azul, teclado y ratón negros) van **encima** de un escritorio: lienzo de 128×160 con el apoyo
   en (64, 128), dibujados a la altura de la superficie del escritorio (22 px del mundo = 44 px de sprite sobre el piso).
@@ -196,7 +201,7 @@ interiores) van **bajitas** para ver adentro.
   `stick` y `mop`; el cubo es `mop_bucket` en `services.py`); cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
   que solo cambian la paleta. Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8`, `_idle_r<n>_1`…`_4` y
   `_type_r<n>_1`…`_4` (sentado tecleando). Por cada cuadro sentado y cada silla, `character_chairs/<cuadro>_<silla>.png` es la parte de la
-  silla que queda delante de la persona: con ella se arma el cuadro «sentado en su silla» (silla entera + persona + esa parte). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.
+  silla que queda delante de la persona (comparando su profundidad con la de `<silla>_r<n>_depth.png`): con ella se arma el cuadro «sentado en su silla» (silla entera + persona + esa parte). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.
 
 ## 10. Árboles y otros
 

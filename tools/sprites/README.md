@@ -477,6 +477,8 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/ground/grass/` | Pasto del solar y de fuera: `ground_grass_<familia>_0`–`_3` y `ground_outside_<familia>_0`–`_3` (familias `plain`, `patchy`, `lush`, `sunny`) |
 | `art/ground/path/`, `sidewalk/`, `road/` | Camino de grava, acera y calle (`ground_road_*`, `ground_road_line_x_*`, `ground_road_line_y_*`) |
 | `art/ground/_ground_kit.py` | Lo común del terreno: rejilla isométrica periódica, anillo del borde compartido, documento Moana por tonos y las comprobaciones de costura y brillo |
+| `art/furniture/chair_basic/`, `chair_ergonomic/` | Sillas de oficina: `<silla>_r0`–`_r3`, sus capas `_seat_r<n>` y `_back_r<n>`, `_shadow` y `_r<n>_depth.png` (profundidad para el personaje sentado, no es sprite) |
+| `art/furniture/_chair_kit.py`, `_chairs.py` | Sillas: sólidos convexos (cojín redondeado, cilindros, barras) rasterizados con z-buffer, contorno, capas asiento/respaldo y profundidad; `_chairs.py` tiene base, cojín, soporte y respaldos |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
 | `art/furniture/_computer_kit.py`, `_computers.py` | Lo que va encima de un escritorio: documento de piezas sueltas, sombra de contacto y las piezas de cada computadora |
 
