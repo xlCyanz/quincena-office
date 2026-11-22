@@ -41,7 +41,7 @@ RANK_BACK = 4
 RANK_PERSON = 5
 
 # Grupos de la hoja de contacto, en orden.
-GROUPS = ("floors", "walls", "chair_plant", "character")
+GROUPS = ("walls", "chair_plant", "character")
 
 
 class PreviewScene(sheet.Scene):
@@ -106,7 +106,7 @@ class Office(object):
         self.directory = directory
         self.seed = seed
         self.manifest = sheet.manifest(directory)
-        self.art = sheet.art_sprites()  # lo que dibuja Moana (escritorios, computadoras, terreno)
+        self.art = sheet.art_sprites()  # lo que dibuja Moana (escritorios, computadoras, suelos)
         cols = OFFICE_COLS + 2 * GRASS
         rows = OFFICE_ROWS + 2 * GRASS
         self.scene = PreviewScene(cols, rows, BACKGROUND, top=24, margin=24)

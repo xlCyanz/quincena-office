@@ -60,10 +60,10 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 
 | Archivo | Material | Colores base (hex) | Dibujo dentro de la casilla |
 | --- | --- | --- | --- |
-| `floor_ceramic_*` | Cerámica | `c9b48a`, `b39c72` | 2×2 losas (cada una un rombo de 64×32) con junta de 2 px un tono más oscuro y bisel de 1 px claro arriba-izquierda, oscuro abajo-derecha. La junta va en el **borde** de la casilla y en el medio, así empalma. |
-| `floor_wood_*` | Madera | `8f6b4a`, `7d5c3f` | 4 tablones paralelos a un eje isométrico, separados por una línea oscura de 1 px; veta de 2–3 tonos en trazos largos; cortes de tablón escalonados (no todos en la misma fila). |
-| `floor_carpet_*` | Alfombra | `5b6f8a`, `52657e` | 2×2 cuadros de alfombra con borde apenas marcado y trama fina ordenada (dither 2×2), sin brillo. |
-| `floor_bare_*` | Sin piso (concreto) | `8c8a86`, `807e7a` | Concreto liso con poros sueltos y alguna grieta fina; muy poco contraste. |
+| `floor_ceramic_*` | Cerámica | blancos `e8e8e8`, `e1e1e1`; junta `a3a1a0` | 2×2 losas en damero de dos blancos con junta gris de 1 celda (más honda en el cruce), esquinas redondeadas, bisel claro arriba y en sombra abajo, nubes muy suaves en el esmalte y un reflejo en diagonal que cambia de losa con la variante. La junta va en el **borde** de la casilla y en el medio, así empalma. |
+| `floor_wood_*` | Madera | naranjas `ad6d40`, `a5663a`; junta `783a13` | 8 tablas angostas a lo largo de un eje con dos cortes por fila escalonados; cada tabla con su tono, canto de arriba con luz, punta en sombra, vetas largas en dos tonos, moteado y algún nudo. La tabla que cruza el borde es igual en las 4 variantes. |
+| `floor_carpet_*` | Alfombra | lilas `7d80a0`, `8688a4` | De pared a pared: 4 lilas cercanos en manchas suaves con el borde tramado y fibras sueltas más oscuras y más claras; sin juntas ni brillo. |
+| `floor_bare_*` | Sin piso (concreto) | grises cálidos `878581`, `8b8985` | Concreto de muy poco contraste con manchas de llana, árido suelto, poros con labio claro y una grieta fina en escalera 2:1. |
 | `ground_grass_<familia>_*` | Pasto del solar | `81a73a`, `719236`, briznas `9ecc42`/`cbf166` | 4 familias (`plain` liso, `patchy` manchones, `lush` tupido, `sunny` claro), cada una con sus 4 variantes y **el mismo anillo del borde en las 16**, así cualquier casilla empalma con cualquier otra. Manchas suaves (suma de ondas periódicas, sin rombos), borde de cada mancha tramado y matas de briznas con su sombra de 1 px. Sin flores (se ven repetidas). El juego elige la familia por zonas (ruido suave sobre el mapa: liso 40 %, tupido 23 %, manchones 22 %, claro 15 %) y la variante al azar. |
 | `ground_outside_<familia>_*` | Pasto fuera del solar | el pasto 15 % más oscuro | Igual que el pasto (mismas familias y anillo propio común a las 16), más apagado. |
 | `ground_path_*` | Camino de grava | grises cálidos `afa38c`, `bcb19b` | Piedras de 2×1 a 6×3 px con luz arriba y sombra de 1 px abajo, sobre grava fina en 4 tonos. |
@@ -71,9 +71,8 @@ Cada material es **una casilla de 128×64** (o en el lienzo de 128×128 con el r
 | `ground_road_*` | Calle | asfalto `494c52`, `44474d` | Asfalto en 4 tonos con granos de árido claros y manchas de alquitrán. |
 | `ground_road_line_*` | Calle con línea | igual que la calle; línea `e0cf78` | Línea amarilla de 4 px de ancho por el centro, a lo largo del eje (`_x` o `_y`), algo gastada; el juego la corta cada tantas casillas usando `ground_road_*` donde no va. |
 
-El terreno de afuera (`ground_*`) se dibuja con Moana en `tools/sprites/art/ground/` (`_ground_kit.py`: rejilla
-isométrica periódica, anillo común, mezcla de cortes y comprobaciones de brillo y de anillo); los `floor_*` siguen
-en `tools/sprites/pieces/floors.py`.
+Todos los suelos (`floor_*` y `ground_*`) se dibujan con Moana en `tools/sprites/art/ground/` (`_ground_kit.py`:
+rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones de brillo y de anillo).
 
 ## 6. Muebles
 

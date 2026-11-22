@@ -241,6 +241,7 @@ class Material:
     palette: list[str]
     draw: Callable[[int], Tile]
     variants: int = 4
+    ring: bool = True  # False: el borde no es igual en todas (tablas), empalma por su dibujo periódico
 
 
 @dataclass
@@ -353,7 +354,7 @@ def main(group: Group, here: Path) -> int:
             problems.append(f"{material.name}: las variantes no tienen el mismo brillo ({spread:.1%})")
     # Anillo común: las celdas del borde son iguales en todas las variantes (y familias que lo comparten).
     ring_px = MASK & IN_RING[PA.clip(0, N - 1), PB.clip(0, N - 1)]
-    for names in [[m.name] for m in group.materials] + group.ring_groups:
+    for names in [[m.name] for m in group.materials if m.ring] + group.ring_groups:
         arrays = [np.asarray(img)[ring_px] for n in names for img in images[n]]
         if not all(np.array_equal(arrays[0], other) for other in arrays[1:]):
             problems.append(f"{'/'.join(names)}: el anillo del borde no es igual en todas")

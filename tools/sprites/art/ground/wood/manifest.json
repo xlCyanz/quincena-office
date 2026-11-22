@@ -1,0 +1,29 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada casilla de suelo de esta carpeta; lo escribe build.py y export_game.py arma con ellas el atlas assets/tiles/ground.png.",
+ "sprites": {
+  "floor_wood_0.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "floor_wood_1.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "floor_wood_2.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "floor_wood_3.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  }
+ }
+}
