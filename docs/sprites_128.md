@@ -142,8 +142,11 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
   `coffee_maker_r0`–`_r3` (cada uno sobre el mueble bajo de cocina de `_kitchen.py`, que ocupa la casilla; la cafetera
   más alta, con visor de agua, portafiltro, jarra con asa y una taza al lado), `vending_machine_r0`–`_r3` (gabinete redondeado con letrero, vitrina, panel y bandeja en relieve), `ping_pong_r0`–`_r3` (2×2, con postes de la red, mangos y
   pelota) y `dining_table_r0`–`_r3` (2×1, tablones y un banco a cada lado).
-- Baño, limpieza y servidores (`tools/sprites/pieces/services.py`): `toilet_r0`–`_r3`, `sink_r0`–`_r3`,
-  `cleaning_closet_r0`–`_r3` (con balde y trapeador al lado) y `server_rack_r0`–`_r3`. Todos con su `_shadow`.
+- Baño, limpieza y servidores (Moana, `tools/sprites/art/furniture/<pieza>/`; cerámica y cromo en `_bath.py`):
+  `toilet_r0`–`_r3` (taza ovalada con asiento, tapa y bisagras), `sink_r0`–`_r3` (pedestal, cuenco hundido,
+  llave con manijas roja y azul y jabón), `cleaning_closet_r0`–`_r3` (puertas en relieve, rociadores encima, y
+  balde con trapeador y escurridor al lado) y `server_rack_r0`–`_r3` (ruedas, puerta de malla con manija,
+  servidores con discos y cables de colores). Todos con su `_shadow`.
 
 ## 7. Objetos de pared
 
@@ -206,7 +209,7 @@ interiores) van **bajitas** para ver adentro.
   direcciones con 8 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
   `character_woman_office_`, `character_woman_executive_`, `character_cleaning_` y `character_woman_cleaning_` (overol verde de
   limpieza; solo ellos tienen además `_mop_r<n>_1`…`_4`, trapeando con el suape, y `_mopwalk_r<n>_1`…`_8`, caminando con él: capas
-  `stick` y `mop`; el cubo es `mop_bucket` en `services.py`); cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
+  `stick` y `mop`; el cubo es `mop_bucket`, con Moana en `tools/sprites/art/furniture/mop_bucket/`); cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
   que solo cambian la paleta. Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8`, `_idle_r<n>_1`…`_4` y
   `_type_r<n>_1`…`_4` (sentado tecleando). Por cada cuadro sentado y cada silla, `character_chairs/<cuadro>_<silla>.png` es la parte de la
   silla que queda delante de la persona (comparando su profundidad con la de `<silla>_r<n>_depth.png`): con ella se arma el cuadro «sentado en su silla» (silla entera + persona + esa parte). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.

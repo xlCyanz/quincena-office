@@ -1,0 +1,17 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "mop_bucket.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "mop_bucket_shadow.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  }
+ }
+}

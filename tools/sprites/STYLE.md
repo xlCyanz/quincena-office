@@ -63,7 +63,7 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      mueble bajo naranja de dos puertas con mesón gris claro; máquina expendedora roja con vitrina de golosinas de
      colores, panel claro y bandeja; ping pong verde con líneas blancas, red y dos paletas rojas; mesa de comedor de
      madera naranja con un banco a cada lado.
-   - *Servicios* (`pieces/services.py`): inodoro y lavamanos de pedestal en cerámica blanca con llaves cromadas;
+   - *Servicios* (con Moana, `art/furniture/`, ver el README): inodoro y lavamanos de pedestal en cerámica blanca con llaves cromadas;
      armario de limpieza gris azulado con rejillas y cartel amarillo, balde amarillo y trapeador; rack negro con
      servidores tras una malla y luces verdes, celestes y ámbar.
    - *Árboles, arbustos y setos*: con Moana (`art/nature/`, ver el README).
