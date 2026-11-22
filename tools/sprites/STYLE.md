@@ -58,7 +58,7 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      con panel oscuro (llaves roja y azul) y rejillas, y bidón grande celeste casi transparente con tres aros y
      brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
    - *Trabajo*: con Moana (`art/furniture/`: escritorios, impresora, archivero, baterías y mesa de reuniones; ver el README).
-   - *Sala de descanso* (`pieces/break_room.py`): sofá lila de dos cojines, brazos rectos y patas de madera; nevera
+   - *Sala de descanso* (con Moana, `art/furniture/`, ver el README): sofá lila de dos cojines, brazos rectos y patas de madera; nevera
      blanca con congelador arriba y tiradores grises; microondas y cafetera negros (jarra de vidrio con café) sobre un
      mueble bajo naranja de dos puertas con mesón gris claro; máquina expendedora roja con vitrina de golosinas de
      colores, panel claro y bandeja; ping pong verde con líneas blancas, red y dos paletas rojas; mesa de comedor de

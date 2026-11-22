@@ -489,6 +489,8 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/_painter.py` | Documento Moana en orden de pintor (cada color tapa a los que van debajo): para piezas con mucha textura que no caben en el límite de nodos de Moana |
 | `art/furniture/printer/`, `filing_cabinet/`, `backup_battery/` | Impresora, archivero y baterías de respaldo: `<pieza>_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/meeting_table/` | Mesa de reuniones redonda (2×2): `meeting_table` y su `_shadow` |
+| `art/furniture/sofa/`, `fridge/`, `microwave/`, `coffee_maker/`, `vending_machine/`, `ping_pong/`, `dining_table/` | Sala de descanso: `<pieza>_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/_kitchen.py` | Mueble bajo de cocina (puertas y mesón) que comparten el microondas y la cafetera |
 | `art/furniture/_boxes.py` | Muebles de cajas sobre `_chair_kit.py`: material desde una rampa, caja y caras con coordenadas en px para pintar puertas, cajones y luces |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
 | `art/furniture/_computer_kit.py`, `_computers.py` | Lo que va encima de un escritorio: documento de piezas sueltas, sombra de contacto y las piezas de cada computadora |

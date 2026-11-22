@@ -137,9 +137,11 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
   también con Moana (`tools/sprites/art/furniture/<pieza>/`, cajas de `_boxes.py`): `printer_r0`–`_r3` (impresora sobre
   un mueble bajo, con alimentador de hojas en la tapa), `filing_cabinet_r0`–`_r3`, `backup_battery_r0`–`_r3` (con
   rejilla en la tapa) y `meeting_table` (2×2, redonda con vetas: una sola imagen).
-- Sala de descanso (`tools/sprites/pieces/break_room.py`): `sofa_r0`–`_r3` (2×1), `fridge_r0`–`_r3`,
-  `microwave_r0`–`_r3` y `coffee_maker_r0`–`_r3` (cada uno sobre su mueble bajo de cocina, que ocupa la casilla),
-  `vending_machine_r0`–`_r3`, `ping_pong_r0`–`_r3` (2×2) y `dining_table_r0`–`_r3` (2×1, con un banco a cada lado).
+- Sala de descanso (Moana, `tools/sprites/art/furniture/<pieza>/`, cajas de `_boxes.py`): `sofa_r0`–`_r3` (2×1,
+  con dos cojines de respaldo), `fridge_r0`–`_r3` (esquinas redondeadas, puertas en relieve, pantalla de temperatura, nota e imanes), `microwave_r0`–`_r3` (alto, con puerta de vidrio enmarcada, panel, manija y rejillas) y
+  `coffee_maker_r0`–`_r3` (cada uno sobre el mueble bajo de cocina de `_kitchen.py`, que ocupa la casilla; la cafetera
+  más alta, con visor de agua, portafiltro, jarra con asa y una taza al lado), `vending_machine_r0`–`_r3` (gabinete redondeado con letrero, vitrina, panel y bandeja en relieve), `ping_pong_r0`–`_r3` (2×2, con postes de la red, mangos y
+  pelota) y `dining_table_r0`–`_r3` (2×1, tablones y un banco a cada lado).
 - Baño, limpieza y servidores (`tools/sprites/pieces/services.py`): `toilet_r0`–`_r3`, `sink_r0`–`_r3`,
   `cleaning_closet_r0`–`_r3` (con balde y trapeador al lado) y `server_rack_r0`–`_r3`. Todos con su `_shadow`.
 
