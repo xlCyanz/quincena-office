@@ -21,6 +21,7 @@ import argparse
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable, Optional
 
 from PIL import Image
 
@@ -38,7 +39,6 @@ PED_Z0 = 3  # la cajonera va sobre un zócalo hundido
 LEG = 3  # patas a 1 unidad de la punta -x y de los bordes
 LEG_YS = (3, 18)
 SKIRT_Y0, SKIRT_Z0 = 19, 22  # faldón de atrás, entre la pata de atrás y la cajonera
-DRAWER_STACK = (5, 37)  # fondo oscuro de la pila de cajones (z)
 DRAWERS = ((6, 15), (16, 26), (27, 36))  # frentes separados por 1 px
 GRAIN = [(5, 3, 13), (5, 17, 27), (9, 7, 21), (13, 2, 10), (13, 14, 28), (17, 5, 17), (20, 19, 27)]  # (y, x0, x1) cada 30
 FOOT = 2  # pie más oscuro al pie de patas y cajonera (px)
@@ -78,6 +78,7 @@ Op = dict[str, object]
 NEG_Y: Vec = (0, -1, 0)
 POS_Y: Vec = (0, 1, 0)
 POS_X: Vec = (1, 0, 0)
+NEG_X: Vec = (-1, 0, 0)
 
 
 @dataclass
@@ -85,7 +86,16 @@ class DeskSpec:
     name: str  # base del nombre de los PNG (desk_simple, desk_long…)
     size: tuple[int, int]  # planta en casillas (ancho x, fondo y) en rotación 0
     canvas: tuple[int, int]  # lienzo en px
-    top_x: tuple[int, int]  # puntas del tablero a lo largo de x (unidades)
+    top_x: tuple[int, int] = (0, 0)  # puntas del tablero a lo largo de x (modelo estándar)
+    model: Optional[Callable[["DeskSpec"], tuple[list["Box"], "Box"]]] = None  # sin él, ``standard_model``
+    colors: Optional[dict[str, str]] = None  # sin ella, ``COLORS``
+    contact: tuple[str, ...] = ("pedestal", "leg0", "leg1")  # piezas con sombra de contacto en el piso
+
+    def parts(self) -> tuple[list["Box"], "Box"]:
+        return (self.model or standard_model)(self)
+
+    def palette(self) -> dict[str, str]:
+        return self.colors or COLORS
 
 
 @dataclass
@@ -220,8 +230,62 @@ def side_bands(box: Box, name: str, color: str, z: float, rows: int = 1) -> list
     return [Decal(f"{name}_{k}", color, normal, corners, rows=rows) for k, (normal, corners) in sides.items()]
 
 
-def model(spec: DeskSpec) -> tuple[list[Box], Box]:
-    """Partes bajo el tablero y el tablero, en rotación 0."""
+def sunken_panel(name: str, normal: Vec, plane: float, a0: float, a1: float, z0: float, z1: float) -> list[Decal]:
+    """Tablero rehundido en una cara vertical: ranura oscura arriba y a un lado, brillo en el borde de abajo."""
+    if normal[0] != 0:
+        edge = [(plane, a0 + 1, z0), (plane, a1, z0)]
+    else:
+        edge = [(a0 + 1, plane, z0), (a1, plane, z0)]
+    return [
+        Decal(name, "@dark", normal, face_rect(normal, plane, a0, a1, z0, z1)),
+        Decal(f"{name}_in", "@face", normal, face_rect(normal, plane, a0 + 1, a1, z0, z1 - 1)),
+        Decal(f"{name}_lit", "@lit", normal, edge, up=1),
+    ]
+
+
+def drawer_pedestal(name: str, x0: float, x1: float, y0: float, y1: float, z0: float, z1: float,
+                    drawers: tuple[tuple[int, int], ...], panels: tuple[Vec, ...]) -> Box:
+    """Cajonera con los cajones en el frente (-y) y un tablero rehundido en cada cara de ``panels``.
+
+    Los cajones son una pila oscura enmarcada por la cajonera y frentes separados por 1 px, cada uno
+    con brillo arriba y un tirador centrado de 4 x 2 px.
+    """
+    box = Box(name, x0, x1, y0, y1, z0, z1)
+    u0, u1 = x0 + 1, x1 - 1
+    box.decals.append(Decal("drawer_stack", "@deep", NEG_Y,
+                            face_rect(NEG_Y, y0, u0, u1, drawers[0][0] - 1, drawers[-1][1] + 1)))
+    pull0 = (x0 + x1) // 2 - 1
+    for i, (d0, d1) in enumerate(drawers):
+        zc = (d0 + d1) // 2
+        box.decals += [
+            Decal(f"drawer{i}_front", "@face", NEG_Y, face_rect(NEG_Y, y0, u0, u1, d0, d1)),
+            Decal(f"drawer{i}_lit", "@lit", NEG_Y, [(u0, y0, d1), (u1, y0, d1)]),
+            Decal(f"drawer{i}_pull", "brass", NEG_Y, face_rect(NEG_Y, y0, pull0, pull0 + 2, zc - 1, zc + 1)),
+        ]
+    for normal in panels:
+        tag = {POS_Y: "py", POS_X: "px", NEG_X: "nx"}[normal]
+        if normal[1] != 0:
+            plane, a0, a1 = y1, x0, x1
+        else:
+            plane, a0, a1 = (x1 if normal[0] > 0 else x0), y0, y1
+        box.decals += sunken_panel(f"panel_{tag}", normal, plane, a0 + 2, a1 - 2, z0 + 5, z1 - 5)
+    return box
+
+
+def grain(top: Box, z: float, color: str = "wood_grain") -> None:
+    """Vetas a lo largo del tablero (x): el dibujo de GRAIN se repite cada 30 unidades."""
+    tx0, tx1, ty0 = int(top.x0), int(top.x1), int(top.y0)
+    i = 0
+    for start in range(tx0, tx1, 30):
+        for y, a, b in GRAIN:
+            a, b = start + a, min(start + b, tx1 - 2)
+            if b - a >= 4 and ty0 + y - TOP_Y[0] < top.y1 - 1:
+                top.decals.append(Decal(f"grain{i}", color, (0, 0, 1), [(a, ty0 + y - TOP_Y[0], z), (b, ty0 + y - TOP_Y[0], z)]))
+                i += 1
+
+
+def standard_model(spec: DeskSpec) -> tuple[list[Box], Box]:
+    """Escritorio de patas y una cajonera (sencillo y largo), en rotación 0."""
     tx0, tx1 = spec.top_x
     ty0, ty1 = TOP_Y
     px1 = tx1 - 1
@@ -229,30 +293,7 @@ def model(spec: DeskSpec) -> tuple[list[Box], Box]:
     py0, py1 = PED_Y
     leg_x0 = tx0 + 1
 
-    pedestal = Box("pedestal", px0, px1, py0, py1, PED_Z0, LEGS_Z)
-    # Cajones en el frente (-y): pila oscura enmarcada por la cajonera y frentes separados por 1 px,
-    # cada uno con brillo arriba y un tirador centrado de 4 x 2 px.
-    u0, u1 = px0 + 1, px1 - 1
-    s0, s1 = DRAWER_STACK
-    pedestal.decals.append(Decal("drawer_stack", "@deep", NEG_Y, face_rect(NEG_Y, py0, u0, u1, s0, s1)))
-    pull0 = (px0 + px1) // 2 - 1
-    for i, (z0, z1) in enumerate(DRAWERS):
-        zc = (z0 + z1) // 2
-        pedestal.decals += [
-            Decal(f"drawer{i}_front", "@face", NEG_Y, face_rect(NEG_Y, py0, u0, u1, z0, z1)),
-            Decal(f"drawer{i}_lit", "@lit", NEG_Y, [(u0, py0, z1), (u1, py0, z1)]),
-            Decal(f"drawer{i}_pull", "brass", NEG_Y, face_rect(NEG_Y, py0, pull0, pull0 + 2, zc - 1, zc + 1)),
-        ]
-    # Panel rehundido en los costados de la cajonera: ranura oscura y borde con brillo.
-    for normal, plane, a0, a1 in ((POS_Y, py1, px0, px1), (POS_X, px1, py0, py1)):
-        tag = "y" if normal == POS_Y else "x"
-        z0, z1 = PED_Z0 + 5, LEGS_Z - 5
-        edge = [(plane, a0 + 3, z0), (plane, a1 - 2, z0)] if tag == "x" else [(a0 + 3, plane, z0), (a1 - 2, plane, z0)]
-        pedestal.decals += [
-            Decal(f"panel_{tag}", "@dark", normal, face_rect(normal, plane, a0 + 2, a1 - 2, z0, z1)),
-            Decal(f"panel_{tag}_in", "@face", normal, face_rect(normal, plane, a0 + 3, a1 - 2, z0, z1 - 1)),
-            Decal(f"panel_{tag}_lit", "@lit", normal, edge, up=1),
-        ]
+    pedestal = drawer_pedestal("pedestal", px0, px1, py0, py1, PED_Z0, LEGS_Z, DRAWERS, (POS_Y, POS_X))
 
     legs = [Box(f"leg{i}", leg_x0, leg_x0 + LEG, y0, y0 + LEG, 0, LEGS_Z) for i, y0 in enumerate(LEG_YS)]
     for leg in legs:
@@ -273,14 +314,7 @@ def model(spec: DeskSpec) -> tuple[list[Box], Box]:
 
     top = Box("top", tx0, tx1, ty0, ty1, LEGS_Z, TOP_Z)
     top.decals += side_bands(top, "edge", "@dark", EDGE_LINE_Z)
-    # Vetas a lo largo del tablero (x): el dibujo de GRAIN se repite cada 30 unidades.
-    i = 0
-    for start in range(tx0, tx1, 30):
-        for y, a, b in GRAIN:
-            a, b = start + a, min(start + b, tx1 - 2)
-            if b - a >= 4:
-                top.decals.append(Decal(f"grain{i}", "wood_grain", (0, 0, 1), [(a, y, TOP_Z), (b, y, TOP_Z)]))
-                i += 1
+    grain(top, TOP_Z)
     return under, top
 
 
@@ -346,7 +380,7 @@ def doc(spec: DeskSpec, doc_id: str, masks: list[Op], layers: list[Op]) -> dict[
         "revision": 0,
         "seed": 0,
         "canvas": {"width": spec.canvas[0], "height": spec.canvas[1], "profile": "strict"},
-        "palette": {"id": f"palette_{spec.name}", "colors": [{"id": k, "rgba": c} for k, c in COLORS.items()], "ramps": []},
+        "palette": {"id": f"palette_{spec.name}", "colors": [{"id": k, "rgba": c} for k, c in spec.palette().items()], "ramps": []},
         "masks": masks,
         "layers": layers,
     }
@@ -359,7 +393,7 @@ def view(spec: DeskSpec, r: int) -> View:
 def desk_document(spec: DeskSpec, r: int) -> dict[str, object]:
     v = view(spec, r)
     p = v.p
-    under, top = model(spec)
+    under, top = spec.parts()
     under = sorted(under, key=lambda b: depth(b, v))  # de atrás hacia adelante
     wood = ("wood_top", "wood_left", "wood_right")
     deep = ("wood_dark", "wood_deep", "wood_deep")
@@ -402,11 +436,10 @@ def shadow_document(spec: DeskSpec, r: int) -> dict[str, object]:
     """Planta de cajonera, patas y centro del tablero, corrida abajo a la derecha y recortada a la planta."""
     v = view(spec, r)
     p = v.p
-    under, _top = model(spec)
-    tx0, tx1 = spec.top_x
-    ty0, ty1 = TOP_Y
-    inner = Box("top_inner", tx0 + SHADOW_INSET, tx1 - SHADOW_INSET, ty0 + SHADOW_INSET, ty1 - SHADOW_INSET, 0, 0)
-    feet = [b for b in under if b.name in ("pedestal", "leg0", "leg1")]
+    under, top = spec.parts()
+    i = SHADOW_INSET
+    inner = Box("top_inner", top.x0 + i, top.x1 - i, top.y0 + i, top.y1 - i, 0, 0)
+    feet = [b for b in under if b.name in spec.contact]
     sx, sy = SHADOW_SHIFT
     ops: list[Op] = []
     # Tablero: mancha suave corrida con la luz. Patas y cajonera: contacto oscuro 1 unidad más ancho.

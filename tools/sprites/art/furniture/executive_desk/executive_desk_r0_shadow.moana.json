@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0",
+  "id": "executive_desk_r0_shadow",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 192,
+    "height": 160,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_executive_desk",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#2A1206FF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#4A2410FF"
+      },
+      {
+        "id": "wood_light",
+        "rgba": "#BD7A4CFF"
+      },
+      {
+        "id": "wood_top",
+        "rgba": "#A0603AFF"
+      },
+      {
+        "id": "wood_grain",
+        "rgba": "#8D5433FF"
+      },
+      {
+        "id": "wood_left",
+        "rgba": "#78482CFF"
+      },
+      {
+        "id": "wood_right",
+        "rgba": "#603A23FF"
+      },
+      {
+        "id": "wood_dark",
+        "rgba": "#432818FF"
+      },
+      {
+        "id": "wood_deep",
+        "rgba": "#301D11FF"
+      },
+      {
+        "id": "brass",
+        "rgba": "#E0B84AFF"
+      },
+      {
+        "id": "brass_dark",
+        "rgba": "#9C6A1EFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      },
+      {
+        "id": "shadow_soft",
+        "rgba": "#4A4E62FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "floor_footprint",
+      "type": "polygon",
+      "points": [
+        [
+          64,
+          64
+        ],
+        [
+          192,
+          128
+        ],
+        [
+          128,
+          160
+        ],
+        [
+          0,
+          96
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "mask_id": "floor_footprint",
+      "operations": [
+        {
+          "id": "shadow_top_inner",
+          "type": "polygon",
+          "points": [
+            [
+              66,
+              77
+            ],
+            [
+              178,
+              133
+            ],
+            [
+              134,
+              155
+            ],
+            [
+              22,
+              99
+            ]
+          ],
+          "color": "shadow_soft"
+        },
+        {
+          "id": "shadow_pedestal_a",
+          "type": "polygon",
+          "points": [
+            [
+              62,
+              69
+            ],
+            [
+              92,
+              84
+            ],
+            [
+              40,
+              110
+            ],
+            [
+              10,
+              95
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_pedestal_b",
+          "type": "polygon",
+          "points": [
+            [
+              156,
+              116
+            ],
+            [
+              186,
+              131
+            ],
+            [
+              134,
+              157
+            ],
+            [
+              104,
+              142
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_modesty",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              102
+            ],
+            [
+              120,
+              138
+            ],
+            [
+              110,
+              143
+            ],
+            [
+              38,
+              107
+            ]
+          ],
+          "color": "shadow_ink"
+        }
+      ]
+    }
+  ]
+}
