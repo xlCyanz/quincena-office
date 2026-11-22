@@ -1,0 +1,2945 @@
+{
+  "schema_version": "1.0",
+  "id": "computer_basic_r0",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 128,
+    "height": 160,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_computer_basic",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#4A3F2CFF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#8A7A58FF"
+      },
+      {
+        "id": "case_light",
+        "rgba": "#F6EED8FF"
+      },
+      {
+        "id": "case_top",
+        "rgba": "#E4D6B4FF"
+      },
+      {
+        "id": "case_grain",
+        "rgba": "#C9BC9EFF"
+      },
+      {
+        "id": "case_left",
+        "rgba": "#ABA087FF"
+      },
+      {
+        "id": "case_right",
+        "rgba": "#89806CFF"
+      },
+      {
+        "id": "case_dark",
+        "rgba": "#605A4CFF"
+      },
+      {
+        "id": "case_deep",
+        "rgba": "#444036FF"
+      },
+      {
+        "id": "glass_light",
+        "rgba": "#9DB8BEFF"
+      },
+      {
+        "id": "glass_top",
+        "rgba": "#6B8A92FF"
+      },
+      {
+        "id": "glass_grain",
+        "rgba": "#5E7980FF"
+      },
+      {
+        "id": "glass_left",
+        "rgba": "#50686EFF"
+      },
+      {
+        "id": "glass_right",
+        "rgba": "#405358FF"
+      },
+      {
+        "id": "glass_dark",
+        "rgba": "#2D3A3DFF"
+      },
+      {
+        "id": "glass_deep",
+        "rgba": "#20292CFF"
+      },
+      {
+        "id": "key",
+        "rgba": "#C9B88FFF"
+      },
+      {
+        "id": "led",
+        "rgba": "#6FE08AFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "sil_keyboard",
+      "type": "polygon",
+      "points": [
+        [
+          78,
+          63
+        ],
+        [
+          102,
+          75
+        ],
+        [
+          102,
+          77
+        ],
+        [
+          92,
+          82
+        ],
+        [
+          68,
+          70
+        ],
+        [
+          68,
+          68
+        ]
+      ]
+    },
+    {
+      "id": "sil_crt",
+      "type": "polygon",
+      "points": [
+        [
+          64,
+          38
+        ],
+        [
+          88,
+          50
+        ],
+        [
+          88,
+          84
+        ],
+        [
+          68,
+          94
+        ],
+        [
+          44,
+          82
+        ],
+        [
+          44,
+          48
+        ]
+      ]
+    },
+    {
+      "id": "sil_mouse",
+      "type": "polygon",
+      "points": [
+        [
+          97,
+          80
+        ],
+        [
+          101,
+          78
+        ],
+        [
+          105,
+          78
+        ],
+        [
+          107,
+          80
+        ],
+        [
+          107,
+          84
+        ],
+        [
+          103,
+          86
+        ],
+        [
+          99,
+          86
+        ],
+        [
+          97,
+          84
+        ]
+      ]
+    },
+    {
+      "id": "sil_mouse_back",
+      "type": "polygon",
+      "points": [
+        [
+          98,
+          80
+        ],
+        [
+          100,
+          79
+        ],
+        [
+          102,
+          79
+        ],
+        [
+          104,
+          80
+        ],
+        [
+          104,
+          82
+        ],
+        [
+          102,
+          83
+        ],
+        [
+          100,
+          83
+        ],
+        [
+          98,
+          82
+        ]
+      ]
+    },
+    {
+      "id": "sil_tube",
+      "type": "polygon",
+      "points": [
+        [
+          48,
+          56
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          64,
+          86
+        ],
+        [
+          58,
+          89
+        ],
+        [
+          42,
+          81
+        ],
+        [
+          42,
+          59
+        ]
+      ]
+    },
+    {
+      "id": "canvas_all",
+      "type": "rect",
+      "box": [
+        0,
+        0,
+        128,
+        160
+      ]
+    },
+    {
+      "id": "outside",
+      "type": "subtract",
+      "masks": [
+        "canvas_all",
+        "sil_keyboard",
+        "sil_crt",
+        "sil_mouse",
+        "sil_mouse_back",
+        "sil_tube"
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "body",
+      "name": "Piezas",
+      "operations": [
+        {
+          "id": "keyboard_r0_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              78,
+              62
+            ],
+            [
+              102,
+              74
+            ],
+            [
+              102,
+              76
+            ],
+            [
+              92,
+              81
+            ],
+            [
+              68,
+              69
+            ],
+            [
+              68,
+              67
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "keyboard_r0_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              78,
+              64
+            ],
+            [
+              102,
+              76
+            ],
+            [
+              102,
+              78
+            ],
+            [
+              92,
+              83
+            ],
+            [
+              68,
+              71
+            ],
+            [
+              68,
+              69
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "keyboard_r0_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              77,
+              63
+            ],
+            [
+              101,
+              75
+            ],
+            [
+              101,
+              77
+            ],
+            [
+              91,
+              82
+            ],
+            [
+              67,
+              70
+            ],
+            [
+              67,
+              68
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "keyboard_r0_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              79,
+              63
+            ],
+            [
+              103,
+              75
+            ],
+            [
+              103,
+              77
+            ],
+            [
+              93,
+              82
+            ],
+            [
+              69,
+              70
+            ],
+            [
+              69,
+              68
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "keyboard_r0_left",
+          "type": "polygon",
+          "points": [
+            [
+              68,
+              68
+            ],
+            [
+              92,
+              80
+            ],
+            [
+              92,
+              82
+            ],
+            [
+              68,
+              70
+            ]
+          ],
+          "color": "case_left"
+        },
+        {
+          "id": "keyboard_r0_right",
+          "type": "polygon",
+          "points": [
+            [
+              102,
+              75
+            ],
+            [
+              92,
+              80
+            ],
+            [
+              92,
+              82
+            ],
+            [
+              102,
+              77
+            ]
+          ],
+          "color": "case_right"
+        },
+        {
+          "id": "keyboard_r0_top",
+          "type": "polygon",
+          "points": [
+            [
+              78,
+              63
+            ],
+            [
+              102,
+              75
+            ],
+            [
+              92,
+              80
+            ],
+            [
+              68,
+              68
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "keyboard_r0_key0_0",
+          "type": "polygon",
+          "points": [
+            [
+              77,
+              64
+            ],
+            [
+              80,
+              66
+            ],
+            [
+              80,
+              67
+            ],
+            [
+              77,
+              65
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key0_1",
+          "type": "polygon",
+          "points": [
+            [
+              81,
+              66
+            ],
+            [
+              84,
+              68
+            ],
+            [
+              84,
+              69
+            ],
+            [
+              81,
+              67
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key0_2",
+          "type": "polygon",
+          "points": [
+            [
+              85,
+              68
+            ],
+            [
+              88,
+              70
+            ],
+            [
+              88,
+              71
+            ],
+            [
+              85,
+              69
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key0_3",
+          "type": "polygon",
+          "points": [
+            [
+              89,
+              70
+            ],
+            [
+              92,
+              72
+            ],
+            [
+              92,
+              73
+            ],
+            [
+              89,
+              71
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key0_4",
+          "type": "polygon",
+          "points": [
+            [
+              93,
+              72
+            ],
+            [
+              96,
+              74
+            ],
+            [
+              96,
+              75
+            ],
+            [
+              93,
+              73
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key1_0",
+          "type": "polygon",
+          "points": [
+            [
+              75,
+              66
+            ],
+            [
+              78,
+              68
+            ],
+            [
+              78,
+              69
+            ],
+            [
+              75,
+              67
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key1_1",
+          "type": "polygon",
+          "points": [
+            [
+              79,
+              68
+            ],
+            [
+              82,
+              70
+            ],
+            [
+              82,
+              71
+            ],
+            [
+              79,
+              69
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key1_2",
+          "type": "polygon",
+          "points": [
+            [
+              83,
+              70
+            ],
+            [
+              86,
+              72
+            ],
+            [
+              86,
+              73
+            ],
+            [
+              83,
+              71
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key1_3",
+          "type": "polygon",
+          "points": [
+            [
+              87,
+              72
+            ],
+            [
+              90,
+              74
+            ],
+            [
+              90,
+              75
+            ],
+            [
+              87,
+              73
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key1_4",
+          "type": "polygon",
+          "points": [
+            [
+              91,
+              74
+            ],
+            [
+              94,
+              76
+            ],
+            [
+              94,
+              77
+            ],
+            [
+              91,
+              75
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key2_0",
+          "type": "polygon",
+          "points": [
+            [
+              71,
+              68
+            ],
+            [
+              74,
+              69
+            ],
+            [
+              74,
+              70
+            ],
+            [
+              71,
+              69
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key2_1",
+          "type": "polygon",
+          "points": [
+            [
+              75,
+              70
+            ],
+            [
+              78,
+              71
+            ],
+            [
+              78,
+              72
+            ],
+            [
+              75,
+              71
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key2_2",
+          "type": "polygon",
+          "points": [
+            [
+              79,
+              72
+            ],
+            [
+              87,
+              76
+            ],
+            [
+              87,
+              77
+            ],
+            [
+              79,
+              73
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_key2_3",
+          "type": "polygon",
+          "points": [
+            [
+              88,
+              76
+            ],
+            [
+              91,
+              78
+            ],
+            [
+              91,
+              79
+            ],
+            [
+              88,
+              77
+            ]
+          ],
+          "color": "key"
+        },
+        {
+          "id": "keyboard_r0_lit_left",
+          "type": "polygon",
+          "points": [
+            [
+              68,
+              67
+            ],
+            [
+              92,
+              79
+            ],
+            [
+              92,
+              80
+            ],
+            [
+              68,
+              68
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "keyboard_r0_lit_right",
+          "type": "polygon",
+          "points": [
+            [
+              92,
+              79
+            ],
+            [
+              102,
+              74
+            ],
+            [
+              102,
+              75
+            ],
+            [
+              92,
+              80
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "keyboard_r0_lit_corner",
+          "type": "rect",
+          "box": [
+            92,
+            80,
+            93,
+            82
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "crt_r0_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              64,
+              37
+            ],
+            [
+              88,
+              49
+            ],
+            [
+              88,
+              83
+            ],
+            [
+              68,
+              93
+            ],
+            [
+              44,
+              81
+            ],
+            [
+              44,
+              47
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "crt_r0_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              64,
+              39
+            ],
+            [
+              88,
+              51
+            ],
+            [
+              88,
+              85
+            ],
+            [
+              68,
+              95
+            ],
+            [
+              44,
+              83
+            ],
+            [
+              44,
+              49
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "crt_r0_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              63,
+              38
+            ],
+            [
+              87,
+              50
+            ],
+            [
+              87,
+              84
+            ],
+            [
+              67,
+              94
+            ],
+            [
+              43,
+              82
+            ],
+            [
+              43,
+              48
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "crt_r0_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              65,
+              38
+            ],
+            [
+              89,
+              50
+            ],
+            [
+              89,
+              84
+            ],
+            [
+              69,
+              94
+            ],
+            [
+              45,
+              82
+            ],
+            [
+              45,
+              48
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "crt_r0_left",
+          "type": "polygon",
+          "points": [
+            [
+              44,
+              48
+            ],
+            [
+              68,
+              60
+            ],
+            [
+              68,
+              94
+            ],
+            [
+              44,
+              82
+            ]
+          ],
+          "color": "case_left"
+        },
+        {
+          "id": "crt_r0_right",
+          "type": "polygon",
+          "points": [
+            [
+              88,
+              50
+            ],
+            [
+              68,
+              60
+            ],
+            [
+              68,
+              94
+            ],
+            [
+              88,
+              84
+            ]
+          ],
+          "color": "case_right"
+        },
+        {
+          "id": "crt_r0_top",
+          "type": "polygon",
+          "points": [
+            [
+              64,
+              38
+            ],
+            [
+              88,
+              50
+            ],
+            [
+              68,
+              60
+            ],
+            [
+              44,
+              48
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "crt_r0_vent_22_0",
+          "type": "polygon",
+          "points": [
+            [
+              76,
+              60
+            ],
+            [
+              75,
+              60
+            ],
+            [
+              75,
+              86
+            ],
+            [
+              76,
+              86
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "crt_r0_vent_22_1",
+          "type": "polygon",
+          "points": [
+            [
+              73,
+              62
+            ],
+            [
+              72,
+              62
+            ],
+            [
+              72,
+              88
+            ],
+            [
+              73,
+              88
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "crt_r0_vent_22_2",
+          "type": "polygon",
+          "points": [
+            [
+              70,
+              63
+            ],
+            [
+              69,
+              64
+            ],
+            [
+              69,
+              90
+            ],
+            [
+              70,
+              89
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "crt_r0_vent_22_3",
+          "type": "polygon",
+          "points": [
+            [
+              67,
+              64
+            ],
+            [
+              66,
+              65
+            ],
+            [
+              66,
+              91
+            ],
+            [
+              67,
+              90
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "crt_r0_top_vent0",
+          "type": "polygon",
+          "points": [
+            [
+              55,
+              46
+            ],
+            [
+              73,
+              54
+            ],
+            [
+              73,
+              55
+            ],
+            [
+              55,
+              47
+            ]
+          ],
+          "color": "case_dark"
+        },
+        {
+          "id": "crt_r0_top_vent1",
+          "type": "polygon",
+          "points": [
+            [
+              52,
+              47
+            ],
+            [
+              70,
+              56
+            ],
+            [
+              70,
+              57
+            ],
+            [
+              52,
+              48
+            ]
+          ],
+          "color": "case_dark"
+        },
+        {
+          "id": "crt_r0_lit_left",
+          "type": "polygon",
+          "points": [
+            [
+              44,
+              47
+            ],
+            [
+              68,
+              59
+            ],
+            [
+              68,
+              60
+            ],
+            [
+              44,
+              48
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "crt_r0_lit_right",
+          "type": "polygon",
+          "points": [
+            [
+              68,
+              59
+            ],
+            [
+              88,
+              49
+            ],
+            [
+              88,
+              50
+            ],
+            [
+              68,
+              60
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "crt_r0_lit_corner",
+          "type": "rect",
+          "box": [
+            68,
+            60,
+            69,
+            94
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "mouse_r0_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              79
+            ],
+            [
+              101,
+              77
+            ],
+            [
+              105,
+              77
+            ],
+            [
+              107,
+              79
+            ],
+            [
+              107,
+              83
+            ],
+            [
+              103,
+              85
+            ],
+            [
+              99,
+              85
+            ],
+            [
+              97,
+              83
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_r0_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              81
+            ],
+            [
+              101,
+              79
+            ],
+            [
+              105,
+              79
+            ],
+            [
+              107,
+              81
+            ],
+            [
+              107,
+              85
+            ],
+            [
+              103,
+              87
+            ],
+            [
+              99,
+              87
+            ],
+            [
+              97,
+              85
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_r0_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              96,
+              80
+            ],
+            [
+              100,
+              78
+            ],
+            [
+              104,
+              78
+            ],
+            [
+              106,
+              80
+            ],
+            [
+              106,
+              84
+            ],
+            [
+              102,
+              86
+            ],
+            [
+              98,
+              86
+            ],
+            [
+              96,
+              84
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_r0_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              80
+            ],
+            [
+              102,
+              78
+            ],
+            [
+              106,
+              78
+            ],
+            [
+              108,
+              80
+            ],
+            [
+              108,
+              84
+            ],
+            [
+              104,
+              86
+            ],
+            [
+              100,
+              86
+            ],
+            [
+              98,
+              84
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_r0_side",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              80
+            ],
+            [
+              101,
+              78
+            ],
+            [
+              105,
+              78
+            ],
+            [
+              107,
+              80
+            ],
+            [
+              107,
+              84
+            ],
+            [
+              103,
+              86
+            ],
+            [
+              99,
+              86
+            ],
+            [
+              97,
+              84
+            ]
+          ],
+          "color": "case_left"
+        },
+        {
+          "id": "mouse_r0_right",
+          "type": "polygon",
+          "points": [
+            [
+              107,
+              82
+            ],
+            [
+              103,
+              84
+            ],
+            [
+              103,
+              86
+            ],
+            [
+              107,
+              84
+            ]
+          ],
+          "color": "case_right"
+        },
+        {
+          "id": "mouse_r0_top",
+          "type": "polygon",
+          "points": [
+            [
+              105,
+              78
+            ],
+            [
+              107,
+              80
+            ],
+            [
+              107,
+              82
+            ],
+            [
+              103,
+              84
+            ],
+            [
+              99,
+              84
+            ],
+            [
+              97,
+              82
+            ],
+            [
+              97,
+              80
+            ],
+            [
+              101,
+              78
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "mouse_r0_shine",
+          "type": "polygon",
+          "points": [
+            [
+              104,
+              80
+            ],
+            [
+              104,
+              80
+            ],
+            [
+              104,
+              81
+            ],
+            [
+              102,
+              82
+            ],
+            [
+              100,
+              82
+            ],
+            [
+              100,
+              82
+            ],
+            [
+              100,
+              81
+            ],
+            [
+              102,
+              80
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "mouse_r0_buttons",
+          "type": "polygon",
+          "points": [
+            [
+              106,
+              79
+            ],
+            [
+              103,
+              80
+            ],
+            [
+              103,
+              81
+            ],
+            [
+              106,
+              80
+            ]
+          ],
+          "color": "case_dark"
+        },
+        {
+          "id": "mouse_back_r0_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              79
+            ],
+            [
+              100,
+              78
+            ],
+            [
+              102,
+              78
+            ],
+            [
+              104,
+              79
+            ],
+            [
+              104,
+              81
+            ],
+            [
+              102,
+              82
+            ],
+            [
+              100,
+              82
+            ],
+            [
+              98,
+              81
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_back_r0_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              81
+            ],
+            [
+              100,
+              80
+            ],
+            [
+              102,
+              80
+            ],
+            [
+              104,
+              81
+            ],
+            [
+              104,
+              83
+            ],
+            [
+              102,
+              84
+            ],
+            [
+              100,
+              84
+            ],
+            [
+              98,
+              83
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_back_r0_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              80
+            ],
+            [
+              99,
+              79
+            ],
+            [
+              101,
+              79
+            ],
+            [
+              103,
+              80
+            ],
+            [
+              103,
+              82
+            ],
+            [
+              101,
+              83
+            ],
+            [
+              99,
+              83
+            ],
+            [
+              97,
+              82
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_back_r0_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              99,
+              80
+            ],
+            [
+              101,
+              79
+            ],
+            [
+              103,
+              79
+            ],
+            [
+              105,
+              80
+            ],
+            [
+              105,
+              82
+            ],
+            [
+              103,
+              83
+            ],
+            [
+              101,
+              83
+            ],
+            [
+              99,
+              82
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "mouse_back_r0_side",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              80
+            ],
+            [
+              100,
+              79
+            ],
+            [
+              102,
+              79
+            ],
+            [
+              104,
+              80
+            ],
+            [
+              104,
+              82
+            ],
+            [
+              102,
+              83
+            ],
+            [
+              100,
+              83
+            ],
+            [
+              98,
+              82
+            ]
+          ],
+          "color": "case_left"
+        },
+        {
+          "id": "mouse_back_r0_right",
+          "type": "polygon",
+          "points": [
+            [
+              104,
+              81
+            ],
+            [
+              102,
+              82
+            ],
+            [
+              102,
+              83
+            ],
+            [
+              104,
+              82
+            ]
+          ],
+          "color": "case_right"
+        },
+        {
+          "id": "mouse_back_r0_top",
+          "type": "polygon",
+          "points": [
+            [
+              102,
+              79
+            ],
+            [
+              104,
+              80
+            ],
+            [
+              104,
+              81
+            ],
+            [
+              102,
+              82
+            ],
+            [
+              100,
+              82
+            ],
+            [
+              98,
+              81
+            ],
+            [
+              98,
+              80
+            ],
+            [
+              100,
+              79
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "mouse_back_r0_shine",
+          "type": "polygon",
+          "points": [
+            [
+              102,
+              80
+            ],
+            [
+              102,
+              80
+            ],
+            [
+              102,
+              81
+            ],
+            [
+              102,
+              81
+            ],
+            [
+              100,
+              81
+            ],
+            [
+              100,
+              81
+            ],
+            [
+              100,
+              80
+            ],
+            [
+              100,
+              80
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "tube_r0_ink_n",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              55
+            ],
+            [
+              64,
+              63
+            ],
+            [
+              64,
+              85
+            ],
+            [
+              58,
+              88
+            ],
+            [
+              42,
+              80
+            ],
+            [
+              42,
+              58
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "tube_r0_ink_s",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              57
+            ],
+            [
+              64,
+              65
+            ],
+            [
+              64,
+              87
+            ],
+            [
+              58,
+              90
+            ],
+            [
+              42,
+              82
+            ],
+            [
+              42,
+              60
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "tube_r0_ink_w",
+          "type": "polygon",
+          "points": [
+            [
+              47,
+              56
+            ],
+            [
+              63,
+              64
+            ],
+            [
+              63,
+              86
+            ],
+            [
+              57,
+              89
+            ],
+            [
+              41,
+              81
+            ],
+            [
+              41,
+              59
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "tube_r0_ink_e",
+          "type": "polygon",
+          "points": [
+            [
+              49,
+              56
+            ],
+            [
+              65,
+              64
+            ],
+            [
+              65,
+              86
+            ],
+            [
+              59,
+              89
+            ],
+            [
+              43,
+              81
+            ],
+            [
+              43,
+              59
+            ]
+          ],
+          "color": "ink_in"
+        },
+        {
+          "id": "tube_r0_left",
+          "type": "polygon",
+          "points": [
+            [
+              42,
+              59
+            ],
+            [
+              58,
+              67
+            ],
+            [
+              58,
+              89
+            ],
+            [
+              42,
+              81
+            ]
+          ],
+          "color": "case_left"
+        },
+        {
+          "id": "tube_r0_right",
+          "type": "polygon",
+          "points": [
+            [
+              64,
+              64
+            ],
+            [
+              58,
+              67
+            ],
+            [
+              58,
+              89
+            ],
+            [
+              64,
+              86
+            ]
+          ],
+          "color": "case_right"
+        },
+        {
+          "id": "tube_r0_top",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              56
+            ],
+            [
+              64,
+              64
+            ],
+            [
+              58,
+              67
+            ],
+            [
+              42,
+              59
+            ]
+          ],
+          "color": "case_top"
+        },
+        {
+          "id": "tube_r0_tube_vent0",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              58
+            ],
+            [
+              60,
+              64
+            ],
+            [
+              60,
+              65
+            ],
+            [
+              48,
+              59
+            ]
+          ],
+          "color": "case_dark"
+        },
+        {
+          "id": "tube_r0_rear0",
+          "type": "polygon",
+          "points": [
+            [
+              45,
+              78
+            ],
+            [
+              55,
+              84
+            ],
+            [
+              55,
+              85
+            ],
+            [
+              45,
+              79
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "tube_r0_rear1",
+          "type": "polygon",
+          "points": [
+            [
+              45,
+              76
+            ],
+            [
+              55,
+              80
+            ],
+            [
+              55,
+              81
+            ],
+            [
+              45,
+              77
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "tube_r0_rear2",
+          "type": "polygon",
+          "points": [
+            [
+              45,
+              72
+            ],
+            [
+              55,
+              78
+            ],
+            [
+              55,
+              79
+            ],
+            [
+              45,
+              73
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "tube_r0_rear3",
+          "type": "polygon",
+          "points": [
+            [
+              45,
+              70
+            ],
+            [
+              55,
+              74
+            ],
+            [
+              55,
+              75
+            ],
+            [
+              45,
+              71
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "tube_r0_rear4",
+          "type": "polygon",
+          "points": [
+            [
+              45,
+              66
+            ],
+            [
+              55,
+              72
+            ],
+            [
+              55,
+              73
+            ],
+            [
+              45,
+              67
+            ]
+          ],
+          "color": "case_deep"
+        },
+        {
+          "id": "tube_r0_lit_left",
+          "type": "polygon",
+          "points": [
+            [
+              42,
+              58
+            ],
+            [
+              58,
+              66
+            ],
+            [
+              58,
+              67
+            ],
+            [
+              42,
+              59
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "tube_r0_lit_right",
+          "type": "polygon",
+          "points": [
+            [
+              58,
+              66
+            ],
+            [
+              64,
+              63
+            ],
+            [
+              64,
+              64
+            ],
+            [
+              58,
+              67
+            ]
+          ],
+          "color": "case_light"
+        },
+        {
+          "id": "tube_r0_lit_corner",
+          "type": "rect",
+          "box": [
+            58,
+            67,
+            59,
+            89
+          ],
+          "color": "case_light"
+        }
+      ]
+    },
+    {
+      "id": "outer_ink",
+      "name": "Contorno exterior",
+      "mask_id": "outside",
+      "operations": [
+        {
+          "id": "keyboard_r0_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              78,
+              62
+            ],
+            [
+              102,
+              74
+            ],
+            [
+              102,
+              76
+            ],
+            [
+              92,
+              81
+            ],
+            [
+              68,
+              69
+            ],
+            [
+              68,
+              67
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "keyboard_r0_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              78,
+              64
+            ],
+            [
+              102,
+              76
+            ],
+            [
+              102,
+              78
+            ],
+            [
+              92,
+              83
+            ],
+            [
+              68,
+              71
+            ],
+            [
+              68,
+              69
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "keyboard_r0_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              77,
+              63
+            ],
+            [
+              101,
+              75
+            ],
+            [
+              101,
+              77
+            ],
+            [
+              91,
+              82
+            ],
+            [
+              67,
+              70
+            ],
+            [
+              67,
+              68
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "keyboard_r0_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              79,
+              63
+            ],
+            [
+              103,
+              75
+            ],
+            [
+              103,
+              77
+            ],
+            [
+              93,
+              82
+            ],
+            [
+              69,
+              70
+            ],
+            [
+              69,
+              68
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "crt_r0_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              64,
+              37
+            ],
+            [
+              88,
+              49
+            ],
+            [
+              88,
+              83
+            ],
+            [
+              68,
+              93
+            ],
+            [
+              44,
+              81
+            ],
+            [
+              44,
+              47
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "crt_r0_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              64,
+              39
+            ],
+            [
+              88,
+              51
+            ],
+            [
+              88,
+              85
+            ],
+            [
+              68,
+              95
+            ],
+            [
+              44,
+              83
+            ],
+            [
+              44,
+              49
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "crt_r0_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              63,
+              38
+            ],
+            [
+              87,
+              50
+            ],
+            [
+              87,
+              84
+            ],
+            [
+              67,
+              94
+            ],
+            [
+              43,
+              82
+            ],
+            [
+              43,
+              48
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "crt_r0_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              65,
+              38
+            ],
+            [
+              89,
+              50
+            ],
+            [
+              89,
+              84
+            ],
+            [
+              69,
+              94
+            ],
+            [
+              45,
+              82
+            ],
+            [
+              45,
+              48
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_r0_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              79
+            ],
+            [
+              101,
+              77
+            ],
+            [
+              105,
+              77
+            ],
+            [
+              107,
+              79
+            ],
+            [
+              107,
+              83
+            ],
+            [
+              103,
+              85
+            ],
+            [
+              99,
+              85
+            ],
+            [
+              97,
+              83
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_r0_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              81
+            ],
+            [
+              101,
+              79
+            ],
+            [
+              105,
+              79
+            ],
+            [
+              107,
+              81
+            ],
+            [
+              107,
+              85
+            ],
+            [
+              103,
+              87
+            ],
+            [
+              99,
+              87
+            ],
+            [
+              97,
+              85
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_r0_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              96,
+              80
+            ],
+            [
+              100,
+              78
+            ],
+            [
+              104,
+              78
+            ],
+            [
+              106,
+              80
+            ],
+            [
+              106,
+              84
+            ],
+            [
+              102,
+              86
+            ],
+            [
+              98,
+              86
+            ],
+            [
+              96,
+              84
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_r0_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              80
+            ],
+            [
+              102,
+              78
+            ],
+            [
+              106,
+              78
+            ],
+            [
+              108,
+              80
+            ],
+            [
+              108,
+              84
+            ],
+            [
+              104,
+              86
+            ],
+            [
+              100,
+              86
+            ],
+            [
+              98,
+              84
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_back_r0_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              79
+            ],
+            [
+              100,
+              78
+            ],
+            [
+              102,
+              78
+            ],
+            [
+              104,
+              79
+            ],
+            [
+              104,
+              81
+            ],
+            [
+              102,
+              82
+            ],
+            [
+              100,
+              82
+            ],
+            [
+              98,
+              81
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_back_r0_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              98,
+              81
+            ],
+            [
+              100,
+              80
+            ],
+            [
+              102,
+              80
+            ],
+            [
+              104,
+              81
+            ],
+            [
+              104,
+              83
+            ],
+            [
+              102,
+              84
+            ],
+            [
+              100,
+              84
+            ],
+            [
+              98,
+              83
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_back_r0_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              97,
+              80
+            ],
+            [
+              99,
+              79
+            ],
+            [
+              101,
+              79
+            ],
+            [
+              103,
+              80
+            ],
+            [
+              103,
+              82
+            ],
+            [
+              101,
+              83
+            ],
+            [
+              99,
+              83
+            ],
+            [
+              97,
+              82
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "mouse_back_r0_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              99,
+              80
+            ],
+            [
+              101,
+              79
+            ],
+            [
+              103,
+              79
+            ],
+            [
+              105,
+              80
+            ],
+            [
+              105,
+              82
+            ],
+            [
+              103,
+              83
+            ],
+            [
+              101,
+              83
+            ],
+            [
+              99,
+              82
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "tube_r0_outer_n",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              55
+            ],
+            [
+              64,
+              63
+            ],
+            [
+              64,
+              85
+            ],
+            [
+              58,
+              88
+            ],
+            [
+              42,
+              80
+            ],
+            [
+              42,
+              58
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "tube_r0_outer_s",
+          "type": "polygon",
+          "points": [
+            [
+              48,
+              57
+            ],
+            [
+              64,
+              65
+            ],
+            [
+              64,
+              87
+            ],
+            [
+              58,
+              90
+            ],
+            [
+              42,
+              82
+            ],
+            [
+              42,
+              60
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "tube_r0_outer_w",
+          "type": "polygon",
+          "points": [
+            [
+              47,
+              56
+            ],
+            [
+              63,
+              64
+            ],
+            [
+              63,
+              86
+            ],
+            [
+              57,
+              89
+            ],
+            [
+              41,
+              81
+            ],
+            [
+              41,
+              59
+            ]
+          ],
+          "color": "ink"
+        },
+        {
+          "id": "tube_r0_outer_e",
+          "type": "polygon",
+          "points": [
+            [
+              49,
+              56
+            ],
+            [
+              65,
+              64
+            ],
+            [
+              65,
+              86
+            ],
+            [
+              59,
+              89
+            ],
+            [
+              43,
+              81
+            ],
+            [
+              43,
+              59
+            ]
+          ],
+          "color": "ink"
+        }
+      ]
+    }
+  ]
+}

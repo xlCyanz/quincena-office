@@ -179,18 +179,32 @@ class Decal:
 
 
 # Tono de cada papel según la cara en pantalla: así un cajón se sombrea bien en cualquier rotación.
+# Cada papel es un tono del material de la caja (``<material>_<tono>``, ver ``material``).
 ROLES = {
-    "left": {"@face": "wood_left", "@lit": "wood_top", "@dark": "wood_right", "@deep": "wood_deep"},
-    "right": {"@face": "wood_right", "@lit": "wood_left", "@dark": "wood_dark", "@deep": "wood_deep"},
-    "top": {"@face": "wood_top", "@lit": "wood_light", "@dark": "wood_grain", "@deep": "wood_dark"},
+    "left": {"@face": "left", "@lit": "top", "@dark": "right", "@deep": "deep"},
+    "right": {"@face": "right", "@lit": "left", "@dark": "dark", "@deep": "deep"},
+    "top": {"@face": "top", "@lit": "light", "@dark": "grain", "@deep": "dark"},
 }
 
 
-def resolve(color: str, normal: Vec) -> str:
+def resolve(color: str, normal: Vec, mat: str = "wood") -> str:
     if not color.startswith("@"):
         return color
     side = {(0, 1, 0): "left", (1, 0, 0): "right"}.get(normal, "top")
-    return ROLES[side][color]
+    return f"{mat}_{ROLES[side][color]}"
+
+
+def material(name: str, base: tuple[int, int, int], light: str, grain: Optional[str] = None) -> dict[str, str]:
+    """Tonos de un material: arriba el color base, izquierda -25 %, derecha -40 %, y sus sombras."""
+    return {
+        f"{name}_light": light,  # brillo de 1 px en aristas
+        f"{name}_top": shade(base, 1.0),
+        f"{name}_grain": grain or shade(base, 0.88),  # vetas o líneas sobre la cara de arriba
+        f"{name}_left": shade(base, 0.75),
+        f"{name}_right": shade(base, 0.60),
+        f"{name}_dark": shade(base, 0.42),
+        f"{name}_deep": shade(base, 0.30),
+    }
 
 
 @dataclass
@@ -204,6 +218,8 @@ class Box:
     z1: float
     tone: int = 0  # -1 = una vuelta más oscura (zócalo)
     decals: list[Decal] = field(default_factory=list)
+    mat: str = "wood"  # prefijo de sus colores en la paleta
+    chamfer: float = 0  # > 0: esquinas verticales cortadas en diagonal (piezas chicas y redondeadas)
 
     def rotated(self, v: View) -> tuple[float, float, float, float, float, float]:
         ax, ay = v.rot(self.x0, self.y0)
@@ -318,12 +334,23 @@ def standard_model(spec: DeskSpec) -> tuple[list[Box], Box]:
     return under, top
 
 
-def faces(box: Box, v: View, colors: tuple[str, str, str]) -> list[Op]:
+def faces(box: Box, v: View) -> list[Op]:
     """Caras visibles (arriba, izquierda +y, derecha +x), brillo de aristas y detalles de la caja."""
     p = v.p
     x0, x1, y0, y1, z0, z1 = box.rotated(v)
-    top_c, left_c, right_c = colors
+    m = box.mat
+    tones = ("top", "left", "right") if box.tone >= 0 else ("dark", "deep", "deep")
+    top_c, left_c, right_c = (f"{m}_{t}" for t in tones)
     n = f"{box.name}_r{v.r}"
+    if box.chamfer:
+        ops = rounded_faces(box, v, n, (top_c, left_c, right_c))
+        for d in box.decals:
+            if v.visible(d.normal):
+                pts = [p(*v.rot(cx, cy), cz) for cx, cy, cz in d.corners]
+                color = resolve(d.color, v.rot_vec(d.normal), m)
+                ops.append(band(f"{n}_{d.name}", color, pts[0], pts[1], d.rows, up=d.up) if len(pts) == 2
+                           else poly(f"{n}_{d.name}", color, pts))
+        return ops
     ops: list[Op] = [
         poly(f"{n}_left", left_c, [p(x0, y1, z1), p(x1, y1, z1), p(x1, y1, z0), p(x0, y1, z0)]),
         poly(f"{n}_right", right_c, [p(x1, y0, z1), p(x1, y1, z1), p(x1, y1, z0), p(x1, y0, z0)]),
@@ -332,7 +359,7 @@ def faces(box: Box, v: View, colors: tuple[str, str, str]) -> list[Op]:
     for d in box.decals:
         if not v.visible(d.normal):
             continue
-        color = resolve(d.color, v.rot_vec(d.normal))
+        color = resolve(d.color, v.rot_vec(d.normal), m)
         pts = [p(*v.rot(cx, cy), cz) for cx, cy, cz in d.corners]
         if len(pts) == 2:
             ops.append(band(f"{n}_{d.name}", color, pts[0], pts[1], d.rows, up=d.up))
@@ -341,17 +368,65 @@ def faces(box: Box, v: View, colors: tuple[str, str, str]) -> list[Op]:
     if box.tone == 0:
         # Brillo de 1 px: aristas de arriba hacia el espectador y la esquina de adelante.
         ops += [
-            band(f"{n}_lit_left", "wood_light", p(x0, y1, z1), p(x1, y1, z1), 1, up=1),
-            band(f"{n}_lit_right", "wood_light", p(x1, y1, z1), p(x1, y0, z1), 1, up=1),
-            vline(f"{n}_lit_corner", "wood_light", p(x1, y1, z1), p(x1, y1, z0)),
+            band(f"{n}_lit_left", f"{m}_light", p(x0, y1, z1), p(x1, y1, z1), 1, up=1),
+            band(f"{n}_lit_right", f"{m}_light", p(x1, y1, z1), p(x1, y0, z1), 1, up=1),
         ]
+        if p(x1, y1, z0)[1] > p(x1, y1, z1)[1]:
+            ops.append(vline(f"{n}_lit_corner", f"{m}_light", p(x1, y1, z1), p(x1, y1, z0)))
     return ops
+
+
+def octagon(box: Box, v: View, z: float, inset: float = 0) -> list[Point]:
+    """Planta de una caja con las esquinas cortadas (``chamfer``), proyectada a la altura z."""
+    x0, x1, y0, y1, _, _ = box.rotated(v)
+    x0, x1, y0, y1 = x0 + inset, x1 - inset, y0 + inset, y1 - inset
+    c = min(box.chamfer, (x1 - x0) / 2, (y1 - y0) / 2)
+    pts = [(x0 + c, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1 - c), (x1 - c, y1), (x0 + c, y1), (x0, y1 - c), (x0, y0 + c)]
+    return [v.p(x, y, z) for x, y in pts]
+
+
+def hull(points: list[Point]) -> list[Point]:
+    """Envolvente convexa (cadena monótona)."""
+    pts = sorted(set(points))
+    if len(pts) < 3:
+        return pts
+
+    def cross(o: Point, a: Point, b: Point) -> int:
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower: list[Point] = []
+    upper: list[Point] = []
+    for pt in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], pt) <= 0:
+            lower.pop()
+        lower.append(pt)
+    for pt in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], pt) <= 0:
+            upper.pop()
+        upper.append(pt)
+    return lower[:-1] + upper[:-1]
 
 
 def silhouette(box: Box, v: View) -> list[Point]:
     p = v.p
     x0, x1, y0, y1, z0, z1 = box.rotated(v)
+    if box.chamfer:
+        return hull(octagon(box, v, z0) + octagon(box, v, z1))
     return [p(x0, y0, z1), p(x1, y0, z1), p(x1, y0, z0), p(x1, y1, z0), p(x0, y1, z0), p(x0, y1, z1)]
+
+
+def rounded_faces(box: Box, v: View, n: str, colors: tuple[str, str, str]) -> list[Op]:
+    """Caja de esquinas cortadas: costado en el tono izquierdo, la cara +x derecha, arriba y un brillo."""
+    p = v.p
+    x0, x1, y0, y1, z0, z1 = box.rotated(v)
+    top_c, left_c, right_c = colors
+    c = min(box.chamfer, (x1 - x0) / 2, (y1 - y0) / 2)
+    ops = [poly(f"{n}_side", left_c, silhouette(box, v))]
+    if y1 - y0 > 2 * c:
+        ops.append(poly(f"{n}_right", right_c, [p(x1, y0 + c, z1), p(x1, y1 - c, z1), p(x1, y1 - c, z0), p(x1, y0 + c, z0)]))
+    ops.append(poly(f"{n}_top", top_c, octagon(box, v, z1)))
+    ops.append(poly(f"{n}_shine", f"{box.mat}_light", octagon(box, v, z1, inset=max(0.5, (min(x1 - x0, y1 - y0)) / 2 - 0.5))))
+    return ops
 
 
 MOVES = {"n": (0, -1), "s": (0, 1), "w": (-1, 0), "e": (1, 0)}
@@ -390,15 +465,22 @@ def view(spec: DeskSpec, r: int) -> View:
     return View(r, spec.size[0] * CELL, spec.size[1] * CELL, spec.canvas)
 
 
+def outer_ink(spec: DeskSpec, pieces: list[Box], v: View) -> tuple[list[Op], list[Op]]:
+    """Máscara ``outside`` (el lienzo menos la silueta de cada pieza) y el contorno fuerte de cada pieza."""
+    masks = [{"id": f"sil_{b.name}", "type": "polygon", "points": [list(pt) for pt in silhouette(b, v)]} for b in pieces]
+    masks += [
+        {"id": "canvas_all", "type": "rect", "box": [0, 0, spec.canvas[0], spec.canvas[1]]},
+        {"id": "outside", "type": "subtract", "masks": ["canvas_all", *[f"sil_{b.name}" for b in pieces]]},
+    ]
+    return masks, [op for b in pieces for op in outline(b, v, "ink", "outer")]
+
+
 def desk_document(spec: DeskSpec, r: int) -> dict[str, object]:
     v = view(spec, r)
     p = v.p
     under, top = spec.parts()
     under = sorted(under, key=lambda b: depth(b, v))  # de atrás hacia adelante
-    wood = ("wood_top", "wood_left", "wood_right")
-    deep = ("wood_dark", "wood_deep", "wood_deep")
-
-    body = [op for b in under for op in [*outline(b, v), *faces(b, v, deep if b.tone < 0 else wood)]]
+    body = [op for b in under for op in [*outline(b, v), *faces(b, v)]]
 
     # Sombra del tablero: 2 filas oscuras bajo sus aristas, solo sobre las caras de lo de abajo.
     x0, x1, y0, y1, z0, _ = top.rotated(v)
@@ -412,12 +494,8 @@ def desk_document(spec: DeskSpec, r: int) -> dict[str, object]:
     masks = [*receivers, {"id": "under_top", "type": "union", "masks": [m["id"] for m in receivers]}]
     # Fuera del mueble: todo el lienzo menos la silueta de cada pieza.
     pieces = [*under, top]
-    masks += [{"id": f"sil_{b.name}", "type": "polygon", "points": [list(pt) for pt in silhouette(b, v)]} for b in pieces]
-    masks += [
-        {"id": "canvas_all", "type": "rect", "box": [0, 0, spec.canvas[0], spec.canvas[1]]},
-        {"id": "outside", "type": "subtract", "masks": ["canvas_all", *[f"sil_{b.name}" for b in pieces]]},
-    ]
-    outer = [op for b in pieces for op in outline(b, v, "ink", "outer")]
+    outer_masks, outer = outer_ink(spec, pieces, v)
+    masks += outer_masks
     under_shadow = [
         band("under_left", "wood_dark", p(x0, y1, z0), p(x1, y1, z0), 2),
         band("under_right", "wood_dark", p(x1, y1, z0), p(x1, y0, z0), 2),
@@ -426,7 +504,7 @@ def desk_document(spec: DeskSpec, r: int) -> dict[str, object]:
     layers = [
         {"id": "body", "name": "Patas, faldón y cajonera", "operations": body},
         {"id": "under_shadow", "name": "Sombra del tablero", "mask_id": "under_top", "operations": under_shadow},
-        {"id": "tabletop", "name": "Tablero", "operations": [*outline(top, v), *faces(top, v, wood)]},
+        {"id": "tabletop", "name": "Tablero", "operations": [*outline(top, v), *faces(top, v)]},
         {"id": "outer_ink", "name": "Contorno exterior", "mask_id": "outside", "operations": outer},
     ]
     return doc(spec, f"{spec.name}_r{r}", masks, layers)
@@ -492,7 +570,13 @@ def preview(spec: DeskSpec, images: list[Image.Image], path: Path, scale: int = 
     sheet.save(path)
 
 
-def main(spec: DeskSpec, here: Path) -> int:
+Documents = Callable[[DeskSpec, int], dict[str, object]]
+
+
+def main(spec: DeskSpec, here: Path, document: Optional[Documents] = None, shadow: Optional[Documents] = None) -> int:
+    """Genera las 4 rotaciones y sus sombras (por defecto, como escritorio) y el manifest.json."""
+    document = document or desk_document
+    shadow = shadow or shadow_document
     parser = argparse.ArgumentParser(description=f"Genera {spec.name} (4 rotaciones y sus sombras) con Moana.")
     parser.add_argument("--out", type=Path, default=here, help="carpeta de salida (por defecto, la del build.py)")
     parser.add_argument("--preview", action="store_true", help=f"escribe también {spec.name}_preview.png")
@@ -505,10 +589,9 @@ def main(spec: DeskSpec, here: Path) -> int:
     anchors: dict[str, dict[str, list[int]]] = {}
     for r in range(4):
         anchor = view(spec, r).anchor
-        for name, document in ((f"{spec.name}_r{r}", desk_document(spec, r)),
-                               (f"{spec.name}_r{r}_shadow", shadow_document(spec, r))):
-            (out / f"{name}.moana.json").write_text(json.dumps(document, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-            image = render(spec, document)
+        for name, built in ((f"{spec.name}_r{r}", document(spec, r)), (f"{spec.name}_r{r}_shadow", shadow(spec, r))):
+            (out / f"{name}.moana.json").write_text(json.dumps(built, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            image = render(spec, built)
             image.save(out / f"{name}.png")
             images.append(image)
             anchors[f"{name}.png"] = {"anchor": anchor}

@@ -1,0 +1,226 @@
+{
+  "schema_version": "1.0",
+  "id": "computer_pro_r1_shadow",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 128,
+    "height": 160,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_computer_pro",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#08080AFF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#101012FF"
+      },
+      {
+        "id": "plastic_light",
+        "rgba": "#7C7C88FF"
+      },
+      {
+        "id": "plastic_top",
+        "rgba": "#4A4A52FF"
+      },
+      {
+        "id": "plastic_grain",
+        "rgba": "#414148FF"
+      },
+      {
+        "id": "plastic_left",
+        "rgba": "#38383EFF"
+      },
+      {
+        "id": "plastic_right",
+        "rgba": "#2C2C31FF"
+      },
+      {
+        "id": "plastic_dark",
+        "rgba": "#1F1F22FF"
+      },
+      {
+        "id": "plastic_deep",
+        "rgba": "#161619FF"
+      },
+      {
+        "id": "glass_light",
+        "rgba": "#6A6E80FF"
+      },
+      {
+        "id": "glass_top",
+        "rgba": "#2A2B36FF"
+      },
+      {
+        "id": "glass_grain",
+        "rgba": "#252630FF"
+      },
+      {
+        "id": "glass_left",
+        "rgba": "#202028FF"
+      },
+      {
+        "id": "glass_right",
+        "rgba": "#191A20FF"
+      },
+      {
+        "id": "glass_dark",
+        "rgba": "#121217FF"
+      },
+      {
+        "id": "glass_deep",
+        "rgba": "#0D0D10FF"
+      },
+      {
+        "id": "key",
+        "rgba": "#7A7A84FF"
+      },
+      {
+        "id": "cyan",
+        "rgba": "#3FE0E8FF"
+      },
+      {
+        "id": "cyan_dark",
+        "rgba": "#1F8A90FF"
+      },
+      {
+        "id": "led",
+        "rgba": "#6FE08AFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "desk_top",
+      "type": "polygon",
+      "points": [
+        [
+          82,
+          63
+        ],
+        [
+          122,
+          83
+        ],
+        [
+          62,
+          113
+        ],
+        [
+          22,
+          93
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "mask_id": "desk_top",
+      "operations": [
+        {
+          "id": "shadow_tower",
+          "type": "polygon",
+          "points": [
+            [
+              82,
+              65
+            ],
+            [
+              110,
+              79
+            ],
+            [
+              96,
+              86
+            ],
+            [
+              68,
+              72
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_foot",
+          "type": "polygon",
+          "points": [
+            [
+              63,
+              80
+            ],
+            [
+              79,
+              88
+            ],
+            [
+              59,
+              98
+            ],
+            [
+              43,
+              90
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_keyboard",
+          "type": "polygon",
+          "points": [
+            [
+              92,
+              88
+            ],
+            [
+              106,
+              95
+            ],
+            [
+              74,
+              111
+            ],
+            [
+              60,
+              104
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_mouse",
+          "type": "polygon",
+          "points": [
+            [
+              105,
+              84
+            ],
+            [
+              117,
+              90
+            ],
+            [
+              107,
+              94
+            ],
+            [
+              95,
+              88
+            ]
+          ],
+          "color": "shadow_ink"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "computer_basic_r0.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r0_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r1.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r1_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r2.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r2_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r3.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  },
+  "computer_basic_r3_shadow.png": {
+   "anchor": [
+    64,
+    128
+   ]
+  }
+ }
+}

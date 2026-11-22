@@ -1,0 +1,195 @@
+{
+  "schema_version": "1.0",
+  "id": "computer_basic_r2_shadow",
+  "revision": 0,
+  "seed": 0,
+  "canvas": {
+    "width": 128,
+    "height": 160,
+    "profile": "strict"
+  },
+  "palette": {
+    "id": "palette_computer_basic",
+    "colors": [
+      {
+        "id": "ink",
+        "rgba": "#4A3F2CFF"
+      },
+      {
+        "id": "ink_in",
+        "rgba": "#8A7A58FF"
+      },
+      {
+        "id": "case_light",
+        "rgba": "#F6EED8FF"
+      },
+      {
+        "id": "case_top",
+        "rgba": "#E4D6B4FF"
+      },
+      {
+        "id": "case_grain",
+        "rgba": "#C9BC9EFF"
+      },
+      {
+        "id": "case_left",
+        "rgba": "#ABA087FF"
+      },
+      {
+        "id": "case_right",
+        "rgba": "#89806CFF"
+      },
+      {
+        "id": "case_dark",
+        "rgba": "#605A4CFF"
+      },
+      {
+        "id": "case_deep",
+        "rgba": "#444036FF"
+      },
+      {
+        "id": "glass_light",
+        "rgba": "#9DB8BEFF"
+      },
+      {
+        "id": "glass_top",
+        "rgba": "#6B8A92FF"
+      },
+      {
+        "id": "glass_grain",
+        "rgba": "#5E7980FF"
+      },
+      {
+        "id": "glass_left",
+        "rgba": "#50686EFF"
+      },
+      {
+        "id": "glass_right",
+        "rgba": "#405358FF"
+      },
+      {
+        "id": "glass_dark",
+        "rgba": "#2D3A3DFF"
+      },
+      {
+        "id": "glass_deep",
+        "rgba": "#20292CFF"
+      },
+      {
+        "id": "key",
+        "rgba": "#C9B88FFF"
+      },
+      {
+        "id": "led",
+        "rgba": "#6FE08AFF"
+      },
+      {
+        "id": "shadow_ink",
+        "rgba": "#1A1C26FF"
+      }
+    ],
+    "ramps": []
+  },
+  "masks": [
+    {
+      "id": "desk_top",
+      "type": "polygon",
+      "points": [
+        [
+          46,
+          63
+        ],
+        [
+          106,
+          93
+        ],
+        [
+          66,
+          113
+        ],
+        [
+          6,
+          83
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "mask_id": "desk_top",
+      "operations": [
+        {
+          "id": "shadow_crt",
+          "type": "polygon",
+          "points": [
+            [
+              62,
+              73
+            ],
+            [
+              90,
+              87
+            ],
+            [
+              66,
+              99
+            ],
+            [
+              38,
+              85
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_keyboard",
+          "type": "polygon",
+          "points": [
+            [
+              38,
+              85
+            ],
+            [
+              66,
+              99
+            ],
+            [
+              52,
+              106
+            ],
+            [
+              24,
+              92
+            ]
+          ],
+          "color": "shadow_ink"
+        },
+        {
+          "id": "shadow_mouse",
+          "type": "polygon",
+          "points": [
+            [
+              29,
+              80
+            ],
+            [
+              39,
+              86
+            ],
+            [
+              27,
+              92
+            ],
+            [
+              17,
+              86
+            ]
+          ],
+          "color": "shadow_ink"
+        }
+      ]
+    }
+  ]
+}

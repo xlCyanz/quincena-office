@@ -466,6 +466,9 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/furniture/desk_simple/` | Escritorio sencillo: `desk_simple_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/desk_long/` | Escritorio largo (2×1): `desk_long_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/executive_desk/` | Escritorio ejecutivo (2×1, nogal): `executive_desk_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/computer_basic/` | Computadora básica (todo en uno crema): `computer_basic_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/computer_pro/` | Computadora pro (pantalla plana y torre): `computer_pro_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/_desk_kit.py` | Modelo común de los escritorios; cada `build.py` da planta y lienzo, y si hace falta su propio modelo y paleta |
+| `art/furniture/_computer_kit.py` | Lo que va encima de un escritorio: documento de piezas sueltas y sombra de contacto sobre el tablero |
 
 `build.py` corre con el Python de Moana, no con el del sistema (ver su cabecera).
