@@ -127,11 +127,12 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
   con puertas al frente y tanque encima, 56 px de sprite de alto: más que su `height` de 20, para que se lea como pecera;
   marco negro en las aristas, franja de aire bajo la tapa y reflejos en el vidrio). Cada uno con su `_shadow` salvo la
   alfombra.
-- Recepción (`tools/sprites/pieces/reception.py`): `reception_counter_r0`–`_r3` (2×1: mesa de trabajo sobre dos
-  cajoneras de metal del lado de la recepcionista, que es el frente, y panel alto con mesón crema del lado del
-  cliente); `waiting_sofa_r0`–`_r3` (2×1, respaldo de 38 px: más que su `height` de 12); `water_dispenser_r0`–`_r3`
-  y `water_dispenser_q_r0`–`_r3` (chico: grifos solo al frente); `trash_can` y `trash_can_q` (chico y simétrico, 26 px de alto: más que su `height` de 10). Cada
-  uno con su `_shadow`.
+- Recepción (Moana, `tools/sprites/art/furniture/<pieza>/`): `reception_counter_r0`–`_r3` (2×1: mesa de trabajo
+  sobre dos cajoneras de metal del lado de la recepcionista, que es el frente, con papeles y portalápices; panel
+  alto con placa del logo, postes de aluminio y mesón crema con timbre y folletos del lado del cliente);
+  `waiting_sofa_r0`–`_r3` (2×1, respaldo corrido de 38 px: más que su `height` de 12; brazos enrollados y cojines
+  con `puff` de `_sofa.py`, redondos igual desde las cuatro rotaciones); `water_dispenser_q_r0`–`_r3` y `trash_can_q` (chicos, ya al 60 %; el zafacón es simétrico, 16 px de
+  alto). Cada uno con su `_shadow`.
 - Trabajo: `executive_desk_r0`–`_r3` (Moana, `tools/sprites/art/furniture/executive_desk/`; 2×1, superficie
   en z = 44 como el escritorio sencillo para que las computadoras se apoyen igual, aunque el ejecutivo tenga `height` 26);
   también con Moana (`tools/sprites/art/furniture/<pieza>/`, cajas de `_boxes.py`): `printer_r0`–`_r3` (impresora sobre

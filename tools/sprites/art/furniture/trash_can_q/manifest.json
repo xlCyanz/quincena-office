@@ -1,0 +1,17 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "trash_can_q.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  },
+  "trash_can_q_shadow.png": {
+   "anchor": [
+    64,
+    96
+   ]
+  }
+ }
+}

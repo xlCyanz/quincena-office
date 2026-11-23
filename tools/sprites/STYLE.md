@@ -51,12 +51,12 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      barras, torta con leyenda o portada con logo, que se arma en 12 cuadros (`_play_1` a `_12`); aire acondicionado split largo y bajo, frente blanco verdoso,
      tapa gris con panel claro, rejilla negra abajo y luz roja.
    - *Decoración de piso*: con Moana (`art/furniture/floor_lamp_q/`, `rug/`, `aquarium/`, ver el README).
-   - *Recepción* (`pieces/reception.py`): mostrador con mesa de trabajo de tablero naranja sobre dos cajoneras de
+   - *Recepción* (con Moana, `art/furniture/`, ver el README): mostrador con mesa de trabajo de tablero naranja sobre dos cajoneras de
      metal gris del lado de la recepcionista y, del lado del cliente, panel de madera lisa con postes de aluminio en
-     las esquinas y mesón crema con un timbre dorado; sofá de espera rojo alto y mullido con faldón, tres cojines de
-     asiento, respaldo de tres cojines con botón y brazos gruesos enrollados; dispensador de agua de gabinete blanco
-     con panel oscuro (llaves roja y azul) y rejillas, y bidón grande celeste casi transparente con tres aros y
-     brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
+     las esquinas y mesón crema con un timbre dorado; sofá de espera rojo alto y mullido con faldón, respaldo corrido alto,
+     tres cojines de asiento, tres de respaldo con botón recostados en él y brazos gruesos enrollados; dispensador
+     de agua de gabinete blanco con luces de frío y calor, hueco oscuro con llaves roja y azul, bandeja de rejilla y
+     tubo de vasos, y bidón grande celeste casi transparente con hombro, tres aros, agua más honda abajo y brillos; zafacón de metal gris alto que se angosta abajo, aro claro y bolsa negra doblada sobre el borde.
    - *Trabajo*: con Moana (`art/furniture/`: escritorios, impresora, archivero, baterías y mesa de reuniones; ver el README).
    - *Sala de descanso* (con Moana, `art/furniture/`, ver el README): sofá lila de dos cojines, brazos rectos y patas de madera; nevera
      blanca con congelador arriba y tiradores grises; microondas y cafetera negros (jarra de vidrio con café) sobre un

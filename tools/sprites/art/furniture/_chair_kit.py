@@ -35,7 +35,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _desk_kit import View  # noqa: E402
 from _painter import document as painter_document  # noqa: E402
-from moana import api  # noqa: E402
+from moanart import api  # noqa: E402
 
 CELL = 32  # unidades por casilla
 CANVAS = (128, 128)

@@ -28,7 +28,7 @@ from typing import Callable, Optional
 import numpy as np
 from PIL import Image
 
-from moana import api
+from moanart import api
 
 N = 64  # celdas de eje por casilla y lado
 SIZE = 128

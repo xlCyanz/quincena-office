@@ -25,7 +25,7 @@ from typing import Callable, Optional
 
 from PIL import Image
 
-from moana import api
+from moanart import api
 
 CELL = 32  # unidades por casilla
 

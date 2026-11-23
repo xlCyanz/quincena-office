@@ -460,7 +460,7 @@ iso.save(tile(0), out_dir, "floor_ceramic_0", material="ceramic", variant=0, bas
 ## Sprites dibujados aparte (`art/`)
 
 `art/<categoría>/<pieza>/` guarda los sprites que no salen de `generate.py`: sus PNG, el documento editable de
-cada uno (`.moana.json`, del motor Moana), el `build.py` que los genera y un `manifest.json` con el apoyo de
+cada uno (`.moana.json`, del motor Moana, hoy MoanArt: el paquete de Python es `moanart`), el `build.py` que los genera y un `manifest.json` con el apoyo de
 cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo nombre.
 
 | Carpeta | Qué tiene |
@@ -492,6 +492,9 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/furniture/sofa/`, `fridge/`, `microwave/`, `coffee_maker/`, `vending_machine/`, `ping_pong/`, `dining_table/` | Sala de descanso: `<pieza>_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/toilet/`, `sink/`, `cleaning_closet/`, `server_rack/` | Baño, limpieza y servidores: `<pieza>_r0`–`_r3` y sus `_shadow` |
 | `art/furniture/mop_bucket/` | Cubo de trapear con ruedas (una imagen, va a `assets/sprites/characters/`) y su `_shadow` |
+| `art/furniture/reception_counter/`, `waiting_sofa/` | Recepción (2×1): `<pieza>_r0`–`_r3` y sus `_shadow` |
+| `art/furniture/water_dispenser_q/`, `trash_can_q/` | Dispensador de agua (`_r0`–`_r3`) y zafacón (una imagen), chicos y ya a su tamaño, con `_shadow` |
+| `art/furniture/_sofa.py` | Bloques acolchados de los sofás: esquinas redondeadas, sombra de 1 px al pie, botón y costuras; `puff`, abultado parejo por los cuatro lados |
 | `art/furniture/_bath.py`, `_cleaning.py` | Cerámica y cromo del baño; balde amarillo con agua que comparten el armario y el cubo |
 | `art/furniture/_kitchen.py` | Mueble bajo de cocina (puertas y mesón) que comparten el microondas y la cafetera |
 | `art/furniture/_boxes.py` | Muebles de cajas sobre `_chair_kit.py`: material desde una rampa, caja y caras con coordenadas en px para pintar puertas, cajones y luces |
