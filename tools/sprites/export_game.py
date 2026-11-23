@@ -219,7 +219,9 @@ def main(directory):
         for base in bases:
             for axis in ("x", "y"):
                 copy("%s_%s" % (base, axis), "wall_items")
-        wall_items[item] = {"sprites": list(bases), "base_z": manifest[bases[0] + "_x.png"]["base_z"]}
+        first = bases[0] + "_x.png"
+        entry = art[first][1] if first in art else manifest[first]
+        wall_items[item] = {"sprites": list(bases), "base_z": entry["base_z"]}
 
     # ---- personajes
     # Cada hoja lleva además «sentado en su silla» por silla: silla entera + persona con su paleta +

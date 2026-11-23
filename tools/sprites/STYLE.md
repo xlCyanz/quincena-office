@@ -42,9 +42,11 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      tirador largo junto al medio y 1 px de luz entre las hojas. Abren hacia afuera.
    - *Ventana administrativa*: aluminio oscuro, parante en el medio, travesaño que deja una banda fija arriba,
      vidrio celeste con reflejos en diagonal y persiana veneciana blanca de tablillas de 3 px.
-   - *Objetos de pared* (`pieces/wall_items.py`): cuadro con marco de madera naranja de 3 px y tres dibujos
-     (paisaje, bloques de color, mar con velero); reloj redondo de aro negro, esfera crema, agujas a las 10:10 y
-     segundero rojo; pizarra blanca de marco de aluminio con garabatos en azul, rojo y verde y bandeja con dos
+   - *Objetos de pared* (con Moana, `art/wall_items/`, ver el README): cuadro con marco de madera naranja de cuatro
+     listones de 3 px, la tela 1 px más adentro y tres dibujos (paisaje con árbol, sol y nube; bloques de color; mar
+     con velero); reloj redondo de 20 px con aro negro de canto redondo, esfera crema
+     con marcas en 12, 3, 6 y 9 y puntos en las demás horas, las 3:00 (agujas en la vertical y a lo largo de la
+     pared, que salen limpias en la escalera 2:1) y segundero rojo en el 6; pizarra blanca de marco de aluminio con garabatos en azul, rojo y verde y bandeja con dos
      marcadores; televisor grande (la pantalla de presentaciones, en dos bordes, de media pared a casi el techo) colgado
      sin repisa: marco negro delgado con filo gris claro, pantalla apagada con reflejos finos en diagonal y dos
      soportes cortos abajo; encendido (Sala de reuniones) muestra una diapositiva clara con barra de título azul:

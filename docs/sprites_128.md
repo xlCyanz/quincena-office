@@ -158,11 +158,13 @@ Cuadro, reloj, pizarra, pantalla de presentaciones y aire acondicionado se cuelg
 - Lienzo 64×128, base del objeto a 24 px del mundo (48 px de sprite) sobre el piso.
 - En las paredes bajas el juego los dibuja chicos y pegados abajo: no hace falta otra versión.
 - Nombres: `painting_x` (paisaje), `painting_abstract_x` y `painting_sea_x` (tres dibujos del cuadro),
-  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor grande colgado, de marco negro delgado, que ocupa dos bordes seguidos de la misma pared, de media pared a casi el techo: lienzo de 128×192, x de 0 a 2, con el apoyo en (64, 160), el punto medio de los dos bordes en el piso; en el juego ocupa un solo borde (decidido al conectar los sprites): se dibuja centrada en él y sobresale medio borde a cada lado; variantes encendidas con una presentación para la Sala de reuniones: `presentation_screen_chart_x`, `_pie_x` y `_title_x`) y
+  `wall_clock_x`, `whiteboard_x`, `presentation_screen_x` (dibujada como un televisor grande colgado, de marco negro delgado, que ocupa dos bordes seguidos de la misma pared, de media pared a casi el techo: lienzo de 128×192, x de 0 a 2, con el apoyo en (64, 160), el punto medio de los dos bordes en el piso; en el juego ocupa un solo borde (decidido al conectar los sprites): se dibuja centrada en él y sobresale medio borde a cada lado) y
   `air_conditioner_x`, más sus `_y`. Apoyo (32, 112), el
   punto medio del borde en el piso como en los tramos; el objeto sale de la cara de la pared (4 px de la línea del
-  borde) y mide de alto el `height` de `data/furniture.json` × 2. En las paredes `_x` los dibujos van espejados
-  para leerse igual que en las `_y`.
+  borde) y mide de alto el `height` de `data/furniture.json` × 2. Se dibujan con Moana
+  (`tools/sprites/art/wall_items/<pieza>/`, kit `_wall_kit.py`): un solo modelo, que en la pared `_x` se ve
+  girado, no espejado, así los dibujos se leen igual en las dos. El fondo corre el objeto a la izquierda en `_y` y
+  a la derecha en `_x`: lo que no entra centrado (el aire acondicionado) se corre a lo largo según la pared.
 
 ## 8. Paredes, puertas y ventanas
 
