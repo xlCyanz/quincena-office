@@ -1,20 +1,22 @@
-# Generador de sprites (piloto)
+# Sprites
 
-Dibuja por código, pixel por pixel, los sprites isométricos de `docs/sprites_128.md`. Esa guía manda:
-léela entera antes de dibujar. Esta carpeta no es parte del juego (`tools/.gdignore` hace que Godot no la importe).
+Todos los sprites del juego se dibujan por código con Moana (`art/<categoría>/<pieza>/build.py`, ver «Sprites dibujados
+aparte» abajo) siguiendo `docs/sprites_128.md`. Esa guía manda: léela entera antes de dibujar. `export_game.py` los
+pasa al juego (`python3 tools/sprites/export_game.py`, después `Godot --headless --editor --quit`) y
+`preview.py --out DIR` arma una oficina de muestra con ellos. Esta carpeta no es parte del juego (`tools/.gdignore` hace que Godot no la importe).
 
 - Python 3.9 del sistema (`/usr/bin/python3`) con Pillow y numpy. Sin sintaxis de 3.10+ (`match`, `X | Y` en tipos).
 - Código en inglés y `snake_case`; comentarios y textos en español.
-- Los PNG **no** se escriben en el repositorio: siempre a la carpeta que se pasa con `--out`.
+- Los PNG de `art/` se versionan junto a su `build.py`, su documento `.moana.json` y su `manifest.json`.
+
+El motor viejo (`iso.py`, el modelo de los personajes en `art/characters/_figure.py` lo sigue usando) se prueba con:
 
 ```
-python3 tools/sprites/generate.py --out DIR [--only grupo[,grupo]] [--check] [--list]
 python3 tools/sprites/check.py DIR [--verbose] [--group grupo[,grupo]]   # RESULTADO: OK o la lista de fallos
 python3 tools/sprites/selftest.py --out DIR         # prueba propia del motor (unos 12 s)
 ```
 
-`generate.py --only decor --check` revisa **solo** los archivos de ese grupo (lo mismo `check.py DIR --group decor`), así
-no se mezclan los fallos de lo que otro esté generando en la misma carpeta. `selftest.py` mide el motor (rombo, lienzos,
+`selftest.py` mide el motor (rombo, lienzos,
 apoyo, escalera 2:1 de 60 cajas × 4 rotaciones, tonos exactos, giro, texturas 1:1, curvas sin huecos, empalme de
 paredes), dibuja piezas de ejemplo con sus hojas `sheet_*.png` y rompe a propósito 36 cosas para comprobar que
 `check.py` las detecta. Correrlo después de tocar el motor.
@@ -26,11 +28,10 @@ paredes), dibuja piezas de ejemplo con sus hojas `sheet_*.png` y rompe a propós
 | `pattern.py` | Patrones periódicos para pisos y texturas: juntas, tablones, vetas, tramas Bayer, manchas, reparto exacto por tono |
 | `sheet.py` | Vistas para revisar: ampliar ×N, sobre fondo, sobre piso, hojas de contacto, escenas por casilla |
 | `check.py` | Verificador de la sección 11 de la guía |
-| `generate.py` | Corre los módulos de `pieces/` y escribe `manifest_<grupo>.json` |
-| `pieces/<grupo>.py` | Las piezas. Cada módulo expone `build(out_dir) -> lista de archivos`. Los que empiezan con `_` no se corren (código compartido) |
+| `export_game.py` | Pasa los sprites de `art/` al juego |
+| `preview.py` | Oficina de muestra y hoja de contacto de paredes y personajes |
 
-Una pieza se corre siempre con `generate.py --only <grupo>` (así `import iso` funciona y se escribe su manifiesto).
-Dos grupos pueden generar a la vez en la misma carpeta: cada uno escribe su propio manifiesto.
+Los ejemplos de código de abajo son del generador viejo (`pieces/`, ya borrado); quedan como referencia del motor.
 
 ## Convenciones (las del juego)
 
@@ -407,10 +408,6 @@ def build(out_dir):
     return files
 ```
 
-```
-python3 tools/sprites/generate.py --out DIR --only <grupo> --check
-```
-
 Un piso (las 4 variantes comparten juntas y bisel; solo cambian las manchas, con la misma cantidad por tono):
 
 ```python
@@ -459,9 +456,9 @@ iso.save(tile(0), out_dir, "floor_ceramic_0", material="ceramic", variant=0, bas
 
 ## Sprites dibujados aparte (`art/`)
 
-`art/<categoría>/<pieza>/` guarda los sprites que no salen de `generate.py`: sus PNG, el documento editable de
+`art/<categoría>/<pieza>/` guarda todos los sprites: sus PNG, el documento editable de
 cada uno (`.moana.json`, del motor Moana, hoy MoanArt: el paquete de Python es `moanart`), el `build.py` que los genera y un `manifest.json` con el apoyo de
-cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo nombre.
+cada PNG. `export_game.py` los pasa al juego.
 
 | Carpeta | Qué tiene |
 | --- | --- |
@@ -476,6 +473,7 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/ground/ceramic/`, `wood/`, `carpet/`, `bare/` | Pisos de adentro: `floor_ceramic_0`–`_3`, `floor_wood_*`, `floor_carpet_*` y `floor_bare_*` (concreto) |
 | `art/ground/grass/` | Pasto del solar y de fuera: `ground_grass_<familia>_0`–`_3` y `ground_outside_<familia>_0`–`_3` (familias `plain`, `patchy`, `lush`, `sunny`) |
 | `art/ground/path/`, `sidewalk/`, `road/` | Camino de grava, acera y calle (`ground_road_*`, `ground_road_line_x_*`, `ground_road_line_y_*`) |
+| `art/ground/dirt/` | Manchas de suciedad `dirt_0` (barro), `dirt_1` (café) y `dirt_2` (migas y papeles), kind `overlay`; aún no las usa el juego |
 | `art/ground/_ground_kit.py` | Lo común del terreno: rejilla isométrica periódica, anillo del borde compartido, documento Moana por tonos y las comprobaciones de costura y brillo |
 | `art/furniture/chair_basic/`, `chair_ergonomic/` | Sillas de oficina: `<silla>_r0`–`_r3`, sus capas `_seat_r<n>` y `_back_r<n>`, `_shadow` y `_r<n>_depth.png` (profundidad para el personaje sentado, no es sprite) |
 | `art/furniture/_chair_kit.py`, `_chairs.py` | Sillas: sólidos convexos (cojín redondeado, cilindros, barras) rasterizados con z-buffer, contorno, capas asiento/respaldo y profundidad; `_chairs.py` tiene base, cojín, soporte y respaldos |
@@ -504,6 +502,9 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/walls/window/` | Ventana alta y baja, y la persiana `window_tall_<eje>_blind_1` a `_6` |
 | `art/walls/posts/` | Postes `wall_post_<−x><−y><+x><+y>` de toda unión y las ocho esquinas con nombre en los cinco colores |
 | `art/walls/_walls_kit.py` | Paredes: modelo a lo largo del borde (`Along`), `_x` espejado del `_y`, fantasmas para el empalme y el pie, hoja con bisagra (`Leaf`), rodapié |
+| `art/characters/<conjunto>/` | Personajes, una carpeta por conjunto de ropa: `character_<prefijo><pose>_r<n>` (de pie, sentado) y `_r<n>_<cuadro>` (caminar, quieto, teclear; trapear en los de limpieza), y por cada cuadro sentado y silla `<cuadro>_<silla>`, lo que la silla le tapa |
+| `art/characters/shadow/` | Sombra de los pies `character_stand_shadow` |
+| `art/characters/_figure.py` | Modelo de los personajes: campos de distancia girados hacia la cámara (`iso.Canvas.character`), sombreado, contorno, detalles a mano, poses y paletas (`LOOKS`); `build.py` guarda cada cuadro como documento Moana |
 | `art/furniture/_sofa.py` | Bloques acolchados de los sofás: esquinas redondeadas, sombra de 1 px al pie, botón y costuras; `puff`, abultado parejo por los cuatro lados |
 | `art/furniture/_bath.py`, `_cleaning.py` | Cerámica y cromo del baño; balde amarillo con agua que comparten el armario y el cubo |
 | `art/furniture/_kitchen.py` | Mueble bajo de cocina (puertas y mesón) que comparten el microondas y la cafetera |

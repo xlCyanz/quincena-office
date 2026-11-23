@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # Pasa al juego los sprites conectados (suelo, paredes, árboles, muebles, objetos de pared y personajes).
 #
-#   python3 tools/sprites/export_game.py DIR
+#   python3 tools/sprites/export_game.py
 #
-# DIR es la carpeta de generate.py (PNG y manifest*.json). Escribe assets/tiles/ground.png,
-# assets/sprites/ y data/sprites.json (apoyos; lo lee SpriteLibrary). Los PNG de tools/sprites/art/
-# (dibujados aparte, una carpeta por pieza) reemplazan a los de DIR con el mismo nombre.
+# Lee los PNG de tools/sprites/art/ (dibujados con Moana, una carpeta por pieza con su manifest.json) y escribe
+# assets/tiles/ground.png, assets/sprites/ y data/sprites.json (apoyos; lo lee SpriteLibrary).
 # Después: Godot --headless --editor --quit
 import json
 import os
@@ -21,10 +20,10 @@ import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 
 import sheet  # noqa: E402
-from pieces import character  # noqa: E402
 
-# Sprites dibujados aparte: art/<categoría>/<pieza>/ con sus PNG y un manifest.json con el apoyo de
-# cada uno. Reemplazan al de generate.py del mismo nombre.
+sys.path.insert(0, os.path.join(HERE, "art", "characters"))
+import _figure as character  # noqa: E402
+
 TILE = (128, 64)
 VARIANTS = 4
 GRASS_FAMILIES = ("plain", "patchy", "lush", "sunny")
@@ -100,7 +99,7 @@ def recolor(image, base, variant):
 SEATED_CHAIRS = {"basic_chair": "chair_basic", "ergonomic_chair": "chair_ergonomic"}
 
 
-def check_chair_colors(directory):
+def check_chair_colors(load):
     """Ningún tono de una silla puede ser también de la ropa, la piel o el pelo de un personaje."""
     used = {}
     for style in character.STYLES:
@@ -110,8 +109,7 @@ def check_chair_colors(directory):
                     used[tuple(color)] = "%s%s (%s)" % (style.name, variant, layer)
     for base in SEATED_CHAIRS.values():
         for rotation in range(4):
-            path = sheet.find(directory, "%s_r%d.png" % (base, rotation))
-            arr = np.array(Image.open(path).convert("RGBA"))
+            arr = np.array(load("%s_r%d" % (base, rotation)))
             for color in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0):
                 key = tuple(int(v) for v in color)
                 if key in used:
@@ -139,14 +137,13 @@ def bleed(tile):
     return Image.fromarray(out)
 
 
-def main(directory):
-    manifest = sheet.manifest(directory)
+def main():
+    art = sheet.art_sprites()
 
     def load(name):
-        path = sheet.find(directory, name + ".png") or os.path.join(directory, name + ".png")
-        if not os.path.isfile(path):
-            raise SystemExit("Falta %s: corre antes generate.py --out %s" % (path, directory))
-        return Image.open(path).convert("RGBA")
+        if name + ".png" not in art:
+            raise SystemExit("Falta %s.png en tools/sprites/art/: corre su build.py" % name)
+        return Image.open(art[name + ".png"][0]).convert("RGBA")
 
     # ---- suelo
     atlas = Image.new("RGBA", (TILE[0] * VARIANTS, TILE[1] * len(GROUND)), (0, 0, 0, 0))
@@ -163,18 +160,14 @@ def main(directory):
     # ---- piezas sueltas
     sprites = {}
 
-    art = sheet.art_sprites()
+    def anchor(name):
+        return art[name + ".png"][1].get("anchor") if name + ".png" in art else None
 
     def copy(name, folder):
         target = os.path.join(ROOT, "assets", "sprites", folder)
         os.makedirs(target, exist_ok=True)
-        if name + ".png" in art:
-            source, entry = art[name + ".png"]
-            image = Image.open(source).convert("RGBA")
-        else:
-            source = os.path.join(directory, name + ".png")
-            image = load(name)
-            entry = manifest.get(name + ".png", {})
+        image = load(name)
+        source, entry = art[name + ".png"]
         shutil.copyfile(source, os.path.join(target, name + ".png"))
         if "anchor" not in entry:
             raise SystemExit("%s no tiene anchor en el manifiesto" % name)
@@ -202,7 +195,7 @@ def main(directory):
             else:
                 copy(base + suffix, "furniture")
             shadow = base + suffix + "_shadow"
-            if shadow + ".png" in art or os.path.isfile(os.path.join(directory, shadow + ".png")):
+            if shadow + ".png" in art:
                 copy(base + suffix + "_shadow", "furniture")
         furniture[item] = {"base": base, "rotated": rotated, "parts": parts}
     for item, by_computer in DESK_SETS.items():
@@ -220,7 +213,7 @@ def main(directory):
             for axis in ("x", "y"):
                 copy("%s_%s" % (base, axis), "wall_items")
         first = bases[0] + "_x.png"
-        entry = art[first][1] if first in art else manifest[first]
+        entry = art[first][1]
         wall_items[item] = {"sprites": list(bases), "base_z": entry["base_z"]}
 
     # ---- personajes
@@ -238,7 +231,7 @@ def main(directory):
         column += count
     characters_dir = os.path.join(ROOT, "assets", "sprites", "characters")
     os.makedirs(characters_dir, exist_ok=True)
-    check_chair_colors(directory)
+    check_chair_colors(load)
     chairs = {}
     for item, base in SEATED_CHAIRS.items():
         for rotation in range(4):
@@ -260,13 +253,12 @@ def main(directory):
                     if plain not in ("stand", "sit"):
                         name += "_%d" % (frame + 1)
                     image = load(name)
-                    if image.size != CHARACTER_CELL or manifest[name + ".png"]["anchor"] != [64.0, 112.0]:
+                    if image.size != CHARACTER_CELL or anchor(name) != [64.0, 112.0]:
                         raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
                     chair = over = None
                     if item:
                         chair = chairs[(item, rotation)]
-                        over = Image.open(os.path.join(directory, character.CHAIR_DIR,
-                                                       "%s_%s.png" % (name, SEATED_CHAIRS[item]))).convert("RGBA")
+                        over = load("%s_%s" % (name, SEATED_CHAIRS[item]))
                     frames.append((column, rotation, image, chair, over))
                     column += 1
         for suffix in CHARACTER_VARIANTS:
@@ -298,7 +290,7 @@ def main(directory):
                     for frame in range(count):
                         name = "character_%s%s_r%d_%d" % (style.prefix, pose, rotation, frame + 1)
                         image = load(name)
-                        if image.size != CHARACTER_CELL or manifest[name + ".png"]["anchor"] != [64.0, 112.0]:
+                        if image.size != CHARACTER_CELL or anchor(name) != [64.0, 112.0]:
                             raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
                         if suffix:
                             image = recolor(image, character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
@@ -344,6 +336,4 @@ def main(directory):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        raise SystemExit(__doc__ or "uso: export_game.py DIR")
-    main(sys.argv[1])
+    main()

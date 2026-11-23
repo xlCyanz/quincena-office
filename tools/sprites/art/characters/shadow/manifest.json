@@ -1,0 +1,20 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "character_stand_shadow.png": {
+   "kind": "shadow",
+   "canvas": [
+    128,
+    128
+   ],
+   "footprint": [
+    1,
+    1
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ]
+  }
+ }
+}

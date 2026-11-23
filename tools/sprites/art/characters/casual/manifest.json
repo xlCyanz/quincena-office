@@ -1,0 +1,2401 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "character_idle_r0_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4
+  },
+  "character_idle_r0_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4
+  },
+  "character_idle_r0_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4
+  },
+  "character_idle_r0_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4
+  },
+  "character_idle_r1_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4
+  },
+  "character_idle_r1_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4
+  },
+  "character_idle_r1_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4
+  },
+  "character_idle_r1_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4
+  },
+  "character_idle_r2_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 24,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4
+  },
+  "character_idle_r2_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 24,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4
+  },
+  "character_idle_r2_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 24,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4
+  },
+  "character_idle_r2_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 24,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4
+  },
+  "character_idle_r3_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4
+  },
+  "character_idle_r3_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4
+  },
+  "character_idle_r3_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4
+  },
+  "character_idle_r3_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "idle",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4
+  },
+  "character_sit_r0.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 21,
+   "pose": "sit",
+   "style": "casual",
+   "seat_z": 24.0
+  },
+  "character_sit_r0_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 0
+  },
+  "character_sit_r0_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_sit_r1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 24,
+   "pose": "sit",
+   "style": "casual",
+   "seat_z": 24.0
+  },
+  "character_sit_r1_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 1
+  },
+  "character_sit_r1_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_sit_r2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 25,
+   "pose": "sit",
+   "style": "casual",
+   "seat_z": 24.0
+  },
+  "character_sit_r2_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 2
+  },
+  "character_sit_r2_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_sit_r3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 20,
+   "pose": "sit",
+   "style": "casual",
+   "seat_z": 24.0
+  },
+  "character_sit_r3_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 3
+  },
+  "character_sit_r3_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_stand_r0.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "stand",
+   "style": "casual"
+  },
+  "character_stand_r1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "stand",
+   "style": "casual"
+  },
+  "character_stand_r2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 24,
+   "pose": "stand",
+   "style": "casual"
+  },
+  "character_stand_r3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "stand",
+   "style": "casual"
+  },
+  "character_type_r0_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 21,
+   "pose": "type",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r0_1_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 0
+  },
+  "character_type_r0_1_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_type_r0_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 22,
+   "pose": "type",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r0_2_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 0
+  },
+  "character_type_r0_2_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_type_r0_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 22,
+   "pose": "type",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r0_3_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 0
+  },
+  "character_type_r0_3_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_type_r0_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 22,
+   "pose": "type",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r0_4_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 0
+  },
+  "character_type_r0_4_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_type_r1_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 24,
+   "pose": "type",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r1_1_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 1
+  },
+  "character_type_r1_1_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_type_r1_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 24,
+   "pose": "type",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r1_2_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 1
+  },
+  "character_type_r1_2_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_type_r1_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 24,
+   "pose": "type",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r1_3_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 1
+  },
+  "character_type_r1_3_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_type_r1_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 24,
+   "pose": "type",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r1_4_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 1
+  },
+  "character_type_r1_4_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_type_r2_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 25,
+   "pose": "type",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r2_1_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 2
+  },
+  "character_type_r2_1_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_type_r2_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 25,
+   "pose": "type",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r2_2_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 2
+  },
+  "character_type_r2_2_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_type_r2_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 25,
+   "pose": "type",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r2_3_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 2
+  },
+  "character_type_r2_3_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_type_r2_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.74,
+   "colors": 25,
+   "pose": "type",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r2_4_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 2
+  },
+  "character_type_r2_4_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_type_r3_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 20,
+   "pose": "type",
+   "style": "casual",
+   "frame": 1,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r3_1_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 3
+  },
+  "character_type_r3_1_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_type_r3_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 20,
+   "pose": "type",
+   "style": "casual",
+   "frame": 2,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r3_2_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 3
+  },
+  "character_type_r3_2_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_type_r3_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 20,
+   "pose": "type",
+   "style": "casual",
+   "frame": 3,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r3_3_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 3
+  },
+  "character_type_r3_3_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_type_r3_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.52,
+   "colors": 20,
+   "pose": "type",
+   "style": "casual",
+   "frame": 4,
+   "frames": 4,
+   "seat_z": 24.0
+  },
+  "character_type_r3_4_chair_basic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_basic",
+   "rotation": 3
+  },
+  "character_type_r3_4_chair_ergonomic.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_walk_r0_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 1,
+   "frames": 8
+  },
+  "character_walk_r0_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 3.02,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 2,
+   "frames": 8
+  },
+  "character_walk_r0_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.57,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 3,
+   "frames": 8
+  },
+  "character_walk_r0_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.28,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 4,
+   "frames": 8
+  },
+  "character_walk_r0_5.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.06,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 5,
+   "frames": 8
+  },
+  "character_walk_r0_6.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 2.41,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 6,
+   "frames": 8
+  },
+  "character_walk_r0_7.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.31,
+   "colors": 20,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 7,
+   "frames": 8
+  },
+  "character_walk_r0_8.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 0,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.26,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 8,
+   "frames": 8
+  },
+  "character_walk_r1_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 1,
+   "frames": 8
+  },
+  "character_walk_r1_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 2,
+   "frames": 8
+  },
+  "character_walk_r1_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.21,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 3,
+   "frames": 8
+  },
+  "character_walk_r1_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.91,
+   "colors": 23,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 4,
+   "frames": 8
+  },
+  "character_walk_r1_5.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 24,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 5,
+   "frames": 8
+  },
+  "character_walk_r1_6.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.57,
+   "colors": 23,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 6,
+   "frames": 8
+  },
+  "character_walk_r1_7.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.84,
+   "colors": 23,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 7,
+   "frames": 8
+  },
+  "character_walk_r1_8.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 1,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.36,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 8,
+   "frames": 8
+  },
+  "character_walk_r2_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 1,
+   "frames": 8
+  },
+  "character_walk_r2_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.57,
+   "colors": 24,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 2,
+   "frames": 8
+  },
+  "character_walk_r2_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.84,
+   "colors": 25,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 3,
+   "frames": 8
+  },
+  "character_walk_r2_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.36,
+   "colors": 24,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 4,
+   "frames": 8
+  },
+  "character_walk_r2_5.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 23,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 5,
+   "frames": 8
+  },
+  "character_walk_r2_6.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.98,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 6,
+   "frames": 8
+  },
+  "character_walk_r2_7.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.21,
+   "colors": 23,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 7,
+   "frames": 8
+  },
+  "character_walk_r2_8.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 2,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.91,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 8,
+   "frames": 8
+  },
+  "character_walk_r3_1.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.06,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 1,
+   "frames": 8
+  },
+  "character_walk_r3_2.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 2.41,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 2,
+   "frames": 8
+  },
+  "character_walk_r3_3.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.31,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 3,
+   "frames": 8
+  },
+  "character_walk_r3_4.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.26,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 4,
+   "frames": 8
+  },
+  "character_walk_r3_5.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 0.88,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 5,
+   "frames": 8
+  },
+  "character_walk_r3_6.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 3.02,
+   "colors": 20,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 6,
+   "frames": 8
+  },
+  "character_walk_r3_7.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.57,
+   "colors": 21,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 7,
+   "frames": 8
+  },
+  "character_walk_r3_8.png": {
+   "kind": "character",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "footprint": [
+    1.0,
+    1.0
+   ],
+   "rotation": 3,
+   "clipped": false,
+   "curved": true,
+   "off_grid": [],
+   "flat_faces": [],
+   "min_z": 1.28,
+   "colors": 22,
+   "pose": "walk",
+   "style": "casual",
+   "frame": 8,
+   "frames": 8
+  }
+ }
+}

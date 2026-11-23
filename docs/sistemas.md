@@ -478,8 +478,8 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 
 ## Arte con sprites (fase 8)
 
-- Sprites conectados (fase 8, `SpriteLibrary`, funciones estáticas; `data/sprites.json` lo escribe `tools/sprites/export_game.py DIR`
-  a partir de la carpeta de `generate.py` y de `tools/sprites/art/` (lo dibujado con Moana: escritorios, computadoras, sillas, plantas, decoración, impresora, archivero, baterías, mesa de reuniones, Sala de descanso, baño, limpieza, servidores, Recepción, objetos de pared, paredes, pisos, terreno y árboles),
+- Sprites conectados (fase 8, `SpriteLibrary`, funciones estáticas; `data/sprites.json` lo escribe `tools/sprites/export_game.py`
+  a partir de `tools/sprites/art/` (todo dibujado con Moana: muebles, objetos de pared, paredes, pisos, terreno, árboles y personajes),
   junto con `assets/tiles/ground.png` y `assets/sprites/`; después `Godot --headless --import`):
   los sprites van a 2 px por px del mundo (`GroundPainter.DETAIL` 2) y `SpriteLibrary.draw(canvas, nombre, punto)` los dibuja a la mitad con
   su apoyo en el punto. Suelo: `OfficeGrid._build_sprite_tile_set` arma el TileSet con el atlas (una fila por estilo, 4 variantes;
@@ -505,7 +505,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
   `can_type` false en visitas), si no `sit`, y de pie `idle`; sentado en una silla se dibuja junto con ella en un solo cuadro (poses
   `sit_<silla>` y `type_<silla>` de la hoja, `_drawn_pose`): el generador compara la profundidad de silla y persona y guarda qué parte de la
-  silla tapa a cada cuadro (`character_chairs/`, `character.save_chair_overlays`), y `export_game.py` compone silla + persona con su paleta +
+  silla tapa a cada cuadro (`<cuadro>_<silla>` en `tools/sprites/art/characters/`, `build.chair_overlays`), y `export_game.py` compone silla + persona con su paleta +
   esa parte; mientras tanto la silla no se dibuja aparte (`OfficeCharacter.draws_chair_at`, grupo `FurnitureView.CHAIR_GROUP`), solo su sombra.
   Ningún tono de una silla puede ser de la ropa, la piel o el pelo (`check_chair_colors`); solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
   Sentado frente a un escritorio o mostrador (`OfficeState.get_desk_facing(casilla)`: `{direction, computer}`), la silla y quien se sienta se

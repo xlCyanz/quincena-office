@@ -29,7 +29,7 @@ from moanart import api
 
 CELL = 32  # unidades por casilla
 
-# Medidas comunes (tools/sprites/pieces/desk.py). Superficie en z = 44 (height 22 x 2).
+# Medidas comunes (las del generador viejo, pieces/desk.py). Superficie en z = 44 (height 22 x 2).
 TOP_Z, SLAB = 44, 6
 LEGS_Z = TOP_Z - SLAB
 TOP_Y = (2, 22)  # fondo del tablero

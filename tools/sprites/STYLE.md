@@ -70,7 +70,19 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
      armario de limpieza gris azulado con rejillas y cartel amarillo, balde amarillo y trapeador; rack negro con
      servidores tras una malla y luces verdes, celestes y ámbar.
    - *Árboles, arbustos y setos*: con Moana (`art/nature/`, ver el README).
-   - *Manchas* (`pieces/dirt.py`): planas, dibujadas en coordenadas del piso: barro en tres marrones grises con
+   - *Personajes* (con Moana, `art/characters/`, ver el README y `docs/sprites_128.md` §9): cabeza grande y redonda,
+     cuerpo robusto, dos ojos oscuros; 8 conjuntos de ropa con tres pieles (`_v1`, `_v2` solo cambian la paleta).
+     Torso en V suave con hombros caídos (más cintura en ellas). Costuras de 1 px un tono más oscuras (o más claras)
+     trazadas sobre el modelo (`clothes_details`): jean con costura lateral, bolsillos adelante y bolsillos traseros
+     en U; pantalón de vestir con raya y bragueta; camiseta con cuello redondo; camisa con canesú y bolsillo; saco
+     con tapas de bolsillo, bolsillo del pecho y costura de la espalda; vestido con cintura, pinzas y pliegues;
+     overol con cremallera clara y bolsillo con tapa. Al caminar el pie de atrás despega con el talón arriba y el
+     de adelante pisa con la punta arriba, el brazo que va adelante dobla el codo y el cuerpo sube al cruzar.
+     Cara de frente: dos ojos altos de 2×4, cejas rectas de 3 px del color del pelo y boca de 3 px; mano con pulgar.
+     Peinados por conjunto (`Style.hair`): raya al costado (casual, oficina), para atrás (ejecutivo), al ras
+     (limpieza), melena larga (vestido), moño (oficinista), bob (ejecutiva) y cola (limpieza); moño y cola son
+     piezas aparte con su línea oscura.
+   - *Manchas* (con Moana, `art/ground/dirt/`): planas, dibujadas en coordenadas del piso: barro en tres marrones grises con
      huellas, charco de café con canto oscuro y brillo, migas y papelitos con canto gris.
 7. **Pisos** (como los de la referencia):
    - *Madera*: tablas angostas (8 por casilla) a lo largo de un eje, junta oscura `783a13` de 1 px (en pantalla,

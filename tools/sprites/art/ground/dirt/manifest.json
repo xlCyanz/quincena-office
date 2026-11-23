@@ -1,0 +1,38 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py.",
+ "sprites": {
+  "dirt_0.png": {
+   "kind": "overlay",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    96.0
+   ]
+  },
+  "dirt_1.png": {
+   "kind": "overlay",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    96.0
+   ]
+  },
+  "dirt_2.png": {
+   "kind": "overlay",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    96.0
+   ]
+  }
+ }
+}

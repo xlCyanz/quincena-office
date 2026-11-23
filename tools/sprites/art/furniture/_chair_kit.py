@@ -10,7 +10,7 @@ generador de personajes (u + v + z / 64, en casillas), y de ahí salen:
 - el contorno: oscuro por fuera de la silueta y suave donde una pieza tapa a otra;
 - las capas asiento y respaldo (el juego dibuja el respaldo encima en r0 y r3, debajo en r1 y r2);
 - ``<nombre>_r<n>_depth.png``: profundidad por pixel (16 bits) para saber qué parte de la silla tapa
-  a quien se sienta (``tools/sprites/pieces/character.py``).
+  a quien se sienta (``tools/sprites/art/characters/build.py``).
 
 El documento Moana lleva una capa por tono con un rectángulo por tramo horizontal; ``build.py`` comprueba
 que Moana dé los mismos pixeles. Desde el repositorio de Moana:

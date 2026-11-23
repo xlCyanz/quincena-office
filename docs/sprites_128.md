@@ -91,7 +91,7 @@ rejilla isométrica periódica, anillo común, mezcla de cortes y comprobaciones
   `chair_basic` (roja, respaldo acolchado con panel) y `chair_ergonomic` (azul, apoyabrazos y respaldo alto de malla), sobre base de
   estrella con ruedas y columna de metal; asiento a 24 px (la cadera del personaje sentado). Cada rotación va entera, en capas
   `_seat_r<n>` y `_back_r<n>` (el juego dibuja el respaldo encima en r0 y r3, debajo en r1 y r2) y con `_r<n>_depth.png`, la
-  profundidad por pixel que usa `character.py` para la parte de la silla que tapa a quien se sienta.
+  profundidad por pixel que usa `art/characters/build.py` para la parte de la silla que tapa a quien se sienta.
 - **Plantas** (con Moana en `tools/sprites/art/furniture/plant_small_q/` y `plant_large/`, mismo kit que las sillas; hojas de dos caras con
   nervio claro y las mitades algo caídas): `plant_small_q` (mata de hojas anchas en tres pisos sobre maceta de barro, ya a su tamaño de
   mueble chico) y `plant_large` (arbolito de hojas ovaladas en espiral, maceta blanca de franja roja sobre su plato), cada una con `_shadow`.
@@ -210,13 +210,16 @@ interiores) van **bajitas** para ver adentro.
 - 4 direcciones (como las rotaciones), animaciones: parado (1–2 cuadros), caminar (4–6), sentado (1), sentado
   trabajando (2). Sentado, la cadera a 24 px de sprite sobre el piso.
 - Piezas intercambiables (pelo, piel, camisa, pantalón) en capas aparte ayudan a tener muchos empleados distintos.
-- Hechos (`tools/sprites/pieces/character.py`): cabeza grande, cuerpo robusto y dos ojos oscuros; de pie y sentado en 4
+- Hechos con Moana (`tools/sprites/art/characters/`: modelo en `_figure.py`, cuadros y documentos en `build.py`, una
+  carpeta por conjunto y `shadow/`): cabeza grande, cuerpo robusto, dos ojos oscuros, cejas y boca; un peinado por conjunto (`Style.hair`); de pie y sentado en 4
   direcciones con 8 conjuntos: `character_` (casual), `character_office_`, `character_executive_`, `character_woman_`,
   `character_woman_office_`, `character_woman_executive_`, `character_cleaning_` y `character_woman_cleaning_` (overol verde de
   limpieza; solo ellos tienen además `_mop_r<n>_1`…`_4`, trapeando con el suape, y `_mopwalk_r<n>_1`…`_8`, caminando con él: capas
   `stick` y `mop`; el cubo es `mop_bucket`, con Moana en `tools/sprites/art/furniture/mop_bucket/`); cada uno con `_v1` (piel oscura) y `_v2` (piel clara) en `r1`,
-  que solo cambian la paleta. Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8`, `_idle_r<n>_1`…`_4` y
-  `_type_r<n>_1`…`_4` (sentado tecleando). Por cada cuadro sentado y cada silla, `character_chairs/<cuadro>_<silla>.png` es la parte de la
+  que solo cambian la paleta. Costuras, bolsillos y pliegues trazados sobre el modelo (`clothes_details`, ver STYLE.md).
+  Animaciones por conjunto y dirección: `_walk_r<n>_1`…`_8` (pie que rueda: talón arriba al despegar, punta arriba al
+  pisar; brazo adelante con el codo doblado), `_idle_r<n>_1`…`_4` y
+  `_type_r<n>_1`…`_4` (sentado tecleando). Por cada cuadro sentado y cada silla, `<cuadro>_<silla>.png` (en la carpeta del conjunto) es la parte de la
   silla que queda delante de la persona (comparando su profundidad con la de `<silla>_r<n>_depth.png`): con ella se arma el cuadro «sentado en su silla» (silla entera + persona + esa parte). El juego las usa en hojas (`tools/sprites/export_game.py`), con las tres paletas.
 
 ## 10. Árboles y otros
@@ -231,7 +234,7 @@ interiores) van **bajitas** para ver adentro.
   cada uno con su `_shadow`. Arbustos y setos (lienzo de mueble según su planta; aún no los usa el juego): `bush_0` a
   `bush_2` (redondo, chico y bajo), `bush_3` a `bush_5` (los mismos con frutos rojos, frutos azules y flores naranjas),
   `hedge_cube` (1×1), `hedge_long_r0`/`_r1` (2×1) y `hedge_corner_r0` a `_r3` (L en 2×2), con su `_shadow`.
-- Suciedad (`tools/sprites/pieces/dirt.py`): `dirt_0` (barro y huellas),
+- Suciedad (Moana, `tools/sprites/art/ground/dirt/`; aún no la usa el juego, `DirtOverlay` pinta con colores): `dirt_0` (barro y huellas),
   `dirt_1` (café derramado) y `dirt_2` (migas y papelitos), kind `overlay`.
 
 ## 11. Lista de revisión

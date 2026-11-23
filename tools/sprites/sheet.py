@@ -248,7 +248,7 @@ def art_seats():
 
 
 def find(out_dir, file_name):
-    """Ruta de un PNG: la carpeta de generate.py o, si no está, la pieza de Moana en art/ (o None)."""
+    """Ruta de un PNG: la carpeta dada o, si no está, la pieza de Moana en art/ (o None)."""
     path = os.path.join(out_dir, file_name)
     if os.path.isfile(path):
         return path

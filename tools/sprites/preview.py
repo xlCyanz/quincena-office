@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Vista previa: arma una oficina con los PNG de generate.py y una hoja de contacto.
+# Vista previa: arma una oficina con los PNG de tools/sprites/art/ y una hoja de contacto de paredes y personajes.
 #
-#   python3 tools/sprites/preview.py DIR [--out CARPETA] [--seed N]
+#   python3 tools/sprites/preview.py --out CARPETA [--seed N]
 #
-# Escribe en --out (por defecto DIR) _preview_x1.png, _preview_x2.png y _contact_x3.png.
+# Escribe en --out _preview_x1.png, _preview_x2.png y _contact_x3.png.
 # Ordena como el juego: pisos, sombras en una sola capa y lo demás por la Y de su punto de orden.
 import argparse
 import os
@@ -40,7 +40,7 @@ RANK_BACK = 4
 RANK_PERSON = 5
 
 # Grupos de la hoja de contacto, en orden.
-GROUPS = ("walls", "character")
+GROUPS = ("walls", "characters")
 
 
 class PreviewScene(sheet.Scene):
@@ -95,11 +95,10 @@ def with_opacity(image, opacity):
 class Office(object):
     """Arma la escena; el local se corre GRASS casillas para dejar lugar al pasto."""
 
-    def __init__(self, directory, seed):
-        self.directory = directory
+    def __init__(self, seed):
         self.seed = seed
-        self.manifest = sheet.manifest(directory)
-        self.art = sheet.art_sprites()  # lo que dibuja Moana (escritorios, computadoras, suelos)
+        self.art = sheet.art_sprites()  # todo lo dibuja Moana
+        self.manifest = dict((name, entry) for name, (_path, entry) in self.art.items())
         cols = OFFICE_COLS + 2 * GRASS
         rows = OFFICE_ROWS + 2 * GRASS
         self.scene = PreviewScene(cols, rows, BACKGROUND, top=24, margin=24)
@@ -107,16 +106,13 @@ class Office(object):
 
     def img(self, name):
         if name not in self._cache:
-            path = os.path.join(self.directory, name + ".png")
-            if name + ".png" in self.art:
-                path = self.art[name + ".png"][0]
-            if not os.path.isfile(path):
-                raise SystemExit("Falta %s: corre antes generate.py --out %s" % (path, self.directory))
-            self._cache[name] = sheet.load(path)
+            if name + ".png" not in self.art:
+                raise SystemExit("Falta %s.png en tools/sprites/art/: corre su build.py" % name)
+            self._cache[name] = sheet.load(self.art[name + ".png"][0])
         return self._cache[name]
 
     def anchor(self, name, default=(64, 96)):
-        entry = self.art[name + ".png"][1] if name + ".png" in self.art else self.manifest.get(name + ".png", {})
+        entry = self.manifest.get(name + ".png", {})
         return tuple(entry.get("anchor", default))
 
     def g(self, x, y):
@@ -241,8 +237,8 @@ class Office(object):
         self.person("character_stand_r2", 3, 4)
         self.person("character_stand_r0", 3, 3)
         self.person("character_stand_r3", 6, 3)
-        self.person("character_stand_r1_v1", 0, 2)
-        self.person("character_stand_r1_v2", 5, 1)
+        self.person("character_office_stand_r1", 0, 2)
+        self.person("character_woman_stand_r1", 5, 1)
         return self.scene
 
 
@@ -255,15 +251,17 @@ def _font(size):
         return ImageFont.load_default()
 
 
-def contact(directory, scale=3, columns=8, gap=12):
-    """Todas las piezas de los manifiestos, por grupo, ×scale sobre un fondo, con su nombre."""
+def contact(scale=3, columns=8, gap=12):
+    """Las piezas de GROUPS (carpetas de art/; de los personajes, solo de pie), ×scale sobre un fondo, con su nombre."""
     by_group = {}
-    import glob
-    import json
-    for path in sorted(glob.glob(os.path.join(directory, "manifest_*.json"))):
-        with open(path, "r") as handle:
-            data = json.load(handle)
-        by_group[data.get("group", os.path.basename(path)[9:-5])] = [e["file"] for e in data.get("sprites", [])]
+    for folder, manifest in sheet.art_manifests():
+        group = os.path.relpath(folder, sheet.ART_DIR).split(os.sep)[0]
+        if group not in GROUPS:
+            continue
+        for name in sorted(manifest["sprites"]):
+            if group == "characters" and "_stand_r" not in name:
+                continue
+            by_group.setdefault(group, []).append(os.path.join(folder, name))
     order = [g for g in GROUPS if g in by_group] + sorted(g for g in by_group if g not in GROUPS)
     label_font = _font(18)
     title_font = _font(28)
@@ -271,10 +269,8 @@ def contact(directory, scale=3, columns=8, gap=12):
     title_h = 44
     blocks = []
     for group in order:
-        names = [n for n in by_group[group] if os.path.isfile(os.path.join(directory, n))]
-        if not names:
-            continue
-        images = [(n[:-4], sheet.load(os.path.join(directory, n))) for n in names]
+        names = by_group[group]
+        images = [(os.path.basename(n)[:-4], sheet.load(n)) for n in names]
         cw = max(i.size[0] for _, i in images) * scale
         ch = max(i.size[1] for _, i in images) * scale
         cw = max(cw, 128 * scale)
@@ -304,19 +300,17 @@ def contact(directory, scale=3, columns=8, gap=12):
 
 def main():
     parser = argparse.ArgumentParser(description="Vista previa de la oficina y hoja de contacto del piloto.")
-    parser.add_argument("directory", help="carpeta con los PNG y manifest*.json de generate.py")
-    parser.add_argument("--out", default=None, help="carpeta de salida (por defecto la misma)")
+    parser.add_argument("--out", required=True, help="carpeta de salida")
     parser.add_argument("--seed", type=int, default=7, help="azar fijo de las variantes de piso")
     args = parser.parse_args()
-    directory = os.path.abspath(args.directory)
-    out_dir = os.path.abspath(args.out or directory)
+    out_dir = os.path.abspath(args.out)
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
-    scene = Office(directory, args.seed).build()
+    scene = Office(args.seed).build()
     image = scene.render(scale=1)
     written = []
     for name, picture in (("_preview_x1.png", image), ("_preview_x2.png", sheet.upscale(image, 2)),
-                          ("_contact_x3.png", contact(directory))):
+                          ("_contact_x3.png", contact())):
         path = os.path.join(out_dir, name)
         picture.convert("RGB").save(path)
         written.append(path)
