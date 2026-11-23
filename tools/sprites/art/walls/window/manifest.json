@@ -1,0 +1,1285 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "window_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "window_tall_x_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "cool"
+  },
+  "window_tall_x_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "cool"
+  },
+  "window_tall_x_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "cool"
+  },
+  "window_tall_x_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "cool"
+  },
+  "window_tall_x_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "cool"
+  },
+  "window_tall_x_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "cool"
+  },
+  "window_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "window_tall_y_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "cool"
+  },
+  "window_tall_y_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "cool"
+  },
+  "window_tall_y_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "cool"
+  },
+  "window_tall_y_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "cool"
+  },
+  "window_tall_y_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "cool"
+  },
+  "window_tall_y_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "cool"
+  },
+  "window_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "window_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "window_beige_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "window_beige_tall_x_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_beige_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_x_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_beige_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_x_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_beige_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_x_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_beige_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_x_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_beige_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_x_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_beige_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "window_beige_tall_y_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_beige_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_y_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_beige_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_y_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_beige_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_y_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_beige_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_y_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_beige_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "beige"
+  },
+  "window_beige_tall_y_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_beige_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "beige"
+  },
+  "window_beige_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "window_beige_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "window_white_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": true
+  },
+  "window_white_tall_x_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_white_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "white"
+  },
+  "window_white_tall_x_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_white_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "white"
+  },
+  "window_white_tall_x_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_white_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "white"
+  },
+  "window_white_tall_x_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_white_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "white"
+  },
+  "window_white_tall_x_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_white_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "white"
+  },
+  "window_white_tall_x_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_white_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "white"
+  },
+  "window_white_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": true
+  },
+  "window_white_tall_y_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_white_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "white"
+  },
+  "window_white_tall_y_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_white_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "white"
+  },
+  "window_white_tall_y_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_white_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "white"
+  },
+  "window_white_tall_y_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_white_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "white"
+  },
+  "window_white_tall_y_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_white_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "white"
+  },
+  "window_white_tall_y_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_white_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "white"
+  },
+  "window_white_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": true
+  },
+  "window_white_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": true
+  },
+  "window_sage_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "window_sage_tall_x_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_sage_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_x_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_sage_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_x_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_sage_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_x_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_sage_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_x_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_sage_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_x_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_sage_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "window_sage_tall_y_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_sage_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_y_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_sage_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_y_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_sage_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_y_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_sage_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_y_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_sage_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "sage"
+  },
+  "window_sage_tall_y_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_sage_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "sage"
+  },
+  "window_sage_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "window_sage_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "window_peach_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "window_peach_tall_x_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_peach_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_x_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_peach_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_x_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_peach_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_x_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_peach_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_x_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_peach_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_x_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_peach_tall_x.png",
+   "animation": "blind",
+   "axis": "x",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "window_peach_tall_y_blind_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "base": "window_peach_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_y_blind_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "base": "window_peach_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_y_blind_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "base": "window_peach_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_y_blind_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "base": "window_peach_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_y_blind_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "base": "window_peach_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "peach"
+  },
+  "window_peach_tall_y_blind_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "base": "window_peach_tall_y.png",
+   "animation": "blind",
+   "axis": "y",
+   "wall_color": "peach"
+  },
+  "window_peach_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "window_peach_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": true
+  }
+ }
+}

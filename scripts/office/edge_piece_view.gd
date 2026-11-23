@@ -9,7 +9,7 @@ const THICKNESS: float = 0.08
 const DOOR_INSET: float = 0.15
 
 ## Brazos de un vértice (para elegir el poste). Nombre: wall_post_<−x><−y><+x><+y>, cada uno
-## n (nada), l (bajo), t (alto), d (puerta baja) o h (puerta alta); igual que walls.py (post_name).
+## n (nada), l (bajo), t (alto), d (puerta baja) o h (puerta alta); igual que tools/sprites/art/walls/posts/build.py (post_name).
 const POST_ARM_ORDER: Array[int] = [2, 3, 0, 1]
 const ARM_PLUS_X: int = 0
 const ARM_PLUS_Y: int = 1

@@ -498,6 +498,12 @@ cada PNG. `export_game.py` los usa en lugar del de `generate.py` con el mismo no
 | `art/wall_items/wall_clock/`, `whiteboard/`, `air_conditioner/` | Reloj, pizarra y aire acondicionado: `<pieza>_x` y `_y` |
 | `art/wall_items/presentation_screen/` | Televisor de dos bordes: apagado, encendido (`_chart`, `_pie`, `_title`) y sus 12 cuadros `_play_<n>` |
 | `art/wall_items/_wall_kit.py` | Objetos de pared: lienzo y apoyo de pared, `_y` en rotación 0 y `_x` en rotación 3 (girado, no espejado), `base_z` en el manifest |
+| `art/walls/wall/` | Tramos lisos `wall_<tall\|low>_<eje>` en los cinco colores (`wall_<color>_…`) y la sombra `wall_tall_<eje>_shadow` |
+| `art/walls/door/` | Puertas de una hoja `door`, `door_wood`, `door_office` (altas, bajas y `_tall_<eje>_open_1` a `_6`) |
+| `art/walls/glass_door/`, `glass_door_double/` | Puerta de vidrio de dos hojas y la doble sin marco de dos bordes (mitades `_a`, `_b`), con sus cuadros de abrir |
+| `art/walls/window/` | Ventana alta y baja, y la persiana `window_tall_<eje>_blind_1` a `_6` |
+| `art/walls/posts/` | Postes `wall_post_<−x><−y><+x><+y>` de toda unión y las ocho esquinas con nombre en los cinco colores |
+| `art/walls/_walls_kit.py` | Paredes: modelo a lo largo del borde (`Along`), `_x` espejado del `_y`, fantasmas para el empalme y el pie, hoja con bisagra (`Leaf`), rodapié |
 | `art/furniture/_sofa.py` | Bloques acolchados de los sofás: esquinas redondeadas, sombra de 1 px al pie, botón y costuras; `puff`, abultado parejo por los cuatro lados |
 | `art/furniture/_bath.py`, `_cleaning.py` | Cerámica y cromo del baño; balde amarillo con agua que comparten el armario y el cubo |
 | `art/furniture/_kitchen.py` | Mueble bajo de cocina (puertas y mesón) que comparten el microondas y la cafetera |

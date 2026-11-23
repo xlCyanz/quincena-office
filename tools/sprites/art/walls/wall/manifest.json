@@ -1,0 +1,289 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "wall_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "wall_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "wall_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "wall_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": true
+  },
+  "wall_beige_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "wall_beige_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "wall_beige_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "wall_beige_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": true
+  },
+  "wall_white_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": true
+  },
+  "wall_white_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": true
+  },
+  "wall_white_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": true
+  },
+  "wall_white_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": true
+  },
+  "wall_sage_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "wall_sage_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "wall_sage_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "wall_sage_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": true
+  },
+  "wall_peach_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "wall_peach_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "wall_peach_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "wall_peach_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": true
+  },
+  "wall_tall_x_shadow.png": {
+   "anchor": [
+    64.0,
+    96.0
+   ],
+   "kind": "shadow",
+   "footprint": [
+    1,
+    1
+   ],
+   "placed_on": "casilla de adentro, delante de la pared alta del borde"
+  },
+  "wall_tall_y_shadow.png": {
+   "anchor": [
+    64.0,
+    96.0
+   ],
+   "kind": "shadow",
+   "footprint": [
+    1,
+    1
+   ],
+   "placed_on": "casilla de adentro, delante de la pared alta del borde"
+  }
+ }
+}

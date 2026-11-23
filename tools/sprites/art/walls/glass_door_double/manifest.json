@@ -1,0 +1,2785 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "glass_door_double_a_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_tall_x_open_1.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_x_open_2.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_x_open_3.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_x_open_4.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_x_open_5.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_x_open_6.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_tall_x_open_1.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_x_open_2.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_x_open_3.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_x_open_4.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_x_open_5.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_x_open_6.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_b_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "cool"
+  },
+  "glass_door_double_a_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "cool",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_beige_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_beige_tall_x_open_1.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_x_open_2.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_x_open_3.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_x_open_4.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_x_open_5.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_x_open_6.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_beige_tall_x_open_1.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_x_open_2.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_x_open_3.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_x_open_4.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_x_open_5.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_x_open_6.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_beige_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_beige_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_beige_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_beige_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_b_beige_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_beige_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "beige"
+  },
+  "glass_door_double_a_beige_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_beige_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "beige",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_white_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_white_tall_x_open_1.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_x_open_2.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_x_open_3.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_x_open_4.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_x_open_5.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_x_open_6.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_white_tall_x_open_1.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_x_open_2.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_x_open_3.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_x_open_4.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_x_open_5.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_x_open_6.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_white_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_white_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_white_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_white_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_b_white_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_white_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "white"
+  },
+  "glass_door_double_a_white_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_white_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "white",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_sage_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_sage_tall_x_open_1.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_x_open_2.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_x_open_3.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_x_open_4.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_x_open_5.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_x_open_6.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_sage_tall_x_open_1.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_x_open_2.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_x_open_3.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_x_open_4.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_x_open_5.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_x_open_6.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_sage_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_sage_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_sage_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_sage_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_b_sage_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_sage_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "sage"
+  },
+  "glass_door_double_a_sage_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_sage_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "sage",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_peach_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_peach_tall_x_open_1.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_x_open_2.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_x_open_3.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_x_open_4.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_x_open_5.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_x_open_6.png": {
+   "anchor": [
+    50.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_x.png",
+   "base_offset": [
+    14,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_x.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_peach_tall_x_open_1.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_x_open_2.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_x_open_3.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_x_open_4.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_x_open_5.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_x_open_6.png": {
+   "anchor": [
+    68.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_x.png",
+   "base_offset": [
+    32,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "x",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_peach_low_x.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "x",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.5,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  },
+  "glass_door_double_a_peach_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b",
+   "door_height": 50
+  },
+  "glass_door_double_a_peach_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_a_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "a",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_y.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": true,
+   "height": 60,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a",
+   "door_height": 50
+  },
+  "glass_door_double_b_peach_tall_y_open_1.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 1,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_y_open_2.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 2,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_y_open_3.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 3,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_y_open_4.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 4,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_y_open_5.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 5,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_b_peach_tall_y_open_6.png": {
+   "anchor": [
+    36.0,
+    142.0
+   ],
+   "kind": "wall_frame",
+   "base": "glass_door_double_b_peach_tall_y.png",
+   "base_offset": [
+    0,
+    0
+   ],
+   "frame": 6,
+   "frames": 6,
+   "animation": "open",
+   "axis": "y",
+   "pair": "b",
+   "wall_color": "peach"
+  },
+  "glass_door_double_a_peach_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "a",
+   "pair_with": "b"
+  },
+  "glass_door_double_b_peach_low_y.png": {
+   "anchor": [
+    36.0,
+    46.0
+   ],
+   "kind": "wall",
+   "axis": "y",
+   "tall": false,
+   "height": 10,
+   "sort_bias": 0.0,
+   "wall_color": "peach",
+   "joins": false,
+   "pair": "b",
+   "pair_with": "a"
+  }
+ }
+}

@@ -22,7 +22,6 @@ from PIL import Image  # noqa: E402
 
 import sheet  # noqa: E402
 from pieces import character  # noqa: E402
-from pieces import walls as wall_piece  # noqa: E402
 
 # Sprites dibujados aparte: art/<categoría>/<pieza>/ con sus PNG y un manifest.json con el apoyo de
 # cada uno. Reemplazan al de generate.py del mismo nombre.
@@ -186,8 +185,9 @@ def main(directory):
         for height in ("tall", "low"):
             for axis in ("x", "y"):
                 copy("%s_%s_%s" % (kind, height, axis), "walls")
-    for neighbors in wall_piece.post_combos():
-        copy(wall_piece.post_name(neighbors), "walls")
+    # Postes de toda unión (art/walls/posts/): el juego arma el nombre con sus vecinos.
+    for name in sorted(n[:-4] for n in art if n.startswith("wall_post_")):
+        copy(name, "walls")
     for index in range(TREES):
         copy("tree_%d" % index, "trees")
         copy("tree_%d_shadow" % index, "trees")

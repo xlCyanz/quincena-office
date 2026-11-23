@@ -1,0 +1,4469 @@
+{
+ "_comentario": "Apoyo (px del sprite) y datos de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "wall_low_corner.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_low_corner_back.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_low_corner_left.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_low_corner_right.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_tall_corner.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_tall_corner_front.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_tall_corner_left.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_tall_corner_right.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_low_corner.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_low_corner_back.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_low_corner_left.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_low_corner_right.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_tall_corner.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_tall_corner_front.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_tall_corner_left.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_beige_tall_corner_right.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "beige",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_low_corner.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_low_corner_back.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_low_corner_left.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_low_corner_right.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_tall_corner.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_tall_corner_front.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_tall_corner_left.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_white_tall_corner_right.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "white",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_low_corner.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_low_corner_back.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_low_corner_left.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_low_corner_right.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_tall_corner.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_tall_corner_front.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_tall_corner_left.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_sage_tall_corner_right.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "sage",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_low_corner.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_low_corner_back.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_low_corner_left.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_low_corner_right.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_tall_corner.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_tall_corner_front.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_tall_corner_left.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_peach_tall_corner_right.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "peach",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnll.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnlt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnld.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnlh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nntl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nntt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nntd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nndl.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nndt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nndd.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nndh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnhl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnhd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nnhh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "n",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlln.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlll.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nllt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlld.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nllh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nltn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nltl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nltt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nltd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nldn.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nldl.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nldt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nldd.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nldh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlhn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlhl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlhd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nlhh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "l",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntnl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntnd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntln.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntll.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntlt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntld.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntlh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nttn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nttl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nttt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nttd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntdn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntdl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntdt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntdd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntdh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nthn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nthl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ntht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nthd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nthh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "t",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnnl.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnnd.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnll.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnlt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnld.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnlh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lntn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lntl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lntt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lntd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lndl.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lndt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lndd.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lndh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnhn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnhl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnhd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lnhh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "n",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llnn.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llnl.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llnd.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llln.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llll.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lllt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llld.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lllh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lltn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lltl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lltt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lltd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lldn.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lldl.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lldt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lldd.png": {
+   "anchor": [
+    8.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lldh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llhn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llhl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llhd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_llhh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "l",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltnn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltnl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltnd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltln.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltll.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltlt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltld.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltlh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lttn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lttl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lttt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lttd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltdn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltdl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltdt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltdd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltdh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lthn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lthl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ltht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lthd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_lthh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "l",
+    "t",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnnl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnnd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnln.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnll.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnlt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnld.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnlh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tntl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tntt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tntd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tndn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tndl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tndt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tndd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tndh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnhl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnhd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tnhh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "n",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlnn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlnl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlnd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlln.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlll.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tllt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlld.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tllh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tltn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tltl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tltt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tltd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tldn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tldl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tldt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tldd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tldh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlhn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlhl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlhd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tlhh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "l",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttnn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttnl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttnt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttnd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttnh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttln.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "l",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttll.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "l",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttlt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "l",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttld.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "l",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttlh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "l",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tttn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "t",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tttl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "t",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tttt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "t",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tttd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "t",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttth.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "t",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttdn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttdl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "d",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttdt.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "d",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttdd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "d",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttdh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "d",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tthn.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tthl.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "h",
+    "l"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ttht.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "h",
+    "t"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tthd.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "h",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_tthh.png": {
+   "anchor": [
+    8.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "t",
+    "t",
+    "h",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_dndn.png": {
+   "anchor": [
+    12.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "d",
+    "n",
+    "d",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_ndnd.png": {
+   "anchor": [
+    12.0,
+    24.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "d",
+    "n",
+    "d"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 10,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_hnhn.png": {
+   "anchor": [
+    12.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "h",
+    "n",
+    "h",
+    "n"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  },
+  "wall_post_nhnh.png": {
+   "anchor": [
+    12.0,
+    124.0
+   ],
+   "kind": "post",
+   "wall_color": "cool",
+   "anchor_at": "vértice de la cuadrícula, en el piso",
+   "neighbors": [
+    "n",
+    "h",
+    "n",
+    "h"
+   ],
+   "neighbor_order": "-x -y +x +y",
+   "height": 60,
+   "sort_after": "tramos del vértice: Y del vértice + 17"
+  }
+ }
+}

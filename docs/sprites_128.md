@@ -182,6 +182,8 @@ interiores) van **bajitas** para ver adentro.
 | Ventana | 60 → 120 | 10 → 20 | vidrio `9fc7dc` | 72×160 / 72×64 |
 | Puerta doble de vidrio | 50 → 100 | 10 → 20 | vidrio `a9d4e6`, marco `4f5862` | 72×160 / 72×64 |
 
+- Se dibujan con Moana (`tools/sprites/art/walls/`, ver su README): el `_x` es el `_y` espejado, con un rodapié
+  ciruela de 4 px al pie de la cara.
 - La pieza baja es el **zócalo** de la alta: mismo color y misma cara de arriba.
 - Colores de pared: cada pieza (tramo, puerta, ventana y poste de esquina) viene en varios colores de cara con la
   misma tapa: sin color en el nombre la de siempre, y `wall_<color>_tall_x`, `door_<color>_low_y`… para las demás

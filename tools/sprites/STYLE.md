@@ -23,11 +23,12 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
    una sombra de 1 px abajo, patas gruesas de 2–4 px.
 5. **Sombras dentro de la planta**: bajo los muebles una mancha de un tono oscuro del piso, sin transparencia en el
    sprite (archivo `*_shadow` aparte, como dice la guía).
-6. **Paredes**: cara interior lisa de color pastel frío; tapa de la pared y canto de la losa del piso en ciruela
-   oscuro (borde de la «maqueta»). El zócalo bajo repite la tapa ciruela. Sin contorno donde la pared toca el
+6. **Paredes** (con Moana, `art/walls/`, ver el README): cara interior lisa de color pastel frío; tapa de la pared
+   y canto de la losa del piso en ciruela oscuro (borde de la «maqueta»), y rodapié ciruela de 4 px al pie de toda
+   cara (tramos, puertas, ventanas y postes). El zócalo bajo repite la tapa ciruela. Sin contorno donde la pared toca el
    piso (la cara llega limpia, `finish(ground_outline=0)`), y donde una pared alta termina sobre una baja el
    corte (el poste de esquina) va entero en ciruela, hasta el piso (el tramo bajo arranca en el borde del poste).
-   Cinco colores de cara con la misma tapa ciruela (`WALL_COLORS` en `pieces/walls.py`): fría `899da0` (la de
+   Cinco colores de cara con la misma tapa ciruela (`WALL_COLORS` en `art/walls/_walls_kit.py`): fría `899da0` (la de
    siempre, sin color en el nombre), beige `b3a792`, blanco `c8c4bb`, salvia `91a689` y durazno `c69f88`. Cada
    color trae tramos, puertas, ventanas y postes: `wall_<color>_tall_x`, `door_<color>_low_y`,
    `wall_<color>_tall_corner_left`… La sombra de la pared alta es una sola para todos.
@@ -40,7 +41,7 @@ catálogo y nuestras medidas, sin calcar ni reproducir un dibujo concreto del pa
    - *Doble de vidrio sin marco* (Recepción, `glass_door_double_a/_b`): ocupa dos bordes; dos hojas de vidrio
      templado de 48 px sin perfil, canto celeste más oscuro, herrajes de metal en las esquinas de la bisagra,
      tirador largo junto al medio y 1 px de luz entre las hojas. Abren hacia afuera.
-   - *Ventana administrativa*: aluminio oscuro, parante en el medio, travesaño que deja una banda fija arriba,
+   - *Ventana administrativa*: aluminio oscuro, parante en el medio (por delante del vidrio), travesaño que deja una banda fija arriba,
      vidrio celeste con reflejos en diagonal y persiana veneciana blanca de tablillas de 3 px.
    - *Objetos de pared* (con Moana, `art/wall_items/`, ver el README): cuadro con marco de madera naranja de cuatro
      listones de 3 px, la tela 1 px más adentro y tres dibujos (paisaje con árbol, sol y nube; bloques de color; mar
