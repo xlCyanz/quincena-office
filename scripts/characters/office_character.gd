@@ -394,12 +394,12 @@ func _refresh_seat() -> void:
 		if bool(info.get("is_seat", false)) or bool(info.get("waiting_seat", false)):
 			_seat_facing = posmod(int(seat["rotation"]), 4)
 			_seat_item = String(seat["id"])
-			var desk: Dictionary = OfficeState.get_desk_facing(_seat_cell) if FurnitureView.has_backrest(seat["id"]) else {}
-			if not desk.is_empty():
-				_seat_facing = int(desk["direction"])
-				_at_computer = bool(desk["computer"])
-				_tuck = Vector2(FurnitureCatalog.get_front(_seat_facing)) * FurnitureView.SEAT_TUCK \
-					+ FurnitureView.get_seat_shift(_seat_cell)
+			if FurnitureView.has_backrest(seat["id"]):
+				var desk: Dictionary = OfficeState.get_desk_facing(_seat_cell)
+				if not desk.is_empty():
+					_seat_facing = int(desk["direction"])
+					_at_computer = bool(desk["computer"])
+				_tuck = FurnitureView.get_seat_offset(_seat_cell)
 	_animate(0.0, Vector2.ZERO)
 	_update_position()
 

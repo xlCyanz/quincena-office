@@ -17,10 +17,11 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from _boxes import box, colors, faces, ramp, rect  # noqa: E402
-from _chair_kit import PieceSpec, cylinder, main_piece, slab  # noqa: E402
+from _chair_kit import CELL, PieceSpec, cylinder, main_piece, slab  # noqa: E402
 
 GROUP = "counter"
 DESK_TOP, SLAB = 34.0, 4.0
+C, DESK_Y, DESK_HALF = 32.0, 9.6, (31.0, 8.0)  # tablero de quien atiende: centro x e y y medio ancho y fondo
 PANEL = (1.2, 62.8, 18.0, 30.8, 0.0, 45.0)
 LEDGE = (0.6, 63.4, 15.6, 31.4, 45.0, 48.0)
 PEDESTALS = ((2.5, 13.5), (50.5, 61.5))
@@ -84,7 +85,7 @@ def model() -> list:
     for k, (x0, x1) in enumerate(PEDESTALS):
         s.append(box(f"pedestal{k}", GROUP, "metal", x0, x1, *PED_Y, 0.0, DESK_TOP - SLAB, lit=True,
                      texture=pedestal_texture(x0, x1)))
-    s.append(slab("desk", GROUP, "wood", 32.0, 9.6, 31.0, 8.0, 0.8, DESK_TOP - SLAB, DESK_TOP, lit=True))
+    s.append(slab("desk", GROUP, "wood", C, DESK_Y, *DESK_HALF, 0.8, DESK_TOP - SLAB, DESK_TOP, lit=True))
     s.append(box("panel", GROUP, "wood", *PANEL, texture=panel_texture))
     s += [box(f"trim{k}", GROUP, "metal", x, x + 1.5, y, y + 1.5, 0.0, LEDGE[4], lit=True)
           for k, (x, y) in enumerate(((0.8, 17.4), (61.7, 17.4), (0.8, 29.7), (61.7, 29.7)))]
@@ -112,6 +113,7 @@ SPEC = PieceSpec(
     shadow=[("bar", 8.0, 16.0, 56.0, 16.0, 14.4, 0, 48)],
     max_colors=40,
     size=(2, 1),
+    edges=((DESK_Y - DESK_HALF[1]) / CELL, (C - DESK_HALF[0]) / CELL, 1 - LEDGE[3] / CELL, (C - DESK_HALF[0]) / CELL),
     canvas=(192, 160),
     rotations=(0, 1, 2, 3),
     painter=True,

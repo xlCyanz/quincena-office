@@ -247,6 +247,14 @@ def art_seats():
     return seats
 
 
+def art_edges():
+    """Base del sprite de una mesa -> hueco hasta el canto por lado (casillas), según los manifest de art/."""
+    edges = {}
+    for _folder, manifest in art_manifests():
+        edges.update(manifest.get("edges", {}))
+    return edges
+
+
 def find(out_dir, file_name):
     """Ruta de un PNG: la carpeta dada o, si no está, la pieza de Moana en art/ (o None)."""
     path = os.path.join(out_dir, file_name)

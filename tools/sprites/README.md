@@ -458,7 +458,8 @@ iso.save(tile(0), out_dir, "floor_ceramic_0", material="ceramic", variant=0, bas
 
 `art/<categoría>/<pieza>/` guarda todos los sprites: sus PNG, el documento editable de
 cada uno (`.moana.json`, del motor Moana, hoy MoanArt: el paquete de Python es `moanart`), el `build.py` que los genera y un `manifest.json` con el apoyo de
-cada PNG. `export_game.py` los pasa al juego.
+cada PNG (y en mesas, `edges`: el hueco hasta el canto del tablero por lado, para arrimar las sillas; en escritorios,
+`seats`: dónde queda el teclado). `export_game.py` los pasa al juego.
 
 | Carpeta | Qué tiene |
 | --- | --- |

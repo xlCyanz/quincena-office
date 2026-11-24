@@ -603,6 +603,9 @@ class PieceSpec:
     canvas: tuple[int, int] = CANVAS
     rotations: tuple[int, ...] = (0,)
     painter: bool = False  # documento en orden de pintor (../_painter.py), para piezas con mucha textura
+    # Mesas: hueco (casillas) entre la planta y el canto a la altura de cada silla, por lado en rotación 0:
+    # frente (-y), +x, fondo (+y) y -x (ver DeskSpec.edges). El juego arrima las sillas hasta ahí.
+    edges: Optional[tuple[float, float, float, float]] = None
 
     def view(self, r: int) -> View:
         return View(r, self.size[0] * CELL, self.size[1] * CELL, self.canvas)
@@ -646,6 +649,8 @@ def main_piece(spec: PieceSpec, here: Path) -> int:
         shown.append(comp)
     manifest = {"_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py "
                                "lo pasa al juego.", "sprites": sprites}
+    if spec.edges is not None:
+        manifest["edges"] = {spec.name: [round(v, 4) for v in spec.edges]}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.preview:
         w, h = spec.canvas

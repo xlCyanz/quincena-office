@@ -15,7 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from _boxes import box, faces, ramp  # noqa: E402
-from _chair_kit import PieceSpec, main_piece  # noqa: E402
+from _chair_kit import CELL, PieceSpec, main_piece  # noqa: E402
 
 GROUP = "dining"
 TOP, BENCH = 28.0, 16.0
@@ -59,6 +59,7 @@ SPEC = PieceSpec(
     model=model,
     shadow=[("bar", 9.6, 16.0, 54.4, 16.0, 14.4, 0, TOP)],
     size=(2, 1),
+    edges=(TABLE[2] / CELL, 2 - TABLE[1] / CELL, 1 - TABLE[3] / CELL, TABLE[0] / CELL),
     canvas=(192, 128),
     rotations=(0, 1, 2, 3),
 )

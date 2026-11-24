@@ -189,8 +189,7 @@ func _check_seated() -> void:
 	_expect(_sat_count == 1, "sat_down se emitió %d veces" % _sat_count)
 	_expect(_ceo.get_cell() == _seat and _ceo.grid_position == Vector2(_seat), "el CEO no quedó en la silla")
 	# Sentado se dibuja arrimado al escritorio y frente al teclado, como su silla.
-	var tuck: Vector2 = Vector2(FurnitureCatalog.get_front(int(OfficeState.get_desk_facing(_seat).get("direction", 0)))) * FurnitureView.SEAT_TUCK \
-		+ FurnitureView.get_seat_shift(_seat)
+	var tuck: Vector2 = FurnitureView.get_seat_offset(_seat)
 	_expect(not OfficeState.get_desk_facing(_seat).is_empty()
 		and _ceo.position.distance_to(_grid.grid_to_world(Vector2(_seat) + tuck)) < 0.01, "el CEO no se dibuja sobre la silla")
 	var walk_seconds: float = 8.0 / GameConstants.CHARACTER_WALK_SPEED

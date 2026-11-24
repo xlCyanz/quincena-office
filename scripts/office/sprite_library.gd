@@ -136,6 +136,13 @@ static func get_seat_x(base: String) -> float:
 	return float(seats[base]) if seats.has(base) else -1.0
 
 
+## Hueco (casillas) entre la planta de una mesa y el canto del tablero por lado del modelo (frente −y, +x,
+## fondo +y, −x); [] si no se sabe.
+static func get_table_edges(base: String) -> Array:
+	var edges: Dictionary = get_data().get("edges", {})
+	return edges[base] if edges.has(base) else []
+
+
 ## Base del sprite de un mueble (sin parte ni rotación), o "".
 static func get_furniture_base(item_id: String) -> String:
 	var furniture: Dictionary = get_data().get("furniture", {})

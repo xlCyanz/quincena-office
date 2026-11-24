@@ -206,6 +206,7 @@ def main():
                     copy("%s_r%d_shadow" % (base, rotation), "furniture")
         furniture[item]["sets"] = by_computer
     seats = dict((name, round(value, 4)) for name, value in sheet.art_seats().items())
+    edges = dict((name, [round(v, 4) for v in value]) for name, value in sheet.art_edges().items())
 
     wall_items = {}
     for item, bases in WALL_ITEMS.items():
@@ -311,7 +312,9 @@ def main():
                        "la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que "
                        "lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: "
                        "base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, "
-                       "en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). wall_items: objeto de pared -> dibujos "
+                       "en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de "
+                       "un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del "
+                       "modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos "
                        "(sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso "
                        "empieza (base_z). characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y "
@@ -326,6 +329,7 @@ def main():
                        "shadow": "character_stand_shadow"},
         "furniture": furniture,
         "seats": seats,
+        "edges": edges,
         "sprites": sprites,
         "wall_items": wall_items,
     }

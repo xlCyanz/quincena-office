@@ -42,8 +42,13 @@ const SEAT_SHIFT_MAX: float = 0.5
 const LOW_WALL_SPRITE_SCALE: float = 0.5
 const SALT_WALL_ITEM: int = 71
 
-## Cuánto se arrima (casillas) la silla frente a un escritorio o mostrador, mirándolo; igual quien se sienta.
-const SEAT_TUCK: float = 0.3
+## Silla que mira una mesa: del centro del asiento al canto del tablero, en casillas (el frente del asiento
+## queda justo bajo el canto); igual quien se sienta.
+const SEAT_REACH: float = 0.26
+## Máximo arrime (casillas): la silla no sale de su casilla, así se ordena bien con la mesa.
+const SEAT_TUCK_MAX: float = 0.45
+## Hueco hasta el canto de una mesa sin edges en sprites.json (el de los escritorios).
+const DEFAULT_TABLE_EDGE: float = 0.0625
 
 ## Grupo de las piezas de sillas: se redibujan al sentarse o levantarse alguien.
 const CHAIR_GROUP: String = "chair_views"
@@ -110,10 +115,11 @@ func setup(grid: OfficeGrid, item: Dictionary, piece: String = PART_MAIN, slice:
 	_sprite_rotation = rotation_index
 	if has_backrest(item_id):
 		add_to_group(CHAIR_GROUP)
-		var desk: Dictionary = OfficeState.get_desk_facing(footprint[0])
-		if not desk.is_empty() and not get_sprite().is_empty():
-			_sprite_rotation = int(desk["direction"])
-			var tuck: Vector2 = Vector2(FurnitureCatalog.get_front(_sprite_rotation)) * SEAT_TUCK + get_seat_shift(footprint[0])
+		var table: Dictionary = get_seat_table(footprint[0])
+		if not table.is_empty() and not get_sprite().is_empty():
+			if bool(table["front"]):
+				_sprite_rotation = int(table["direction"])
+			var tuck: Vector2 = get_seat_offset(footprint[0])
 			_anchor += tuck
 			_low += tuck
 			_high += tuck
@@ -180,8 +186,60 @@ func get_sprite_rotation() -> int:
 	return _sprite_rotation
 
 
+## Mesa a la que se arrima la silla de seat_cell: {"index", "direction" (0–3, de la silla hacia la mesa),
+## "front" (es el frente de un escritorio o mostrador: la silla gira a mirarlo)}; {} si no mira a ninguna.
+## Una silla de costado (visita, reunión) se arrima solo si ya mira a la mesa.
+static func get_seat_table(seat_cell: Vector2i) -> Dictionary:
+	var facing: Dictionary = OfficeState.get_desk_facing(seat_cell)
+	if not facing.is_empty():
+		return {"index": int(facing["index"]), "direction": int(facing["direction"]), "front": true}
+	var chair: int = OfficeState.find_furniture_at(seat_cell)
+	if chair < 0:
+		return {}
+	var direction: int = posmod(int(OfficeState.furniture[chair]["rotation"]), 4)
+	var index: int = OfficeState.find_furniture_at(seat_cell + FurnitureCatalog.get_front(direction))
+	if index < 0 or String(FurnitureCatalog.get_item(OfficeState.furniture[index]["id"]).get("shape", "")) != "desk":
+		return {}
+	return {"index": index, "direction": direction, "front": false}
+
+
+## Corrimiento (casillas) de la silla de seat_cell y de quien se sienta en ella: hacia la mesa que mira
+## hasta SEAT_REACH de su canto y, frente a un escritorio, de lado hasta el teclado. Cero sin mesa.
+static func get_seat_offset(seat_cell: Vector2i) -> Vector2:
+	var table: Dictionary = get_seat_table(seat_cell)
+	if table.is_empty():
+		return Vector2.ZERO
+	var step := Vector2(FurnitureCatalog.get_front(int(table["direction"])))
+	var tuck: float = minf(0.5 + get_table_edge(OfficeState.furniture[int(table["index"])], -step) - SEAT_REACH, SEAT_TUCK_MAX)
+	var offset: Vector2 = step * maxf(tuck, 0.0)
+	if bool(table["front"]):
+		offset += get_seat_shift(seat_cell)
+	return offset
+
+
+## Hueco (casillas) entre la planta de una mesa y el canto de su tablero del lado que mira hacia side
+## (dirección en la cuadrícula), según su sprite; DEFAULT_TABLE_EDGE si no se sabe.
+static func get_table_edge(table: Dictionary, side: Vector2) -> float:
+	var computer: String = String(table.get("computer", ""))
+	var base: String = SpriteLibrary.get_desk_set_base(table["id"], computer, FurnitureCatalog.get_monitor_count(table))
+	if base.is_empty():
+		base = SpriteLibrary.get_furniture_base(table["id"])
+	var edges: Array = SpriteLibrary.get_table_edges(base)
+	if edges.size() != 4:
+		return DEFAULT_TABLE_EDGE
+	var rotation: int = posmod(int(table["rotation"]), 4)
+	var front := Vector2(FurnitureCatalog.get_front(rotation))
+	# Lados del modelo (frente −y, +x, fondo +y, −x) en la cuadrícula con esa rotación.
+	var sides: Array[Vector2] = [front, MODEL_X_SIDES[rotation], -front, -MODEL_X_SIDES[rotation]]
+	for k: int in range(4):
+		if sides[k].is_equal_approx(side):
+			return float(edges[k])
+	return DEFAULT_TABLE_EDGE
+
+
 ## Corrimiento lateral (casillas) de quien se sienta en seat_cell para quedar frente al teclado
-## del escritorio de delante (según su sprite). Cero si no hay o no se sabe.
+## del escritorio de delante (según su sprite). Cero si no hay, no se sabe o hay otra silla frente al
+## mismo escritorio (cada una queda frente a su casilla en vez de juntarse en el teclado).
 static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
 	var facing: Dictionary = OfficeState.get_desk_facing(seat_cell)
 	if facing.is_empty():
@@ -189,6 +247,10 @@ static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
 	var desk: Dictionary = OfficeState.furniture[int(facing["index"])]
 	var rotation: int = posmod(int(desk["rotation"]), 4)
 	var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(desk["id"], desk["cell"], rotation)
+	for cell: Vector2i in cells:
+		var other: Vector2i = cell + FurnitureCatalog.get_front(rotation)
+		if other != seat_cell and _is_seat_at(other) and int(OfficeState.get_desk_facing(other).get("index", -1)) == int(facing["index"]):
+			return Vector2.ZERO
 	var computer: String = String(desk.get("computer", ""))
 	# Posición del teclado a lo largo del modelo, desde su punta −x.
 	var along: float = SpriteLibrary.get_seat_x(SpriteLibrary.get_desk_set_base(desk["id"], computer, FurnitureCatalog.get_monitor_count(desk)))
@@ -208,6 +270,11 @@ static func get_seat_shift(seat_cell: Vector2i) -> Vector2:
 	var front: Vector2i = FurnitureCatalog.FRONT_DIRECTIONS[int(facing["direction"])]
 	var index: float = Vector2(seat_cell + front - Vector2i(desk["cell"])).dot(axis)
 	return axis * clampf(place - index, -SEAT_SHIFT_MAX, SEAT_SHIFT_MAX)
+
+
+static func _is_seat_at(cell: Vector2i) -> bool:
+	var index: int = OfficeState.find_furniture_at(cell)
+	return index >= 0 and bool(FurnitureCatalog.get_item(OfficeState.furniture[index]["id"]).get("is_seat", false))
 
 
 ## Tira que dibuja esta pieza (0 si el mueble va entero).

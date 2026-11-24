@@ -7,6 +7,7 @@ gris oscuro. Desde el repositorio de Moana:
     sh scripts/uv.sh run python RUTA/tools/sprites/art/furniture/meeting_table/build.py [--out DIR] [--preview]
 """
 
+import math
 import sys
 from pathlib import Path
 
@@ -16,12 +17,13 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from _boxes import ramp  # noqa: E402
-from _chair_kit import PieceSpec, cylinder, main_piece  # noqa: E402
+from _chair_kit import CELL, PieceSpec, cylinder, main_piece  # noqa: E402
 
 GROUP = "table"
 C = 32.0  # centro de la planta de 64 × 64 unidades
 TOP, SLAB = 40.0, 5.0
 RADIUS = 25.6
+EDGE = round((C - math.sqrt(RADIUS ** 2 - (CELL / 2) ** 2)) / CELL, 4)
 
 WOOD = ramp("wood", "#DF823DFF", "#C26B24FF", "#894522FF", "#3C1300FF", "#EDA85DFF", "#743B0EFF")
 COLUMN = ramp("column", "#4A4F55FF", "#383B40FF", "#2C2F33FF", "#141619FF", "#6B7177FF", "#1F2125FF")
@@ -52,6 +54,8 @@ SPEC = PieceSpec(
     model=model,
     shadow=[("disc", C, C, 22.4, 0, TOP)],
     size=(2, 2),
+    # Canto de la tapa redonda frente al centro de cada casilla vecina (a media casilla del eje).
+    edges=(EDGE,) * 4,
     canvas=(256, 192),
 )
 

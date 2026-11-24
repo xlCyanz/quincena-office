@@ -1,5 +1,5 @@
 {
- "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta y, si tiene, dónde se sienta la persona (seat, casillas desde la punta -x del modelo); lo escribe build.py y export_game.py lo pasa al juego.",
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta y, si tiene, dónde se sienta la persona (seat, casillas desde la punta -x del modelo) y el canto del tablero por lado (edges, ver DeskSpec.edges); lo escribe build.py y export_game.py lo pasa al juego.",
  "sprites": {
   "desk_long_basic_r0.png": {
    "anchor": [
@@ -49,6 +49,14 @@
     128
    ]
   }
+ },
+ "edges": {
+  "desk_long_basic": [
+   0.0625,
+   0.2812,
+   0.3125,
+   0.2812
+  ]
  },
  "seats": {
   "desk_long_basic": 0.9688

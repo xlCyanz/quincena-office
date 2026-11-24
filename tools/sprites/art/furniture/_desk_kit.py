@@ -109,6 +109,13 @@ class DeskSpec:
         keys = [b for b in parts if b.name == "keyboard"]
         return round((keys[0].x0 + keys[0].x1) / 2 / CELL, 4) if keys else None
 
+    def edges(self) -> list[float]:
+        """Hueco (casillas) entre la planta y el canto del tablero por lado, en rotación 0: frente (-y, donde
+        se sienta la persona), +x, fondo (+y) y -x. El juego arrima las sillas hasta ese canto."""
+        _, top = self.parts()
+        w, d = self.size[0] * CELL, self.size[1] * CELL
+        return [round(v / CELL, 4) for v in (top.y0, w - top.x1, d - top.y1, top.x0)]
+
 
 @dataclass
 class View:
@@ -680,8 +687,9 @@ def main(spec: DeskSpec, here: Path, document: Optional[Documents] = None, shado
             print(f"{name}.png  apoyo {anchor}  recuadro {image.getbbox()}")
     manifest: dict[str, object] = {
         "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta y, si tiene, dónde se sienta la persona "
-                       "(seat, casillas desde la punta -x del modelo); lo escribe build.py y export_game.py lo pasa "
-                       "al juego.", "sprites": anchors}
+                       "(seat, casillas desde la punta -x del modelo) y el canto del tablero por lado (edges, ver "
+                       "DeskSpec.edges); lo escribe build.py y export_game.py lo pasa al juego.", "sprites": anchors,
+        "edges": {spec.name: spec.edges()}}
     if spec.seat_x() is not None:
         manifest["seats"] = {spec.name: spec.seat_x()}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

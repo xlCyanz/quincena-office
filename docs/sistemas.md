@@ -509,7 +509,10 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   esa parte; mientras tanto la silla no se dibuja aparte (`OfficeCharacter.draws_chair_at`, grupo `FurnitureView.CHAIR_GROUP`), solo su sombra.
   Ningún tono de una silla puede ser de la ropa, la piel o el pelo (`check_chair_colors`); solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
   Sentado frente a un escritorio o mostrador (`OfficeState.get_desk_facing(casilla)`: `{direction, computer}`), la silla y quien se sienta se
-  dibujan arrimados `FurnitureView.SEAT_TUCK` (0.3 casillas) y mirándolo (`get_sprite_rotation`, `OfficeCharacter._tuck`; `grid_position` no cambia);
+  dibujan arrimados y mirándolo (`get_sprite_rotation`, `OfficeCharacter._tuck`; `grid_position` no cambia). `FurnitureView.get_seat_offset(casilla)`
+  arrima hasta dejar el centro de la silla a `SEAT_REACH` (0.26 casillas) del canto del tablero, según `edges` de `data/sprites.json` (hueco
+  entre la planta y el canto por lado del modelo, lo escribe cada `build.py` de mesa; `get_table_edge`), sin pasar de `SEAT_TUCK_MAX`. Una
+  silla de costado o de reunión (`get_seat_table`: `front` false) se arrima igual si ya mira a la mesa, sin girar;
   mirando a +x o +y, la pieza hija `Hands` (el personaje tiene `y_sort_enabled`) repite la franja de antebrazos `HANDS_BAND` ordenada tras el
   escritorio. El asiento de las sillas va a 24 px de sprite (la cadera del personaje) y el teclado al borde del escritorio. Un mueble largo
   (1×N) se dibuja en una tira por casilla (`PART_SLICE`, `get_slice_count`) para ordenarse bien con paredes y personas.
@@ -517,7 +520,8 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   128×160 con apoyo (64, 128)) en el centro del mueble; el escritorio largo se dibuja entero con lo que lleva (`sets` de su entrada en
   `data/sprites.json`: `desk_long_basic`, `desk_long_pro1`/`pro2`/`pro3` según las pantallas extra; con tres la torre va debajo de la mesa;
   `SpriteLibrary.get_desk_set_sprite`). `seats` dice a qué altura del modelo queda el teclado de cada sprite y `FurnitureView.get_seat_shift(casilla)`
-  corre de lado (hasta media casilla) a la silla y a quien se sienta para quedar frente a él.
+  corre de lado (hasta media casilla) a la silla y a quien se sienta para quedar frente a él; con otra silla frente al mismo escritorio no se
+  corre ninguna (cada una frente a su casilla). Prueba: `tests/suites/test_seating.gd`.
   Objetos de pared (`wall_items` en `data/sprites.json`: dibujos y `base_z`; `SpriteLibrary.get_wall_item_sprite(id, eje, elección)`):
   `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; solo las caras que se ven de frente (frente
   a +x o +y; de espaldas sigue el dibujo provisional); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a
