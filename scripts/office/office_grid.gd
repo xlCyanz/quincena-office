@@ -47,6 +47,13 @@ var _site_border := SiteBorder.new()
 @onready var _objects: Node2D = $Objects
 # Manchas de suciedad; se crea en _ready, encima del tinte de habitaciones.
 var _dirt_overlay := DirtOverlay.new()
+# Sombra de las paredes altas en el piso, encima de las manchas.
+var _wall_shadows := WallShadowOverlay.new()
+# Puertas que se abren, pantallas que se prenden y personajes que las abren.
+var _doors: Array[EdgePieceView] = []
+var _screens: Array[FurnitureView] = []
+var _characters: Array[Node2D] = []
+var _screen_time: float = 0.0
 
 
 func _ready() -> void:
@@ -68,10 +75,61 @@ func _ready() -> void:
 	add_child(_dirt_overlay)
 	move_child(_dirt_overlay, _room_overlay.get_index() + 1)
 	_dirt_overlay.setup(self)
+	_wall_shadows.name = "WallShadows"
+	add_child(_wall_shadows)
+	move_child(_wall_shadows, _dirt_overlay.get_index() + 1)
+	_wall_shadows.setup(self)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	update_hover(get_global_mouse_position())
+	update_doors()
+	_update_screens(delta)
+
+
+## Abre las puertas con alguien a DOOR_OPEN_REACH casillas de su medio y cierra las demás.
+func update_doors() -> void:
+	if _doors.is_empty():
+		return
+	var spots: Array[Vector2] = []
+	# Un personaje liberado sigue en la lista hasta el próximo add_object.
+	for character: Variant in _characters:
+		if is_instance_valid(character) and (character as Node2D).is_visible_in_tree():
+			spots.append(world_to_grid((character as Node2D).position))
+	for door: EdgePieceView in _doors:
+		var ends: Array[Vector2] = GridEdge.get_endpoints(door.edge)
+		var middle: Vector2 = (ends[0] + ends[1]) / 2.0
+		var near: bool = false
+		for spot: Vector2 in spots:
+			if spot.distance_to(middle) <= GameConstants.DOOR_OPEN_REACH:
+				near = true
+				break
+		door.set_door_open(near)
+
+
+# La pantalla de presentaciones se prende en horario (PRESENTATION_SCREEN_HOURS) y pasa sus cuadros mientras
+# corre el reloj.
+func _update_screens(delta: float) -> void:
+	if _screens.is_empty():
+		return
+	var hour: int = GameClock.get_hour()
+	var on: bool = hour >= GameConstants.PRESENTATION_SCREEN_HOURS.x and hour < GameConstants.PRESENTATION_SCREEN_HOURS.y
+	if on and not GameClock.is_paused:
+		_screen_time += delta
+	for screen: FurnitureView in _screens:
+		var frames: int = SpriteLibrary.get_wall_item_play_frames(screen.item_id)
+		var frame: int = int(_screen_time / GameConstants.PRESENTATION_SCREEN_FRAME_SECONDS) % frames + 1
+		screen.set_screen_frame(frame if on else 0)
+
+
+## Puertas que se abren (para pruebas).
+func get_doors() -> Array[EdgePieceView]:
+	return _doors
+
+
+## Capa de sombras de las paredes (para pruebas).
+func get_wall_shadows() -> WallShadowOverlay:
+	return _wall_shadows
 
 
 ## Dibuja la oficina (piso, bordes, muebles y tinte de habitaciones) con los datos de OfficeState,
@@ -127,12 +185,19 @@ func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
 			_objects.remove_child(child)
 			child.queue_free()
 	var views: Dictionary[Vector3i, EdgePieceView] = {}
+	var tall_edges: Array[Vector3i] = []
+	_doors.clear()
 	for edge: Vector3i in edges:
 		var view := EdgePieceView.new()
 		view.name = "%s_%d_%d_%d" % [edges[edge], edge.x, edge.y, edge.z]
 		_objects.add_child(view)
 		view.setup(self, edge, edges[edge], is_tall_edge(edge), EdgePieceView.get_double_half(edges, edge))
 		views[edge] = view
+		if view.tall:
+			tall_edges.append(edge)
+		if view.can_open():
+			_doors.append(view)
+	_wall_shadows.set_edges(tall_edges, _lot)
 	_place_corner_posts(views)
 
 
@@ -181,6 +246,13 @@ func is_back_edge(edge: Vector3i) -> bool:
 ## Añade un objeto (p. ej. un personaje) a la capa ordenada por Y.
 func add_object(node: Node2D) -> void:
 	_objects.add_child(node)
+	if node is OfficeCharacter:
+		var alive: Array[Node2D] = []
+		for character: Variant in _characters:
+			if is_instance_valid(character):
+				alive.append(character as Node2D)
+		alive.append(node)
+		_characters = alive
 
 
 ## Posición de cuadrícula con decimales a píxeles del mundo (las casillas enteras caen en su centro).
@@ -196,11 +268,14 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 		if child is FurnitureView:
 			_objects.remove_child(child)
 			child.queue_free()
+	_screens.clear()
 	for item: Dictionary in furniture:
 		var view := FurnitureView.new()
 		view.name = "%s_%d_%d" % [item["id"], item["cell"].x, item["cell"].y]
 		_objects.add_child(view)
 		view.setup(self, item)
+		if view.can_play():
+			_screens.append(view)
 		for slice: int in range(1, FurnitureView.get_slice_count(item)):
 			var strip := FurnitureView.new()
 			strip.name = "%s_tira_%d" % [view.name, slice]

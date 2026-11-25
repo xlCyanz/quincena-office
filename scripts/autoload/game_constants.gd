@@ -32,6 +32,15 @@ const DAYS_PER_WEEK: int = 7
 ## Hora a la que empieza una partida nueva.
 const START_HOUR: int = 8
 
+## Horas en que la pantalla de presentaciones está prendida: desde x hasta antes de y.
+const PRESENTATION_SCREEN_HOURS := Vector2i(8, 18)
+
+## Segundos reales por cuadro de la animación de la pantalla prendida.
+const PRESENTATION_SCREEN_FRAME_SECONDS: float = 0.25
+
+## Distancia en casillas desde el medio de una puerta a la que se abre al acercarse alguien.
+const DOOR_OPEN_REACH: float = 0.9
+
 ## Velocidades del reloj, sin la pausa.
 const CLOCK_SPEEDS: Array[float] = [1.0, 2.0, 4.0, 8.0, 16.0]
 

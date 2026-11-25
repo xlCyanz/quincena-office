@@ -85,6 +85,8 @@ var _back_first: bool = false
 # Rotación dibujada (la silla arrimada mira al escritorio).
 var _sprite_rotation: int = 0
 var _slice: int = 0
+# Cuadro de la pantalla prendida (0 = apagada).
+var _screen_frame: int = 0
 var _slices: int = 1
 
 
@@ -277,6 +279,18 @@ static func _is_seat_at(cell: Vector2i) -> bool:
 	return index >= 0 and bool(FurnitureCatalog.get_item(OfficeState.furniture[index]["id"]).get("is_seat", false))
 
 
+## Indica si es un objeto de pared que se prende (la pantalla de presentaciones).
+func can_play() -> bool:
+	return SpriteLibrary.get_wall_item_play_frames(item_id) > 0
+
+
+## Prende la pantalla en un cuadro (1 a get_wall_item_play_frames) o la apaga con 0.
+func set_screen_frame(frame: int) -> void:
+	if frame != _screen_frame:
+		_screen_frame = frame
+		queue_redraw()
+
+
 ## Tira que dibuja esta pieza (0 si el mueble va entero).
 func get_slice() -> int:
 	return _slice
@@ -289,8 +303,12 @@ func get_sprite() -> String:
 		var facing: Vector2i = FurnitureCatalog.get_front(rotation_index)
 		var cell := Vector2i((_anchor + Vector2(facing) * 0.5).round())
 		var pick: int = int(MapDecor.noise(cell, SALT_WALL_ITEM) * 1000.0)
-		return SpriteLibrary.get_wall_item_sprite(item_id, FurnitureCatalog.get_wall_edge(cell, rotation_index).z, pick,
-			facing.x + facing.y < 0)
+		var axis: int = FurnitureCatalog.get_wall_edge(cell, rotation_index).z
+		if _screen_frame > 0:
+			var on: String = SpriteLibrary.get_wall_item_on_sprite(item_id, axis, pick, facing.x + facing.y < 0, _screen_frame)
+			if not on.is_empty():
+				return on
+		return SpriteLibrary.get_wall_item_sprite(item_id, axis, pick, facing.x + facing.y < 0)
 	if has_backrest(item_id):
 		return SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "back" if part == PART_BACKREST else "seat")
 	var whole: String = SpriteLibrary.get_desk_set_sprite(item_id, computer_id, monitor_count, rotation_index)

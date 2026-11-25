@@ -17,6 +17,8 @@ const ARM_PLUS_Y: int = 1
 const ARM_MINUS_X: int = 2
 const ARM_MINUS_Y: int = 3
 const DOOR_CODES: Array[String] = ["d", "h"]
+## Segundos reales por cuadro al abrir o cerrar una puerta.
+const DOOR_FRAME_SECONDS: float = 0.05
 
 var edge := Vector3i.ZERO
 var kind: String = ""
@@ -34,6 +36,10 @@ var _along := Vector2.RIGHT  # dirección del borde en pantalla
 # Sprite del tramo ("" = provisional) y postes que dibuja encima: [sprite, posición].
 var _sprite: String = ""
 var _posts: Array[Array] = []
+# Puerta que se abre: cuadros que tiene (0 si no), cuadro actual con decimales y si debe quedar abierta.
+var _door_frames: int = 0
+var _door_frame: float = 0.0
+var _door_open: bool = false
 
 
 func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: bool = true, double_half: String = "") -> void:
@@ -61,6 +67,8 @@ func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: 
 	_sprite = get_sprite_name(kind, tall, edge.z, double_half)
 	if not SpriteLibrary.has_sprite(_sprite):
 		_sprite = ""
+	_door_frames = SpriteLibrary.get_door_frames(kind) if tall and not _sprite.is_empty() else 0
+	set_process(false)
 	_posts.clear()
 	_frame_bases.clear()
 	_leaf_bases.clear()
@@ -160,9 +168,38 @@ func get_post_count() -> int:
 	return _posts.size()
 
 
+## Indica si la puerta tiene cuadros de abrir (solo las altas con sprite).
+func can_open() -> bool:
+	return _door_frames > 0
+
+
+## Abre o cierra la puerta de a un cuadro cada DOOR_FRAME_SECONDS.
+func set_door_open(open: bool) -> void:
+	if open == _door_open or _door_frames == 0:
+		return
+	_door_open = open
+	set_process(true)
+
+
+## Cuadro de abrir que se ve (0 = cerrada).
+func get_door_frame() -> int:
+	return int(_door_frame)
+
+
+func _process(delta: float) -> void:
+	var target: float = float(_door_frames) if _door_open else 0.0
+	var before: int = get_door_frame()
+	_door_frame = move_toward(_door_frame, target, delta / DOOR_FRAME_SECONDS)
+	if get_door_frame() != before:
+		queue_redraw()
+	if is_equal_approx(_door_frame, target):
+		set_process(false)
+
+
 func _draw() -> void:
 	if not _sprite.is_empty():
-		SpriteLibrary.draw(self, _sprite)
+		var frame: String = SpriteLibrary.get_door_frame_sprite(_sprite, get_door_frame()) if get_door_frame() > 0 else ""
+		SpriteLibrary.draw(self, frame if not frame.is_empty() else _sprite)
 		for post: Array in _posts:
 			SpriteLibrary.draw(self, post[0], post[1])
 		return

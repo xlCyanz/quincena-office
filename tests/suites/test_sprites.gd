@@ -5,6 +5,8 @@ extends Node
 signal finished(failures: int, checks: int)
 
 const GAME_SCENE: PackedScene = preload("res://scenes/main.tscn")
+## Un cuadro de puerta y un poco más.
+const DOOR_STEP: float = EdgePieceView.DOOR_FRAME_SECONDS * 1.01
 
 var _failures: int = 0
 var _checks: int = 0
@@ -264,8 +266,13 @@ func _check_game() -> void:
 	OfficeState.furniture.append({"id": "painting", "cell": Vector2i(0, 4), "rotation": 1})
 	OfficeState.furniture.append({"id": "wall_clock", "cell": Vector2i(4, 0), "rotation": 2})
 	OfficeState.furniture.append({"id": "painting", "cell": Vector2i(2, 1), "rotation": 3})
+	OfficeState.furniture.append({"id": "presentation_screen", "cell": Vector2i(0, 6), "rotation": 1})
 	EventBus.office_changed.emit()
 	await get_tree().process_frame
+	await get_tree().process_frame
+	_check_screen(grid)
+	_check_wall_shadows(grid)
+	_check_door(grid)
 	var hung_sprites: Dictionary[String, String] = {}
 	for child: Node in grid.get_node("Objects").get_children():
 		if child is FurnitureView and not child.is_queued_for_deletion() and FurnitureCatalog.is_wall_mounted((child as FurnitureView).item_id):
@@ -336,3 +343,67 @@ func _check_game() -> void:
 	_expect(OfficeCharacter.draws_chair_at(ceo.get_seat_cell()), "y al sentarse otra vez, con él")
 	game.queue_free()
 	await get_tree().process_frame
+
+
+# La pantalla de presentaciones se prende en horario con sus cuadros de frente y se apaga fuera.
+func _check_screen(grid: OfficeGrid) -> void:
+	var screen: FurnitureView = null
+	for child: Node in grid.get_node("Objects").get_children():
+		if child is FurnitureView and not child.is_queued_for_deletion() and (child as FurnitureView).item_id == "presentation_screen":
+			screen = child
+	_expect(screen != null and screen.can_play() and SpriteLibrary.get_wall_item_play_frames("presentation_screen") == 12,
+		"la pantalla se prende y tiene 12 cuadros")
+	if screen == null:
+		return
+	var hour: int = GameClock.get_hour()
+	var on: bool = hour >= GameConstants.PRESENTATION_SCREEN_HOURS.x and hour < GameConstants.PRESENTATION_SCREEN_HOURS.y
+	_expect(on == screen.get_sprite().contains("_play_"), "a las %d la pantalla %s: %s" % [hour, "prendida" if on else "apagada", screen.get_sprite()])
+	screen.set_screen_frame(5)
+	_expect(screen.get_sprite().ends_with("_x_play_5"), "cuadro 5: %s" % screen.get_sprite())
+	screen.set_screen_frame(0)
+	_expect(screen.get_sprite() == "presentation_screen_x", "apagada: %s" % screen.get_sprite())
+
+
+# Cada pared alta del local deja su sombra en la casilla de adentro.
+func _check_wall_shadows(grid: OfficeGrid) -> void:
+	var shadows: Array[Array] = grid.get_wall_shadows().get_shadows()
+	var inside: bool = true
+	for shadow: Array in shadows:
+		inside = inside and grid.is_in_lot(shadow[0]) and String(shadow[1]).begins_with("wall_tall_")
+	_expect(shadows.size() > 0 and inside, "sombras de las paredes altas dentro del local: %d" % shadows.size())
+	_expect(SpriteLibrary.get_wall_shadow_sprite(GridEdge.AXIS_X) == "wall_tall_x_shadow"
+		and SpriteLibrary.get_wall_shadow_sprite(GridEdge.AXIS_Y) == "wall_tall_y_shadow", "sprites de sombra por eje")
+
+
+# Una puerta alta se abre de a un cuadro con alguien cerca y se cierra cuando se va; la baja no se abre.
+func _check_door(grid: OfficeGrid) -> void:
+	var edge := Vector3i(4, 2, GridEdge.AXIS_Y)
+	var door := EdgePieceView.new()
+	grid.get_node("Objects").add_child(door)
+	door.setup(grid, edge, ConstructionCatalog.DOOR, true)
+	var low := EdgePieceView.new()
+	grid.get_node("Objects").add_child(low)
+	low.setup(grid, edge, ConstructionCatalog.DOOR, false)
+	_expect(door.can_open() and not low.can_open() and SpriteLibrary.get_door_frames(ConstructionCatalog.DOOR) == 6,
+		"la puerta alta tiene 6 cuadros de abrir y la baja ninguno")
+	var doors: Array[EdgePieceView] = grid.get_doors()
+	doors.append(door)
+	var visitor := Node2D.new()
+	grid.get_node("Objects").add_child(visitor)
+	var ends: Array[Vector2] = GridEdge.get_endpoints(edge)
+	visitor.position = grid.grid_to_world((ends[0] + ends[1]) / 2.0 + Vector2(0.0, 0.5))
+	var people: Array[Node2D] = [visitor]
+	grid.set("_characters", people)
+	grid.update_doors()
+	door._process(DOOR_STEP)
+	_expect(door.get_door_frame() == 1, "abre de a un cuadro: %d" % door.get_door_frame())
+	door._process(1.0)
+	_expect(door.get_door_frame() == 6 and SpriteLibrary.has_sprite(SpriteLibrary.get_door_frame_sprite(door.get_sprite(), 6)),
+		"abierta del todo con su cuadro: %d" % door.get_door_frame())
+	visitor.position = grid.grid_to_world(Vector2(ends[0]) + Vector2(3.0, 3.0))
+	grid.update_doors()
+	door._process(1.0)
+	_expect(door.get_door_frame() == 0, "sin nadie cerca se cierra: %d" % door.get_door_frame())
+	doors.erase(door)
+	for node: Node in [door, low, visitor]:
+		node.queue_free()

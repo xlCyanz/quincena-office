@@ -100,6 +100,42 @@ static func get_wall_item_sprite(item_id: String, axis: int, pick: int = 0, back
 	return sprite if has_sprite(sprite) else ""
 
 
+## Cuadros de la animación de un objeto de pared prendido (0 si no se prende, como todos salvo la pantalla).
+static func get_wall_item_play_frames(item_id: String) -> int:
+	return int(get_data().get("wall_items", {}).get(item_id, {}).get("play_frames", 0))
+
+
+## Sprite de un objeto de pared prendido: dibujo que toca por pick y cuadro (1 a get_wall_item_play_frames; de
+## espaldas no se ve la animación). "" si no tiene.
+static func get_wall_item_on_sprite(item_id: String, axis: int, pick: int, back: bool, frame: int) -> String:
+	var screens: Array = get_data().get("wall_items", {}).get(item_id, {}).get("on", [])
+	if screens.is_empty():
+		return ""
+	var sprite: String = "%s_%s%s" % [screens[posmod(pick, screens.size())], "back_" if back else "",
+		"x" if axis == GridEdge.AXIS_X else "y"]
+	if not back:
+		sprite += "_play_%d" % frame
+	return sprite if has_sprite(sprite) else ""
+
+
+## Cuadros de abrir de una pieza de borde (0 si no se abre).
+static func get_door_frames(piece_kind: String) -> int:
+	var doors: Dictionary = get_data().get("doors", {})
+	return int(doors.get("frames", 0)) if piece_kind in doors.get("opening", []) else 0
+
+
+## Cuadro de abrir (1 a get_door_frames) del tramo alto de una puerta; "" si no hay.
+static func get_door_frame_sprite(base_sprite: String, frame: int) -> String:
+	var sprite: String = "%s_open_%d" % [base_sprite, frame]
+	return sprite if has_sprite(sprite) else ""
+
+
+## Sombra que deja una pared alta de ese eje en la casilla de adentro ("" si no hay).
+static func get_wall_shadow_sprite(axis: int) -> String:
+	var sprite: String = String(get_data().get("wall_shadow", "")).replace("%s", "x" if axis == GridEdge.AXIS_X else "y")
+	return sprite if has_sprite(sprite) else ""
+
+
 ## Altura sobre el piso (px del mundo) donde empieza el dibujo de un objeto de pared.
 static func get_wall_item_base(item_id: String) -> float:
 	var items: Dictionary = get_data().get("wall_items", {})

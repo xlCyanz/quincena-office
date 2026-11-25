@@ -1,5 +1,5 @@
 {
-	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). ui_icons: icono de la barra -> sprite. status_icons: icono -> sprite del globo. characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal de limpieza; bucket: el cubo que se dibuja junto a quien trapea; cell y anchor en px del sprite).",
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso empieza (base_z); on = dibujos de la pantalla prendida con play_frames cuadros <dibujo>_<eje>_play_<n>. doors: piezas cuyo tramo alto se abre en frames cuadros <pieza>_tall_<eje>_open_<n>. wall_shadow: sombra de la pared alta en la casilla de adentro (%s = eje). dirt: manchas de suciedad (sprites de una casilla). ui_icons: icono de la barra -> sprite. status_icons: icono -> sprite del globo. characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal de limpieza; bucket: el cubo que se dibuja junto a quien trapea; cell y anchor en px del sprite).",
 	"characters": {
 		"anchor": [
 			64,
@@ -2901,6 +2901,12 @@
 		"dirt_1",
 		"dirt_2"
 	],
+	"doors": {
+		"frames": 6,
+		"opening": [
+			"door"
+		]
+	},
 	"edges": {
 		"desk_long": [
 			0.0625,
@@ -5537,6 +5543,72 @@
 				160
 			]
 		},
+		"door_tall_x_open_1": {
+			"anchor": [
+				37.0,
+				142.0
+			],
+			"file": "walls/door_tall_x_open_1.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_x_open_2": {
+			"anchor": [
+				37.0,
+				142.0
+			],
+			"file": "walls/door_tall_x_open_2.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_x_open_3": {
+			"anchor": [
+				37.0,
+				142.0
+			],
+			"file": "walls/door_tall_x_open_3.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_x_open_4": {
+			"anchor": [
+				37.0,
+				142.0
+			],
+			"file": "walls/door_tall_x_open_4.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_x_open_5": {
+			"anchor": [
+				37.0,
+				142.0
+			],
+			"file": "walls/door_tall_x_open_5.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_x_open_6": {
+			"anchor": [
+				37.0,
+				142.0
+			],
+			"file": "walls/door_tall_x_open_6.png",
+			"size": [
+				104,
+				162
+			]
+		},
 		"door_tall_y": {
 			"anchor": [
 				36.0,
@@ -5546,6 +5618,72 @@
 			"size": [
 				72,
 				160
+			]
+		},
+		"door_tall_y_open_1": {
+			"anchor": [
+				67.0,
+				142.0
+			],
+			"file": "walls/door_tall_y_open_1.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_y_open_2": {
+			"anchor": [
+				67.0,
+				142.0
+			],
+			"file": "walls/door_tall_y_open_2.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_y_open_3": {
+			"anchor": [
+				67.0,
+				142.0
+			],
+			"file": "walls/door_tall_y_open_3.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_y_open_4": {
+			"anchor": [
+				67.0,
+				142.0
+			],
+			"file": "walls/door_tall_y_open_4.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_y_open_5": {
+			"anchor": [
+				67.0,
+				142.0
+			],
+			"file": "walls/door_tall_y_open_5.png",
+			"size": [
+				104,
+				162
+			]
+		},
+		"door_tall_y_open_6": {
+			"anchor": [
+				67.0,
+				142.0
+			],
+			"file": "walls/door_tall_y_open_6.png",
+			"size": [
+				104,
+				162
 			]
 		},
 		"executive_desk_r0": {
@@ -6467,6 +6605,930 @@
 				160.0
 			],
 			"file": "wall_items/presentation_screen_back_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_back_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_back_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_back_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_back_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_1": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_1.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_10": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_10.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_11": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_11.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_12": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_12.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_2": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_2.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_3": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_3.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_4": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_4.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_5": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_5.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_6": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_6.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_7": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_7.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_8": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_8.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_x_play_9": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_x_play_9.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_1": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_1.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_10": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_10.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_11": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_11.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_12": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_12.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_2": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_2.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_3": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_3.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_4": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_4.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_5": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_5.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_6": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_6.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_7": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_7.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_8": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_8.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_chart_y_play_9": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_chart_y_play_9.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_back_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_back_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_back_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_back_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_1": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_1.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_10": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_10.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_11": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_11.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_12": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_12.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_2": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_2.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_3": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_3.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_4": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_4.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_5": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_5.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_6": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_6.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_7": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_7.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_8": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_8.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_x_play_9": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_x_play_9.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_1": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_1.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_10": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_10.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_11": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_11.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_12": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_12.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_2": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_2.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_3": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_3.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_4": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_4.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_5": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_5.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_6": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_6.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_7": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_7.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_8": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_8.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_pie_y_play_9": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_pie_y_play_9.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_back_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_back_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_back_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_back_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_1": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_1.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_10": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_10.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_11": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_11.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_12": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_12.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_2": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_2.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_3": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_3.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_4": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_4.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_5": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_5.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_6": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_6.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_7": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_7.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_8": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_8.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_x_play_9": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_x_play_9.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_1": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_1.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_10": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_10.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_11": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_11.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_12": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_12.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_2": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_2.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_3": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_3.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_4": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_4.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_5": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_5.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_6": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_6.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_7": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_7.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_8": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_8.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_title_y_play_9": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_title_y_play_9.png",
 			"size": [
 				128,
 				192
@@ -9937,6 +10999,17 @@
 				160
 			]
 		},
+		"wall_tall_x_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "walls/wall_tall_x_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
 		"wall_tall_y": {
 			"anchor": [
 				36.0,
@@ -9946,6 +11019,17 @@
 			"size": [
 				72,
 				160
+			]
+		},
+		"wall_tall_y_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "walls/wall_tall_y_shadow.png",
+			"size": [
+				128,
+				128
 			]
 		},
 		"water_dispenser_q_r0": {
@@ -10161,6 +11245,12 @@
 		},
 		"presentation_screen": {
 			"base_z": 50,
+			"on": [
+				"presentation_screen_chart",
+				"presentation_screen_pie",
+				"presentation_screen_title"
+			],
+			"play_frames": 12,
 			"sprites": [
 				"presentation_screen"
 			]
@@ -10177,5 +11267,6 @@
 				"whiteboard"
 			]
 		}
-	}
+	},
+	"wall_shadow": "wall_tall_%s_shadow"
 }

@@ -562,8 +562,17 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; mirando a +x o +y se ve de frente y a −x o −y
   de espaldas (`<dibujo>_back_x`/`_back_y`, `get_wall_item_sprite(…, back)`: colgado del lado de la pared que no se ve); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a
   `LOW_WALL_SPRITE_SCALE` pegado al piso. La pantalla de presentaciones se dibuja de dos bordes de ancho centrada en el suyo (en el juego ocupa uno).
-  Manchas de suciedad (`dirt`) y globos de estado (`status_icons`, `get_status_icon_sprite`) también son sprites. Faltan la sombra
-  de las paredes y las animaciones de puertas y pantallas. Prueba `test_sprites`.
+  Manchas de suciedad (`dirt`) y globos de estado (`status_icons`, `get_status_icon_sprite`) también son sprites.
+  Sombra de las paredes (`wall_shadow`, `get_wall_shadow_sprite(eje)`): `WallShadowOverlay`, sobre el piso y las manchas, pone
+  `wall_tall_<eje>_shadow` en la casilla de mayor x o y de cada tramo alto si es del local (se rehace con las piezas de borde).
+  Puertas que se abren (`doors` en `data/sprites.json`: piezas y cuadros; `get_door_frames(pieza)`, `get_door_frame_sprite`): solo
+  la `door` alta; `OfficeGrid.update_doors()` (cada cuadro) abre las que tienen un personaje visible a
+  `GameConstants.DOOR_OPEN_REACH` casillas de su medio y cierra las demás; `EdgePieceView.set_door_open` pasa de a un cuadro
+  `<pieza>_tall_<eje>_open_<n>` cada `DOOR_FRAME_SECONDS` (tiempo real). Los personajes los anota `OfficeGrid.add_object`.
+  Pantalla de presentaciones (`on` y `play_frames` en su `wall_items`; `get_wall_item_on_sprite`): prendida de
+  `GameConstants.PRESENTATION_SCREEN_HOURS` (8 a 18) con uno de sus tres dibujos por casilla, y de frente pasa sus 12 cuadros
+  `_play_<n>` cada `PRESENTATION_SCREEN_FRAME_SECONDS` mientras corre el reloj (`FurnitureView.set_screen_frame`, 0 = apagada).
+  Prueba `test_sprites`.
 
 ## Exportación
 

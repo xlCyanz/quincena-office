@@ -62,6 +62,10 @@ WALL_ITEMS = {
     "air_conditioner": ("air_conditioner",), "painting": ("painting", "painting_abstract", "painting_sea"),
     "wall_clock": ("wall_clock",), "whiteboard": ("whiteboard",), "presentation_screen": ("presentation_screen",),
 }
+# Pantalla de presentaciones prendida: un dibujo por pantalla (elegido por casilla) con sus cuadros _play_<n> de frente.
+SCREENS = {"presentation_screen": ("presentation_screen_chart", "presentation_screen_pie", "presentation_screen_title")}
+# Puertas de una hoja que se abren (cuadros <pieza>_tall_<eje>_open_<n>, solo las altas: la baja no tiene hoja).
+OPENING_DOORS = ("door",)
 # Manchas de suciedad (dirt_0 …) y globos de estado (status_<icono>), dibujados en art/ground/dirt y art/icons/status.
 DIRT_STAINS = 3
 STATUS_ICONS = ("no_station", "tired", "upset", "stressed", "idle")
@@ -207,6 +211,16 @@ def main():
         for height in ("tall", "low"):
             for axis in ("x", "y"):
                 copy("glass_door_double_%s_%s_%s" % (half, height, axis), "walls")
+    # Cuadros de abrir de las puertas y sombra de la pared alta en el piso de adentro.
+    door_frames = 0
+    for kind in OPENING_DOORS:
+        for axis in ("x", "y"):
+            base = "%s_tall_%s" % (kind, axis)
+            door_frames = int(art[base + "_open_1.png"][1]["frames"])
+            for frame in range(1, door_frames + 1):
+                copy("%s_open_%d" % (base, frame), "walls")
+    for axis in ("x", "y"):
+        copy("wall_tall_%s_shadow" % axis, "walls")
     # Postes de toda unión (art/walls/posts/): el juego arma el nombre con sus vecinos.
     for name in sorted(n[:-4] for n in art if n.startswith("wall_post_")):
         copy(name, "walls")
@@ -246,6 +260,16 @@ def main():
         first = bases[0] + "_x.png"
         entry = art[first][1]
         wall_items[item] = {"sprites": list(bases), "base_z": entry["base_z"]}
+    for item, screens in SCREENS.items():
+        frames = int(art[screens[0] + "_x_play_1.png"][1]["frames"])
+        for screen in screens:
+            for axis in ("x", "y"):
+                copy("%s_%s" % (screen, axis), "wall_items")
+                copy("%s_back_%s" % (screen, axis), "wall_items")
+                for frame in range(1, frames + 1):
+                    copy("%s_%s_play_%d" % (screen, axis, frame), "wall_items")
+        wall_items[item]["on"] = list(screens)
+        wall_items[item]["play_frames"] = frames
 
     # ---- manchas de suciedad y globos de estado
     for index in range(DIRT_STAINS):
@@ -363,7 +387,9 @@ def main():
                        "un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del "
                        "modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos "
                        "(sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso "
-                       "empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). ui_icons: icono de la barra -> sprite. status_icons: icono -> sprite del "
+                       "empieza (base_z); on = dibujos de la pantalla prendida con play_frames cuadros <dibujo>_<eje>_play_<n>. doors: piezas cuyo "
+                       "tramo alto se abre en frames cuadros <pieza>_tall_<eje>_open_<n>. wall_shadow: sombra de la pared alta en "
+                       "la casilla de adentro (%s = eje). dirt: manchas de suciedad (sprites de una casilla). ui_icons: icono de la barra -> sprite. status_icons: icono -> sprite del "
                        "globo. characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores "
                        "exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y "
@@ -380,6 +406,8 @@ def main():
         "seats": seats,
         "edges": edges,
         "dirt": ["dirt_%d" % index for index in range(DIRT_STAINS)],
+        "doors": {"opening": list(OPENING_DOORS), "frames": door_frames},
+        "wall_shadow": "wall_tall_%s_shadow",
         "status_icons": dict((icon, "status_" + icon) for icon in STATUS_ICONS),
         "ui_icons": dict((icon, "ui_" + icon) for icon in UI_ICONS),
         "sprites": sprites,
