@@ -1,0 +1,60 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "status_no_station.png": {
+   "kind": "icon",
+   "canvas": [
+    32,
+    36
+   ],
+   "anchor": [
+    16.0,
+    15.0
+   ]
+  },
+  "status_tired.png": {
+   "kind": "icon",
+   "canvas": [
+    32,
+    36
+   ],
+   "anchor": [
+    16.0,
+    15.0
+   ]
+  },
+  "status_upset.png": {
+   "kind": "icon",
+   "canvas": [
+    32,
+    36
+   ],
+   "anchor": [
+    16.0,
+    15.0
+   ]
+  },
+  "status_stressed.png": {
+   "kind": "icon",
+   "canvas": [
+    32,
+    36
+   ],
+   "anchor": [
+    16.0,
+    15.0
+   ]
+  },
+  "status_idle.png": {
+   "kind": "icon",
+   "canvas": [
+    32,
+    36
+   ],
+   "anchor": [
+    16.0,
+    15.0
+   ]
+  }
+ }
+}

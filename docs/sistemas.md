@@ -235,7 +235,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   meta de ánimo de todos, una vez: `get_office_trait_mood`), Impuntual, Leal y Adicto al café. No entra en equipos ni proyectos (`no_teams`
   en el cargo, `StaffCatalog.is_role_without_teams`, `Staff.can_join_teams`): `add_to_team` la rechaza, Horarios no la ofrece, «Sin equipo»
   no la lista y al cargar sale de su equipo. `Staff.cleaning_shift_enabled` (solo pruebas) apaga los minutos fijos y los rasgos propios en las partes anteriores.
-  Prueba `test_cleaning_view`. `EventBus.dirt_changed`; `DirtOverlay` dibuja manchas. Botones del modo construcción en filas según el ancho (hito 65).
+  Prueba `test_cleaning_view`. `EventBus.dirt_changed`; `DirtOverlay` dibuja una mancha `dirt_*` por casilla manchada (`get_stains`: tantas casillas como la parte sucia, siempre en el mismo orden por casilla; a `STAIN_ALPHA` hasta `dirty_from`). Botones del modo construcción en filas según el ancho (hito 65).
 - Competencia (`competition` en `data/staff.json`): cada medianoche (`Staff._update_morale`) otra empresa puede ofrecerle a un SemiSenior o
   Senior, o a un líder, gerente o ejecutivo (cuentan como Senior), su sueldo +15–30 % (`outside_offer`: `{salary, until_day}`, 5 días).
   `Staff.get_offer_chance`: Senior 1 %/día, SemiSenior 0.5 %, ×3 si gana menos que su nivel, ×0.3 desde el 110 %, leal ×0.25, ambicioso ×2.
@@ -443,7 +443,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   ponen `SaveManager.save_dir = "user://test_saves"` para no tocar las del jugador.
 - Iconos de estado y avisos con destino (hito 57, `status_icons` en `data/staff.json`): `Staff.get_status_icon(empleado)` da el primero de `order`
   que se cumple: `no_station` (sin silla), `tired` (energía < 30), `upset` (ánimo < 30 o aviso de renuncia), `stressed` (estrés ≥ 70) e `idle`
-  (`is_idle`). `main.update_status_icons` lo pone en cada `Employee` (`OfficeCharacter.set_status_icon`, globo con signo de `STATUS_ICONS`) al
+  (`is_idle`). `main.update_status_icons` lo pone en cada `Employee` (`OfficeCharacter.set_status_icon`, sprite `status_<icono>` de `status_icons` en `data/sprites.json`; sin él, el globo con signo de `STATUS_ICONS`) al
   cambiar la hora, el personal, la oficina o los proyectos; nunca por cuadro. Avisos: `EventBus.send_notice(destino, texto)` emite `notice` con
   `get_notice_target()` válido mientras dura; destinos `target_employee/contract/product/room/menu` ("staff", "projects", "teams", "bank",
   "company"). El `Hud` muestra el aviso con destino en celeste con «›»; un clic (`click_notice`) lo cierra y emite `notice_clicked`, y
@@ -545,10 +545,11 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   corre de lado (hasta media casilla) a la silla y a quien se sienta para quedar frente a él; con otra silla frente al mismo escritorio no se
   corre ninguna (cada una frente a su casilla). Prueba: `tests/suites/test_seating.gd`.
   Objetos de pared (`wall_items` en `data/sprites.json`: dibujos y `base_z`; `SpriteLibrary.get_wall_item_sprite(id, eje, elección)`):
-  `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; solo las caras que se ven de frente (frente
-  a +x o +y; de espaldas sigue el dibujo provisional); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a
+  `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; mirando a +x o +y se ve de frente y a −x o −y
+  de espaldas (`<dibujo>_back_x`/`_back_y`, `get_wall_item_sprite(…, back)`: colgado del lado de la pared que no se ve); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a
   `LOW_WALL_SPRITE_SCALE` pegado al piso. La pantalla de presentaciones se dibuja de dos bordes de ancho centrada en el suyo (en el juego ocupa uno).
-  Faltan manchas de suciedad, sombra de las paredes y las animaciones de puertas y pantallas. Prueba `test_sprites`.
+  Manchas de suciedad (`dirt`) y globos de estado (`status_icons`, `get_status_icon_sprite`) también son sprites. Faltan la sombra
+  de las paredes y las animaciones de puertas y pantallas. Prueba `test_sprites`.
 
 ## Exportación
 

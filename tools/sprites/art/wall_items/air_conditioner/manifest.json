@@ -14,6 +14,20 @@
     112.0
    ],
    "base_z": 48
+  },
+  "air_conditioner_back_x.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
+  "air_conditioner_back_y.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
   }
  }
 }

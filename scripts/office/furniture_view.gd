@@ -285,13 +285,12 @@ func get_slice() -> int:
 ## Sprite de esta pieza ("" si usa el dibujo provisional).
 func get_sprite() -> String:
 	if FurnitureCatalog.is_wall_mounted(item_id):
-		# Solo hay dibujo de las caras que miran a +x o +y.
+		# Mirando a −x o −y cuelga del lado de la pared que no se ve: su vista de espaldas.
 		var facing: Vector2i = FurnitureCatalog.get_front(rotation_index)
-		if facing.x + facing.y < 0:
-			return ""
 		var cell := Vector2i((_anchor + Vector2(facing) * 0.5).round())
 		var pick: int = int(MapDecor.noise(cell, SALT_WALL_ITEM) * 1000.0)
-		return SpriteLibrary.get_wall_item_sprite(item_id, FurnitureCatalog.get_wall_edge(cell, rotation_index).z, pick)
+		return SpriteLibrary.get_wall_item_sprite(item_id, FurnitureCatalog.get_wall_edge(cell, rotation_index).z, pick,
+			facing.x + facing.y < 0)
 	if has_backrest(item_id):
 		return SpriteLibrary.get_furniture_sprite(item_id, _sprite_rotation, "back" if part == PART_BACKREST else "seat")
 	var whole: String = SpriteLibrary.get_desk_set_sprite(item_id, computer_id, monitor_count, rotation_index)

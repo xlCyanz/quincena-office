@@ -475,7 +475,7 @@ cada PNG (y en mesas, `edges`: el hueco hasta el canto del tablero por lado, par
 | `art/ground/ceramic/`, `wood/`, `carpet/`, `bare/` | Pisos de adentro: `floor_ceramic_0`–`_3`, `floor_wood_*`, `floor_carpet_*` y `floor_bare_*` (concreto) |
 | `art/ground/grass/` | Pasto del solar y de fuera: `ground_grass_<familia>_0`–`_3` y `ground_outside_<familia>_0`–`_3` (familias `plain`, `patchy`, `lush`, `sunny`) |
 | `art/ground/path/`, `sidewalk/`, `road/` | Camino de grava, acera y calle (`ground_road_*`, `ground_road_line_x_*`, `ground_road_line_y_*`) |
-| `art/ground/dirt/` | Manchas de suciedad `dirt_0` (barro), `dirt_1` (café) y `dirt_2` (migas y papeles), kind `overlay`; aún no las usa el juego |
+| `art/ground/dirt/` | Manchas de suciedad `dirt_0` (barro), `dirt_1` (café) y `dirt_2` (migas y papeles), kind `overlay`: `DirtOverlay` pone una por casilla manchada |
 | `art/ground/_ground_kit.py` | Lo común del terreno: rejilla isométrica periódica, anillo del borde compartido, documento Moana por tonos y las comprobaciones de costura y brillo |
 | `art/furniture/chair_basic/`, `chair_ergonomic/`, `chair_mesh/`, `chair_manager/`, `chair_executive/`, `chair_visitor/`, `chair_stool/` | Sillas de oficina: `<silla>_r0`–`_r3`, sus capas `_seat_r<n>` y `_back_r<n>`, `_shadow` y `_r<n>_depth.png` (profundidad para el personaje sentado, no es sprite) |
 | `art/furniture/_chair_kit.py`, `_chairs.py` | Sillas: sólidos convexos (cojín redondeado, cilindros, barras) rasterizados con z-buffer, contorno, capas asiento/respaldo y profundidad; `_chairs.py` tiene base, cojín, soporte y respaldos |
@@ -497,7 +497,8 @@ cada PNG (y en mesas, `edges`: el hueco hasta el canto del tablero por lado, par
 | `art/wall_items/painting/` | Cuadros: `painting`, `painting_abstract` y `painting_sea`, cada uno `_x` y `_y` (sin sombra) |
 | `art/wall_items/wall_clock/`, `whiteboard/`, `air_conditioner/` | Reloj, pizarra y aire acondicionado: `<pieza>_x` y `_y` |
 | `art/wall_items/presentation_screen/` | Televisor de dos bordes: apagado, encendido (`_chart`, `_pie`, `_title`) y sus 12 cuadros `_play_<n>` |
-| `art/wall_items/_wall_kit.py` | Objetos de pared: lienzo y apoyo de pared, `_y` en rotación 0 y `_x` en rotación 3 (girado, no espejado), `base_z` en el manifest |
+| `art/wall_items/_wall_kit.py` | Objetos de pared: lienzo y apoyo de pared, `_y` en rotación 0 y `_x` en rotación 3 (girado, no espejado), de espaldas `_back_y` (rotación 2) y `_back_x` (rotación 1) colgado del lado que no se ve, `base_z` en el manifest |
+| `art/icons/status/` | Globos de estado `status_<icono>` (`no_station`, `tired`, `upset`, `stressed`, `idle`): círculo con contorno, luz, colita y signo; 32×36, apoyo en el centro del círculo |
 | `art/walls/wall/` | Tramos lisos `wall_<tall\|low>_<eje>` en los cinco colores (`wall_<color>_…`) y la sombra `wall_tall_<eje>_shadow` |
 | `art/walls/door/` | Puertas de una hoja `door`, `door_wood`, `door_office` (altas, bajas y `_tall_<eje>_open_1` a `_6`) |
 | `art/walls/glass_door/`, `glass_door_double/` | Puerta de vidrio de dos hojas y la doble sin marco de dos bordes (mitades `_a`, `_b`), con sus cuadros de abrir |

@@ -15,6 +15,7 @@ func _ready() -> void:
 	_check_library()
 	_check_furniture()
 	_check_characters()
+	_check_overlays()
 	await _check_palette_drawing()
 	await _check_game()
 	finished.emit(_failures, _checks)
@@ -94,6 +95,9 @@ func _check_furniture() -> void:
 					var hung: String = SpriteLibrary.get_wall_item_sprite(id, axis, rotation)
 					_expect(SpriteLibrary.get_texture(hung) != null and hung.ends_with("_x" if axis == GridEdge.AXIS_X else "_y"),
 						"%s tiene sprite para el eje %d: «%s»" % [id, axis, hung])
+					var back: String = SpriteLibrary.get_wall_item_sprite(id, axis, rotation, true)
+					_expect(SpriteLibrary.get_texture(back) != null and back.contains("_back_"),
+						"%s tiene vista de espaldas para el eje %d: «%s»" % [id, axis, back])
 				_expect(SpriteLibrary.get_wall_item_base(id) > 0.0, "%s empieza sobre el piso" % id)
 				continue
 			_expect(SpriteLibrary.get_texture(sprite) != null, "%s r%d tiene sprite: «%s»" % [id, rotation, sprite])
@@ -134,6 +138,32 @@ func _check_palettes() -> void:
 	var from_colors: PackedVector3Array = material.get_shader_parameter("from_colors")
 	var first := Color(String(palette["from"][0]))
 	_expect(from_colors[0].is_equal_approx(Vector3(first.r, first.g, first.b)), "los colores de la tabla llegan al shader")
+
+
+# Manchas de suciedad y globos de estado con sprites.
+func _check_overlays() -> void:
+	var dirt: Array[String] = SpriteLibrary.get_dirt_sprites()
+	_expect(dirt.size() == 3 and dirt[0] == "dirt_0", "tres manchas: %s" % [dirt])
+	var cells: Array[Vector2i] = []
+	for x: int in range(4):
+		for y: int in range(3):
+			cells.append(Vector2i(x, y))
+	var max_dirt: float = float(StaffCatalog.get_cleaning("max_dirt"))
+	var overlay := DirtOverlay.new()
+	var half: Array[Array] = overlay.get_stains({"type": "work_area", "cells": cells, "dirt": max_dirt / 2.0})
+	var full: Array[Array] = overlay.get_stains({"type": "work_area", "cells": cells, "dirt": max_dirt})
+	var spots: Dictionary[Vector2i, bool] = {}
+	for stain: Array in full:
+		spots[stain[0]] = true
+	_expect(half.size() == 6 and full.size() == cells.size() and spots.size() == cells.size(),
+		"media suciedad, media habitación manchada; al máximo, todas las casillas: %d, %d" % [half.size(), full.size()])
+	_expect(full.slice(0, half.size()) == half and dirt.has(String(full[0][1])), "al ensuciarse se suman manchas sin mover las que había")
+	_expect(overlay.get_stains({"type": "work_area", "cells": cells, "dirt": 0.0}).is_empty(), "limpia, sin manchas")
+	overlay.free()
+	for icon: String in OfficeCharacter.STATUS_ICONS:
+		var sprite: String = SpriteLibrary.get_status_icon_sprite(icon)
+		_expect(sprite == "status_" + icon and SpriteLibrary.get_texture(sprite) != null, "globo de %s: «%s»" % [icon, sprite])
+	_expect(SpriteLibrary.get_status_icon_sprite("no_existe").is_empty(), "un icono desconocido no tiene globo")
 
 
 # Al dibujar, el lienzo toma la paleta del aspecto (y la suelta con la base).
@@ -239,7 +269,8 @@ func _check_game() -> void:
 	_expect(String(hung_sprites.get("painting_1", "")).begins_with("painting") and String(hung_sprites.get("painting_1", "")).ends_with("_x"),
 		"cuadro en pared del eje x: %s" % hung_sprites.get("painting_1", ""))
 	_expect(hung_sprites.get("wall_clock_2", "") == "wall_clock_y", "reloj en pared del eje y: %s" % hung_sprites.get("wall_clock_2", ""))
-	_expect(hung_sprites.get("painting_3", "?") == "", "de espaldas no hay sprite")
+	_expect(String(hung_sprites.get("painting_3", "")).begins_with("painting") and String(hung_sprites.get("painting_3", "")).contains("_back_"),
+		"de espaldas, su vista de espaldas: %s" % hung_sprites.get("painting_3", ""))
 	# Con ↕ todas las paredes van altas y lo colgado en una pared baja se ve a su tamaño.
 	var front_edge: Vector3i = OfficeState.get_entrance_edge()
 	_expect(not grid.is_tall_edge(front_edge) and not game.are_walls_up(), "al empezar las paredes de adelante van bajas")

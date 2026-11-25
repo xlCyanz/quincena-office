@@ -5,6 +5,8 @@ El objeto se modela una sola vez colgado de una pared en y = 0 con el frente hac
 del borde (0 a 32 unidades por borde) y z es la altura en px. El lado de la pared ``_y`` es la rotación 0
 y el de la pared ``_x`` la rotación 3, así los dibujos nunca salen espejados. Lienzo 64×128 con apoyo
 (32, 112) en el medio del borde, o 128×192 con apoyo (64, 160) si ocupa dos bordes, como un tramo de pared.
+Cada pieza tiene además su vista de espaldas (``<nombre>_back_x``/``_back_y``, rotaciones 1 y 2): colgado del
+lado de la pared que no se ve, con el mismo apoyo.
 En las texturas, la cara de adelante es ``Faces.back`` de ``../furniture/_boxes.py`` (``a`` de izquierda a
 derecha, ``b`` hacia arriba, en px). Sin sombra: el objeto no toca el piso.
 """
@@ -30,6 +32,7 @@ from _painter import document as painter_document  # noqa: E402
 FACE = 2.0  # cara de la pared: 4 px de la línea del borde
 BASE = 48.0  # z de la base de un objeto de pared (24 px del mundo)
 AXES = {"y": 0, "x": 3}
+BACK_AXES = {"y": 2, "x": 1}  # de espaldas: el frente mira a −y o a −x
 _axis = {"now": "y"}
 
 
@@ -48,7 +51,12 @@ class WallView(View):
     @property
     def origin(self) -> tuple[float, float]:
         top = self.canvas[1] - 32 * self.edges
-        return (0.0 if self.r == 0 else 64.0 * self.edges, float(top))
+        if self.r == 0:
+            return (0.0, float(top))
+        if self.r == 3:
+            return (64.0 * self.edges, float(top))
+        # De espaldas la pared queda en y = d del modelo girado: se corre para que el borde caiga en el mismo lugar.
+        return (2.0 * self.d if self.r == 2 else 64.0 * self.edges - 2.0 * self.d, float(top - self.d))
 
     @property
     def anchor(self) -> list[float]:
@@ -71,8 +79,8 @@ class WallSpec:
     def canvas(self) -> tuple[int, int]:
         return (64, 128) if self.edges == 1 else (128, 192)
 
-    def view(self, axis: str) -> WallView:
-        return WallView(AXES[axis], CELL * self.edges, CELL, self.canvas, self.edges)
+    def view(self, axis: str, back: bool = False) -> WallView:
+        return WallView((BACK_AXES if back else AXES)[axis], CELL * self.edges, CELL, self.canvas, self.edges)
 
     def palette(self) -> list[tuple[str, str]]:
         seen: dict[str, str] = {}
@@ -83,7 +91,7 @@ class WallSpec:
 
 
 def main_wall(specs: list[WallSpec], here: Path) -> int:
-    """Genera ``<nombre>_x`` y ``<nombre>_y`` de cada pieza con su documento Moana y un manifest.json."""
+    """Genera ``<nombre>_x``, ``<nombre>_y`` y sus vistas de espaldas con su documento Moana y un manifest.json."""
     parser = argparse.ArgumentParser(description="Genera " + ", ".join(s.name for s in specs) + " (_x, _y) con Moana.")
     parser.add_argument("--out", type=Path, default=here, help="carpeta de salida (por defecto, la del build.py)")
     parser.add_argument("--preview", action="store_true", help="escribe también <nombre>_preview.png")
@@ -105,9 +113,11 @@ def main_wall(specs: list[WallSpec], here: Path) -> int:
 
 def _one(spec: WallSpec, out: Path, preview: bool, problems: list[str], sprites: dict[str, object]) -> None:
     shown = []
-    for axis in ("x", "y"):
-        v = spec.view(axis)
-        name = f"{spec.name}_{axis}{spec.suffix}"
+    # Los cuadros de animación (suffix) solo de frente: de espaldas no se ve la pantalla.
+    views = [(axis, False) for axis in ("x", "y")] + ([(axis, True) for axis in ("x", "y")] if not spec.suffix else [])
+    for axis, back in views:
+        v = spec.view(axis, back)
+        name = f"{spec.name}_{'back_' if back else ''}{axis}{spec.suffix}"
         _axis["now"] = axis
         image = to_rgba(finish(render(spec.model(), v, spec.canvas), spec.mats), spec)  # type: ignore[arg-type]
         colors = {tuple(c) for c in image[image[..., 3] == 255][:, :3]}

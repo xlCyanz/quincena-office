@@ -62,6 +62,9 @@ WALL_ITEMS = {
     "air_conditioner": ("air_conditioner",), "painting": ("painting", "painting_abstract", "painting_sea"),
     "wall_clock": ("wall_clock",), "whiteboard": ("whiteboard",), "presentation_screen": ("presentation_screen",),
 }
+# Manchas de suciedad (dirt_0 …) y globos de estado (status_<icono>), dibujados en art/ground/dirt y art/icons/status.
+DIRT_STAINS = 3
+STATUS_ICONS = ("no_station", "tired", "upset", "stressed", "idle")
 # Escritorio dibujado entero con su computadora -> sprite según las pantallas extra (0, 1, 2).
 DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
                            "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}
@@ -237,9 +240,16 @@ def main():
         for base in bases:
             for axis in ("x", "y"):
                 copy("%s_%s" % (base, axis), "wall_items")
+                copy("%s_back_%s" % (base, axis), "wall_items")
         first = bases[0] + "_x.png"
         entry = art[first][1]
         wall_items[item] = {"sprites": list(bases), "base_z": entry["base_z"]}
+
+    # ---- manchas de suciedad y globos de estado
+    for index in range(DIRT_STAINS):
+        copy("dirt_%d" % index, "overlays")
+    for icon in STATUS_ICONS:
+        copy("status_" + icon, "overlays")
 
     # ---- personajes
     # Cada hoja lleva además «sentado en su silla» por silla: silla entera + persona con su paleta +
@@ -302,6 +312,13 @@ def main():
             looks[style.name + suffix] = "characters/%s.png" % style.name
             if suffix:
                 palettes[style.name + suffix] = palette_entry(style, suffix, style.name)
+    # Los globos se dibujan en el mismo nodo que la persona (con el shader de paleta): sus tonos no pueden cambiar.
+    swapped = {color for entry in palettes.values() for color in entry["from"]}
+    for icon in STATUS_ICONS:
+        arr = np.array(load("status_" + icon))
+        for color in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0):
+            if "%02x%02x%02x" % tuple(int(v) for v in color) in swapped:
+                raise SystemExit("status_%s: el color %s es de una paleta de personaje" % (icon, tuple(color)))
     tool_poses = {}
     column = 0
     for pose, count in TOOL_POSES:
@@ -341,8 +358,9 @@ def main():
                        "en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de "
                        "un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del "
                        "modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos "
-                       "(sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso "
-                       "empieza (base_z). characters: hojas de personajes (looks: "
+                       "(sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso "
+                       "empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). status_icons: icono -> sprite del "
+                       "globo. characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores "
                        "exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y "
                        "cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; "
@@ -357,6 +375,8 @@ def main():
         "furniture": furniture,
         "seats": seats,
         "edges": edges,
+        "dirt": ["dirt_%d" % index for index in range(DIRT_STAINS)],
+        "status_icons": dict((icon, "status_" + icon) for icon in STATUS_ICONS),
         "sprites": sprites,
         "wall_items": wall_items,
     }

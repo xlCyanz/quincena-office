@@ -88,13 +88,15 @@ static func get_furniture_sprite(item_id: String, rotation: int, part: String = 
 	return sprite if has_sprite(sprite) else ""
 
 
-## Sprite de un objeto de pared en un borde de ese eje; pick elige entre sus dibujos. "" si no tiene.
-static func get_wall_item_sprite(item_id: String, axis: int, pick: int = 0) -> String:
+## Sprite de un objeto de pared en un borde de ese eje; pick elige entre sus dibujos y back da la vista de
+## espaldas (colgado del lado de la pared que no se ve). "" si no tiene.
+static func get_wall_item_sprite(item_id: String, axis: int, pick: int = 0, back: bool = false) -> String:
 	var items: Dictionary = get_data().get("wall_items", {})
 	if not items.has(item_id):
 		return ""
 	var names: Array = items[item_id]["sprites"]
-	var sprite: String = "%s_%s" % [names[posmod(pick, names.size())], "x" if axis == GridEdge.AXIS_X else "y"]
+	var sprite: String = "%s_%s%s" % [names[posmod(pick, names.size())], "back_" if back else "",
+		"x" if axis == GridEdge.AXIS_X else "y"]
 	return sprite if has_sprite(sprite) else ""
 
 
@@ -271,6 +273,21 @@ static func get_character_material(look: String) -> ShaderMaterial:
 		material.set_shader_parameter("to_colors", to_colors)
 	_palette_materials[look] = material
 	return material
+
+
+## Sprites de las manchas de suciedad (una casilla cada una).
+static func get_dirt_sprites() -> Array[String]:
+	var sprites: Array[String] = []
+	for sprite: Variant in get_data().get("dirt", []):
+		if has_sprite(String(sprite)):
+			sprites.append(String(sprite))
+	return sprites
+
+
+## Sprite del globo de un icono de estado ("" si no hay).
+static func get_status_icon_sprite(icon: String) -> String:
+	var sprite: String = String(get_data().get("status_icons", {}).get(icon, ""))
+	return sprite if has_sprite(sprite) else ""
 
 
 ## Sombra de piso de un personaje de pie.

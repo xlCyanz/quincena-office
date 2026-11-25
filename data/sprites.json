@@ -1,5 +1,5 @@
 {
-	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso empieza (base_z). characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal de limpieza; bucket: el cubo que se dibuja junto a quien trapea; cell y anchor en px del sprite).",
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). status_icons: icono -> sprite del globo. characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal de limpieza; bucket: el cubo que se dibuja junto a quien trapea; cell y anchor en px del sprite).",
 	"characters": {
 		"anchor": [
 			64,
@@ -2896,6 +2896,11 @@
 			}
 		}
 	},
+	"dirt": [
+		"dirt_0",
+		"dirt_1",
+		"dirt_2"
+	],
 	"edges": {
 		"desk_long": [
 			0.0625,
@@ -3255,6 +3260,28 @@
 		"desk_long_pro3": 0.9688
 	},
 	"sprites": {
+		"air_conditioner_back_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/air_conditioner_back_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"air_conditioner_back_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/air_conditioner_back_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
 		"air_conditioner_x": {
 			"anchor": [
 				32.0,
@@ -5444,6 +5471,39 @@
 				128
 			]
 		},
+		"dirt_0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "overlays/dirt_0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"dirt_1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "overlays/dirt_1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"dirt_2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "overlays/dirt_2.png",
+			"size": [
+				128,
+				128
+			]
+		},
 		"door_low_x": {
 			"anchor": [
 				36.0,
@@ -6126,6 +6186,28 @@
 				128
 			]
 		},
+		"painting_abstract_back_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_abstract_back_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_abstract_back_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_abstract_back_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
 		"painting_abstract_x": {
 			"anchor": [
 				32.0,
@@ -6143,6 +6225,50 @@
 				112.0
 			],
 			"file": "wall_items/painting_abstract_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_back_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_back_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_back_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_back_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_sea_back_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_sea_back_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"painting_sea_back_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/painting_sea_back_y.png",
 			"size": [
 				64,
 				128
@@ -6322,6 +6448,28 @@
 			"size": [
 				128,
 				128
+			]
+		},
+		"presentation_screen_back_x": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_back_x.png",
+			"size": [
+				128,
+				192
+			]
+		},
+		"presentation_screen_back_y": {
+			"anchor": [
+				64.0,
+				160.0
+			],
+			"file": "wall_items/presentation_screen_back_y.png",
+			"size": [
+				128,
+				192
 			]
 		},
 		"presentation_screen_x": {
@@ -6797,6 +6945,61 @@
 				128
 			]
 		},
+		"status_idle": {
+			"anchor": [
+				16.0,
+				15.0
+			],
+			"file": "overlays/status_idle.png",
+			"size": [
+				32,
+				36
+			]
+		},
+		"status_no_station": {
+			"anchor": [
+				16.0,
+				15.0
+			],
+			"file": "overlays/status_no_station.png",
+			"size": [
+				32,
+				36
+			]
+		},
+		"status_stressed": {
+			"anchor": [
+				16.0,
+				15.0
+			],
+			"file": "overlays/status_stressed.png",
+			"size": [
+				32,
+				36
+			]
+		},
+		"status_tired": {
+			"anchor": [
+				16.0,
+				15.0
+			],
+			"file": "overlays/status_tired.png",
+			"size": [
+				32,
+				36
+			]
+		},
+		"status_upset": {
+			"anchor": [
+				16.0,
+				15.0
+			],
+			"file": "overlays/status_upset.png",
+			"size": [
+				32,
+				36
+			]
+		},
 		"toilet_r0": {
 			"anchor": [
 				64.0,
@@ -7256,6 +7459,28 @@
 			"file": "furniture/waiting_sofa_r3_shadow.png",
 			"size": [
 				192,
+				128
+			]
+		},
+		"wall_clock_back_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/wall_clock_back_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"wall_clock_back_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/wall_clock_back_y.png",
+			"size": [
+				64,
 				128
 			]
 		},
@@ -9701,6 +9926,28 @@
 				160
 			]
 		},
+		"whiteboard_back_x": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/whiteboard_back_x.png",
+			"size": [
+				64,
+				128
+			]
+		},
+		"whiteboard_back_y": {
+			"anchor": [
+				32.0,
+				112.0
+			],
+			"file": "wall_items/whiteboard_back_y.png",
+			"size": [
+				64,
+				128
+			]
+		},
 		"whiteboard_x": {
 			"anchor": [
 				32.0,
@@ -9767,6 +10014,13 @@
 				160
 			]
 		}
+	},
+	"status_icons": {
+		"idle": "status_idle",
+		"no_station": "status_no_station",
+		"stressed": "status_stressed",
+		"tired": "status_tired",
+		"upset": "status_upset"
 	},
 	"wall_items": {
 		"air_conditioner": {

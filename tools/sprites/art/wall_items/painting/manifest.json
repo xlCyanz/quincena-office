@@ -15,6 +15,20 @@
    ],
    "base_z": 48
   },
+  "painting_back_x.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
+  "painting_back_y.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
   "painting_abstract_x.png": {
    "anchor": [
     32.0,
@@ -29,6 +43,20 @@
    ],
    "base_z": 48
   },
+  "painting_abstract_back_x.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
+  "painting_abstract_back_y.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
   "painting_sea_x.png": {
    "anchor": [
     32.0,
@@ -37,6 +65,20 @@
    "base_z": 48
   },
   "painting_sea_y.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
+  "painting_sea_back_x.png": {
+   "anchor": [
+    32.0,
+    112.0
+   ],
+   "base_z": 48
+  },
+  "painting_sea_back_y.png": {
    "anchor": [
     32.0,
     112.0

@@ -15,6 +15,20 @@
    ],
    "base_z": 50
   },
+  "presentation_screen_back_x.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
+  "presentation_screen_back_y.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
   "presentation_screen_chart_x.png": {
    "anchor": [
     64.0,
@@ -23,6 +37,20 @@
    "base_z": 50
   },
   "presentation_screen_chart_y.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
+  "presentation_screen_chart_back_x.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
+  "presentation_screen_chart_back_y.png": {
    "anchor": [
     64.0,
     160.0
@@ -307,6 +335,20 @@
    ],
    "base_z": 50
   },
+  "presentation_screen_pie_back_x.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
+  "presentation_screen_pie_back_y.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
   "presentation_screen_pie_x_play_1.png": {
    "anchor": [
     64.0,
@@ -579,6 +621,20 @@
    "base_z": 50
   },
   "presentation_screen_title_y.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
+  "presentation_screen_title_back_x.png": {
+   "anchor": [
+    64.0,
+    160.0
+   ],
+   "base_z": 50
+  },
+  "presentation_screen_title_back_y.png": {
    "anchor": [
     64.0,
     160.0

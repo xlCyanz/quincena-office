@@ -1,11 +1,13 @@
-# Manchas de suciedad en el piso de cada habitación, más cuanto más sucia. Arte provisional.
+# Manchas de suciedad en el piso de cada habitación: más casillas manchadas cuanto más sucia (sprites dirt_*).
 class_name DirtOverlay
 extends Node2D
 
-const STAIN_COLOR := Color(0.35, 0.25, 0.12, 0.45)
-const DIRTY_COLOR := Color(0.3, 0.2, 0.08, 0.6)
+## Opacidad de las manchas antes de que la habitación cuente como sucia (dirty_from); sucia, enteras.
+const STAIN_ALPHA: float = 0.6
 ## Manchas por casilla con la suciedad al máximo.
-const MAX_STAINS_PER_CELL: int = 3
+const MAX_STAINS_PER_CELL: int = 1
+const SALT_CELL: int = 7151
+const SALT_KIND: int = 9283
 
 var _grid: OfficeGrid
 var _rooms: Array[Dictionary] = []
@@ -25,25 +27,33 @@ func set_rooms(rooms: Array[Dictionary]) -> void:
 func get_stain_count(room: Dictionary) -> int:
 	var cells: Array = room["cells"]
 	var ratio: float = OfficeState.get_room_dirt(room) / float(StaffCatalog.get_cleaning("max_dirt"))
-	return roundi(ratio * cells.size() * MAX_STAINS_PER_CELL)
+	return mini(roundi(ratio * cells.size() * MAX_STAINS_PER_CELL), cells.size())
+
+
+## Casillas manchadas de una habitación y la mancha de cada una: [[casilla, sprite], …]. Siempre las mismas
+## casillas en el mismo orden, así al ensuciarse se suman manchas sin que se muevan las que ya estaban.
+func get_stains(room: Dictionary) -> Array[Array]:
+	var stains: Array[Array] = []
+	var sprites: Array[String] = SpriteLibrary.get_dirt_sprites()
+	var count: int = get_stain_count(room)
+	if count <= 0 or sprites.is_empty():
+		return stains
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in room["cells"]:
+		cells.append(cell)
+	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return MapDecor.noise(a, SALT_CELL) < MapDecor.noise(b, SALT_CELL))
+	for index: int in range(count):
+		var cell: Vector2i = cells[index]
+		var kind: int = int(MapDecor.noise(cell, SALT_KIND) * 1000.0) % sprites.size()
+		stains.append([cell, sprites[kind]])
+	return stains
 
 
 func _draw() -> void:
 	if _grid == null:
 		return
 	for room: Dictionary in _rooms:
-		var stains: int = get_stain_count(room)
-		if stains <= 0:
-			continue
-		var color: Color = DIRTY_COLOR if OfficeState.is_room_dirty(room) else STAIN_COLOR
-		var cells: Array = room["cells"]
-		# Posiciones fijas por casilla.
-		for index: int in range(stains):
-			var cell: Vector2i = cells[index % cells.size()]
-			var rng := RandomNumberGenerator.new()
-			rng.seed = hash(Vector3i(cell.x, cell.y, index))
-			var point := Vector2(cell) + Vector2(rng.randf_range(-0.35, 0.35), rng.randf_range(-0.35, 0.35))
-			var center: Vector2 = _grid.grid_to_world(point)
-			draw_set_transform(center, 0.0, Vector2(1.0, 0.5))
-			draw_circle(Vector2.ZERO, rng.randf_range(4.0, 8.0), color)
-	draw_set_transform(Vector2.ZERO)
+		var tint := Color(1.0, 1.0, 1.0, 1.0 if OfficeState.is_room_dirty(room) else STAIN_ALPHA)
+		for stain: Array in get_stains(room):
+			SpriteLibrary.draw(self, String(stain[1]), _grid.grid_to_world(Vector2(stain[0])), tint)

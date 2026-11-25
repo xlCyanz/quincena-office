@@ -18,7 +18,7 @@ const SEAT_HEIGHT_PX: float = 14.0
 ## Escala del muñeco: con 0.8 mide ~50 px de pie (1.7 m frente a un escritorio de 75 cm).
 ## El icono de estado no se achica.
 const BODY_SCALE: float = 0.8
-## Iconos de estado (Staff.get_status_icon): color del globo y signo.
+## Iconos de estado (Staff.get_status_icon): color del globo y signo si falta su sprite status_<icono>.
 const STATUS_ICONS: Dictionary[String, Array] = {
 	"no_station": [Color("8a8f99"), "?"],
 	"tired": [Color("5b8bd9"), "z"],
@@ -738,6 +738,8 @@ func _draw_sprite() -> bool:
 
 # Globo del icono de estado, arriba a la derecha de la cabeza.
 func _draw_status_icon(center: Vector2) -> void:
+	if SpriteLibrary.draw(self, SpriteLibrary.get_status_icon_sprite(status_icon), center):
+		return
 	var icon: Array = STATUS_ICONS[status_icon]
 	draw_circle(center, ICON_RADIUS + 1.0, Color(0.1, 0.1, 0.12, 0.9))
 	draw_circle(center, ICON_RADIUS, icon[0])

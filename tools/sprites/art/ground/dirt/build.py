@@ -5,8 +5,8 @@
 * ``dirt_2``: migas y papeles, migas de 2×1 px y dos papelitos arrugados.
 
 Lienzo 128×128 con el rombo abajo, como un piso (apoyo (64, 96)); alfa 0/255 solo dentro del rombo. Se dibuja en
-coordenadas del piso (u, v de 0 a 1): todo sale plano y 2:1. Hoy el juego no las usa (``DirtOverlay`` pinta la
-suciedad con colores). Desde el repositorio de Moana:
+coordenadas del piso (u, v de 0 a 1): todo sale plano y 2:1. ``DirtOverlay`` pone una en cada casilla manchada.
+Desde el repositorio de Moana:
 
     sh scripts/uv.sh run python RUTA/tools/sprites/art/ground/dirt/build.py [--out DIR]
 """

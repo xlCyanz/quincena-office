@@ -2,8 +2,8 @@
 tapa al sentarse (``<cuadro>_<silla>``) y la sombra de los pies (``shadow/``). El modelo está en ``_figure.py``.
 
 Cada cuadro se dibuja con ``_figure.build_one``, se revisa con ``_figure.verify`` y se guarda como documento Moana
-(``.moana.json``), que tiene que dar los mismos pixeles. Las paletas ``_v1`` y ``_v2`` las cambia
-``export_game.py``; aquí solo se comprueba que son un cambio de paleta. Desde el repositorio de Moana:
+(``.moana.json``), que tiene que dar los mismos pixeles. Las paletas ``_v1`` y ``_v2`` las pone
+en el juego un shader (tablas de ``export_game.py``); aquí solo se comprueba que son un cambio de paleta. Desde el repositorio de Moana:
 
     sh scripts/uv.sh run python RUTA/tools/sprites/art/characters/build.py [--out DIR] [--only TEXTO]
 """
