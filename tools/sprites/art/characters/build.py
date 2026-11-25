@@ -46,7 +46,7 @@ def jobs() -> Iterator[tuple[str, str, int, str, int]]:
             for rotation in range(4):
                 yield style.name, style.name, rotation, pose.name, 0
         kinds = list(fg.ANIMATIONS)
-        if style.name in fg.CLEANING_STYLES:
+        if style.outfit in fg.CLEANING_STYLES:
             kinds += list(fg.TOOL_ANIMATIONS)
         for kind, make in kinds:
             for rotation in range(4):

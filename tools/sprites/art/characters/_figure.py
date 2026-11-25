@@ -3,7 +3,7 @@ robusto, 4 direcciones, de pie, sentado y animaciones, en 8 conjuntos de ropa (S
 personal de limpieza (CLEANING_STYLES) tiene además trapear (mop) y caminar con el suape (mopwalk).
 
 Lienzo 128×128 con los pies en (64, 112); sentado, la cadera a SIT_SEAT_Z sobre el piso. Modelo de campos de
-distancia en px del cuerpo (lat, fwd, z) girado TURN hacia la cámara, rasterizado con ``tools/sprites/iso.py``;
+distancia en px del cuerpo (lat, fwd, z) girado TURN hacia la cámara, rasterizado con ``_figure_kit.py``;
 sombreado, contorno y detalles se pintan pixel a pixel. ``build_one`` da la figura terminada y ``verify`` la revisa;
 ``build.py`` guarda cada cuadro como documento Moana.
 """
@@ -14,12 +14,11 @@ import sys
 import numpy as np
 from PIL import Image
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))  # tools/sprites
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # _figure_kit
 
-import iso  # noqa: E402
-import palette as pal  # noqa: E402
+import _figure_kit as kit  # noqa: E402
 
-PX = 1.0 / iso.Z_METRIC  # 1 px del cuerpo en casillas
+PX = 1.0 / kit.Z_METRIC  # 1 px del cuerpo en casillas
 CENTER = 0.5  # el personaje se para en el centro de la casilla
 # Giro hacia la cámara: con 45° − atan(1/2) una línea lateral queda en escalera de 4 px por 1.
 TURN = math.radians(45.0) - math.atan(0.5)
@@ -187,7 +186,7 @@ def mopwalk_poses():
 TOOL_ANIMATIONS = (("mop", mop_poses), ("mopwalk", mopwalk_poses))
 CLEANING_STYLES = ("cleaning", "woman_cleaning")  # conjuntos con las poses del suape
 
-OUTLINE, DEEP, RIGHT, LEFT, BASE, LIGHT = pal.OUTLINE, pal.DEEP, pal.RIGHT, pal.LEFT, pal.BASE, pal.LIGHT
+OUTLINE, DEEP, RIGHT, LEFT, BASE, LIGHT = kit.OUTLINE, kit.DEEP, kit.RIGHT, kit.LEFT, kit.BASE, kit.LIGHT
 
 # Capas, de atrás hacia adelante para componerlas (LAYER_ORDER).
 LAYER_ORDER = ("shoes", "pants", "shirt", "jacket", "skin", "accent", "face", "hair", "stick", "mop")
@@ -219,10 +218,10 @@ PLUM_HUE = 330.0 / 360.0  # el contorno corre al ciruela, como el borde de la «
 def layer_ramp(base, light=0.35, name=None):
     """Rampa de una capa (STYLE.md): contorno (base × 0.26, al ciruela), línea DEEP (base × 0.5),
     −40 %, −25 %, base y brillo cálido."""
-    dark = pal.adjust(base, 0.26, 1.6, PLUM_HUE, 0.12, 0.30)
-    deep = pal.adjust(base, 0.52, 1.25, PLUM_HUE, 0.06, 0.12)
-    bright = pal.adjust(pal.lighten(base, light), 1.0, 0.95, pal.WARM_HUE, 0.10, 0.03)
-    return pal.ramp(base, outline=dark, deep=deep, light=bright, shine=bright, name=name)
+    dark = kit.adjust(base, 0.26, 1.6, PLUM_HUE, 0.12, 0.30)
+    deep = kit.adjust(base, 0.52, 1.25, PLUM_HUE, 0.06, 0.12)
+    bright = kit.adjust(kit.lighten(base, light), 1.0, 0.95, kit.WARM_HUE, 0.10, 0.03)
+    return kit.ramp(base, outline=dark, deep=deep, light=bright, shine=bright, name=name)
 
 
 STICK_COLOR = "4a8fd8"  # palo del suape
@@ -240,7 +239,7 @@ class Look(object):
         self.jacket = layer_ramp(jacket or pants, light=0.30, name="jacket")  # saco: por defecto, traje entero
         self.shoes = layer_ramp(shoes, light=0.40, name="shoes")
         self.accent = layer_ramp(accent, light=0.30, name="accent")
-        self.face = pal.palette(["1e1420", "fbf6ee"], name="face")  # pupila y blanco del ojo
+        self.face = kit.palette(["1e1420", "fbf6ee"], name="face")  # pupila y blanco del ojo
         # Suape (el mismo en todos los aspectos): palo azul y mopa de hilos gris claro.
         self.stick = layer_ramp(STICK_COLOR, light=0.35, name="stick")
         self.mop = layer_ramp(MOP_COLOR, light=0.25, name="mop")
@@ -253,8 +252,9 @@ class Style(object):
     """Conjunto de ropa y cuerpo: cambia la forma (mangas, falda, pelo), no solo los colores."""
 
     def __init__(self, name, prefix, long_sleeve=False, tucked=False, collar=False, tie=False, skirt=False,
-                 hair="side", waist=0.07, jacket=False):
+                 hair="side", waist=0.07, jacket=False, outfit=None, beard=None, glasses=False, build=1.0):
         self.name = name
+        self.outfit = outfit or name  # conjunto de ropa (las formas de un conjunto comparten sus paletas)
         self.prefix = prefix  # va en el nombre del sprite: character_<prefix>stand_r0
         self.long_sleeve = long_sleeve  # manga larga con puño (si no, manga corta)
         self.tucked = tucked  # camisa por dentro: se ve el cinturón o la pretina
@@ -266,6 +266,19 @@ class Style(object):
         self.hair = hair
         self.waist = waist  # cuánto se angosta el torso hacia la cintura
         self.jacket = jacket  # saco (capa jacket) sobre la camisa: se ve la V de la camisa y el puño
+        self.beard = beard  # None, "beard" (barba corta por la mandíbula) o "mustache" (bigote)
+        self.glasses = glasses  # lentes de marco oscuro (de frente)
+        self.build = build  # complexión: ancho del cuerpo (1 = la de siempre, < 1 delgado, > 1 robusto)
+
+    def form(self, suffix, **changes):
+        """Otra forma del mismo conjunto (peinado, cara y complexión): nombre <conjunto>_<suffix>."""
+        values = dict(self.__dict__)
+        values.update(changes)
+        name = "%s_%s" % (self.name, suffix)
+        values.update({"name": name, "prefix": name + "_", "outfit": self.name})
+        other = Style.__new__(Style)
+        other.__dict__.update(values)
+        return other
 
 
 # executive = traje con camisa y corbata; office = camisa de manga larga y corbata; woman = vestido;
@@ -283,6 +296,24 @@ STYLES = (
     Style("cleaning", "cleaning_", tucked=True, collar=True, hair="crop"),
     Style("woman_cleaning", "woman_cleaning_", tucked=True, collar=True, hair="ponytail", waist=0.13),
 )
+OUTFITS = tuple(style.name for style in STYLES)
+_BY_OUTFIT = dict((style.name, style) for style in STYLES)
+ROBUST = 1.26  # complexión robusta: torso más ancho y con panza, brazos y piernas más gruesos
+SLIM = 0.85  # delgada
+# Formas de cada conjunto además de la de siempre: _f1 y _f2 cambian peinado, barba o bigote, lentes y complexión.
+FORMS = {
+    "casual": ({"hair": "crop", "beard": "beard", "build": ROBUST}, {"hair": "slick", "glasses": True, "build": SLIM}),
+    "office": ({"hair": "crop", "glasses": True, "build": SLIM}, {"hair": "slick", "beard": "beard", "build": ROBUST}),
+    "executive": ({"hair": "side", "glasses": True, "build": ROBUST}, {"hair": "crop", "beard": "mustache", "build": SLIM}),
+    "cleaning": ({"hair": "side", "beard": "mustache", "build": ROBUST}, {"hair": "slick", "glasses": True, "build": SLIM}),
+    "woman": ({"hair": "bob", "glasses": True, "build": SLIM}, {"hair": "ponytail", "build": ROBUST}),
+    "woman_office": ({"hair": "long", "build": ROBUST}, {"hair": "bob", "glasses": True, "build": SLIM}),
+    "woman_executive": ({"hair": "bun", "glasses": True, "build": ROBUST}, {"hair": "long", "build": SLIM}),
+    "woman_cleaning": ({"hair": "bun", "build": ROBUST}, {"hair": "bob", "glasses": True, "build": SLIM}),
+}
+FORM_SUFFIXES = ("f1", "f2")
+STYLES = STYLES + tuple(_BY_OUTFIT[outfit].form(suffix, **changes) for outfit in OUTFITS
+                        for suffix, changes in zip(FORM_SUFFIXES, FORMS[outfit]))
 STYLE_BY_NAME = dict((style.name, style) for style in STYLES)
 
 DARK_SHOES = "3e2c28"
@@ -331,6 +362,9 @@ LOOKS = {
         "_v2": Look(skin="f8d0a8", hair="e6b04a", shirt="a9d6c4", pants="4a4038", shoes=DARK_SHOES),
     },
 }
+# Las formas usan las paletas de su conjunto.
+for _style in STYLES:
+    LOOKS.setdefault(_style.name, LOOKS[_style.outfit])
 
 
 # ---------------------------------------------------------------------- campos de distancia
@@ -483,7 +517,7 @@ class Figure(object):
     keep (dibujado a mano) y lat, fwd (coordenadas del cuerpo, tras measure())."""
 
     def __init__(self, rotation, look, pose=None, scale=1.0, style=None):
-        self.c = iso.Canvas.character(rotation)
+        self.c = kit.FigureCanvas(rotation)
         self.look = look
         self.style = style or STYLES[0]
         self.pose = pose or STAND
@@ -724,7 +758,7 @@ class Figure(object):
 
     def horizontal_light(self):
         """n·luz con solo la parte horizontal de la normal: bandas verticales limpias en las piernas."""
-        lx, ly, lz = iso.LIGHT_DIR
+        lx, ly, lz = kit.LIGHT_DIR
         flat = np.sqrt(np.maximum(1.0 - self.nz ** 2, 1.0e-6))
         return (self.light - self.nz * lz) / flat / math.hypot(lx, ly)
 
@@ -854,22 +888,32 @@ class Figure(object):
                     c.ramp_id[y, x] = rid
                     self.layer[y, x] = layer
             c.result = None
+        # Un pixel del borde suelto que no es contorno (brillo de un hombro ancho) pasa a contorno.
+        c.shade[self.loose() & edge & (c.shade != OUTLINE)] = OUTLINE
         # Un pixel de contorno suelto toma el contorno de la capa vecina y se une a la línea.
-        alone = self.loose() & edge
-        for y, x in zip(*np.nonzero(alone)):
-            for dy, dx in MOVES8:
-                ny, nx = y + dy, x + dx
-                if edge[ny, nx] and c.ramp_id[ny, nx] != c.ramp_id[y, x] and c.shade[ny, nx] == OUTLINE:
-                    c.ramp_id[y, x] = c.ramp_id[ny, nx]
-                    self.layer[y, x] = self.layer[ny, nx]
-                    break
+        for _ in range(3):  # al cambiar uno, el de al lado puede quedar suelto: otra vuelta
+            alone = self.loose() & edge
+            if not alone.any():
+                break
+            for y, x in zip(*np.nonzero(alone)):
+                # La capa con más contorno alrededor (en empate, la primera que aparece).
+                counts = {}
+                for dy, dx in MOVES8:
+                    ny, nx = y + dy, x + dx
+                    key = (int(c.ramp_id[ny, nx]), int(self.layer[ny, nx]))
+                    if edge[ny, nx] and key != (int(c.ramp_id[y, x]), int(self.layer[y, x])) and c.shade[ny, nx] == OUTLINE:
+                        counts[key] = counts.get(key, 0) + 1
+                if counts:
+                    best = max(counts.values())
+                    rid, layer = next(key for key, count in counts.items() if count == best)
+                    c.ramp_id[y, x] = rid
+                    self.layer[y, x] = layer
         c.result = None
 
     # ------------------------------------------------------------------ salida
 
     def render(self):
         c = self.c
-        c.no_finish(np.ones(c.alpha.shape, dtype=bool))
         return c.finish()
 
     def layer_mask(self, layer):
@@ -886,6 +930,30 @@ CUFF = 0.72  # la manga larga llega a esta parte del antebrazo (codo → muñeca
 SKIRT_HEM = 19.0  # de pie: alto del ruedo de la falda (la rodilla)
 SLEEVE = 0.72  # la manga corta llega a esta parte del brazo (hombro → codo)
 HEAD_RADII = (17.0, 17.2, 17.2)  # cabeza grande y redonda
+
+
+def arm_points(fig, sign):
+    """Hombro, codo, muñeca y mano de un lado, corridos hacia afuera según la complexión; sentado (teclado) o
+    con el brazo fijado por la pose (suape) las manos quedan donde están."""
+    points = fig.pose.arm_points(sign)
+    spread = 12.0 * (fig.style.build - 1.0)
+    shares = (1.0, 0.6, 0.0, 0.0) if fig.pose.sit or sign in fig.pose.arms else (1.0, 0.85, 0.7, 0.7)
+    return [(p[0] + sign * spread * share, p[1], p[2]) for p, share in zip(points, shares)]
+
+
+def girth(fig):
+    """Cuánto engrosan piernas y brazos con la complexión (menos que el ancho del torso)."""
+    return 1.0 + (fig.style.build - 1.0) * 0.6
+
+
+def outer(value, build):
+    """Límite de una pieza según la complexión; con la de siempre queda exacto (el límite cambia la marcha de rayos)."""
+    return value if build == 1.0 else value * build + 0.5
+
+
+def torso_depth(build):
+    """Fondo del torso según la complexión: la robusta suma panza."""
+    return 1.0 + (build - 1.0) * (0.9 if build > 1.0 else 0.5)
 
 
 def shoe_fwd(pose):
@@ -913,35 +981,41 @@ def build_model(fig, hair=True):
         build_skirt(fig, cut_z)
     elif pose.sit:
         # Sentado: cadera redonda apoyada en SIT_SEAT_Z, muslos al frente y canillas que bajan.
-        thigh_r = 6.6
+        b, g = fig.style.build, girth(fig)
+        thigh_r = 6.6 * g
         cut_z = max(cut_z, SIT_SEAT_Z + 2.0 * thigh_r + 0.3)  # el corte no rebana los muslos
         cut = lambda lat, fwd, z: z - cut_z
         thigh_z = SIT_SEAT_Z + thigh_r
         legs = []
         for sign in (-1.0, 1.0):
-            hip = (sign * 5.4, -1.0, thigh_z)
-            knee = (sign * 6.0, SIT_KNEE_FWD, thigh_z - 0.5)
+            hip = (sign * 5.4 * b, -1.0, thigh_z)
+            knee = (sign * 6.0 * b, SIT_KNEE_FWD, thigh_z - 0.5)
             ankle = (sign * SHOE_LAT, SIT_FEET_FWD, 7.0)
-            legs.append(f_blend(f_capsule(hip, knee, thigh_r, 6.2), f_capsule(knee, ankle, 6.0, 5.4), 1.5))
-        seat = f_box(-11.2, 11.2, -7.0, 6.0, SIT_SEAT_Z, cut_z + 2.0, 5.5)
+            legs.append(f_blend(f_capsule(hip, knee, thigh_r, 6.2 * g), f_capsule(knee, ankle, 6.0 * g, 5.4), 1.5))
+        seat = f_box(-11.2 * b, 11.2 * b, -7.0, 6.0, SIT_SEAT_Z, cut_z + 2.0, 5.5)
         body = f_blend(f_blend(legs[0], legs[1], 2.0), seat, 2.0)
         fig.solid("pants", "pants", f_intersect(body, cut),
-                  (-13.5, 13.5, -8.5, SIT_FEET_FWD + 7.5, 2.0, cut_z))
+                  (-outer(13.5, b), outer(13.5, b), -8.5, SIT_FEET_FWD + 7.5, 2.0, cut_z))
     else:
         # Pantalón: cadera y piernas en una pieza (tubos fundidos arriba, cortados en el cinturón), así el
         # sombreado baja seguido; entre los tobillos quedan 3 px.
-        both = [stand_leg(pose, sign, 7.0, 6.0, 6.0, pose.belt_z + 10.0) for sign in (-1.0, 1.0)]
+        b, g = fig.style.build, girth(fig)
+        both = [stand_leg(pose, sign, 7.0 * g, 6.0 * g, 6.0 * b, pose.belt_z + 10.0) for sign in (-1.0, 1.0)]
         legs = f_blend(both[0], both[1], 2.5)
         reach = STRIDE + 2.0
-        fig.solid("pants", "pants", f_intersect(legs, cut), (-14.0, 14.0, -8.5 - reach, 8.5 + reach, 2.0, cut_z))
+        fig.solid("pants", "pants", f_intersect(legs, cut),
+                  (-outer(14.0, b), outer(14.0, b), -8.5 - reach, 8.5 + reach, 2.0, cut_z))
     # Camisa: el torso es una caja redondeada, un poco más angosta en la cintura.
-    fig.solid("torso", "jacket" if fig.style.jacket else "shirt", f_torso(pose, fig.style), (-13.2, 13.2, -8.6, 8.6, pose.belt_z - 4.0, pose.neck_z + 1.5))
+    wide, deep = outer(13.2, fig.style.build), outer(8.6, torso_depth(fig.style.build))
+    fig.solid("torso", "jacket" if fig.style.jacket else "shirt", f_torso(pose, fig.style),
+              (-wide, wide, -deep, deep, pose.belt_z - 4.0, pose.neck_z + 1.5))
     # Manga corta hasta SLEEVE del brazo; el resto del brazo y la mano son una pieza de piel.
     for side, sign in (("l", -1.0), ("r", 1.0)):
-        shoulder, elbow, wrist, hand = pose.arm_points(sign)
+        shoulder, elbow, wrist, hand = arm_points(fig, sign)
         radii = pose.arm[4]
         hem = tuple(shoulder[i] + (elbow[i] - shoulder[i]) * SLEEVE for i in range(3))
-        skin = f_blend(f_blend(f_capsule(shoulder, elbow, 5.0, 4.4), f_capsule(elbow, wrist, 4.4, 3.9), 1.0),
+        g = girth(fig)
+        skin = f_blend(f_blend(f_capsule(shoulder, elbow, 5.0 * g, 4.4 * g), f_capsule(elbow, wrist, 4.4 * g, 3.9), 1.0),
                        f_ellipsoid(hand, radii), 1.2)
         if sign not in pose.arms:
             # Pulgar: de pie sale hacia adelante; sentado, hacia adentro (sobre el teclado).
@@ -951,15 +1025,16 @@ def build_model(fig, hair=True):
                 thumb = (hand[0] - sign * 1.4, hand[1] + 3.6, hand[2] + 1.6)
             skin = f_blend(skin, f_ellipsoid(thumb, (1.8, 1.9, 2.3)), 0.5)
         points = (shoulder, elbow, wrist, hand)
-        box = (min(p[0] for p in points) - 6.2, max(p[0] for p in points) + 6.2,
-               min(p[1] for p in points) - 6.2, max(p[1] for p in points) + 6.2,
-               min(p[2] for p in points) - 6.2, max(p[2] for p in points) + 6.2)
+        r = 6.2 * g
+        box = (min(p[0] for p in points) - r, max(p[0] for p in points) + r,
+               min(p[1] for p in points) - r, max(p[1] for p in points) + r,
+               min(p[2] for p in points) - r, max(p[2] for p in points) + r)
         fig.solid("hand_" + side, "skin", skin, box)
         if fig.style.long_sleeve:
             cuff = tuple(elbow[i] + (wrist[i] - elbow[i]) * CUFF for i in range(3))
-            sleeve = f_blend(f_capsule(shoulder, elbow, 5.5, 5.2), f_capsule(elbow, cuff, 5.2, 4.9), 1.0)
+            sleeve = f_blend(f_capsule(shoulder, elbow, 5.5 * g, 5.2 * g), f_capsule(elbow, cuff, 5.2 * g, 4.9 * g), 1.0)
         else:
-            sleeve = f_capsule(shoulder, hem, 5.6, 5.4)
+            sleeve = f_capsule(shoulder, hem, 5.6 * g, 5.4 * g)
         fig.solid("arm_" + side, "jacket" if fig.style.jacket else "shirt", sleeve, box)
     if pose.tool:
         build_mop(fig, pose)
@@ -976,6 +1051,23 @@ def build_model(fig, hair=True):
                   (sign * ear - 2.7, sign * ear + 2.7, -3.6, 2.6, head_z - 7.4, head_z + 0.4))
     if hair:
         build_hair(fig)
+    if fig.style.beard == "beard":
+        build_beard(fig)
+
+
+def build_beard(fig):
+    """Barba corta: una capa del color del pelo sobre la mandíbula, de oreja a oreja y bajo la boca."""
+    head_z = fig.pose.head_z
+    rx, ry, rz = HEAD_RADII
+    shell = f_ellipsoid((0.0, 0.9, head_z - 0.6), (rx + 1.0, ry + 1.0, rz + 1.0))
+
+    def jaw(lat, fwd, z):
+        # Baja de las patillas (junto a las orejas) a la barbilla; solo la mitad de adelante de la cabeza.
+        limit = head_z - 7.0 + 6.5 * np.clip((np.abs(lat) - 9.0) / 6.0, 0.0, 1.0)
+        return np.maximum(z - limit, -1.5 - fwd)
+
+    fig.solid("beard", "hair", f_intersect(shell, jaw),
+              (-rx - 1.5, rx + 1.5, -2.0, ry + 2.0, head_z - rz - 2.0, head_z + 1.0))
 
 
 def build_mop(fig, pose):
@@ -1016,34 +1108,37 @@ def leg_axis(pose, sign, hip_lat, hip_z):
 def build_skirt(fig, cut_z):
     """Falda (capa pants) y piernas de piel: de pie campana hasta SKIRT_HEM, sentada hasta la rodilla."""
     pose = fig.pose
+    b, g = fig.style.build, girth(fig)
     if pose.sit:
-        thigh_r = 6.2
+        thigh_r = 6.2 * g
         thigh_z = SIT_SEAT_Z + thigh_r
         top = max(cut_z, SIT_SEAT_Z + 2.0 * thigh_r + 0.6)
         front = SIT_KNEE_FWD - 2.5
-        lap = f_box(-12.2, 12.2, -7.0, front, SIT_SEAT_Z, top + 3.0, 5.5)
+        lap = f_box(-12.2 * b, 12.2 * b, -7.0, front, SIT_SEAT_Z, top + 3.0, 5.5)
         fig.solid("pants", "pants", f_intersect(lap, lambda lat, fwd, z: z - top),
-                  (-13.5, 13.5, -8.5, front + 1.0, SIT_SEAT_Z - 1.0, top))
+                  (-outer(13.5, b), outer(13.5, b), -8.5, front + 1.0, SIT_SEAT_Z - 1.0, top))
         for side, sign in (("l", -1.0), ("r", 1.0)):
-            thigh = (sign * 5.8, front - 5.0, thigh_z - 0.4)
-            knee = (sign * 6.0, SIT_KNEE_FWD, thigh_z - 0.6)
+            thigh = (sign * 5.8 * b, front - 5.0, thigh_z - 0.4)
+            knee = (sign * 6.0 * b, SIT_KNEE_FWD, thigh_z - 0.6)
             ankle = (sign * SHOE_LAT, SIT_FEET_FWD, 7.0)
-            leg = f_blend(f_capsule(thigh, knee, 5.4, 5.2), f_capsule(knee, ankle, 5.0, 4.5), 1.5)
-            fig.solid("leg_" + side, "skin", leg, (sign * 6.0 - 7.0, sign * 6.0 + 7.5, front - 11.0,
+            leg = f_blend(f_capsule(thigh, knee, 5.4 * g, 5.2 * g), f_capsule(knee, ankle, 5.0 * g, 4.5), 1.5)
+            spread = 0.0 if b == 1.0 else 0.5
+            fig.solid("leg_" + side, "skin", leg, (sign * 6.0 * b - 7.0 - spread, sign * 6.0 * b + 7.5 + spread, front - 11.0,
                                                     SIT_FEET_FWD + 6.5, 2.0, thigh_z + 6.5))
     else:
-        box = f_box(-13.4, 13.4, -9.0, 9.0, SKIRT_HEM, cut_z + 4.0, 3.5)
+        box = f_box(-13.4 * b, 13.4 * b, -9.0 * g, 9.0 * g, SKIRT_HEM, cut_z + 4.0, 3.5)
 
         def bell(lat, fwd, z):
             k = 1.0 + 0.17 * np.clip((z - SKIRT_HEM) / (cut_z - SKIRT_HEM), 0.0, 1.0)
             return box(lat * k, fwd * k, z)
 
         fig.solid("pants", "pants", f_intersect(bell, lambda lat, fwd, z: z - cut_z),
-                  (-14.4, 14.4, -10.0, 10.0, SKIRT_HEM - 1.0, cut_z))
+                  (-outer(14.4, b), outer(14.4, b), -outer(10.0, g), outer(10.0, g), SKIRT_HEM - 1.0, cut_z))
         for side, sign in (("l", -1.0), ("r", 1.0)):
-            leg = stand_leg(pose, sign, 5.2, 4.6, 5.8, SKIRT_HEM + 6.0)
+            leg = stand_leg(pose, sign, 5.2 * g, 4.6 * g, 5.8 * b, SKIRT_HEM + 6.0)
             reach = STRIDE + 2.0
-            fig.solid("leg_" + side, "skin", leg, (sign * 6.3 - 6.0, sign * 6.3 + 6.0, -6.0 - reach, 6.5 + reach, 2.0,
+            spread = 0.0 if b == 1.0 else 0.5
+            fig.solid("leg_" + side, "skin", leg, (sign * 6.3 * b - 6.0 - spread, sign * 6.3 * b + 6.0 + spread, -6.0 - reach, 6.5 + reach, 2.0,
                                                     SKIRT_HEM + 8.0 + FOOT_LIFT))
 
 
@@ -1196,7 +1291,7 @@ def volume_details(fig):
     style = fig.style
     # Ruedo de la manga corta o puño de la manga larga: el final de la manga, un paso más oscuro.
     for side, sign in (("l", -1.0), ("r", 1.0)):
-        shoulder, elbow, wrist, _hand = pose.arm_points(sign)
+        shoulder, elbow, wrist, _hand = arm_points(fig, sign)
         start, end, part = (elbow, wrist, CUFF) if style.long_sleeve else (shoulder, elbow, SLEEVE)
         d = (np.array(end) - np.array(start)) * part
         length = float(np.linalg.norm(d))
@@ -1336,7 +1431,7 @@ def clothes_details(fig):
     torso = fig.of("torso")
     pants = fig.of("pants")
     belt, neck = pose.belt_z, pose.neck_z
-    cleaning = style.name in CLEANING_STYLES
+    cleaning = style.outfit in CLEANING_STYLES
     # Torso.
     if style.jacket:
         # Saco: tapas de los bolsillos, bolsillo del pecho, costura y abertura de la espalda.
@@ -1409,8 +1504,16 @@ def face(fig):
     head = fig.of("head")
     head_z = fig.pose.head_z
     small = fig.k < 0.9
-    legend = {"P": ("face", 0), "b": ("hair", RIGHT), "m": ("skin", DEEP)}
+    legend = {"P": ("face", 0), "b": ("hair", RIGHT), "m": ("skin", DEEP), "G": ("face", 0)}
     rows = ["PP", "PP", "PP"] if small else ["PP", "PP", "PP", "PP"]
+    if fig.style.glasses and not small:
+        # Lentes: un marco oscuro de 6×6 alrededor de cada ojo y el puente entre los dos.
+        eyes = sorted(fig.canon(sign * fig.near * EYE_LAT, EYE_FWD, head_z + EYE_DZ) for sign in (1, -1))
+        for x, y in eyes:
+            fig.art(x - 3, y - 2, ["GGGGGG", "G....G", "G....G", "G....G", "G....G", "GGGGGG"], legend, head)
+        (x0, y0), (x1, _y1) = eyes
+        if x1 - x0 > 6:
+            fig.art(x0 + 3, y0 - 1, ["G" * (x1 - x0 - 6)], legend, head)
     for sign in (1, -1):
         x, y = fig.canon(sign * fig.near * EYE_LAT, EYE_FWD, head_z + EYE_DZ)
         fig.art(x - 1, y - 1, rows, legend, head)
@@ -1419,7 +1522,9 @@ def face(fig):
     if not small:
         # Boca: 3 px entre los ojos y la barbilla (fuera de la sombra de abajo).
         x, y = fig.canon(0.0, EYE_FWD + 1.0, head_z + EYE_DZ - 5.0)
-        fig.art(x - 1, y, ["mmm"], legend, head)
+        fig.art(x - 1, y, ["mmm"], legend, fig.of("head", "beard"))
+        if fig.style.beard == "mustache":
+            fig.art(x - 2, y - 2, ["bbbbb", "bbbbb"], legend, head)
 
 
 def collar_and_tie(fig):
@@ -1497,7 +1602,7 @@ def hand_details(fig):
         hand = fig.of("hand_" + side)
         if hand.sum() < 12:
             continue
-        hx, hy, hz = fig.pose.arm_points(sign)[3]
+        hx, hy, hz = arm_points(fig, sign)[3]
         x, y = fig.canon(hx + sign * 0.4, hy + 1.6, hz)
         fig.art(x, y, ["n", "n"], {"n": ("skin", "darker")}, hand)
 
@@ -1506,7 +1611,9 @@ def f_torso(pose, style):
     """Torso robusto: caja muy redondeada, casi recta (camiseta suelta sobre el pantalón)."""
     grow = 0.5 if style.jacket else 0.0  # el saco es un poco más ancho y más largo
     low = -3.0 if style.jacket else (1.0 if style.tucked else -0.5)
-    box = f_box(-12.0 - grow, 12.0 + grow, -7.6 - grow, 7.6 + grow, pose.belt_z + low, pose.neck_z + 1.0, 5.5)
+    half = (12.0 + grow) * style.build
+    depth = (7.6 + grow) * torso_depth(style.build)
+    box = f_box(-half, half, -depth, depth, pose.belt_z + low, pose.neck_z + 1.0, 5.5)
     top = pose.neck_z - 5.0
 
     def fn(lat, fwd, z):
@@ -1556,8 +1663,8 @@ def foot_shadow():
     ys, xs = np.mgrid[0:128, 0:128]
     rx = xs + 0.5 - 64.0
     ry = ys + 0.5 - 80.0
-    u = (ry / iso.HALF_H + rx / iso.HALF_W) / 2.0
-    v = (ry / iso.HALF_H - rx / iso.HALF_W) / 2.0
+    u = (ry / kit.HALF_H + rx / kit.HALF_W) / 2.0
+    v = (ry / kit.HALF_H - rx / kit.HALF_W) / 2.0
     mask = ((u - 0.55) / 0.19) ** 2 + ((v - 0.50) / 0.15) ** 2 <= 1.0
     rgba = np.zeros((128, 128, 4), dtype=np.uint8)
     rgba[mask, :3] = SHADOW_COLOR
@@ -1591,7 +1698,9 @@ def verify(fig, name):
     if not pose.height[0] * fig.k <= tall <= pose.height[1] * fig.k:
         problems.append("mide %d px sobre el apoyo (%d–%d)" % (tall, pose.height[0] * fig.k, pose.height[1] * fig.k))
     shoes_x = xs[layer[ys, xs] == LAYER_ID["shoes"]]
-    if shoes_x.size == 0 or (not pose.tool and abs(shoes_x.mean() + 0.5 - low_x) > 3.5):  # el suape tapa un zapato
+    # El suape tapa un zapato; el pantalón ancho del robusto tapa parte de uno al caminar.
+    off = 3.5 + 8.0 * max(fig.style.build - 1.0, 0.0)
+    if shoes_x.size == 0 or (not pose.tool and abs(shoes_x.mean() + 0.5 - low_x) > off):
         problems.append("los zapatos no están centrados en x = %.1f" % low_x)
     if pose.sit:
         hip_x, hip_y = fig.screen(0.0, 0.0, SIT_SEAT_Z)

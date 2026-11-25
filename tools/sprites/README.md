@@ -9,7 +9,8 @@ pasa al juego (`python3 tools/sprites/export_game.py`, después `Godot --headles
 - Código en inglés y `snake_case`; comentarios y textos en español.
 - Los PNG de `art/` se versionan junto a su `build.py`, su documento `.moana.json` y su `manifest.json`.
 
-El motor viejo (`iso.py`, el modelo de los personajes en `art/characters/_figure.py` lo sigue usando) se prueba con:
+El motor viejo (`iso.py`, `palette.py`, `pattern.py`) ya no dibuja ningún sprite del juego: los personajes usan
+`art/characters/_figure_kit.py` (sus rampas y su lienzo con `sdf`). Queda como referencia y se prueba con:
 
 ```
 python3 tools/sprites/check.py DIR [--verbose] [--group grupo[,grupo]]   # RESULTADO: OK o la lista de fallos
@@ -505,7 +506,8 @@ cada PNG (y en mesas, `edges`: el hueco hasta el canto del tablero por lado, par
 | `art/walls/_walls_kit.py` | Paredes: modelo a lo largo del borde (`Along`), `_x` espejado del `_y`, fantasmas para el empalme y el pie, hoja con bisagra (`Leaf`), rodapié |
 | `art/characters/<conjunto>/` | Personajes, una carpeta por conjunto de ropa: `character_<prefijo><pose>_r<n>` (de pie, sentado) y `_r<n>_<cuadro>` (caminar, quieto, teclear; trapear en los de limpieza), y por cada cuadro sentado y silla `<cuadro>_<silla>`, lo que la silla le tapa |
 | `art/characters/shadow/` | Sombra de los pies `character_stand_shadow` |
-| `art/characters/_figure.py` | Modelo de los personajes: campos de distancia girados hacia la cámara (`iso.Canvas.character`), sombreado, contorno, detalles a mano, poses y paletas (`LOOKS`); `build.py` guarda cada cuadro como documento Moana |
+| `art/characters/_figure.py` | Modelo de los personajes: campos de distancia girados hacia la cámara (`_figure_kit.FigureCanvas`), sombreado, contorno, detalles a mano, poses, paletas (`LOOKS`) y formas de cada conjunto (`FORMS`: peinado, barba o bigote, lentes y complexión `build`; carpetas `<conjunto>_f1`, `_f2`); `build.py` guarda cada cuadro como documento Moana |
+| `art/characters/_figure_kit.py` | Rampas de 8 tonos y lienzo del personaje: z-buffer y formas por campo de distancia (`sdf`), sin acabado automático |
 | `art/furniture/_sofa.py` | Bloques acolchados de los sofás: esquinas redondeadas, sombra de 1 px al pie, botón y costuras; `puff`, abultado parejo por los cuatro lados |
 | `art/furniture/_bath.py`, `_cleaning.py` | Cerámica y cromo del baño; balde amarillo con agua que comparten el armario y el cubo |
 | `art/furniture/_kitchen.py` | Mueble bajo de cocina (puertas y mesón) que comparten el microondas y la cafetera |

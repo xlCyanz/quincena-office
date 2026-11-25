@@ -511,11 +511,14 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `SpriteLibrary.get_furniture_sprite(id, rotación, parte)`; `FurnitureView._draw_sprites` dibuja sombra y mueble con el apoyo en el centro de
   la casilla de anclaje (los chicos, su versión `_q` en el centro del cuarto), la computadora y el segundo monitor sobre el centro del escritorio
   (con monitor la computadora se corre `COMPUTER_SHIFT`) y las sillas en dos piezas (`_seat` y `_back`, la de atrás lleva la sombra).
-  Personajes: una hoja por aspecto en `assets/sprites/characters/` (8 conjuntos × 3 paletas; fila = dirección, columna = cuadro de `poses`:
-  stand, sit, idle ×4, walk ×8, type ×4; las paletas `_v1`/`_v2` las saca `export_game.py` cambiando rampa por rampa). El personal de limpieza
+  Personajes: una hoja por aspecto en `assets/sprites/characters/` (8 conjuntos × 3 formas × 3 paletas; fila = dirección, columna = cuadro
+  de `poses`: stand, sit, idle ×4, walk ×8, type ×4; las paletas `_v1`/`_v2` las saca `export_game.py` cambiando rampa por rampa). Las
+  formas `_f1`/`_f2` de cada conjunto (`_figure.FORMS`) cambian peinado, barba o bigote, lentes y complexión (`ROBUST`, `SLIM`) y usan las
+  paletas del conjunto. El personal de limpieza
   tiene además una hoja `<aspecto>_tools.png` con `mop` ×4 y `mopwalk` ×8 (`characters.tool_poses`/`tool_looks`; `SpriteLibrary.has_tool_look`;
   `draw_character` la usa sola) y el cubo `mop_bucket` (`characters.bucket`). `OfficeCharacter.look`
-  (`make_look(mujer, "casual"|"office"|"executive"|"cleaning", número)`; CEO de traje, `Employee._look_for` por cargo (el personal de limpieza con su overol verde, `cleaning`), nombre e id, visitas y candidatos
+  (`make_look(mujer, "casual"|"office"|"executive"|"cleaning", número)`: paleta = número % 3, forma = número / 3 % 3;
+  `OfficeCharacter.forms_enabled` en false, solo en pruebas anteriores a `sprites`, deja la forma de siempre; CEO de traje, `Employee._look_for` por cargo (el personal de limpieza con su overol verde, `cleaning`), nombre e id, visitas y candidatos
   en `Visitor`); `_animate` elige pose, dirección (0–3 como las rotaciones) y cuadro: camina según lo recorrido (`WALK_CYCLES_PER_CELL`),
   sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
   `can_type` false en visitas), si no `sit`, y de pie `idle`; sentado en una silla se dibuja junto con ella en un solo cuadro (poses

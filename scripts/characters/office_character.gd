@@ -45,6 +45,10 @@ const SEATED_BACK_BAND := Vector2(21.0, 128.0)
 const HANDS_BAND := Vector2(41.0, 52.0)
 ## Paletas de cada conjunto (base, piel oscura, piel clara).
 const LOOK_VARIANTS: Array[String] = ["", "_v1", "_v2"]
+## Formas de cada conjunto: la de siempre y dos con otro peinado, barba, bigote o lentes y otra complexión.
+const LOOK_FORMS: Array[String] = ["", "_f1", "_f2"]
+## Solo para pruebas: false deja a todos con la forma de siempre (menos hojas que cargar). No se guarda.
+static var forms_enabled: bool = true
 ## Ninguna casilla (para _release_cells).
 const NO_CELL := Vector2i(-1000000, -1000000)
 
@@ -158,12 +162,15 @@ func setup(grid: OfficeGrid, pathfinder: OfficePathfinder, seat_cell: Vector2i,
 	_update_position()
 
 
-## Aspecto: conjunto de ropa ("casual", "office", "executive" o "cleaning"; de mujer si woman) y paleta según number.
+## Aspecto: conjunto de ropa ("casual", "office", "executive" o "cleaning"; de mujer si woman), y según number
+## la paleta (number % 3) y la forma (number / 3 % 3): <conjunto><forma><paleta>, p. ej. "office_f1_v2".
 static func make_look(woman: bool, outfit: String, number: int) -> String:
 	var base: String = outfit
 	if woman:
 		base = "woman" if outfit == "casual" else "woman_" + outfit
-	return base + LOOK_VARIANTS[posmod(number, LOOK_VARIANTS.size())]
+	@warning_ignore("integer_division")
+	var form: String = LOOK_FORMS[posmod(number / LOOK_VARIANTS.size(), LOOK_FORMS.size())] if forms_enabled else ""
+	return base + form + LOOK_VARIANTS[posmod(number, LOOK_VARIANTS.size())]
 
 
 ## Indica si un nombre es de mujer (por su primer nombre en data/names.json).

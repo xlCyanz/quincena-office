@@ -29,6 +29,8 @@ const FIRST_OFFICE_CHAIRS_SUITE: String = "office_chairs"
 const FIRST_CLEANING_SHIFT_SUITE: String = "cleaning_shift"
 ## Desde aquí la entrada lleva la puerta de vidrio doble; antes OfficeState.double_door_enabled en false.
 const FIRST_DOUBLE_DOOR_SUITE: String = "glass_door_double"
+## Desde aquí los personajes tienen sus tres formas; antes OfficeCharacter.forms_enabled en false.
+const FIRST_FORMS_SUITE: String = "sprites"
 ## Tope por parte; las más largas son las simulaciones de fase.
 const MAX_SUITE_SECONDS: float = 60.0
 ## Autoloads cuyas conexiones de señales se quitan al terminar cada parte.
@@ -91,6 +93,7 @@ func _run_suite(suite: String) -> Vector2i:
 	RoomRules.counts_enabled = SUITES.find(suite) >= SUITES.find(FIRST_OFFICE_CHAIRS_SUITE)
 	Staff.cleaning_shift_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CLEANING_SHIFT_SUITE)
 	OfficeState.double_door_enabled = SUITES.find(suite) >= SUITES.find(FIRST_DOUBLE_DOOR_SUITE)
+	OfficeCharacter.forms_enabled = SUITES.find(suite) >= SUITES.find(FIRST_FORMS_SUITE)
 	var script: GDScript = load("%stest_%s.gd" % [SUITES_DIR, suite])
 	var node := Node.new()
 	node.name = suite

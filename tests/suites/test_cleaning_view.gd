@@ -39,7 +39,7 @@ func _check_library() -> void:
 	_expect(SpriteLibrary.get_character_frames("mop") == 4 and SpriteLibrary.get_character_frames("mopwalk") == 8,
 		"poses del suape: trapear 4 cuadros y caminar 8")
 	for woman: bool in [false, true]:
-		for number: int in range(3):
+		for number: int in range(9):
 			var look: String = OfficeCharacter.make_look(woman, "cleaning", number)
 			_expect(SpriteLibrary.has_tool_look(look), "hoja del suape para %s" % look)
 	_expect(not SpriteLibrary.has_tool_look("casual") and not SpriteLibrary.has_tool_look("office_v1"),

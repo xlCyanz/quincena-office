@@ -293,7 +293,7 @@ def main():
         column += count
     tool_looks = {}
     for style in character.STYLES:
-        if style.name not in character.CLEANING_STYLES:
+        if style.outfit not in character.CLEANING_STYLES:
             continue
         for suffix in CHARACTER_VARIANTS:
             page = Image.new("RGBA", (CHARACTER_CELL[0] * column, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))

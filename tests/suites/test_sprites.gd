@@ -118,15 +118,16 @@ func _check_furniture() -> void:
 		and SpriteLibrary.get_seat_x("no_existe") < 0.0, "dónde queda el teclado de cada sprite")
 
 
-# Los 8 conjuntos de personajes en sus 3 paletas, con todas las poses.
+# Los 8 conjuntos de personajes en sus 3 formas y 3 paletas, con todas las poses.
 func _check_characters() -> void:
 	for woman: bool in [false, true]:
 		for outfit: String in ["casual", "office", "executive", "cleaning"]:
-			for number: int in range(3):
+			for number: int in range(9):
 				var look: String = OfficeCharacter.make_look(woman, outfit, number)
 				_expect(SpriteLibrary.has_character_look(look), "hay hoja para %s" % look)
-	_expect(OfficeCharacter.make_look(true, "casual", 0) == "woman" and OfficeCharacter.make_look(false, "office", 4) == "office_v1",
-		"nombres de los aspectos")
+	_expect(OfficeCharacter.make_look(true, "casual", 0) == "woman" and OfficeCharacter.make_look(false, "office", 1) == "office_v1"
+		and OfficeCharacter.make_look(false, "office", 4) == "office_f1_v1"
+		and OfficeCharacter.make_look(true, "executive", 8) == "woman_executive_f2_v2", "nombres de los aspectos")
 	_expect(not SpriteLibrary.has_character_look("no_existe"), "un aspecto desconocido no tiene hoja")
 	_expect(SpriteLibrary.get_character_frames("walk") == 8 and SpriteLibrary.get_character_frames("idle") == 4
 		and SpriteLibrary.get_character_frames("type") == 4 and SpriteLibrary.get_character_frames("sit") == 1
