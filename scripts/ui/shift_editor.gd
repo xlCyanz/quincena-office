@@ -6,7 +6,7 @@ extends VBoxContainer
 ## El jugador pidió otro turno: hora de entrada, días y horas extra.
 signal changed(start_hour: int, days: Array[int], overtime: int)
 
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const MUTED_COLOR := UiTheme.MUTED
 const STEP_BUTTON_WIDTH: float = 36.0
 
 var _schedule: WorkSchedule = WorkSchedule.new()

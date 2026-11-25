@@ -15,7 +15,7 @@ const MARGIN_TOP: float = 100.0
 const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const MUTED_COLOR := UiTheme.MUTED
 
 # Botón «?» de ayuda.
 var _help_button: Button
@@ -51,7 +51,7 @@ var _offers: Dictionary[int, int] = {}
 
 func _ready() -> void:
 	_open_button = Button.new()
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "staff")
 	_open_button.pressed.connect(func() -> void: set_open(not is_open()))
 
 	var root := Control.new()
@@ -79,6 +79,7 @@ func _ready() -> void:
 	rows.add_child(header)
 	var title := Label.new()
 	title.text = "Personal"
+	title.theme_type_variation = &"HeaderLabel"
 	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
@@ -289,6 +290,7 @@ func get_list_text() -> String:
 func _add_section(parent: Container, text: String) -> void:
 	var label := Label.new()
 	label.text = text
+	label.theme_type_variation = &"SectionLabel"
 	label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	parent.add_child(label)
 

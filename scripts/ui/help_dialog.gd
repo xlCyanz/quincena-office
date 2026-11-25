@@ -30,6 +30,7 @@ func _ready() -> void:
 	rows.add_theme_constant_override("separation", 10)
 	_panel.add_child(rows)
 	_title = Label.new()
+	_title.theme_type_variation = &"HeaderLabel"
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	rows.add_child(_title)
 	_text = Label.new()

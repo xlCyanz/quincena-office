@@ -37,6 +37,7 @@ func _ready() -> void:
 	panel.add_child(rows)
 	_title = Label.new()
 	_title.text = "La empresa quebró"
+	_title.theme_type_variation = &"HeaderLabel"
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.add_theme_color_override("font_color", Hud.NEGATIVE_COLOR)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -9,7 +9,7 @@ const MARGIN: float = 16.0
 const MARGIN_TOP: float = 140.0
 ## Espacio que se deja abajo para la barra de botones.
 const TITLE_FONT_SIZE: int = 22
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const MUTED_COLOR := UiTheme.MUTED
 const ALERT_COLOR := Color("f2c14e")
 ## Barras de la ficha: clave en el empleado y nombre para el jugador.
 const BARS: Dictionary[String, String] = {"energy": "Energía", "mood": "Ánimo", "stress": "Estrés"}
@@ -80,6 +80,7 @@ func _ready() -> void:
 	var header := HBoxContainer.new()
 	outer.add_child(header)
 	_title = Label.new()
+	_title.theme_type_variation = &"HeaderLabel"
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

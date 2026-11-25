@@ -284,6 +284,12 @@ static func get_dirt_sprites() -> Array[String]:
 	return sprites
 
 
+## Icono de la barra de la partida (null si no hay).
+static func get_ui_icon(icon: String) -> Texture2D:
+	var sprite: String = String(get_data().get("ui_icons", {}).get(icon, ""))
+	return get_texture(sprite) if has_sprite(sprite) else null
+
+
 ## Sprite del globo de un icono de estado ("" si no hay).
 static func get_status_icon_sprite(icon: String) -> String:
 	var sprite: String = String(get_data().get("status_icons", {}).get(icon, ""))

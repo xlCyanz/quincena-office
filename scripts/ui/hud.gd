@@ -12,23 +12,23 @@ signal notice_clicked(target: Dictionary)
 
 const MARGIN: float = 12.0
 const WEEKDAY_NAMES: Array[String] = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
-const NEGATIVE_COLOR := Color(1.0, 0.45, 0.4)
-const REPUTATION_COLOR := Color(1.0, 0.82, 0.35)
-const VALUE_COLOR := Color(0.6, 0.85, 1.0)
-const MONEY_FONT_SIZE: int = 24
-const PANEL_COLOR := Color(0.12, 0.12, 0.14, 0.88)
-const PANEL_PADDING: float = 8.0
-const PANEL_RADIUS: int = 6
+const NEGATIVE_COLOR := UiTheme.NEGATIVE
+const REPUTATION_COLOR := UiTheme.ACCENT
+const VALUE_COLOR := UiTheme.SOFT
+const BALANCE_COLOR := UiTheme.POSITIVE
+const PAYROLL_COLOR := UiTheme.ACCENT
+const REPUTATION_FONT_SIZE: int = 20
+const PANEL_PADDING: float = 12.0
 ## Segundos reales que se ve un aviso.
 const NOTICE_SECONDS: float = 6.0
 ## Color del texto de un aviso al que se le puede hacer clic, y lo que se le agrega.
-const LINK_COLOR := Color(0.65, 0.88, 1.0)
+const LINK_COLOR := UiTheme.ACCENT
 const LINK_SUFFIX: String = "  ›"
-## Tamaño de los botones de la barra de menús de abajo (caben nueve en 1280 px).
-const MENU_BUTTON_SIZE := Vector2(124.0, 44.0)
+## Tamaño mínimo de los botones de la barra de menús de abajo (icono arriba, texto abajo).
+const MENU_BUTTON_SIZE := Vector2(84.0, 60.0)
 
 ## Ancho mínimo de cada botón de velocidad del reloj.
-const SPEED_BUTTON_WIDTH: float = 34.0
+const SPEED_BUTTON_WIDTH: float = 40.0
 
 var _balance_label: Label
 var _reputation_label: Label
@@ -64,17 +64,19 @@ func _ready() -> void:
 	money_row.add_theme_constant_override("separation", 16)
 	money_rows.add_child(money_row)
 	_balance_label = Label.new()
-	_balance_label.add_theme_font_size_override("font_size", MONEY_FONT_SIZE)
+	_balance_label.theme_type_variation = "MoneyLabel"
 	money_row.add_child(_balance_label)
 	# Reputación.
 	_reputation_label = Label.new()
-	_reputation_label.add_theme_font_size_override("font_size", MONEY_FONT_SIZE)
+	_reputation_label.theme_type_variation = "MoneyLabel"
+	_reputation_label.add_theme_font_size_override("font_size", REPUTATION_FONT_SIZE)
 	_reputation_label.add_theme_color_override("font_color", REPUTATION_COLOR)
 	_reputation_label.tooltip_text = "Reputación de la empresa"
 	_reputation_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	money_row.add_child(_reputation_label)
 	# Valor de la empresa, en otra línea para no ensanchar la esquina.
 	_value_label = Label.new()
+	_value_label.theme_type_variation = "MutedLabel"
 	_value_label.tooltip_text = "Valor de la empresa: dinero + reventa de los muebles + terreno − deuda con el banco"
 	_value_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	money_rows.add_child(_value_label)
@@ -87,14 +89,15 @@ func _ready() -> void:
 	var time_row := HBoxContainer.new()
 	clock_rows.add_child(time_row)
 	_date_label = Label.new()
+	_date_label.theme_type_variation = "StrongLabel"
 	_date_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	time_row.add_child(_date_label)
 	_time_label = Label.new()
-	_time_label.add_theme_font_size_override("font_size", MONEY_FONT_SIZE)
+	_time_label.theme_type_variation = "MoneyLabel"
 	time_row.add_child(_time_label)
 	_payroll_label = Label.new()
 	clock_rows.add_child(_payroll_label)
-	_payroll_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.75))
+	_payroll_label.theme_type_variation = "StrongLabel"
 	var speed_row := HBoxContainer.new()
 	clock_rows.add_child(speed_row)
 	_pause_button = _add_toggle(speed_row, "Pausa")
@@ -284,7 +287,7 @@ func _update_clock() -> void:
 	_time_label.text = "%02d:%02d" % [GameClock.get_hour(), GameClock.get_minute()]
 	var days: int = days_until_payroll(GameClock.get_day())
 	var owed: int = Staff.get_total_owed()
-	_payroll_label.add_theme_color_override("font_color", NEGATIVE_COLOR if owed > 0 else Color(1.0, 1.0, 1.0, 0.75))
+	_payroll_label.add_theme_color_override("font_color", NEGATIVE_COLOR if owed > 0 else PAYROLL_COLOR)
 	if owed > 0:
 		_payroll_label.text = "Nómina pendiente: %s" % MoneyFormat.format(owed)
 	elif days == 0:
@@ -300,15 +303,35 @@ func _update_clock() -> void:
 		_speed_buttons[index].disabled = not _controls_enabled
 
 
-## Panel semitransparente con margen y esquinas redondeadas (lo usan otros paneles).
+## Tarjeta que flota sobre la oficina (la usan otros paneles); su caja sale del tema.
 static func make_panel() -> PanelContainer:
-	var style := StyleBoxFlat.new()
-	style.bg_color = PANEL_COLOR
-	style.set_corner_radius_all(PANEL_RADIUS)
-	style.set_content_margin_all(PANEL_PADDING)
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", style)
-	return panel
+	return PanelContainer.new()
+
+
+## Botón de la barra de abajo: icono de SpriteLibrary arriba y texto abajo; primary lo pinta de acento.
+## El icono se dibuja aparte (con el icono arriba, Button pide el doble de alto); el tema deja el lugar.
+static func style_bar_button(button: Button, icon: String, primary: bool = false) -> void:
+	button.custom_minimum_size = MENU_BUTTON_SIZE
+	button.theme_type_variation = "PrimaryBarButton" if primary else "BarButton"
+	var texture: Texture2D = SpriteLibrary.get_ui_icon(icon)
+	if texture != null:
+		button.draw.connect(_draw_bar_icon.bind(button, texture))
+
+
+# El icono toma el color del texto según el estado del botón.
+static func _draw_bar_icon(button: Button, texture: Texture2D) -> void:
+	var color_name: String = "font_color"
+	match button.get_draw_mode():
+		BaseButton.DRAW_PRESSED:
+			color_name = "font_pressed_color"
+		BaseButton.DRAW_HOVER:
+			color_name = "font_hover_color"
+		BaseButton.DRAW_HOVER_PRESSED:
+			color_name = "font_hover_pressed_color"
+		BaseButton.DRAW_DISABLED:
+			color_name = "font_disabled_color"
+	var at := Vector2(roundf((button.size.x - texture.get_width()) / 2.0), UiTheme.BAR_ICON_TOP)
+	button.draw_texture(texture, at, button.get_theme_color(color_name))
 
 
 func _add_toggle(parent: Container, text: String) -> Button:
@@ -316,6 +339,7 @@ func _add_toggle(parent: Container, text: String) -> Button:
 	button.text = text
 	button.toggle_mode = true
 	button.custom_minimum_size = Vector2(52, 32)
+	button.theme_type_variation = &"SpeedButton"
 	button.focus_mode = Control.FOCUS_NONE
 	parent.add_child(button)
 	return button
@@ -325,10 +349,7 @@ func _add_toggle(parent: Container, text: String) -> Button:
 func _on_balance_changed(_balance: int = 0) -> void:
 	var balance: int = Economy.balance
 	_balance_label.text = MoneyFormat.format(balance)
-	if balance < 0:
-		_balance_label.add_theme_color_override("font_color", NEGATIVE_COLOR)
-	else:
-		_balance_label.remove_theme_color_override("font_color")
+	_balance_label.add_theme_color_override("font_color", NEGATIVE_COLOR if balance < 0 else BALANCE_COLOR)
 
 
 func _update_top_space() -> void:

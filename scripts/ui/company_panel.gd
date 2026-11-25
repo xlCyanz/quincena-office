@@ -13,8 +13,8 @@ const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const STAGE_FONT_SIZE: int = 22
 const SECTION_FONT_SIZE: int = 18
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
-const MET_COLOR := Color(0.55, 0.85, 0.5)
+const MUTED_COLOR := UiTheme.MUTED
+const MET_COLOR := UiTheme.POSITIVE
 const AMOUNT_WIDTH: float = 140.0
 
 # Botón «?» de ayuda.
@@ -32,7 +32,7 @@ var _confirming_ipo: bool = false
 func _ready() -> void:
 	_open_button = Button.new()
 	_open_button.text = "Empresa"
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "company")
 	_open_button.focus_mode = Control.FOCUS_NONE
 	_open_button.pressed.connect(func() -> void: set_open(not is_open()))
 
@@ -57,6 +57,7 @@ func _ready() -> void:
 	rows.add_child(header)
 	var title := Label.new()
 	title.text = "Empresa"
+	title.theme_type_variation = &"HeaderLabel"
 	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
@@ -302,6 +303,7 @@ func _label(text: String, font_size: int = 0, color: Color = Color.WHITE) -> voi
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if font_size > 0:
+		label.theme_type_variation = &"SectionLabel"
 		label.add_theme_font_size_override("font_size", font_size)
 	if color != Color.WHITE:
 		label.add_theme_color_override("font_color", color)

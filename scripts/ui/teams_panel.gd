@@ -13,7 +13,7 @@ const MARGIN_TOP: float = 100.0
 const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const MUTED_COLOR := UiTheme.MUTED
 const DAY_BUTTON_WIDTH: float = 52.0
 const VIEW_TEAMS: String = "teams"
 const VIEW_TEMPLATES: String = "templates"
@@ -53,7 +53,7 @@ var _template_controls: Dictionary[int, Dictionary] = {}
 func _ready() -> void:
 	_open_button = Button.new()
 	_open_button.text = "Horarios"
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "teams")
 	_open_button.focus_mode = Control.FOCUS_NONE
 	_open_button.pressed.connect(func() -> void: set_open(not is_open()))
 
@@ -80,6 +80,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "Horarios"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.theme_type_variation = &"HeaderLabel"
 	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	header.add_child(title)
 	_create_button = Button.new()
@@ -292,6 +293,7 @@ func _add_team(team: Dictionary) -> void:
 	name_label.text = "%s · %d %s%s" % [team["name"], members.size(), "persona" if members.size() == 1 else "personas",
 		" + líder" if not leader.is_empty() else ""]
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.theme_type_variation = &"SectionLabel"
 	name_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	header.add_child(name_label)
 	var delete := Button.new()
@@ -589,6 +591,7 @@ func _set_shift(team_id: int, start_hour: int, days: Array[int], overtime: int) 
 func _add_section(text: String) -> void:
 	var label := Label.new()
 	label.text = text
+	label.theme_type_variation = &"SectionLabel"
 	label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	_list.add_child(label)
 

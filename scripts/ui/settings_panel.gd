@@ -46,7 +46,7 @@ var _pending: Callable
 func _ready() -> void:
 	_open_button = Button.new()
 	_open_button.text = "Ajustes"
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "settings")
 	_open_button.pressed.connect(func() -> void: set_open(true))
 
 	var root := Control.new()

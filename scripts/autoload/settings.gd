@@ -1,6 +1,6 @@
 # Opciones del jugador: ConfigFile aparte de las partidas, con valores por defecto en
 # data/settings.json (un valor roto vuelve al suyo). Aplica pantalla completa, escala de la
-# interfaz y alto mínimo de los botones; lo demás lo leen los sistemas con get_value.
+# interfaz, alto mínimo de los botones y el tema (UiTheme); lo demás lo leen los sistemas con get_value.
 extends Node
 
 const DATA_PATH: String = "res://data/settings.json"
@@ -15,6 +15,7 @@ var _data: Dictionary = {}
 
 
 func _ready() -> void:
+	UiTheme.apply()
 	load_settings()
 	get_tree().node_added.connect(_on_node_added)
 

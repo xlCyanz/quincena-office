@@ -624,7 +624,7 @@ func _on_character_left_office() -> void:
 func _add_ceo_button(menu_bar: Container) -> void:
 	_ceo_button = Button.new()
 	_ceo_button.name = "CeoButton"
-	_ceo_button.custom_minimum_size = Vector2(172.0, Hud.MENU_BUTTON_SIZE.y)
+	Hud.style_bar_button(_ceo_button, "ceo")
 	_ceo_button.focus_mode = Control.FOCUS_NONE
 	_ceo_button.pressed.connect(func() -> void: Staff.set_ceo_at_work(not Staff.ceo_at_work))
 	menu_bar.add_child(_ceo_button)

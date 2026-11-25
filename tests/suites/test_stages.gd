@@ -195,7 +195,7 @@ func _check_ui() -> void:
 	var names: Array[String] = []
 	for child: Node in bar.get_children():
 		names.append((child as Button).text)
-	_expect(names.size() == 10 and names[2] == "↕" and names[6] == "Banco" and names[7] == "Empresa", "barra de menús: %s" % [names])
+	_expect(names.size() == 10 and names[2] == "Paredes" and names[6] == "Banco" and names[7] == "Empresa", "barra de menús: %s" % [names])
 	await get_tree().process_frame
 	_expect(bar.get_global_rect().size.x <= 1280.0, "la barra cabe en 1280 px: %.0f" % bar.get_global_rect().size.x)
 	_expect(build.get_tool_button("single_office").disabled and not build.get_tool_button("work_area").disabled,

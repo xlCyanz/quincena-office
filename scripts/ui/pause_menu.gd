@@ -11,11 +11,11 @@ signal settings_requested(tab: String)
 signal quit_requested
 
 const LAYER: int = 15
-const PANEL_WIDTH: float = 360.0
+const PANEL_WIDTH: float = 400.0
 const TEXT_WIDTH: float = PANEL_WIDTH - 40.0
 const BUTTON_HEIGHT: float = 44.0
-const TITLE_FONT_SIZE: int = 28
-const DIM_COLOR := Color(0.0, 0.0, 0.0, 0.45)
+const TITLE_FONT_SIZE: int = 34
+const DIM_COLOR := UiTheme.DIM
 
 var _cover: ColorRect
 var _buttons_box: VBoxContainer
@@ -24,6 +24,7 @@ var _confirm_box: VBoxContainer
 var _confirm_label: Label
 var _confirm_button: Button
 var _cancel_button: Button
+var _subtitle: Label
 
 
 func _ready() -> void:
@@ -38,16 +39,29 @@ func _ready() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_cover.add_child(center)
 	var panel: PanelContainer = Hud.make_panel()
+	panel.theme_type_variation = &"DialogPanel"
 	panel.custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 	center.add_child(panel)
 	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 10)
+	rows.add_theme_constant_override("separation", 14)
 	panel.add_child(rows)
+	# Cabecera: título y la hora en que quedó detenido el tiempo.
+	var header := PanelContainer.new()
+	header.theme_type_variation = &"HeaderPanel"
+	rows.add_child(header)
+	var header_rows := VBoxContainer.new()
+	header_rows.add_theme_constant_override("separation", 2)
+	header.add_child(header_rows)
 	var title := Label.new()
 	title.text = "Pausa"
+	title.theme_type_variation = &"HeaderLabel"
 	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rows.add_child(title)
+	header_rows.add_child(title)
+	_subtitle = Label.new()
+	_subtitle.theme_type_variation = &"MutedLabel"
+	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header_rows.add_child(_subtitle)
 
 	_buttons_box = VBoxContainer.new()
 	_buttons_box.add_theme_constant_override("separation", 8)
@@ -57,6 +71,8 @@ func _ready() -> void:
 	_add_button("load", "Cargar", func() -> void: settings_requested.emit(SettingsPanel.TAB_LOAD))
 	_add_button("settings", "Ajustes", func() -> void: settings_requested.emit(SettingsPanel.TAB_OPTIONS))
 	_add_button("quit", "Salir al menú", _ask_quit)
+	_buttons["resume"].theme_type_variation = &"PrimaryButton"
+	_buttons["quit"].theme_type_variation = &"DangerButton"
 
 	_confirm_box = VBoxContainer.new()
 	_confirm_box.add_theme_constant_override("separation", 8)
@@ -68,6 +84,7 @@ func _ready() -> void:
 	_confirm_label.custom_minimum_size = Vector2(TEXT_WIDTH, 0)
 	_confirm_box.add_child(_confirm_label)
 	_confirm_button = _make_button("Salir al menú")
+	_confirm_button.theme_type_variation = &"DangerButton"
 	_confirm_button.pressed.connect(func() -> void: quit_requested.emit())
 	_confirm_box.add_child(_confirm_button)
 	_cancel_button = _make_button("Cancelar")
@@ -97,6 +114,9 @@ func set_open(open: bool) -> void:
 	cancel_confirm()
 	_cover.visible = open
 	if open:
+		_subtitle.text = "%s %d · Mes %d · %02d:%02d — el tiempo está detenido" % [
+			Hud.WEEKDAY_NAMES[GameClock.get_weekday()], GameClock.get_day(), GameClock.get_month(),
+			GameClock.get_hour(), GameClock.get_minute()]
 		_buttons["resume"].grab_focus()
 
 

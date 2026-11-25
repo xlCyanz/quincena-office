@@ -142,6 +142,10 @@ func _check_palettes() -> void:
 
 # Manchas de suciedad y globos de estado con sprites.
 func _check_overlays() -> void:
+	# Iconos de la barra: 24×24 en blanco (Godot los tiñe con el color del texto).
+	for icon: String in ["build", "frame", "walls", "staff", "projects", "teams", "bank", "company", "ceo", "settings"]:
+		var texture: Texture2D = SpriteLibrary.get_ui_icon(icon)
+		_expect(texture != null and texture.get_size() == Vector2(24, 24), "icono de la barra %s" % icon)
 	var dirt: Array[String] = SpriteLibrary.get_dirt_sprites()
 	_expect(dirt.size() == 3 and dirt[0] == "dirt_0", "tres manchas: %s" % [dirt])
 	var cells: Array[Vector2i] = []

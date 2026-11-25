@@ -37,6 +37,7 @@ func _ready() -> void:
 	panel.add_child(rows)
 	_title = Label.new()
 	_title.text = "Préstamo de emergencia"
+	_title.theme_type_variation = &"HeaderLabel"
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rows.add_child(_title)
@@ -63,7 +64,7 @@ func _ready() -> void:
 func _make_button(text: String, parent: Container) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(0, Hud.MENU_BUTTON_SIZE.y)
+	button.custom_minimum_size = Vector2(0, Settings.get_min_button_height())
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_NONE
 	parent.add_child(button)

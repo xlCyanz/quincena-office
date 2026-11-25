@@ -6,8 +6,8 @@ extends CanvasLayer
 const MARGIN: float = 16.0
 const MARGIN_TOP: float = 100.0
 const PANEL_WIDTH: float = 340.0
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
-const REWARD_COLOR := Color(0.55, 0.85, 0.5)
+const MUTED_COLOR := UiTheme.MUTED
+const REWARD_COLOR := UiTheme.POSITIVE
 
 var _panel: PanelContainer
 var _header: Button

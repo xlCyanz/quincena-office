@@ -9,7 +9,9 @@ const PANEL_WIDTH: float = 420.0
 const MIN_TOP_WIDTH: float = 280.0
 const MARGIN_TOP: float = 8.0
 const GAP: float = 8.0
-const HIGHLIGHT_COLOR := Color(1.0, 0.82, 0.25)
+## Borde derecho de los paneles de la izquierda: arriba la tarjeta no se mete encima.
+const LEFT_PANELS_END: float = StaffPanel.MARGIN + StaffPanel.PANEL_WIDTH
+const HIGHLIGHT_COLOR := UiTheme.ACCENT
 const FRAME_GROW: float = 6.0
 const FRAME_WIDTH: int = 3
 const ARROW_SIZE := Vector2(28.0, 22.0)
@@ -102,7 +104,7 @@ func _process(delta: float) -> void:
 	_update_highlight()
 
 
-# Arriba entre el dinero y el reloj, pegada al reloj; si no hay lugar, bajo el reloj.
+# Arriba entre el dinero (o los paneles de la izquierda) y el reloj, pegada al reloj; si no hay lugar, bajo el reloj.
 func _place() -> void:
 	if not _panel.visible:
 		return
@@ -113,7 +115,8 @@ func _place() -> void:
 	var top: float = MARGIN_TOP
 	var width: float = minf(PANEL_WIDTH, right - left)
 	if corners.size() == 2:
-		var gap_width: float = corners[1].position.x - corners[0].end.x - GAP * 2.0
+		var gap_left: float = maxf(corners[0].end.x, LEFT_PANELS_END)
+		var gap_width: float = corners[1].position.x - gap_left - GAP * 2.0
 		if gap_width >= MIN_TOP_WIDTH:
 			width = minf(PANEL_WIDTH, gap_width)
 			right = corners[1].position.x - GAP

@@ -66,7 +66,7 @@ func _ready() -> void:
 	root.add_child(_menu_bar)
 	_open_button = Button.new()
 	_open_button.text = "Construir"
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "build", true)
 	_open_button.pressed.connect(func() -> void: set_build_mode(true))
 	_menu_bar.add_child(_open_button)
 	_menu_bar.anchor_left = 0.0

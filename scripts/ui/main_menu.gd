@@ -3,13 +3,13 @@
 extends Control
 
 const GAME_SCENE_PATH: String = "res://scenes/main.tscn"
-const SLOT_BUTTON_SIZE := Vector2(460, 44)
+const SLOT_BUTTON_SIZE := Vector2(448, 44)
 const VIEW_BUTTONS: String = "buttons"
 const VIEW_LOAD: String = "load"
 const VIEW_OPTIONS: String = "options"
 const VIEW_CONFIRM: String = "confirm"
 ## Ancho de los textos que se parten en líneas.
-const TEXT_WIDTH: float = 460.0
+const TEXT_WIDTH: float = 448.0
 
 ## Lo que hace «Salir»; las pruebas lo cambian para no cerrar el juego.
 var quit_action: Callable = func() -> void: get_tree().quit()
@@ -30,6 +30,7 @@ var _cancel_button: Button
 @onready var _settings_button: Button = %SettingsButton
 @onready var _quit_button: Button = %QuitButton
 @onready var _load_list: VBoxContainer = %LoadList
+@onready var _continue_info: Label = %ContinueInfo
 
 
 func _ready() -> void:
@@ -38,6 +39,7 @@ func _ready() -> void:
 	var latest: String = SaveManager.get_latest_slot()
 	_continue_button.visible = not latest.is_empty()
 	_continue_button.tooltip_text = SaveManager.describe_slot(latest) if not latest.is_empty() else ""
+	_continue_info.text = _continue_button.tooltip_text
 	_continue_button.pressed.connect(_on_continue_pressed)
 	_new_game_button.pressed.connect(_on_new_game_pressed)
 	_load_button.pressed.connect(_show.bind(VIEW_LOAD))
@@ -132,11 +134,11 @@ func _build_confirm() -> void:
 	_load_list.get_parent().add_child(_confirm_box)
 	_confirm_label = Label.new()
 	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_confirm_label.custom_minimum_size = Vector2(TEXT_WIDTH, 0)
 	_confirm_box.add_child(_confirm_label)
 	_confirm_button = Button.new()
 	_confirm_button.text = "Empezar una nueva"
+	_confirm_button.theme_type_variation = &"PrimaryButton"
 	_confirm_button.custom_minimum_size = SLOT_BUTTON_SIZE
 	_confirm_button.pressed.connect(_start_new_game)
 	_confirm_box.add_child(_confirm_button)
@@ -160,6 +162,7 @@ func _show(view: String) -> void:
 	_view = view
 	var buttons: bool = view == VIEW_BUTTONS
 	_continue_button.visible = buttons and not SaveManager.get_latest_slot().is_empty()
+	_continue_info.visible = _continue_button.visible
 	for button: Button in [_new_game_button, _load_button, _settings_button, _quit_button]:
 		button.visible = buttons
 	_load_list.visible = view == VIEW_LOAD

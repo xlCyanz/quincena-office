@@ -1,5 +1,5 @@
 {
-	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). status_icons: icono -> sprite del globo. characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal de limpieza; bucket: el cubo que se dibuja junto a quien trapea; cell y anchor en px del sprite).",
+	"_comentario": "Sprites conectados al juego (lo escribe tools/sprites/export_game.py; no editar a mano). scale = px de sprite por px del mundo. ground: atlas del suelo, una fila por estilo (row) con count variantes de tile px cada una. sprites: archivo dentro de assets/sprites, punto de apoyo (anchor, en px del sprite) y tamaño. furniture: mueble del juego -> base del nombre de su sprite, si tiene rotaciones (_r0.._r3) y si va en partes (_seat y _back antes de la rotación); la sombra es el nombre sin parte más _shadow; sets = el mueble se dibuja entero con lo que lleva encima: computadora -> base del sprite según las pantallas extra (0, 1, 2). seats: base de un sprite de escritorio o de computadora -> a qué altura del modelo queda el teclado, en casillas a lo largo del mueble desde su punta −x (ahí se dibuja quien se sienta). edges: base de un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos (sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). ui_icons: icono de la barra -> sprite. status_icons: icono -> sprite del globo. characters: hojas de personajes (looks: aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal de limpieza; bucket: el cubo que se dibuja junto a quien trapea; cell y anchor en px del sprite).",
 	"characters": {
 		"anchor": [
 			64,
@@ -7286,6 +7286,116 @@
 				256
 			]
 		},
+		"ui_bank": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_bank.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_build": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_build.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_ceo": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_ceo.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_company": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_company.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_frame": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_frame.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_projects": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_projects.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_settings": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_settings.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_staff": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_staff.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_teams": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_teams.png",
+			"size": [
+				24,
+				24
+			]
+		},
+		"ui_walls": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_walls.png",
+			"size": [
+				24,
+				24
+			]
+		},
 		"vending_machine_r0": {
 			"anchor": [
 				64.0,
@@ -10021,6 +10131,18 @@
 		"stressed": "status_stressed",
 		"tired": "status_tired",
 		"upset": "status_upset"
+	},
+	"ui_icons": {
+		"bank": "ui_bank",
+		"build": "ui_build",
+		"ceo": "ui_ceo",
+		"company": "ui_company",
+		"frame": "ui_frame",
+		"projects": "ui_projects",
+		"settings": "ui_settings",
+		"staff": "ui_staff",
+		"teams": "ui_teams",
+		"walls": "ui_walls"
 	},
 	"wall_items": {
 		"air_conditioner": {

@@ -65,6 +65,8 @@ WALL_ITEMS = {
 # Manchas de suciedad (dirt_0 …) y globos de estado (status_<icono>), dibujados en art/ground/dirt y art/icons/status.
 DIRT_STAINS = 3
 STATUS_ICONS = ("no_station", "tired", "upset", "stressed", "idle")
+# Iconos de la barra de la partida (ui_<icono>), dibujados en art/icons/ui.
+UI_ICONS = ("build", "frame", "walls", "staff", "projects", "teams", "bank", "company", "ceo", "settings")
 # Escritorio dibujado entero con su computadora -> sprite según las pantallas extra (0, 1, 2).
 DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
                            "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}
@@ -250,6 +252,8 @@ def main():
         copy("dirt_%d" % index, "overlays")
     for icon in STATUS_ICONS:
         copy("status_" + icon, "overlays")
+    for icon in UI_ICONS:
+        copy("ui_" + icon, "ui")
 
     # ---- personajes
     # Cada hoja lleva además «sentado en su silla» por silla: silla entera + persona con su paleta +
@@ -359,7 +363,7 @@ def main():
                        "un sprite de mesa -> hueco en casillas entre su planta y el canto del tablero por lado del "
                        "modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos "
                        "(sprites, cada uno con _x y _y según el eje del borde, y _back_x y _back_y de espaldas) y a cuántos px de sprite del piso "
-                       "empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). status_icons: icono -> sprite del "
+                       "empieza (base_z). dirt: manchas de suciedad (sprites de una casilla). ui_icons: icono de la barra -> sprite. status_icons: icono -> sprite del "
                        "globo. characters: hojas de personajes (looks: "
                        "aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores "
                        "exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y "
@@ -377,6 +381,7 @@ def main():
         "edges": edges,
         "dirt": ["dirt_%d" % index for index in range(DIRT_STAINS)],
         "status_icons": dict((icon, "status_" + icon) for icon in STATUS_ICONS),
+        "ui_icons": dict((icon, "ui_" + icon) for icon in UI_ICONS),
         "sprites": sprites,
         "wall_items": wall_items,
     }

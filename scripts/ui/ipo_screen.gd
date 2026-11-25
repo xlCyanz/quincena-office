@@ -12,7 +12,7 @@ const LAYER: int = 20
 const PANEL_WIDTH: float = 520.0
 const TITLE_FONT_SIZE: int = 32
 const DIM_COLOR := Color(0.0, 0.0, 0.0, 0.7)
-const TITLE_COLOR := Color(0.55, 0.85, 0.5)
+const TITLE_COLOR := UiTheme.POSITIVE
 
 var _cover: ColorRect
 var _title: Label
@@ -41,6 +41,7 @@ func _ready() -> void:
 	panel.add_child(rows)
 	_title = Label.new()
 	_title.text = "¡Salida a bolsa!"
+	_title.theme_type_variation = &"HeaderLabel"
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.add_theme_color_override("font_color", TITLE_COLOR)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

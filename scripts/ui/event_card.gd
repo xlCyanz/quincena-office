@@ -7,7 +7,7 @@ const PANEL_WIDTH: float = 360.0
 const MARGIN: float = 12.0
 const MARGIN_TOP: float = 132.0
 const TITLE_FONT_SIZE: int = 18
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const MUTED_COLOR := UiTheme.MUTED
 const URGENT_SECONDS: float = 30.0
 const URGENT_COLOR := Color(1.0, 0.55, 0.4)
 
@@ -57,6 +57,7 @@ func _ready() -> void:
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_body)
 	_title = Label.new()
+	_title.theme_type_variation = &"HeaderLabel"
 	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_body.add_child(_title)

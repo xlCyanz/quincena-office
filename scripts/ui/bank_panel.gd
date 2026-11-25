@@ -13,8 +13,8 @@ const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
 const BALANCE_FONT_SIZE: int = 22
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
-const INCOME_COLOR := Color(0.55, 0.85, 0.5)
+const MUTED_COLOR := UiTheme.MUTED
+const INCOME_COLOR := UiTheme.POSITIVE
 const DATE_WIDTH: float = 120.0
 const AMOUNT_WIDTH: float = 110.0
 
@@ -67,7 +67,7 @@ var _last_current: int = 1
 func _ready() -> void:
 	_open_button = Button.new()
 	_open_button.text = "Banco"
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "bank")
 	_open_button.focus_mode = Control.FOCUS_NONE
 	_open_button.pressed.connect(func() -> void: set_open(not is_open()))
 
@@ -93,6 +93,7 @@ func _ready() -> void:
 	rows.add_child(header)
 	var title := Label.new()
 	title.text = "Banco"
+	title.theme_type_variation = &"HeaderLabel"
 	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
@@ -117,6 +118,7 @@ func _ready() -> void:
 
 	# Valor de la empresa.
 	_company_label = Label.new()
+	_company_label.theme_type_variation = &"SectionLabel"
 	_company_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	content.add_child(_company_label)
 	_company_rows = VBoxContainer.new()
@@ -125,6 +127,7 @@ func _ready() -> void:
 	# Calificación de crédito.
 	_credit_label = Label.new()
 	_credit_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_credit_label.theme_type_variation = &"SectionLabel"
 	_credit_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	content.add_child(_credit_label)
 	_credit_rows = VBoxContainer.new()
@@ -138,6 +141,7 @@ func _ready() -> void:
 	# Préstamos.
 	var loans_title := Label.new()
 	loans_title.text = "Préstamos"
+	loans_title.theme_type_variation = &"SectionLabel"
 	loans_title.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	content.add_child(loans_title)
 	_overdue_label = Label.new()
@@ -178,6 +182,7 @@ func _ready() -> void:
 	_previous_button.pressed.connect(func() -> void: _show_month(_shown_month - 1))
 	month_header.add_child(_previous_button)
 	_month_label = Label.new()
+	_month_label.theme_type_variation = &"SectionLabel"
 	_month_label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	_month_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_month_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -192,6 +197,7 @@ func _ready() -> void:
 
 	var movements_title := Label.new()
 	movements_title.text = "Movimientos"
+	movements_title.theme_type_variation = &"SectionLabel"
 	movements_title.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	content.add_child(movements_title)
 	_empty_label = Label.new()

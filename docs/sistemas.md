@@ -425,6 +425,18 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 
 ## Interfaz, menús y guardado
 
+- Tema «Oficina de noche» (`UiTheme`, `scripts/ui/ui_theme.gd`): paleta (`BG`, `PANEL`, `CARD`, `BUTTON`, `OUTLINE`, `TEXT`, `MUTED`,
+  `ACCENT`, `POSITIVE`, `NEGATIVE`, `INFO`…), Nunito para el texto y Pixelify Sans para botones, pestañas, cifras y títulos
+  (`assets/fonts/`, licencia OFL al lado; sin ligaduras, Pixelify no trae «fi»). `Settings._ready` llama `UiTheme.apply()`, que mezcla el
+  tema en el de Godot (`ThemeDB.get_default_theme()`) para que lo tomen también los nodos bajo un `CanvasLayer`. Cajas con bisel desde una
+  imagen chica en nueve partes (borde de 2 px, línea clara arriba, franja oscura abajo y sombra corta en los paneles). Variaciones:
+  `TitleLabel`, `HeaderLabel` (títulos de panel), `SectionLabel`, `MoneyLabel`, `CaptionLabel`, `MutedLabel`, `StrongLabel`;
+  `PrimaryButton`, `DangerButton`, `QuietButton`, `BarButton`, `PrimaryBarButton`, `SpeedButton`; `DialogPanel`, `CardPanel`,
+  `AlertPanel`, `HeaderPanel`, `SidebarPanel`. Un `PanelContainer` sin variación (`Hud.make_panel()`) es la tarjeta que flota sobre la
+  oficina. Los colores sueltos de los paneles (`MUTED_COLOR`, `NEGATIVE_COLOR`…) apuntan a la paleta.
+- Menú principal: barra lateral (`SidebarPanel`) sobre `assets/ui/bg_menu.png` con título, Continuar en acento y la partida que carga
+  (`%ContinueInfo`); Cargar, Ajustes y la pregunta de partida nueva reemplazan a los botones en la misma barra. La pausa lleva cabecera
+  con la fecha detenida, Seguir en acento y Salir al menú en rojo.
 - Escena inicial: `scenes/main_menu.tscn`; la partida es `scenes/main.tscn`.
   La interfaz superpuesta es `Hud` (dinero y reloj) más `BuildPanel` (botón Construir y herramientas).
   Construir va en secciones (`BuildPanel.SECTION_*`: Estructura, Muebles, Habitaciones y Terreno, con «?» y Salir en la misma fila): solo se ve
@@ -434,7 +446,9 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   con `tool:`). Prueba `test_build_sections`.
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`, los últimos 200, y en
   `Economy.month_totals`, totales por concepto del mes actual y el anterior). Menú Banco (`BankPanel`): saldo, resumen del
-  mes con «<»/«>» y movimientos, los nuevos arriba; no pausa. Los botones de la barra miden `Hud.MENU_BUTTON_SIZE`.
+  mes con «<»/«>» y movimientos, los nuevos arriba; no pausa. Los botones de la barra se arman con `Hud.style_bar_button(botón, icono)`:
+  miden al menos `Hud.MENU_BUTTON_SIZE`, llevan arriba el icono `ui_<icono>` (`SpriteLibrary.get_ui_icon`, dibujado aparte con el color del
+  texto según el estado) y Construir va en acento.
   `SaveManager.new_game()` prepara una partida nueva; la oficina inicial está en `data/starting_office.json` y, con
   `SaveManager.start_with_demo` (false por defecto: el CEO solo; true para probar), `StartingCompany.apply()` la convierte en la empresa de `data/starting_company.json`:
   Mediana empresa, local de 22×18, 40 empleados en 6 equipos con líder, 2 gerentes, 2 ejecutivos, apoyo y 7 contratos en curso

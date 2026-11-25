@@ -294,18 +294,17 @@ func _add_frame_button(menu_bar: Container) -> void:
 	var button := Button.new()
 	button.name = "FrameOfficeButton"
 	button.text = "Ver oficina"
-	# Más angosto: así la barra entra en una fila a 1280.
-	button.custom_minimum_size = Vector2(Hud.MENU_BUTTON_SIZE.x - Hud.MENU_BUTTON_SIZE.y, Hud.MENU_BUTTON_SIZE.y)
+	Hud.style_bar_button(button, "frame")
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(frame_office)
 	menu_bar.add_child(button)
-	# Paredes arriba / abajo: cuadrado, con descripción emergente.
+	# Paredes arriba / abajo, con descripción emergente.
 	var walls := Button.new()
 	walls.name = "WallsButton"
-	walls.text = "↕"
+	walls.text = "Paredes"
 	walls.tooltip_text = "Paredes arriba / abajo (P)"
 	walls.toggle_mode = true
-	walls.custom_minimum_size = Vector2(Hud.MENU_BUTTON_SIZE.y, Hud.MENU_BUTTON_SIZE.y)
+	Hud.style_bar_button(walls, "walls")
 	walls.focus_mode = Control.FOCUS_NONE
 	walls.toggled.connect(func(pressed: bool) -> void: set_walls_up(pressed))
 	menu_bar.add_child(walls)

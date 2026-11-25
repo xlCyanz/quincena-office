@@ -12,7 +12,7 @@ const MARGIN_TOP: float = 100.0
 const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
-const MUTED_COLOR := Color(1.0, 1.0, 1.0, 0.7)
+const MUTED_COLOR := UiTheme.MUTED
 const STARS: int = 5
 const PHASE_LABEL_WIDTH: float = 120.0
 const PHASE_VALUE_WIDTH: float = 150.0
@@ -57,7 +57,7 @@ var _confirming_retire: int = 0
 
 func _ready() -> void:
 	_open_button = Button.new()
-	_open_button.custom_minimum_size = Hud.MENU_BUTTON_SIZE
+	Hud.style_bar_button(_open_button, "projects")
 	_open_button.focus_mode = Control.FOCUS_NONE
 	_open_button.pressed.connect(func() -> void: set_open(not is_open()))
 
@@ -83,6 +83,7 @@ func _ready() -> void:
 	rows.add_child(header)
 	var title := Label.new()
 	title.text = "Proyectos"
+	title.theme_type_variation = &"HeaderLabel"
 	title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	header.add_child(title)
 	_reputation_label = Label.new()
@@ -693,6 +694,7 @@ func _add_offer(offer: Dictionary) -> void:
 func _add_section(text: String) -> void:
 	var label := Label.new()
 	label.text = text
+	label.theme_type_variation = &"SectionLabel"
 	label.add_theme_font_size_override("font_size", SECTION_FONT_SIZE)
 	_list.add_child(label)
 

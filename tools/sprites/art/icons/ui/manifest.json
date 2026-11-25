@@ -1,0 +1,115 @@
+{
+ "_comentario": "Apoyo (px del sprite) de cada PNG de esta carpeta; lo escribe build.py y export_game.py lo pasa al juego.",
+ "sprites": {
+  "ui_build.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_frame.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_walls.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_staff.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_projects.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_teams.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_bank.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_company.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_ceo.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  },
+  "ui_settings.png": {
+   "kind": "icon",
+   "canvas": [
+    24,
+    24
+   ],
+   "anchor": [
+    12.0,
+    12.0
+   ]
+  }
+ }
+}
