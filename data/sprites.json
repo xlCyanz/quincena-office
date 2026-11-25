@@ -3012,6 +3012,94 @@
 				160
 			]
 		},
+		"glass_door_double_a_low_x": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/glass_door_double_a_low_x.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"glass_door_double_a_low_y": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/glass_door_double_a_low_y.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"glass_door_double_a_tall_x": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_a_tall_x.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"glass_door_double_a_tall_y": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_a_tall_y.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"glass_door_double_b_low_x": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/glass_door_double_b_low_x.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"glass_door_double_b_low_y": {
+			"anchor": [
+				36.0,
+				46.0
+			],
+			"file": "walls/glass_door_double_b_low_y.png",
+			"size": [
+				72,
+				64
+			]
+		},
+		"glass_door_double_b_tall_x": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x.png",
+			"size": [
+				72,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y.png",
+			"size": [
+				72,
+				160
+			]
+		},
 		"glass_door_low_x": {
 			"anchor": [
 				36.0,

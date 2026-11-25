@@ -4,6 +4,8 @@ extends Node
 
 ## Oficina con la que empieza toda partida nueva.
 const STARTING_OFFICE_PATH: String = "res://data/starting_office.json"
+## Ningún borde (p. ej. sin puerta de vidrio doble).
+const NO_EDGE := Vector3i(-1000000, -1000000, 0)
 ## Mueble quitado (el escritorio amplio): las partidas viejas lo cambian por uno sencillo.
 const REMOVED_WIDE_DESK: String = "wide_desk"
 const REMOVED_MID_COMPUTER: String = "mid_computer"
@@ -27,6 +29,8 @@ var lot_rect: Rect2i:
 
 ## Casillas del solar: el mapa fijo con el local en el centro.
 var site_rect := Rect2i()
+## Solo para pruebas: false deja la entrada como venga, sin la puerta de vidrio doble. No se guarda.
+var double_door_enabled: bool = true
 
 # Consultas pedidas muchas veces por hora (habitaciones que funcionan, mesas, Sala de descanso,
 # inodoros). Solo vale con GameClock.in_hour_tick; se borra al cambiar oficina u hora y al empezar o cargar.
@@ -103,6 +107,7 @@ func new_game() -> void:
 	for item: Dictionary in data.get("furniture", []):
 		furniture.append(_furniture_from_data(item))
 	entrance = _to_cell(data.get("entrance", [0, 0]))
+	place_double_door(edges, lot, get_entrance_edge())
 
 
 ## Solar de tamaño GameConstants.MAX_SITE_SIZE con el local en el centro.
@@ -232,12 +237,59 @@ func blocks_passage(edge: Vector3i) -> bool:
 	return kind == ConstructionCatalog.WALL or kind == ConstructionCatalog.WINDOW
 
 
-## Puntos de ambiente de la puerta de vidrio: cuentan para la habitación con la casilla de entrada.
+## Puntos de ambiente de la puerta de vidrio (sencilla o doble): cuentan para la habitación con la casilla de entrada.
 func get_room_door_ambiance(room: Dictionary) -> int:
-	if get_edge(get_entrance_edge()) != ConstructionCatalog.GLASS_DOOR:
+	var kind: String = get_edge(get_entrance_edge())
+	if not ConstructionCatalog.is_glass_door(kind):
 		return 0
 	var cells: Array = room["cells"]
-	return ConstructionCatalog.get_glass_door_ambiance() if cells.has(entrance) else 0
+	return ConstructionCatalog.get_glass_door_ambiance(kind) if cells.has(entrance) else 0
+
+
+## Tramo que acompaña a la puerta de vidrio doble de la entrada (el de al lado con la misma pieza), o
+## NO_EDGE si la entrada no la tiene. on_edges vacío = los bordes de la oficina.
+func get_double_door_partner(on_edges: Dictionary = {}) -> Vector3i:
+	if on_edges.is_empty():
+		on_edges = edges
+	var door: Vector3i = get_entrance_edge()
+	if String(on_edges.get(door, "")) != ConstructionCatalog.GLASS_DOOR_DOUBLE:
+		return NO_EDGE
+	for side: Vector3i in GridEdge.get_line_neighbors(door):
+		if String(on_edges.get(side, "")) == ConstructionCatalog.GLASS_DOOR_DOUBLE:
+			return side
+	return NO_EDGE
+
+
+## Pone en la entrada (door) la puerta de vidrio doble, que va siempre ahí, con un tramo del contorno de al
+## lado: el que ya la tenía; si no, una pared sin nada colgado (primero la de arriba); si no, cualquier pared
+## o ventana. Otro tramo suelto vuelve a pared. Sin tramo posible queda la de vidrio sencilla. Devuelve el tramo.
+func place_double_door(on_edges: Dictionary[Vector3i, String], on_lot: Lot, door: Vector3i) -> Vector3i:
+	if not double_door_enabled:
+		return NO_EDGE
+	var kind: String = ConstructionCatalog.GLASS_DOOR_DOUBLE
+	var sides: Array[Vector3i] = GridEdge.get_line_neighbors(door)
+	sides.reverse()
+	var partner: Vector3i = NO_EDGE
+	for pass_index: int in range(3):
+		for side: Vector3i in sides:
+			if partner != NO_EDGE or not GridEdge.is_exterior(side, on_lot):
+				continue
+			var current: String = String(on_edges.get(side, ""))
+			var fits: bool = current == kind
+			if pass_index == 1:
+				fits = current == ConstructionCatalog.WALL and wall_items_on(side).is_empty()
+			elif pass_index == 2:
+				fits = current == ConstructionCatalog.WALL or current == ConstructionCatalog.WINDOW
+			if fits:
+				partner = side
+	for edge: Vector3i in on_edges.keys():
+		if on_edges[edge] == kind and edge != door and edge != partner:
+			on_edges[edge] = ConstructionCatalog.WALL
+	on_edges[door] = kind if partner != NO_EDGE else ConstructionCatalog.GLASS_DOOR
+	if partner != NO_EDGE:
+		on_edges[partner] = kind
+	_query_cache.clear()
+	return partner
 
 
 ## Borde de la puerta de entrada (entre la casilla de entrada y la de afuera).
@@ -613,6 +665,8 @@ func import_state(state: Dictionary) -> void:
 		furniture.append(_furniture_from_data(item))
 	_replace_removed_furniture()
 	entrance = _to_cell(state.get("entrance", [0, 0]))
+	# Partidas viejas: la entrada tenía puerta normal o de vidrio sencilla.
+	place_double_door(edges, lot, get_entrance_edge())
 	_hang_wall_items()
 
 

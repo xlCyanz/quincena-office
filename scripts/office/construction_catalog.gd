@@ -15,6 +15,8 @@ const DOOR: String = "door"
 const WINDOW: String = "window"
 ## Puerta doble de vidrio: solo en lugar de la puerta de entrada.
 const GLASS_DOOR: String = "glass_door"
+## Puerta de vidrio doble ancha: ocupa la puerta de entrada y el tramo de pared de al lado.
+const GLASS_DOOR_DOUBLE: String = "glass_door_double"
 
 static var _data: Dictionary = {}
 
@@ -42,12 +44,17 @@ static func get_edge_piece(kind: String) -> Dictionary:
 
 ## Indica si una pieza es puerta (deja pasar y abre habitaciones).
 static func is_door(kind: String) -> bool:
-	return kind == DOOR or kind == GLASS_DOOR
+	return kind == DOOR or kind == GLASS_DOOR or kind == GLASS_DOOR_DOUBLE
+
+
+## Indica si una pieza es de vidrio (va solo en la entrada y suma ambiente).
+static func is_glass_door(kind: String) -> bool:
+	return kind == GLASS_DOOR or kind == GLASS_DOOR_DOUBLE
 
 
 ## Indica si kind es una pieza de borde.
 static func is_edge_piece(kind: String) -> bool:
-	return kind == WALL or kind == DOOR or kind == WINDOW or kind == GLASS_DOOR
+	return kind == WALL or kind == DOOR or kind == WINDOW or kind == GLASS_DOOR or kind == GLASS_DOOR_DOUBLE
 
 
 ## Precio de un piso por casilla o de una pieza de borde.
@@ -74,9 +81,9 @@ static func get_window_ambiance() -> int:
 	return int(get_edge_piece(WINDOW).get("ambiance", 0))
 
 
-## Puntos de ambiente de la puerta de vidrio para su habitación.
-static func get_glass_door_ambiance() -> int:
-	return int(get_edge_piece(GLASS_DOOR).get("ambiance", 0))
+## Puntos de ambiente de la puerta de vidrio (o de la doble con kind) para su habitación.
+static func get_glass_door_ambiance(kind: String = GLASS_DOOR) -> int:
+	return int(get_edge_piece(kind).get("ambiance", 0))
 
 
 ## Alto en píxeles de las piezas bajas (todas menos las de atrás).

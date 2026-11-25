@@ -16,8 +16,6 @@ signal confirm_changed(text: String)
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
 const TOOL_WINDOW: String = "window"
-## Puerta doble de vidrio de la entrada.
-const TOOL_GLASS_DOOR: String = "glass_door"
 const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
@@ -432,8 +430,6 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.DOOR})
 		TOOL_WINDOW:
 			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.WINDOW})
-		TOOL_GLASS_DOOR:
-			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.GLASS_DOOR})
 		TOOL_SELL:
 			var edge: Vector3i = GridEdge.nearest(end)
 			if not OfficeState.get_edge(edge).is_empty() and GridEdge.distance_to(edge, end) <= SELL_EDGE_DISTANCE:

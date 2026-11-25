@@ -91,9 +91,23 @@ static func get_road_axis(exit_direction: Vector2i) -> int:
 	return GridEdge.AXIS_X if exit_direction.x == 0 else GridEdge.AXIS_Y
 
 
+## Casillas de fuera donde arranca el camino: la de la entrada y, con puerta de vidrio doble, también la
+## de su otro tramo, para que el camino quede centrado en la puerta.
+static func get_path_starts(lot: Lot, entrance_outside: Vector2i, edges: Dictionary = {}) -> Array[Vector2i]:
+	var starts: Array[Vector2i] = [entrance_outside]
+	var door: Vector3i = GridEdge.between(entrance_outside - get_exit_direction(lot, entrance_outside), entrance_outside)
+	if String(edges.get(door, "")) != ConstructionCatalog.GLASS_DOOR_DOUBLE:
+		return starts
+	for side: Vector3i in GridEdge.get_line_neighbors(door):
+		if String(edges.get(side, "")) == ConstructionCatalog.GLASS_DOOR_DOUBLE:
+			starts.append(entrance_outside + Vector2i(side.x - door.x, side.y - door.y))
+			break
+	return starts
+
+
 ## Plano: {"tiles": casilla → estilo (solar y surround_width alrededor, sin el local),
-## "trees": casillas con árbol, "road_axis"}.
-static func plan(site: Rect2i, lot: Lot, entrance_outside: Vector2i) -> Dictionary:
+## "trees": casillas con árbol, "road_axis"}. Con edges, el camino sigue el ancho de la puerta (get_path_starts).
+static func plan(site: Rect2i, lot: Lot, entrance_outside: Vector2i, edges: Dictionary = {}) -> Dictionary:
 	var data: Dictionary = get_data()
 	var surround: int = int(data.get("surround_width", 0))
 	var exit: Vector2i = get_exit_direction(lot, entrance_outside)
@@ -103,10 +117,11 @@ static func plan(site: Rect2i, lot: Lot, entrance_outside: Vector2i) -> Dictiona
 		return {"tiles": tiles, "trees": trees, "road_axis": get_road_axis(exit)}
 	# Camino de la puerta hasta el borde del solar.
 	var path: Dictionary[Vector2i, bool] = {}
-	var step: Vector2i = entrance_outside
-	while site.has_point(step) and not lot.has_point(step):
-		path[step] = true
-		step += exit
+	for start: Vector2i in get_path_starts(lot, entrance_outside, edges):
+		var step: Vector2i = start
+		while site.has_point(step) and not lot.has_point(step):
+			path[step] = true
+			step += exit
 	var near_lot: Dictionary[Vector2i, bool] = _near_cells(lot, int(data.get("trees", {}).get("lot_margin", 0)))
 	var tree_data: Dictionary = data.get("trees", {})
 	var outer: Rect2i = site.grow(surround)

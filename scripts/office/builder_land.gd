@@ -156,12 +156,21 @@ func quote_land_cells(cells: Array[Vector2i]) -> Dictionary:
 			result["message"] = "Hay que dejar una casilla libre frente a la entrada para salir a la calle."
 			return result
 	var new_edges: Dictionary[Vector3i, String] = _edges_with_land(new_lot, new_cells, street if moves_entrance else NO_CELL)
+	var partner: Vector3i = OfficeState.get_double_door_partner()
 	if moves_entrance:
 		var old_door: Vector3i = GridEdge.between(OfficeState.entrance, street)
 		var door_kind: String = String(OfficeState.edges.get(old_door, ConstructionCatalog.DOOR))
 		new_edges.erase(old_door)
-		new_edges[GridEdge.between(entrance, entrance + outward)] = door_kind
+		var new_door: Vector3i = GridEdge.between(entrance, entrance + outward)
+		new_edges[new_door] = door_kind
+		# La puerta de vidrio doble se lleva su otro tramo al mismo lado del borde nuevo.
+		if partner != OfficeState.NO_EDGE:
+			var moved: Vector3i = partner + (new_door - old_door)
+			if new_edges.get(moved, "") == ConstructionCatalog.WALL and GridEdge.is_exterior(moved, new_lot):
+				new_edges[moved] = ConstructionCatalog.GLASS_DOOR_DOUBLE
 		result["entrance"] = entrance
+	OfficeState.place_double_door(new_edges, new_lot, GridEdge.between(entrance, entrance + outward) if moves_entrance
+		else OfficeState.get_entrance_edge())
 	var spaces: Array[Dictionary] = RoomRules.find_spaces(new_lot, new_edges)
 	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, entrance, OfficeState.furniture)
 	var lost: Array[String] = _lost_rooms(rooms)

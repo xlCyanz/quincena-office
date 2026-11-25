@@ -394,7 +394,8 @@ func _check_map() -> void:
 				if maxi(absi(cell.x - tree.cell.x), absi(cell.y - tree.cell.y)) < margin:
 					trees_ok = false
 	_expect(trees_ok and inside_site > 0, "%d árboles (%d en el solar) bien puestos" % [trees.size(), inside_site])
-	_expect(MapDecor.plan(site, OfficeState.lot, OfficeState.get_outside_of_entrance()) == plan, "el plano no cambia solo")
+	_expect(MapDecor.plan(site, OfficeState.lot, OfficeState.get_outside_of_entrance(), OfficeState.edges) == plan,
+		"el plano no cambia solo")
 	var border: PackedVector2Array = grid.get_site_border().get_corners()
 	var area: Transform2D = grid.get_site_world_area()
 	var border_ok: bool = border.size() == 4

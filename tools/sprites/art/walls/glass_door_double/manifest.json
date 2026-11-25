@@ -15,18 +15,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_tall_x_open_1.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -38,13 +38,13 @@
   "glass_door_double_a_tall_x_open_2.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -56,13 +56,13 @@
   "glass_door_double_a_tall_x_open_3.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -74,13 +74,13 @@
   "glass_door_double_a_tall_x_open_4.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -92,13 +92,13 @@
   "glass_door_double_a_tall_x_open_5.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -110,13 +110,13 @@
   "glass_door_double_a_tall_x_open_6.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -139,7 +139,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_tall_x_open_1.png": {
    "anchor": [
@@ -293,18 +293,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_tall_y_open_1.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -316,13 +316,13 @@
   "glass_door_double_a_tall_y_open_2.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -334,13 +334,13 @@
   "glass_door_double_a_tall_y_open_3.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -352,13 +352,13 @@
   "glass_door_double_a_tall_y_open_4.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -370,13 +370,13 @@
   "glass_door_double_a_tall_y_open_5.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -388,13 +388,13 @@
   "glass_door_double_a_tall_y_open_6.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -417,7 +417,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_tall_y_open_1.png": {
    "anchor": [
@@ -571,18 +571,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_beige_tall_x_open_1.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -594,13 +594,13 @@
   "glass_door_double_a_beige_tall_x_open_2.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -612,13 +612,13 @@
   "glass_door_double_a_beige_tall_x_open_3.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -630,13 +630,13 @@
   "glass_door_double_a_beige_tall_x_open_4.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -648,13 +648,13 @@
   "glass_door_double_a_beige_tall_x_open_5.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -666,13 +666,13 @@
   "glass_door_double_a_beige_tall_x_open_6.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -695,7 +695,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_beige_tall_x_open_1.png": {
    "anchor": [
@@ -849,18 +849,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_beige_tall_y_open_1.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -872,13 +872,13 @@
   "glass_door_double_a_beige_tall_y_open_2.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -890,13 +890,13 @@
   "glass_door_double_a_beige_tall_y_open_3.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -908,13 +908,13 @@
   "glass_door_double_a_beige_tall_y_open_4.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -926,13 +926,13 @@
   "glass_door_double_a_beige_tall_y_open_5.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -944,13 +944,13 @@
   "glass_door_double_a_beige_tall_y_open_6.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_beige_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -973,7 +973,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_beige_tall_y_open_1.png": {
    "anchor": [
@@ -1127,18 +1127,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_white_tall_x_open_1.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -1150,13 +1150,13 @@
   "glass_door_double_a_white_tall_x_open_2.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -1168,13 +1168,13 @@
   "glass_door_double_a_white_tall_x_open_3.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -1186,13 +1186,13 @@
   "glass_door_double_a_white_tall_x_open_4.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -1204,13 +1204,13 @@
   "glass_door_double_a_white_tall_x_open_5.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -1222,13 +1222,13 @@
   "glass_door_double_a_white_tall_x_open_6.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -1251,7 +1251,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_white_tall_x_open_1.png": {
    "anchor": [
@@ -1405,18 +1405,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_white_tall_y_open_1.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -1428,13 +1428,13 @@
   "glass_door_double_a_white_tall_y_open_2.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -1446,13 +1446,13 @@
   "glass_door_double_a_white_tall_y_open_3.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -1464,13 +1464,13 @@
   "glass_door_double_a_white_tall_y_open_4.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -1482,13 +1482,13 @@
   "glass_door_double_a_white_tall_y_open_5.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -1500,13 +1500,13 @@
   "glass_door_double_a_white_tall_y_open_6.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_white_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -1529,7 +1529,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_white_tall_y_open_1.png": {
    "anchor": [
@@ -1683,18 +1683,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_sage_tall_x_open_1.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -1706,13 +1706,13 @@
   "glass_door_double_a_sage_tall_x_open_2.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -1724,13 +1724,13 @@
   "glass_door_double_a_sage_tall_x_open_3.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -1742,13 +1742,13 @@
   "glass_door_double_a_sage_tall_x_open_4.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -1760,13 +1760,13 @@
   "glass_door_double_a_sage_tall_x_open_5.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -1778,13 +1778,13 @@
   "glass_door_double_a_sage_tall_x_open_6.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -1807,7 +1807,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_sage_tall_x_open_1.png": {
    "anchor": [
@@ -1961,18 +1961,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_sage_tall_y_open_1.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -1984,13 +1984,13 @@
   "glass_door_double_a_sage_tall_y_open_2.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -2002,13 +2002,13 @@
   "glass_door_double_a_sage_tall_y_open_3.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -2020,13 +2020,13 @@
   "glass_door_double_a_sage_tall_y_open_4.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -2038,13 +2038,13 @@
   "glass_door_double_a_sage_tall_y_open_5.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -2056,13 +2056,13 @@
   "glass_door_double_a_sage_tall_y_open_6.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_sage_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -2085,7 +2085,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_sage_tall_y_open_1.png": {
    "anchor": [
@@ -2239,18 +2239,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_peach_tall_x_open_1.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -2262,13 +2262,13 @@
   "glass_door_double_a_peach_tall_x_open_2.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -2280,13 +2280,13 @@
   "glass_door_double_a_peach_tall_x_open_3.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -2298,13 +2298,13 @@
   "glass_door_double_a_peach_tall_x_open_4.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -2316,13 +2316,13 @@
   "glass_door_double_a_peach_tall_x_open_5.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -2334,13 +2334,13 @@
   "glass_door_double_a_peach_tall_x_open_6.png": {
    "anchor": [
     50.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_x.png",
    "base_offset": [
     14,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -2363,7 +2363,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_peach_tall_x_open_1.png": {
    "anchor": [
@@ -2517,18 +2517,18 @@
    "joins": false,
    "pair": "a",
    "pair_with": "b",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_a_peach_tall_y_open_1.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 1,
    "frames": 6,
@@ -2540,13 +2540,13 @@
   "glass_door_double_a_peach_tall_y_open_2.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 2,
    "frames": 6,
@@ -2558,13 +2558,13 @@
   "glass_door_double_a_peach_tall_y_open_3.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 3,
    "frames": 6,
@@ -2576,13 +2576,13 @@
   "glass_door_double_a_peach_tall_y_open_4.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 4,
    "frames": 6,
@@ -2594,13 +2594,13 @@
   "glass_door_double_a_peach_tall_y_open_5.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 5,
    "frames": 6,
@@ -2612,13 +2612,13 @@
   "glass_door_double_a_peach_tall_y_open_6.png": {
    "anchor": [
     36.0,
-    142.0
+    148.0
    ],
    "kind": "wall_frame",
    "base": "glass_door_double_a_peach_tall_y.png",
    "base_offset": [
     0,
-    0
+    6
    ],
    "frame": 6,
    "frames": 6,
@@ -2641,7 +2641,7 @@
    "joins": false,
    "pair": "b",
    "pair_with": "a",
-   "door_height": 50
+   "door_height": 57
   },
   "glass_door_double_b_peach_tall_y_open_1.png": {
    "anchor": [

@@ -31,6 +31,12 @@ static func get_endpoints(edge: Vector3i) -> Array[Vector2]:
 	return [Vector2(edge.x - 0.5, edge.y + 0.5), Vector2(edge.x + 0.5, edge.y + 0.5)]
 
 
+## Los dos bordes en línea con este, uno a cada lado: [el de menor x o y, el de mayor].
+static func get_line_neighbors(edge: Vector3i) -> Array[Vector3i]:
+	var step := Vector3i(0, 1, 0) if edge.z == AXIS_X else Vector3i(1, 0, 0)
+	return [edge - step, edge + step]
+
+
 ## Indica si alguna de sus casillas es del local.
 static func touches_lot(edge: Vector3i, lot: Lot) -> bool:
 	var cells: Array[Vector2i] = get_cells(edge)

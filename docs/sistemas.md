@@ -111,12 +111,22 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   pared; cierra como pared (`blocks_passage`, caminos, espacios) y nada se cuelga en ella. Suma sus puntos al ambiente de la habitación a la que da
   (`OfficeState.count_room_windows`, `Ambiance.get_detail(…, windows)`). Al comprar terreno las del borde que se abre se devuelven a la mitad
   (`window_refund`, «Construcción»). No cuentan como bienes. Herramienta Ventana en la sección Estructura (`BuildController.TOOL_WINDOW`).
-- Puerta doble de vidrio (hito 69, diseño 21.6; `glass_door` en `data/construction.json`, $900, `ambiance` 6): la puerta de la Recepción. Solo
-  reemplaza la puerta de entrada (`OfficeState.get_entrance_edge()`, `Builder._is_entrance_swap`); la puerta del contorno no se cobra
-  (`_paid_kind`) y vender la de vidrio o pasarle otra pieza deja la puerta normal. `ConstructionCatalog.is_door` (pasa, abre espacios, la
-  entrada) reemplaza las comparaciones con `DOOR`. Suma sus puntos al ambiente de la habitación con la casilla de entrada
-  (`OfficeState.get_room_door_ambiance`, cuarto parámetro `extra_points` de `Ambiance`). `EdgePieceView` la dibuja con dos postes, dintel y
-  dos hojas. Herramienta `TOOL_GLASS_DOOR` («Puerta de vidrio»); la empresa de prueba la trae puesta. No cuenta como bien.
+- Puerta de vidrio sencilla (hito 69, diseño 21.6; `glass_door` en `data/construction.json`, `ambiance` 6): ya no se compra; solo queda
+  en la entrada cuando no cabe la doble (sin tramo de contorno al lado) y para partidas viejas. `ConstructionCatalog.is_door` (pasa,
+  abre espacios, la entrada) reemplaza las comparaciones con `DOOR`. Suma sus puntos al ambiente de la habitación con la casilla de
+  entrada (`OfficeState.get_room_door_ambiance`, cuarto parámetro `extra_points` de `Ambiance`). `EdgePieceView` la dibuja con dos
+  postes, dintel y dos hojas. No cuenta como bien.
+- Puerta de vidrio doble (`glass_door_double` en `data/construction.json`, `price` 0, `height` 57, `ambiance` 10): la entrada la lleva
+  siempre. Sin marco, de dos bordes: la puerta de entrada y un tramo del contorno de al lado, en línea (`GridEdge.get_line_neighbors`);
+  los dos guardan la misma pieza y `OfficeState.get_double_door_partner` da el otro. `OfficeState.place_double_door(edges, lot, door)`
+  la pone (partida nueva, `import_state` para partidas viejas, empresa de prueba y terreno): primero el tramo que ya la tenía, si no
+  una pared sin nada colgado (la de arriba primero), si no pared o ventana; sin tramo posible queda la sencilla. Es fija: `Builder`
+  rechaza cualquier cambio en sus dos bordes (`_is_entrance_door`, `ENTRANCE_FIXED_MESSAGE`) y no hay herramienta de puertas de
+  vidrio. Con terreno frente a la entrada se corre entera (el tramo con el mismo desplazamiento). El camino de grava sale de sus
+  dos tramos (`MapDecor.get_path_starts`, `plan(…, edges)`), así queda centrado y sigue a la puerta. `ConstructionCatalog.is_glass_door`
+  cubre las dos para el ambiente. `EdgePieceView` dibuja en cada borde su mitad (`glass_door_double_<a|b>_<tall|low>_<x|y>`,
+  `get_double_half`: a = el de menor x o y). Pruebas anteriores a `glass_door_double` corren con `OfficeState.double_door_enabled`
+  en false.
 
 ## Tiempo, jornada y personajes
 

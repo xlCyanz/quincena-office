@@ -11,7 +11,7 @@ const SUITES: Array[String] = [
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "office_chairs", "interview_view", "appointments", "cleaning_view", "build_sections", "quarters", "ground", "sprites", "starting_company", "dev_tools", "cleaning_shift", "laptop_glass_table", "seating",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "office_chairs", "interview_view", "appointments", "cleaning_view", "build_sections", "quarters", "ground", "sprites", "starting_company", "dev_tools", "cleaning_shift", "laptop_glass_table", "seating", "glass_door_double",
 ]
 ## Desde aquí cuentan los baños; las anteriores corren con Staff.bathrooms_enabled en false.
 const FIRST_BATHROOM_SUITE: String = "bathrooms"
@@ -27,6 +27,8 @@ const FIRST_ARRIVALS_SUITE: String = "arrivals"
 const FIRST_OFFICE_CHAIRS_SUITE: String = "office_chairs"
 ## Desde aquí limpieza entra y limpia a su minuto; antes Staff.cleaning_shift_enabled en false.
 const FIRST_CLEANING_SHIFT_SUITE: String = "cleaning_shift"
+## Desde aquí la entrada lleva la puerta de vidrio doble; antes OfficeState.double_door_enabled en false.
+const FIRST_DOUBLE_DOOR_SUITE: String = "glass_door_double"
 ## Tope por parte; las más largas son las simulaciones de fase.
 const MAX_SUITE_SECONDS: float = 60.0
 ## Autoloads cuyas conexiones de señales se quitan al terminar cada parte.
@@ -88,6 +90,7 @@ func _run_suite(suite: String) -> Vector2i:
 	Staff.arrival_spread_enabled = SUITES.find(suite) >= SUITES.find(FIRST_ARRIVALS_SUITE)
 	RoomRules.counts_enabled = SUITES.find(suite) >= SUITES.find(FIRST_OFFICE_CHAIRS_SUITE)
 	Staff.cleaning_shift_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CLEANING_SHIFT_SUITE)
+	OfficeState.double_door_enabled = SUITES.find(suite) >= SUITES.find(FIRST_DOUBLE_DOOR_SUITE)
 	var script: GDScript = load("%stest_%s.gd" % [SUITES_DIR, suite])
 	var node := Node.new()
 	node.name = suite

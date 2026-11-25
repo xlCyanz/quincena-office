@@ -1,4 +1,5 @@
-# Pared, puerta o ventana sobre su borde: sprite <pieza>_<tall|low>_<x|y> o caja provisional.
+# Pared, puerta o ventana sobre su borde: sprite <pieza>_<tall|low>_<x|y> o caja provisional. La puerta de vidrio
+# doble ocupa dos bordes: cada uno dibuja su mitad, <pieza>_<a|b>_<tall|low>_<x|y> (a = el de menor x o y).
 # Las de atrás van altas; las demás bajas. Se ordena por el centro del borde.
 class_name EdgePieceView
 extends Node2D
@@ -35,7 +36,7 @@ var _sprite: String = ""
 var _posts: Array[Array] = []
 
 
-func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: bool = true) -> void:
+func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: bool = true, double_half: String = "") -> void:
 	edge = piece_edge
 	kind = piece_kind
 	tall = is_tall
@@ -57,13 +58,13 @@ func setup(grid: OfficeGrid, piece_edge: Vector3i, piece_kind: String, is_tall: 
 	_base = PackedVector2Array()
 	for corner: Vector2 in IsoBox.grid_rect_corners(grid, low, high):
 		_base.append(corner - position)
-	_sprite = get_sprite_name(kind, tall, edge.z)
+	_sprite = get_sprite_name(kind, tall, edge.z, double_half)
 	if not SpriteLibrary.has_sprite(_sprite):
 		_sprite = ""
 	_posts.clear()
 	_frame_bases.clear()
 	_leaf_bases.clear()
-	if kind == ConstructionCatalog.GLASS_DOOR:
+	if ConstructionCatalog.is_glass_door(kind):
 		_frame_color = Color(String(piece.get("frame_color", "4f5862")))
 		_along = (grid.grid_to_world(ends[1]) - grid.grid_to_world(ends[0])).normalized()
 		# Postes en las puntas y dos hojas con una rendija en el medio.
@@ -87,9 +88,19 @@ func _segment(grid: OfficeGrid, ends: Array[Vector2], span: Vector2, depth: floa
 	return base
 
 
-## Nombre del sprite de una pieza: <pieza>_<tall|low>_<x|y>.
-static func get_sprite_name(piece_kind: String, is_tall: bool, axis: int) -> String:
-	return "%s_%s_%s" % [piece_kind, "tall" if is_tall else "low", "x" if axis == GridEdge.AXIS_X else "y"]
+## Nombre del sprite de una pieza: <pieza>_<tall|low>_<x|y>, o <pieza>_<half>_… para una mitad.
+static func get_sprite_name(piece_kind: String, is_tall: bool, axis: int, half: String = "") -> String:
+	var piece: String = piece_kind if half.is_empty() else "%s_%s" % [piece_kind, half]
+	return "%s_%s_%s" % [piece, "tall" if is_tall else "low", "x" if axis == GridEdge.AXIS_X else "y"]
+
+
+## Mitad de la puerta de vidrio doble que va en un borde: "a" si su pareja está del lado de mayor x o y,
+## "b" si está del otro; "" para las demás piezas.
+static func get_double_half(edges: Dictionary, piece_edge: Vector3i) -> String:
+	if String(edges.get(piece_edge, "")) != ConstructionCatalog.GLASS_DOOR_DOUBLE:
+		return ""
+	var sides: Array[Vector3i] = GridEdge.get_line_neighbors(piece_edge)
+	return "b" if String(edges.get(sides[0], "")) == ConstructionCatalog.GLASS_DOOR_DOUBLE else "a"
 
 
 ## Código de un tramo para el poste: t pared alta, l baja, h puerta alta, d puerta baja.
@@ -155,7 +166,7 @@ func _draw() -> void:
 		for post: Array in _posts:
 			SpriteLibrary.draw(self, post[0], post[1])
 		return
-	if kind == ConstructionCatalog.GLASS_DOOR:
+	if ConstructionCatalog.is_glass_door(kind):
 		_draw_glass_door()
 		return
 	if kind != ConstructionCatalog.WINDOW:

@@ -79,7 +79,7 @@ func _process(_delta: float) -> void:
 func build(lot: Lot, floors: Dictionary[Vector2i, String], edges: Dictionary[Vector3i, String],
 		furniture: Array[Dictionary], rooms: Array[Dictionary] = []) -> void:
 	_lot = lot
-	_update_map()
+	_update_map(edges)
 	_floor.clear()
 	var tiles: Dictionary = _map_plan.get("tiles", {})
 	for x: int in range(_site_rect.position.x, _site_rect.end.x):
@@ -131,7 +131,7 @@ func _place_edge_pieces(edges: Dictionary[Vector3i, String]) -> void:
 		var view := EdgePieceView.new()
 		view.name = "%s_%d_%d_%d" % [edges[edge], edge.x, edge.y, edge.z]
 		_objects.add_child(view)
-		view.setup(self, edge, edges[edge], is_tall_edge(edge))
+		view.setup(self, edge, edges[edge], is_tall_edge(edge), EdgePieceView.get_double_half(edges, edge))
 		views[edge] = view
 	_place_corner_posts(views)
 
@@ -239,13 +239,13 @@ func get_site_border() -> SiteBorder:
 
 
 # Rehace mapa, lo de fuera, árboles y borde si cambió el local, el solar o la entrada.
-func _update_map() -> void:
-	var signature: String = "%s|%s|%d|%s" % [_site_rect, _entrance_outside, _lot.get_cells().size(),
-		_lot.get_bounds()]
+func _update_map(edges: Dictionary[Vector3i, String]) -> void:
+	var starts: Array[Vector2i] = MapDecor.get_path_starts(_lot, _entrance_outside, edges)
+	var signature: String = "%s|%s|%d|%s" % [_site_rect, starts, _lot.get_cells().size(), _lot.get_bounds()]
 	if signature == _map_signature:
 		return
 	_map_signature = signature
-	_map_plan = MapDecor.plan(_site_rect, _lot, _entrance_outside)
+	_map_plan = MapDecor.plan(_site_rect, _lot, _entrance_outside, edges)
 	_surroundings.clear()
 	var tiles: Dictionary = _map_plan["tiles"]
 	for cell: Vector2i in tiles:

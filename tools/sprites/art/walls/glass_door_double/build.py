@@ -24,7 +24,7 @@ import _walls_kit as k  # noqa: E402
 
 WALL = 8.0  # 16 px de pared a cada lado
 GAP = 0.5  # medio hueco entre las dos hojas (1 px cada una)
-TOP = k.GLASS_TOP  # 100
+TOP = k.DATA["glass_door_double"]["height"] * k.SCALE  # 114, casi al alto de la pared
 BOTTOM = 1  # la hoja queda 1 px sobre el piso
 PULL = (26, 74)
 ANGLES = (15, 30, 45, 60, 75, 90)
@@ -112,7 +112,7 @@ def sprites() -> Iterator[k.Sprite]:
                     name = k.colored(f"glass_door_double_{half}_{'tall' if tall else 'low'}_{edge}", color)
                     entry = k.wall_entry(edge, tall, color, joins=False, pair=half, pair_with="b" if half == "a" else "a")
                     if tall:
-                        entry["door_height"] = k.DATA["glass_door"]["height"]
+                        entry["door_height"] = k.DATA["glass_door_double"]["height"]
                     yield k.Sprite(name, np.ascontiguousarray(image[oy:oy + h, ox:ox + k.CANVAS_W]), entry)
                     if not tall:
                         continue

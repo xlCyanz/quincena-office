@@ -35,6 +35,7 @@ GROUND += [("path", "ground_path"), ("sidewalk", "ground_sidewalk"), ("road", "g
            ("road_line_x", "ground_road_line_x"), ("road_line_y", "ground_road_line_y")]
 
 EDGE_KINDS = ("wall", "door", "window", "glass_door")
+DOUBLE_HALVES = ("a", "b")
 TREES = 8
 
 # Mueble (id de data/furniture.json) -> (sprite, si tiene rotaciones _r0.._r3). Los chicos usan _q.
@@ -183,6 +184,11 @@ def main():
         for height in ("tall", "low"):
             for axis in ("x", "y"):
                 copy("%s_%s_%s" % (kind, height, axis), "walls")
+    # Puerta de vidrio doble: dos bordes, cada uno con su mitad (a = el de menor x o y).
+    for half in DOUBLE_HALVES:
+        for height in ("tall", "low"):
+            for axis in ("x", "y"):
+                copy("glass_door_double_%s_%s_%s" % (half, height, axis), "walls")
     # Postes de toda unión (art/walls/posts/): el juego arma el nombre con sus vecinos.
     for name in sorted(n[:-4] for n in art if n.startswith("wall_post_")):
         copy(name, "walls")
