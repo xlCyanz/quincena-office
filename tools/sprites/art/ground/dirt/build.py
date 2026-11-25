@@ -23,10 +23,8 @@ from PIL import Image
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))  # art: _painter
-sys.path.insert(0, str(HERE.parents[2]))  # tools/sprites: iso
 sys.path.insert(0, str(HERE.parents[1] / "furniture"))  # _chair_kit
 
-import iso  # noqa: E402
 from _chair_kit import moana_render  # noqa: E402
 from _painter import document as painter_document  # noqa: E402
 
@@ -39,10 +37,13 @@ def rgb(hexa):
 
 
 def ground():
+    """Coordenadas del piso (u, v) de cada pixel y el rombo de la casilla (las dos entre 0 y 1, como los pisos)."""
     ys, xs = np.mgrid[0:SIZE, 0:SIZE]
     rx = xs + 0.5 - ORIGIN[0]
     ry = ys + 0.5 - ORIGIN[1]
-    return (ry / 32.0 + rx / 64.0) / 2.0, (ry / 32.0 - rx / 64.0) / 2.0
+    u = (ry / 32.0 + rx / 64.0) / 2.0
+    v = (ry / 32.0 - rx / 64.0) / 2.0
+    return u, v, (u >= 0) & (u < 1) & (v >= 0) & (v < 1)
 
 
 def value_noise(u, v, cells, seed):
@@ -150,8 +151,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=HERE, help="carpeta de salida (por defecto, la del build.py)")
     out: Path = parser.parse_args().out
     out.mkdir(parents=True, exist_ok=True)
-    u, v = ground()
-    inside = iso.rhombus_mask(SIZE, SIZE)
+    u, v, inside = ground()
     problems = []
     entries = {}
     for name, fn in VARIANTS:
