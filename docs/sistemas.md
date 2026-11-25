@@ -511,8 +511,12 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `SpriteLibrary.get_furniture_sprite(id, rotación, parte)`; `FurnitureView._draw_sprites` dibuja sombra y mueble con el apoyo en el centro de
   la casilla de anclaje (los chicos, su versión `_q` en el centro del cuarto), la computadora y el segundo monitor sobre el centro del escritorio
   (con monitor la computadora se corre `COMPUTER_SHIFT`) y las sillas en dos piezas (`_seat` y `_back`, la de atrás lleva la sombra).
-  Personajes: una hoja por aspecto en `assets/sprites/characters/` (8 conjuntos × 3 formas × 3 paletas; fila = dirección, columna = cuadro
-  de `poses`: stand, sit, idle ×4, walk ×8, type ×4; las paletas `_v1`/`_v2` las saca `export_game.py` cambiando rampa por rampa). Las
+  Personajes: 72 aspectos (8 conjuntos × 3 formas × 3 paletas) sobre 24 hojas en `assets/sprites/characters/`, una por conjunto y forma con
+  la paleta base (fila = dirección, columna = cuadro de `poses`: stand, sit, idle ×4, walk ×8, type ×4). Las paletas `_v1`/`_v2` apuntan a
+  la hoja base y las pone el shader `scripts/office/character_palette.gdshader`: cambia cada color exacto de la tabla
+  `characters.palettes` (aspecto → `from`/`to` en hex, rampa por rampa, hasta `PALETTE_MAX` = 48; `export_game.py` exige que todo píxel de
+  la persona sea de una rampa y que no haya blanco puro). `SpriteLibrary.draw_character` le pone al lienzo el material del aspecto
+  (`get_character_material`, uno por aspecto; null con la paleta base) y guarda las texturas por archivo. Las
   formas `_f1`/`_f2` de cada conjunto (`_figure.FORMS`) cambian peinado, barba o bigote, lentes y complexión (`ROBUST`, `SLIM`) y usan las
   paletas del conjunto. El personal de limpieza
   tiene además una hoja `<aspecto>_tools.png` con `mop` ×4 y `mopwalk` ×8 (`characters.tool_poses`/`tool_looks`; `SpriteLibrary.has_tool_look`;
@@ -523,7 +527,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   sentado en un asiento mira al escritorio con computadora que lo tiene delante y teclea (`_refresh_seat`, también con `office_changed`;
   `can_type` false en visitas), si no `sit`, y de pie `idle`; sentado en una silla se dibuja junto con ella en un solo cuadro (poses
   `sit_<silla>` y `type_<silla>` de la hoja, `_drawn_pose`): el generador compara la profundidad de silla y persona y guarda qué parte de la
-  silla tapa a cada cuadro (`<cuadro>_<silla>` en `tools/sprites/art/characters/`, `build.chair_overlays`), y `export_game.py` compone silla + persona con su paleta +
+  silla tapa a cada cuadro (`<cuadro>_<silla>` en `tools/sprites/art/characters/`, `build.chair_overlays`), y `export_game.py` compone silla + persona +
   esa parte; mientras tanto la silla no se dibuja aparte (`OfficeCharacter.draws_chair_at`, grupo `FurnitureView.CHAIR_GROUP`), solo su sombra.
   Ningún tono de una silla puede ser de la ropa, la piel o el pelo (`check_chair_colors`); solo redibuja al cambiar de cuadro (`get_sprite_state`). Sin hoja, el muñeco provisional.
   Sentado frente a un escritorio o mostrador (`OfficeState.get_desk_facing(casilla)`: `{direction, computer}`), la silla y quien se sienta se

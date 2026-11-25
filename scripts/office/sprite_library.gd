@@ -7,9 +7,13 @@ const DATA_PATH: String = "res://data/sprites.json"
 const FOLDER: String = "res://assets/sprites/"
 ## Opacidad de las sombras de piso (el sprite de sombra es opaco).
 const SHADOW_ALPHA: float = 0.3
+## Shader que pone la paleta de cada aspecto sobre la hoja base (tablas en characters.palettes).
+const PALETTE_SHADER: Shader = preload("res://scripts/office/character_palette.gdshader")
 
 static var _data: Dictionary = {}
 static var _textures: Dictionary[String, Texture2D] = {}
+## Material de paleta por aspecto (null si usa la paleta base).
+static var _palette_materials: Dictionary[String, ShaderMaterial] = {}
 
 
 ## Datos de data/sprites.json (se leen una vez).
@@ -216,20 +220,22 @@ static func draw_character(canvas: CanvasItem, look: String, pose: String, rotat
 	var characters: Dictionary = get_data().get("characters", {})
 	var poses: Dictionary = characters.get("poses", {})
 	var looks: Dictionary = characters.get("looks", {})
-	var key: String = "character:" + look
 	if not poses.has(pose):
 		# Poses del suape: en la hoja de herramientas del aspecto.
 		poses = characters.get("tool_poses", {})
 		looks = characters.get("tool_looks", {})
-		key = "tools:" + look
 	if not looks.has(look) or not poses.has(pose):
 		return false
-	if not _textures.has(key):
-		var path: String = FOLDER + String(looks[look])
-		_textures[key] = (load(path) as Texture2D) if ResourceLoader.exists(path) else null
-	var texture: Texture2D = _textures[key]
+	# Las paletas comparten la hoja base: la textura se guarda por archivo.
+	var path: String = FOLDER + String(looks[look])
+	if not _textures.has(path):
+		_textures[path] = (load(path) as Texture2D) if ResourceLoader.exists(path) else null
+	var texture: Texture2D = _textures[path]
 	if texture == null:
 		return false
+	var palette: ShaderMaterial = get_character_material(look)
+	if canvas.material != palette:
+		canvas.material = palette
 	var cell := Vector2(float(characters["cell"][0]), float(characters["cell"][1]))
 	var anchor := Vector2(float(characters["anchor"][0]), float(characters["anchor"][1]))
 	var column: int = int(poses[pose]["column"]) + posmod(frame, int(poses[pose]["frames"]))
@@ -242,6 +248,29 @@ static func draw_character(canvas: CanvasItem, look: String, pose: String, rotat
 		target = Rect2(target.position + Vector2(0.0, top / get_scale()), source.size / get_scale())
 	canvas.draw_texture_rect_region(texture, target, source)
 	return true
+
+
+## Material con la paleta de ese aspecto sobre su hoja base; null si es la paleta base o no existe.
+static func get_character_material(look: String) -> ShaderMaterial:
+	if _palette_materials.has(look):
+		return _palette_materials[look]
+	var palette: Dictionary = get_data().get("characters", {}).get("palettes", {}).get(look, {})
+	var material: ShaderMaterial = null
+	if not palette.is_empty():
+		var from_colors := PackedVector3Array()
+		var to_colors := PackedVector3Array()
+		for index: int in range(palette["from"].size()):
+			var from_color := Color(String(palette["from"][index]))
+			var to_color := Color(String(palette["to"][index]))
+			from_colors.append(Vector3(from_color.r, from_color.g, from_color.b))
+			to_colors.append(Vector3(to_color.r, to_color.g, to_color.b))
+		material = ShaderMaterial.new()
+		material.shader = PALETTE_SHADER
+		material.set_shader_parameter("color_count", from_colors.size())
+		material.set_shader_parameter("from_colors", from_colors)
+		material.set_shader_parameter("to_colors", to_colors)
+	_palette_materials[look] = material
+	return material
 
 
 ## Sombra de piso de un personaje de pie.

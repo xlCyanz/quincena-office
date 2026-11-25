@@ -15,6 +15,7 @@ func _ready() -> void:
 	_check_library()
 	_check_furniture()
 	_check_characters()
+	await _check_palette_drawing()
 	await _check_game()
 	finished.emit(_failures, _checks)
 
@@ -118,6 +119,39 @@ func _check_furniture() -> void:
 		and SpriteLibrary.get_seat_x("no_existe") < 0.0, "dónde queda el teclado de cada sprite")
 
 
+# Las paletas _v1 y _v2 son la hoja base con un shader que cambia colores exactos.
+func _check_palettes() -> void:
+	var characters: Dictionary = SpriteLibrary.get_data()["characters"]
+	_expect(characters["looks"]["office_f1_v2"] == characters["looks"]["office_f1"]
+		and characters["tool_looks"]["cleaning_v1"] == characters["tool_looks"]["cleaning"], "las paletas usan la hoja base")
+	_expect(SpriteLibrary.get_character_material("office") == null and SpriteLibrary.get_character_material("no_existe") == null,
+		"la paleta base va sin shader")
+	var material: ShaderMaterial = SpriteLibrary.get_character_material("woman_executive_f2_v2")
+	var palette: Dictionary = characters["palettes"]["woman_executive_f2_v2"]
+	_expect(material != null and material == SpriteLibrary.get_character_material("woman_executive_f2_v2")
+		and int(material.get_shader_parameter("color_count")) == palette["from"].size() and palette["from"].size() > 0
+		and palette["from"].size() <= 48, "la otra paleta trae su shader con la tabla de colores")
+	var from_colors: PackedVector3Array = material.get_shader_parameter("from_colors")
+	var first := Color(String(palette["from"][0]))
+	_expect(from_colors[0].is_equal_approx(Vector3(first.r, first.g, first.b)), "los colores de la tabla llegan al shader")
+
+
+# Al dibujar, el lienzo toma la paleta del aspecto (y la suelta con la base).
+func _check_palette_drawing() -> void:
+	var canvas := Node2D.new()
+	var drawn: Array[String] = ["office_v1"]
+	canvas.draw.connect(func() -> void: SpriteLibrary.draw_character(canvas, drawn[0], "stand", 0, 0))
+	add_child(canvas)
+	await get_tree().process_frame
+	var first_material: Material = canvas.material
+	drawn[0] = "office"
+	canvas.queue_redraw()
+	await get_tree().process_frame
+	_expect(first_material != null and first_material == SpriteLibrary.get_character_material("office_v1")
+		and canvas.material == null, "al dibujar, el lienzo toma la paleta del aspecto")
+	canvas.queue_free()
+
+
 # Los 8 conjuntos de personajes en sus 3 formas y 3 paletas, con todas las poses.
 func _check_characters() -> void:
 	for woman: bool in [false, true]:
@@ -129,6 +163,7 @@ func _check_characters() -> void:
 		and OfficeCharacter.make_look(false, "office", 4) == "office_f1_v1"
 		and OfficeCharacter.make_look(true, "executive", 8) == "woman_executive_f2_v2", "nombres de los aspectos")
 	_expect(not SpriteLibrary.has_character_look("no_existe"), "un aspecto desconocido no tiene hoja")
+	_check_palettes()
 	_expect(SpriteLibrary.get_character_frames("walk") == 8 and SpriteLibrary.get_character_frames("idle") == 4
 		and SpriteLibrary.get_character_frames("type") == 4 and SpriteLibrary.get_character_frames("sit") == 1
 		and SpriteLibrary.get_character_frames("no_existe") == 0, "cuadros de cada pose")

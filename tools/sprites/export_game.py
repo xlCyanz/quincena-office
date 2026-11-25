@@ -75,29 +75,42 @@ CHARACTER_CELL = (128, 128)
 CHARACTER_POSES = (("stand", 1), ("sit", 1), ("idle", character.IDLE_FRAMES), ("walk", character.WALK_FRAMES),
                    ("type", character.TYPE_FRAMES))
 CHARACTER_VARIANTS = ("", "_v1", "_v2")
+# Tope de colores por tabla de paleta: el tamaño de los arreglos de character_palette.gdshader.
+PALETTE_MAX = 48
 # Poses del suape, solo del personal de limpieza: van en una hoja aparte (<aspecto>_tools.png).
 TOOL_POSES = (("mop", character.MOP_FRAMES), ("mopwalk", character.MOPWALK_FRAMES))
 
 
-def recolor(image, base, variant):
-    """Cambia la paleta de un cuadro: cada tono de cada capa de `base` por el mismo tono de `variant`."""
+def palette_map(base, variant):
+    """Tono de cada capa de `base` -> el mismo tono de `variant` (solo los que cambian)."""
     mapping = {}
     for layer in character.LAYER_ORDER:
         for old, new in zip(base.ramp(layer).colors, variant.ramp(layer).colors):
-            old, new = tuple(old), tuple(new)
+            old, new = tuple(int(v) for v in old), tuple(int(v) for v in new)
             if mapping.get(old, new) != new:
                 raise SystemExit("personajes: el color %s está en dos capas con destinos distintos" % (old,))
             mapping[old] = new
+    return {old: new for old, new in mapping.items() if old != new}
+
+
+def check_ramp_colors(image, look, name):
+    """El shader de paleta cambia colores exactos: todo píxel de la persona tiene que ser de una rampa."""
+    allowed = {tuple(int(v) for v in color) for layer in character.LAYER_ORDER for color in look.ramp(layer).colors}
+    if (255, 255, 255) in allowed:
+        raise SystemExit("personajes: el blanco puro no puede ir en una rampa (es el de los dibujos sin textura)")
     arr = np.array(image)
-    out = arr.copy()
-    done = arr[..., 3] == 0
-    for old, new in mapping.items():
-        take = (arr[..., 0] == old[0]) & (arr[..., 1] == old[1]) & (arr[..., 2] == old[2]) & (arr[..., 3] > 0)
-        out[take, :3] = new
-        done |= take
-    if not done.all():
-        raise SystemExit("personajes: hay colores fuera de las rampas del aspecto")
-    return Image.fromarray(out)
+    for color in np.unique(arr[arr[..., 3] > 0][:, :3], axis=0):
+        if tuple(int(v) for v in color) not in allowed:
+            raise SystemExit("%s: el color %s está fuera de las rampas del aspecto" % (name, tuple(color)))
+
+
+def palette_entry(style, suffix, sheet_look):
+    """Tabla de paleta de un aspecto: hoja base y colores de y hacia (hex), los que cambia el shader."""
+    mapping = palette_map(character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
+    if len(mapping) > PALETTE_MAX:
+        raise SystemExit("%s%s: %d colores de paleta (el shader admite %d)" % (style.name, suffix, len(mapping), PALETTE_MAX))
+    hexes = lambda color: "%02x%02x%02x" % color  # noqa: E731
+    return {"sheet": sheet_look, "from": [hexes(old) for old in mapping], "to": [hexes(new) for new in mapping.values()]}
 
 # Sillas con las que se arma «sentado en su silla»: mueble del juego -> base del sprite.
 SEATED_CHAIRS = {"basic_chair": "chair_basic", "ergonomic_chair": "chair_ergonomic", "mesh_chair": "chair_mesh",
@@ -253,6 +266,7 @@ def main():
                         (0, character.CHAIR_SHIFT))
             chairs[(item, rotation)] = whole
     looks = {}
+    palettes = {}
     for style in character.STYLES:
         frames = []  # (columna, fila, persona, silla entera o None, parte de la silla que tapa o None)
         for rotation in range(4):
@@ -267,25 +281,27 @@ def main():
                     image = load(name)
                     if image.size != CHARACTER_CELL or anchor(name) != [64.0, 112.0]:
                         raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
+                    check_ramp_colors(image, character.LOOKS[style.name][""], name)
                     chair = over = None
                     if item:
                         chair = chairs[(item, rotation)]
                         over = load("%s_%s" % (name, SEATED_CHAIRS[item]))
                     frames.append((column, rotation, image, chair, over))
                     column += 1
+        # Una hoja por aspecto con la paleta base; las otras paletas las pone el shader (palettes).
+        page = Image.new("RGBA", (CHARACTER_CELL[0] * columns, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
+        for column, row, image, chair, over in frames:
+            if chair is not None:
+                joined = chair.copy()
+                joined.alpha_composite(image)
+                joined.alpha_composite(over)
+                image = joined
+            page.paste(image, (column * CHARACTER_CELL[0], row * CHARACTER_CELL[1]))
+        page.save(os.path.join(characters_dir, style.name + ".png"))
         for suffix in CHARACTER_VARIANTS:
-            page = Image.new("RGBA", (CHARACTER_CELL[0] * columns, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
-            for column, row, image, chair, over in frames:
-                if suffix:
-                    image = recolor(image, character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
-                if chair is not None:
-                    joined = chair.copy()
-                    joined.alpha_composite(image)
-                    joined.alpha_composite(over)
-                    image = joined
-                page.paste(image, (column * CHARACTER_CELL[0], row * CHARACTER_CELL[1]))
-            page.save(os.path.join(characters_dir, style.name + suffix + ".png"))
-            looks[style.name + suffix] = "characters/%s%s.png" % (style.name, suffix)
+            looks[style.name + suffix] = "characters/%s.png" % style.name
+            if suffix:
+                palettes[style.name + suffix] = palette_entry(style, suffix, style.name)
     tool_poses = {}
     column = 0
     for pose, count in TOOL_POSES:
@@ -295,21 +311,20 @@ def main():
     for style in character.STYLES:
         if style.outfit not in character.CLEANING_STYLES:
             continue
+        page = Image.new("RGBA", (CHARACTER_CELL[0] * column, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
+        for rotation in range(4):
+            for pose, count in TOOL_POSES:
+                for frame in range(count):
+                    name = "character_%s%s_r%d_%d" % (style.prefix, pose, rotation, frame + 1)
+                    image = load(name)
+                    if image.size != CHARACTER_CELL or anchor(name) != [64.0, 112.0]:
+                        raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
+                    check_ramp_colors(image, character.LOOKS[style.name][""], name)
+                    page.paste(image, ((tool_poses[pose]["column"] + frame) * CHARACTER_CELL[0],
+                                       rotation * CHARACTER_CELL[1]))
+        page.save(os.path.join(characters_dir, style.name + "_tools.png"))
         for suffix in CHARACTER_VARIANTS:
-            page = Image.new("RGBA", (CHARACTER_CELL[0] * column, CHARACTER_CELL[1] * 4), (0, 0, 0, 0))
-            for rotation in range(4):
-                for pose, count in TOOL_POSES:
-                    for frame in range(count):
-                        name = "character_%s%s_r%d_%d" % (style.prefix, pose, rotation, frame + 1)
-                        image = load(name)
-                        if image.size != CHARACTER_CELL or anchor(name) != [64.0, 112.0]:
-                            raise SystemExit("%s: lienzo o apoyo distinto del esperado" % name)
-                        if suffix:
-                            image = recolor(image, character.LOOKS[style.name][""], character.LOOKS[style.name][suffix])
-                        page.paste(image, ((tool_poses[pose]["column"] + frame) * CHARACTER_CELL[0],
-                                           rotation * CHARACTER_CELL[1]))
-            page.save(os.path.join(characters_dir, style.name + suffix + "_tools.png"))
-            tool_looks[style.name + suffix] = "characters/%s%s_tools.png" % (style.name, suffix)
+            tool_looks[style.name + suffix] = "characters/%s_tools.png" % style.name
     copy("character_stand_shadow", "characters")
     copy("mop_bucket", "characters")
     copy("mop_bucket_shadow", "characters")
@@ -328,7 +343,8 @@ def main():
                        "modelo (frente −y, +x, fondo +y, −x): hasta ahí se arriman las sillas. wall_items: objeto de pared -> dibujos "
                        "(sprites, cada uno con _x y _y según el eje del borde) y a cuántos px de sprite del piso "
                        "empieza (base_z). characters: hojas de personajes (looks: "
-                       "aspecto -> archivo; una fila por dirección r0..r3; poses: columna del primer cuadro y "
+                       "aspecto -> archivo; una fila por dirección r0..r3; palettes: aspecto -> hoja base (sheet) y colores "
+                       "exactos que cambia el shader de paleta (from -> to, hex); poses: columna del primer cuadro y "
                        "cuántos tiene; sit_<silla> y type_<silla> = sentado en esa silla, con la silla dibujada; "
                        "tool_poses y tool_looks: poses del suape (mop, mopwalk) en una hoja aparte, solo del personal "
                        "de limpieza; bucket: el cubo que se dibuja junto a quien trapea; "
@@ -336,7 +352,7 @@ def main():
         "scale": 2,
         "ground": {"file": "res://assets/tiles/ground.png", "tile": list(TILE), "styles": styles},
         "characters": {"cell": list(CHARACTER_CELL), "anchor": [64, 112], "poses": poses, "looks": looks,
-                       "tool_poses": tool_poses, "tool_looks": tool_looks, "bucket": "mop_bucket",
+                       "palettes": palettes, "tool_poses": tool_poses, "tool_looks": tool_looks, "bucket": "mop_bucket",
                        "shadow": "character_stand_shadow"},
         "furniture": furniture,
         "seats": seats,
