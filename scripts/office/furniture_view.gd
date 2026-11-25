@@ -22,6 +22,8 @@ const SEAT_INSET: float = 0.15
 ## Objetos de pared: ancho y fondo (casillas) y altura en la pared donde empiezan (píxeles).
 const WALL_ITEM_WIDTH: float = 0.5
 const WALL_ITEM_DEPTH: float = 0.06
+## Las tiras de un objeto de pared se solapan esto (px): el sprite de pared se sale de su tramo y taparía la unión.
+const WALL_STRIP_OVERLAP_PX: float = 4.0
 const WALL_ITEM_BASE_PX: float = 24.0
 ## En una pared baja el objeto va pegado abajo y no más alto que ella.
 const LOW_WALL_ITEM_BASE_PX: float = 1.0
@@ -56,7 +58,8 @@ const CHAIR_GROUP: String = "chair_views"
 const PART_MAIN: String = ""
 const PART_BACKREST: String = "backrest"
 ## Tira de un mueble largo (1×N) con sprite: cada casilla dibuja la suya con su punto de orden,
-## para ordenarse bien con paredes y personas. La principal es la tira 0.
+## para ordenarse bien con paredes y personas. La principal es la tira 0. Un objeto de pared más ancho que
+## su tramo (la pantalla) también va en tiras, una por tramo de pared que cubre.
 const PART_SLICE: String = "slice"
 
 var item_id: String = ""
@@ -88,6 +91,9 @@ var _slice: int = 0
 # Cuadro de la pantalla prendida (0 = apagada).
 var _screen_frame: int = 0
 var _slices: int = 1
+# Objeto de pared: tramo que dibuja esta tira (0 = el suyo, ±1 = los vecinos) y la dirección a lo largo de la pared.
+var _wall_offset: int = 0
+var _across := Vector2.ZERO
 
 
 ## Coloca el mueble desde su entrada en OfficeState.furniture; piece: PART_MAIN o PART_BACKREST.
@@ -157,13 +163,24 @@ func _setup_wall_item(cell: Vector2i) -> void:
 	var front := Vector2(FurnitureCatalog.get_front(rotation_index))
 	var center: Vector2 = Vector2(cell) - front * 0.5 + front * (EdgePieceView.THICKNESS / 2.0 + WALL_ITEM_DEPTH / 2.0)
 	var across := Vector2(absf(front.y), absf(front.x))
+	_across = across
+	# Tiras 1, 2, 3, 4… = tramos −1, +1, −2, +2…
+	_wall_offset = 0 if _slice == 0 else (_slice + 1) / 2 * (-1 if _slice % 2 == 1 else 1)
 	var half: Vector2 = across * (WALL_ITEM_WIDTH / 2.0) + Vector2(absf(front.x), absf(front.y)) * (WALL_ITEM_DEPTH / 2.0)
 	_low = center - half
 	_high = center + half
 	# El sprite se apoya en el punto medio del borde, en el piso.
 	_anchor = Vector2(cell) - front * 0.5
-	position = _grid.grid_to_world(center + front * 0.1)
+	# Cada tira se ordena con su tramo de pared, para que la pared vecina no la tape.
+	position = _grid.grid_to_world(center + across * _wall_offset + front * 0.1)
 	queue_redraw()
+
+
+## Tramos de pared vecinos que cubre a cada lado el sprite de un objeto de pared (la pantalla, que mide dos: 1).
+static func get_wall_reach(id: String) -> int:
+	var width: float = SpriteLibrary.get_rect(SpriteLibrary.get_wall_item_sprite(id, GridEdge.AXIS_X)).size.x
+	var edge: float = GameConstants.TILE_SIZE.x / 2.0
+	return maxi(ceili((width / edge - 1.0) / 2.0 - 0.01), 0)
 
 
 ## Indica si este mueble necesita además una pieza de respaldo.
@@ -174,7 +191,9 @@ static func has_backrest(item_id_to_check: String) -> bool:
 ## Tiras en que se dibuja un mueble: una por casilla si es largo (1×N) con sprite.
 static func get_slice_count(item: Dictionary) -> int:
 	var id: String = item["id"]
-	if FurnitureCatalog.is_wall_mounted(id) or SpriteLibrary.get_furniture_sprite(id, item["rotation"]).is_empty():
+	if FurnitureCatalog.is_wall_mounted(id):
+		return 1 + 2 * get_wall_reach(id)
+	if SpriteLibrary.get_furniture_sprite(id, item["rotation"]).is_empty():
 		return 1
 	var cells: Array[Vector2i] = FurnitureCatalog.get_footprint(id, item["cell"], item["rotation"])
 	if cells.size() < 2:
@@ -328,7 +347,17 @@ func _draw_sprites() -> bool:
 		return true
 	if FurnitureCatalog.is_wall_mounted(item_id):
 		if not _on_low_wall:
-			return SpriteLibrary.draw(self, sprite, at)
+			if _slices == 1:
+				return SpriteLibrary.draw(self, sprite, at)
+			var step: float = (_local(_anchor + _across) - _local(_anchor)).x * SpriteLibrary.get_scale()
+			var reach: int = (_slices - 1) / 2
+			var from: float = step * (_wall_offset - 0.5) if _wall_offset > -reach else -INF * signf(step)
+			var to: float = step * (_wall_offset + 0.5) if _wall_offset < reach else INF * signf(step)
+			var overlap: float = WALL_STRIP_OVERLAP_PX * SpriteLibrary.get_scale()
+			return SpriteLibrary.draw_strip(self, sprite, at, minf(from, to) - overlap, maxf(from, to) + overlap)
+		if _slice > 0:
+			# En pared baja el dibujo achicado cabe en su tramo: lo pone la tira 0.
+			return true
 		var drop: float = SpriteLibrary.get_wall_item_base(item_id) * LOW_WALL_SPRITE_SCALE - LOW_WALL_ITEM_BASE_PX
 		return SpriteLibrary.draw_scaled(self, sprite, at + Vector2(0.0, drop), LOW_WALL_SPRITE_SCALE)
 	if _slices > 1:

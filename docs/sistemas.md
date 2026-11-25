@@ -561,7 +561,9 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   Objetos de pared (`wall_items` en `data/sprites.json`: dibujos y `base_z`; `SpriteLibrary.get_wall_item_sprite(id, eje, elección)`):
   `<dibujo>_x`/`_y` según el eje del borde, con el apoyo en el punto medio del borde en el piso; mirando a +x o +y se ve de frente y a −x o −y
   de espaldas (`<dibujo>_back_x`/`_back_y`, `get_wall_item_sprite(…, back)`: colgado del lado de la pared que no se ve); el cuadro elige uno de sus 3 dibujos fijo por casilla; en pared baja se dibuja a
-  `LOW_WALL_SPRITE_SCALE` pegado al piso. La pantalla de presentaciones se dibuja de dos bordes de ancho centrada en el suyo (en el juego ocupa uno).
+  `LOW_WALL_SPRITE_SCALE` pegado al piso. La pantalla de presentaciones se dibuja de dos bordes de ancho centrada en el suyo (en el juego ocupa uno);
+  un objeto de pared más ancho que su tramo va en tiras (`FurnitureView.get_wall_reach`, `PART_SLICE`), cada una ordenada con su tramo y
+  solapadas `WALL_STRIP_OVERLAP_PX`, para que la pared vecina no lo tape.
   Manchas de suciedad (`dirt`) y globos de estado (`status_icons`, `get_status_icon_sprite`) también son sprites.
   Sombra de las paredes (`wall_shadow`, `get_wall_shadow_sprite(eje)`): `WallShadowOverlay`, sobre el piso y las manchas, pone
   `wall_tall_<eje>_shadow` en la casilla de mayor x o y de cada tramo alto si es del local (se rehace con las piezas de borde).

@@ -281,6 +281,8 @@ func _place_furniture(furniture: Array[Dictionary]) -> void:
 			strip.name = "%s_tira_%d" % [view.name, slice]
 			_objects.add_child(strip)
 			strip.setup(self, item, FurnitureView.PART_SLICE, slice)
+			if strip.can_play():
+				_screens.append(strip)
 		if FurnitureView.has_backrest(item["id"]):
 			var backrest := FurnitureView.new()
 			backrest.name = view.name + "_respaldo"

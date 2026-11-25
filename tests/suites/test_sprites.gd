@@ -348,9 +348,14 @@ func _check_game() -> void:
 # La pantalla de presentaciones se prende en horario con sus cuadros de frente y se apaga fuera.
 func _check_screen(grid: OfficeGrid) -> void:
 	var screen: FurnitureView = null
+	var strips: int = 0
 	for child: Node in grid.get_node("Objects").get_children():
 		if child is FurnitureView and not child.is_queued_for_deletion() and (child as FurnitureView).item_id == "presentation_screen":
 			screen = child
+			strips += 1
+	# Mide dos tramos: va en tres tiras (la suya y media de cada vecina) para que la pared de al lado no la tape.
+	_expect(FurnitureView.get_wall_reach("presentation_screen") == 1 and strips == 3 and FurnitureView.get_wall_reach("painting") == 0,
+		"la pantalla va en 3 tiras de pared: %d" % strips)
 	_expect(screen != null and screen.can_play() and SpriteLibrary.get_wall_item_play_frames("presentation_screen") == 12,
 		"la pantalla se prende y tiene 12 cuadros")
 	if screen == null:
