@@ -292,8 +292,8 @@ func _check_game() -> void:
 		if child is EdgePieceView and not child.is_queued_for_deletion():
 			all_tall = all_tall and (child as EdgePieceView).tall
 	_expect(game.are_walls_up() and grid.is_tall_edge(front_edge) and all_tall, "paredes arriba: todas a su alto")
-	_expect(game.menu_bar_button("WallsButton") != null and game.menu_bar_button("WallsButton").button_pressed
-		and not game.menu_bar_button("WallsButton").tooltip_text.is_empty(), "el botón ↕ queda marcado y tiene descripción")
+	_expect((game.get_node("BuildPanel") as BuildPanel).get_walls_button() != null and (game.get_node("BuildPanel") as BuildPanel).get_walls_button().button_pressed
+		and not (game.get_node("BuildPanel") as BuildPanel).get_walls_button().tooltip_text.is_empty(), "el botón Paredes de Construir queda marcado y tiene descripción")
 	game.set_walls_up(false)
 	await get_tree().process_frame
 	_expect(not game.are_walls_up() and not grid.is_tall_edge(front_edge), "paredes abajo otra vez")
@@ -302,7 +302,7 @@ func _check_game() -> void:
 	build_panel.set_build_mode(true)
 	build_panel.select_tool("painting")
 	await get_tree().process_frame
-	_expect(game.are_walls_up() and not game.menu_bar_button("WallsButton").button_pressed, "colgando algo las paredes suben solas")
+	_expect(game.are_walls_up() and not (game.get_node("BuildPanel") as BuildPanel).get_walls_button().button_pressed, "colgando algo las paredes suben solas")
 	build_panel.select_tool(BuildController.TOOL_WALL)
 	await get_tree().process_frame
 	_expect(not game.are_walls_up(), "con otra herramienta bajan")

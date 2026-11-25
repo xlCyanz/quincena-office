@@ -29,6 +29,7 @@ func _ready() -> void:
 	_build_controller.confirm_changed.connect(_build_panel.show_confirm)
 	_build_panel.confirm_answered.connect(func(accept: bool) -> void: _build_controller.answer_confirm(accept))
 	_build_panel.tool_selected.connect(func(_tool: String) -> void: _apply_walls())
+	_build_panel.walls_toggled.connect(set_walls_up)
 	_build_panel.build_mode_changed.connect(func(_active: bool) -> void: _apply_walls())
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.speed_pressed.connect(_on_speed_pressed)

@@ -298,16 +298,6 @@ func _add_frame_button(menu_bar: Container) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(frame_office)
 	menu_bar.add_child(button)
-	# Paredes arriba / abajo, con descripción emergente.
-	var walls := Button.new()
-	walls.name = "WallsButton"
-	walls.text = "Paredes"
-	walls.tooltip_text = "Paredes arriba / abajo (P)"
-	walls.toggle_mode = true
-	Hud.style_bar_button(walls, "walls")
-	walls.focus_mode = Control.FOCUS_NONE
-	walls.toggled.connect(func(pressed: bool) -> void: set_walls_up(pressed))
-	menu_bar.add_child(walls)
 
 
 ## Sube las paredes a su alto o las baja para ver el interior. Solo la vista; no se guarda.
@@ -325,9 +315,7 @@ func are_walls_up() -> bool:
 func _apply_walls() -> void:
 	var hanging: bool = _build_panel.is_build_mode() and FurnitureCatalog.is_wall_mounted(_build_controller.tool)
 	var up: bool = _walls_wanted or hanging
-	var button: Button = menu_bar_button("WallsButton")
-	if button != null:
-		button.set_pressed_no_signal(_walls_wanted)
+	_build_panel.get_walls_button().set_pressed_no_signal(_walls_wanted)
 	if up == _office_grid.walls_up:
 		return
 	_office_grid.walls_up = up

@@ -1,8 +1,8 @@
-"""Iconos de la barra de la partida de Quincena Office con Moana (ui_<icono>): 24×24, blancos sobre transparente.
+"""Iconos de la barra de la partida de Quincena Office con Moana (ui_<icono>): 24×24 a resolución nativa.
 
-Godot los tiñe con el color del botón (claro normal, oscuro al estar pulsado), por eso van en blanco puro. Cada
-icono se arma con rectángulos en una cuadrícula de 12×12 (como en el diseño de la interfaz) y se agranda ×2:
-``+`` pinta y ``-`` vacía lo pintado antes. Apoyo en el centro (12, 12). Desde el repositorio de Moana:
+Godot los multiplica por el color del texto del botón (claro normal, oscuro al estar pulsado), por eso van en grises:
+blanco, claro y oscuro para dar volumen. Cada icono se arma con rectángulos, discos y dibujos de texto. Apoyo en el
+centro (12, 12). Desde el repositorio de Moana:
 
     sh scripts/uv.sh run python RUTA/tools/sprites/art/icons/ui/build.py [--out DIR] [--preview]
 """
@@ -24,49 +24,263 @@ sys.path.insert(0, str(HERE.parents[1] / "furniture"))  # _chair_kit
 from _chair_kit import moana_render  # noqa: E402
 from _painter import document  # noqa: E402
 
-GRID = 12
-SCALE = 2
-SIZE = (GRID * SCALE, GRID * SCALE)
-INK = (255, 255, 255, 255)
-# Icono -> rectángulos (signo, x, y, ancho, alto) en la cuadrícula de 12.
+SIZE = (24, 24)
+# Tonos (Godot multiplica el icono por el color del texto del botón): blanco, claro y oscuro.
+W = (255, 255, 255, 255)
+L = (206, 206, 206, 255)
+D = (138, 138, 138, 255)
+CLEAR = (0, 0, 0, 0)
+
+
+class Canvas:
+    """Lienzo de 24×24 a resolución nativa con rectángulos, discos y pixeles sueltos."""
+
+    def __init__(self) -> None:
+        self.px = np.zeros((SIZE[1], SIZE[0], 4), dtype=np.uint8)
+
+    def rect(self, x: int, y: int, w: int, h: int, tone=W) -> "Canvas":
+        self.px[y:y + h, x:x + w] = tone
+        return self
+
+    def dot(self, x: int, y: int, tone=W) -> "Canvas":
+        self.px[y, x] = tone
+        return self
+
+    def disc(self, cx: float, cy: float, r: float, tone=W) -> "Canvas":
+        ys, xs = np.mgrid[0:SIZE[1], 0:SIZE[0]]
+        self.px[np.hypot(xs + 0.5 - cx, ys + 0.5 - cy) <= r] = tone
+        return self
+
+    def ring(self, cx: float, cy: float, r: float, width: float, tone=W) -> "Canvas":
+        ys, xs = np.mgrid[0:SIZE[1], 0:SIZE[0]]
+        dist = np.hypot(xs + 0.5 - cx, ys + 0.5 - cy)
+        self.px[(dist <= r) & (dist > r - width)] = tone
+        return self
+
+    def rows(self, x: int, y: int, art: list[str]) -> "Canvas":
+        """Pinta un dibujo de texto: # blanco, + claro, - oscuro, . nada (deja lo de abajo), x borra."""
+        tones = {"#": W, "+": L, "-": D, "x": CLEAR}
+        for r, line in enumerate(art):
+            for c, ch in enumerate(line):
+                if ch in tones:
+                    self.px[y + r, x + c] = tones[ch]
+        return self
+
+
+def build_icon() -> np.ndarray:
+    # Martillo: cabeza con cara a la derecha y uña a la izquierda, mango con empuñadura.
+    c = Canvas()
+    c.rows(2, 2, [
+        "...##########+..",
+        "..###########++#",
+        ".############++#",
+        "#############++#",
+        "##-----------++#",
+        "#.......--...--.",
+    ])
+    c.rect(9, 8, 3, 9, W).rect(11, 8, 1, 9, D).rect(9, 8, 3, 1, D)
+    c.rect(8, 16, 5, 6, L).rect(12, 16, 1, 6, D).rect(8, 21, 5, 1, D)
+    c.rect(9, 17, 1, 4, W)
+    return c.px
+
+
+def frame_icon() -> np.ndarray:
+    # Encuadre: cuatro esquinas y una casilla isométrica con su borde en el medio.
+    c = Canvas()
+    for x, y, dx, dy in ((1, 1, 1, 1), (22, 1, -1, 1), (1, 22, 1, -1), (22, 22, -1, -1)):
+        for i in range(7):
+            c.dot(x + dx * i, y, W).dot(x, y + dy * i, W)
+            c.dot(x + dx * i, y + dy, L if i > 0 else W).dot(x + dx, y + dy * i, L if i > 0 else W)
+    c.rows(5, 8, [
+        ".......##.......",
+        ".....##++##.....",
+        "...##++++++##...",
+        ".##++++++++++##.",
+        ".--##++++++##--.",
+        "...--##++##--...",
+        ".....--##--.....",
+        ".......--.......",
+    ])
+    return c.px
+
+
+def walls_icon() -> np.ndarray:
+    # Pared de ladrillos con una flecha arriba y abajo a la derecha.
+    c = Canvas()
+    c.rect(1, 6, 14, 16, W)
+    for y in (9, 13, 17):
+        c.rect(1, y, 14, 1, D)
+    for y, xs in ((6, (5, 11)), (10, (3, 8, 13)), (14, (5, 11)), (18, (3, 8, 13))):
+        for x in xs:
+            c.rect(x, y, 1, 3, D)
+    c.rect(1, 21, 14, 1, L).rect(14, 6, 1, 16, L)
+    c.rows(16, 1, [
+        "...#...",
+        "..###..",
+        ".#####.",
+        "#######",
+    ])
+    c.rect(18, 5, 3, 14, W).rect(20, 5, 1, 14, L)
+    c.rows(16, 19, [
+        "#######",
+        ".#####.",
+        "..###..",
+        "...#...",
+    ])
+    return c.px
+
+
+def staff_icon() -> np.ndarray:
+    # Persona: cabeza con pelo, hombros redondeados y corbata.
+    c = Canvas()
+    c.disc(12, 7.5, 5, W)
+    # Pelo: tapa la mitad de arriba de la cabeza y baja por los lados.
+    c.rows(7, 2, [
+        "..-----...",
+        ".-------..",
+        "---------.",
+        "---------.",
+        "--.....--.",
+        "-.......-.",
+    ])
+    c.dot(15, 9, L).dot(15, 10, L).dot(14, 11, L)
+    c.rows(3, 14, [
+        "....########....",
+        "..############..",
+        ".######--######.",
+        "#######--#######",
+        "######----######",
+        "######----######",
+        "######----######",
+        "#######--#######",
+    ])
+    c.rect(16, 15, 3, 7, L).rect(19, 17, 1, 5, L)
+    c.rect(3, 21, 18, 1, D)
+    return c.px
+
+
+def projects_icon() -> np.ndarray:
+    # Portapapeles con pinza, renglones y una marca de hecho.
+    c = Canvas()
+    c.rect(3, 3, 18, 20, L).rect(4, 4, 16, 18, W)
+    c.rect(4, 21, 16, 1, D).rect(19, 4, 1, 18, L)
+    c.rows(8, 1, [
+        "..####..",
+        "########",
+        "#------#",
+        "########",
+    ])
+    for y in (9, 13, 17):
+        c.rect(11, y, 7, 2, D)
+    for y in (9, 13):
+        c.rows(6, y - 1, ["...-", "-.--", ".--."])
+    c.rect(6, 17, 3, 2, D)
+    return c.px
+
+
+def teams_icon() -> np.ndarray:
+    # Reloj de pared: aro, marcas de las horas y agujas.
+    c = Canvas()
+    c.disc(12, 12, 10.5, L).disc(12, 12, 8.5, W)
+    c.ring(12, 12, 10.5, 1.2, D)
+    for x, y in ((11, 4), (11, 18), (4, 11), (18, 11)):
+        c.rect(x, y, 2, 2, D)
+    c.rect(11, 6, 2, 7, D).rect(12, 11, 5, 2, D)
+    c.rect(11, 11, 2, 2, W).dot(11, 11, D)
+    return c.px
+
+
+def bank_icon() -> np.ndarray:
+    # Banco: frontón, friso, tres columnas y escalones.
+    c = Canvas()
+    c.rows(1, 1, [
+        "..........##..........",
+        "........######........",
+        "......##########......",
+        "....##############....",
+        "..##################..",
+        "######################",
+    ])
+    c.rect(4, 4, 16, 2, W).rect(10, 3, 4, 2, D)
+    c.rect(2, 7, 20, 2, L).rect(2, 8, 20, 1, D)
+    for x in (4, 10, 16):
+        c.rect(x, 10, 4, 8, W).rect(x + 3, 10, 1, 8, L)
+    c.rect(2, 18, 20, 2, L).rect(1, 20, 22, 2, W).rect(1, 21, 22, 1, D)
+    return c.px
+
+
+def company_icon() -> np.ndarray:
+    # Edificio de oficinas alto con otro más bajo al lado; ventanas y puerta.
+    c = Canvas()
+    c.rect(3, 2, 11, 20, W).rect(13, 2, 1, 20, L)
+    c.rect(14, 9, 8, 13, L).rect(21, 9, 1, 13, D)
+    for y in (4, 8, 12):
+        for x in (5, 9):
+            c.rect(x, y, 2, 2, D)
+    for y in (11, 15):
+        for x in (16, 19):
+            c.rect(x, y, 2, 2, D)
+    c.rect(7, 17, 3, 5, D).rect(3, 21, 19, 1, D)
+    return c.px
+
+
+def ceo_icon() -> np.ndarray:
+    # Salir: puerta abierta con marco y una flecha hacia afuera.
+    c = Canvas()
+    c.rect(2, 2, 12, 20, L).rect(4, 4, 8, 18, CLEAR)
+    c.rows(4, 3, [
+        "##......",
+        "####....",
+        "######..",
+        "######..",
+        "######..",
+        "######..",
+        "######..",
+        "######..",
+        "####-#..",
+        "######..",
+        "######..",
+        "######..",
+        "######..",
+        "######..",
+        "######..",
+        "####....",
+        "##......",
+    ])
+    c.rect(2, 21, 12, 1, D)
+    c.rows(13, 7, [
+        "....#....",
+        "....##...",
+        "#########",
+        "##########",
+        "#########",
+        "....##...",
+        "....#....",
+    ])
+    return c.px
+
+
+def settings_icon() -> np.ndarray:
+    # Engranaje de ocho dientes (cada 45°) con el centro hueco.
+    c = Canvas()
+    ys, xs = np.mgrid[0:SIZE[1], 0:SIZE[0]]
+    dx, dy = xs + 0.5 - 12, ys + 0.5 - 12
+    dist = np.hypot(dx, dy)
+    angle = np.degrees(np.arctan2(dy, dx)) % 45.0
+    tooth = (np.minimum(angle, 45.0 - angle) * np.pi / 180.0 * dist <= 2.1) & (dist <= 11.0)
+    body = dist <= 8.0
+    c.px[tooth | body] = W
+    c.px[(tooth & ~body) & (dx + dy > 2)] = L
+    c.ring(12, 12, 8.0, 1.0, L)
+    c.disc(12, 12, 4.0, D).disc(12, 12, 2.5, CLEAR)
+    return c.px
+
+
+# Icono -> función que lo dibuja.
 ICONS = {
-    # Martillo.
-    "build": [("+", 1, 1, 7, 3), ("-", 1, 3, 1, 1), ("+", 4, 4, 2, 7)],
-    # Encuadre: cuatro esquinas.
-    "frame": [("+", 1, 1, 4, 1), ("+", 1, 1, 1, 4), ("+", 7, 1, 4, 1), ("+", 10, 1, 1, 4),
-              ("+", 1, 10, 4, 1), ("+", 1, 7, 1, 4), ("+", 7, 10, 4, 1), ("+", 10, 7, 1, 4), ("+", 5, 5, 2, 2)],
-    # Flecha arriba y abajo.
-    "walls": [("+", 5, 2, 2, 8), ("+", 3, 3, 6, 1), ("+", 4, 2, 4, 1), ("+", 5, 1, 2, 1),
-              ("+", 3, 8, 6, 1), ("+", 4, 9, 4, 1), ("+", 5, 10, 2, 1)],
-    # Persona.
-    "staff": [("+", 4, 1, 4, 4), ("+", 2, 6, 8, 5), ("-", 2, 6, 1, 1), ("-", 9, 6, 1, 1)],
-    # Portapapeles con renglones.
-    "projects": [("+", 1, 2, 10, 9), ("+", 4, 1, 4, 2), ("-", 3, 5, 6, 1), ("-", 3, 7, 6, 1), ("-", 3, 9, 4, 1)],
-    # Reloj.
-    "teams": [("+", 1, 1, 10, 10), ("-", 2, 2, 8, 8), ("-", 1, 1, 1, 1), ("-", 10, 1, 1, 1), ("-", 1, 10, 1, 1),
-              ("-", 10, 10, 1, 1), ("+", 5, 3, 2, 4), ("+", 6, 5, 3, 2)],
-    # Banco con columnas.
-    "bank": [("+", 5, 1, 2, 1), ("+", 3, 2, 6, 1), ("+", 1, 3, 10, 1), ("+", 2, 5, 2, 5), ("+", 5, 5, 2, 5),
-             ("+", 8, 5, 2, 5), ("+", 1, 10, 10, 1)],
-    # Edificio con ventanas.
-    "company": [("+", 2, 1, 8, 10), ("-", 3, 2, 2, 2), ("-", 7, 2, 2, 2), ("-", 3, 5, 2, 2), ("-", 7, 5, 2, 2),
-                ("-", 5, 8, 2, 3)],
-    # Puerta con flecha de salida.
-    "ceo": [("+", 1, 1, 6, 10), ("-", 2, 2, 4, 8), ("+", 4, 6, 1, 1), ("+", 7, 5, 4, 2), ("+", 9, 4, 1, 4)],
-    # Engranaje.
-    "settings": [("+", 2, 2, 8, 8), ("-", 4, 4, 4, 4), ("+", 5, 0, 2, 2), ("+", 5, 10, 2, 2), ("+", 0, 5, 2, 2),
-                 ("+", 10, 5, 2, 2)],
+    "build": build_icon, "frame": frame_icon, "walls": walls_icon, "staff": staff_icon, "projects": projects_icon,
+    "teams": teams_icon, "bank": bank_icon, "company": company_icon, "ceo": ceo_icon, "settings": settings_icon,
 }
-
-
-def icon(rects: list[tuple[str, int, int, int, int]]) -> np.ndarray:
-    grid = np.zeros((GRID, GRID), dtype=bool)
-    for sign, x, y, w, h in rects:
-        grid[y:y + h, x:x + w] = sign == "+"
-    mark = np.kron(grid, np.ones((SCALE, SCALE), dtype=bool))
-    out = np.zeros((SIZE[1], SIZE[0], 4), dtype=np.uint8)
-    out[mark] = INK
-    return out
 
 
 def main() -> int:
@@ -79,9 +293,9 @@ def main() -> int:
     problems: list[str] = []
     sprites: dict[str, object] = {}
     shown = []
-    for key, rects in ICONS.items():
+    for key, draw in ICONS.items():
         name = "ui_" + key
-        image = icon(rects)
+        image = draw()
         if not (image[..., 3] > 0).any():
             problems.append(f"{name}: está vacío")
         doc = document(name, image)

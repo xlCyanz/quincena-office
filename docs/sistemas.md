@@ -40,7 +40,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   cuarto bajo el ratón; las partidas viejas los ponen en el cuarto 0. Prueba `test_quarters`.
 - El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
   fuera del local se dibuja terreno (`MapDecor`, hito 68). Paredes arriba / abajo (solo la vista, no se guarda):
-  botón «↕» de la barra o tecla P (`main.set_walls_up`, `are_walls_up`; `OfficeGrid.walls_up`, `is_tall_edge`) suben todas las piezas de borde a su
+  botón Paredes de la fila de secciones de Construir (`BuildPanel.walls_toggled`, `get_walls_button`, con el icono `ui_walls`) o tecla P (`main.set_walls_up`, `are_walls_up`; `OfficeGrid.walls_up`, `is_tall_edge`) suben todas las piezas de borde a su
   alto y lo colgado se ve a tamaño real; al elegir un objeto de pared en Construir suben solas (`main._apply_walls`). Con las paredes abajo, un
   tramo del contorno va alto solo si es de atrás y no hay local detrás de él
   (`OfficeGrid.is_back_edge`, `BEHIND_WALL_REACH`): con el local en L, el lado de un saliente va bajo. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.

@@ -9,6 +9,8 @@ signal build_mode_changed(active: bool)
 signal tool_selected(tool: String)
 ## El jugador respondió la pregunta de confirmación (mudar la Oficina Ejecutiva).
 signal confirm_answered(accept: bool)
+## Se pulsó Paredes: subir (true) o bajar las paredes.
+signal walls_toggled(up: bool)
 ## Se pulsó Comprar en la fila del terreno.
 
 ## Secciones del panel en orden: id → nombre del botón.
@@ -26,6 +28,7 @@ const BUILD_PANEL_WIDTH: float = 1000.0
 
 # Botón «?» de ayuda.
 var _help_button: Button
+var _walls_button: Button
 var _menu_bar: HFlowContainer
 # Herramientas en filas que se acomodan al ancho, dentro de un desplazamiento.
 var _tools_scroll: ScrollContainer
@@ -127,6 +130,16 @@ func _ready() -> void:
 		section_button.pressed.connect(set_section.bind(section))
 		sections.add_child(section_button)
 		_section_buttons[section] = section_button
+	# Paredes arriba / abajo: solo la vista (main decide; también con P).
+	_walls_button = Button.new()
+	_walls_button.name = "WallsButton"
+	_walls_button.text = "Paredes"
+	_walls_button.tooltip_text = "Paredes arriba / abajo (P)"
+	_walls_button.toggle_mode = true
+	_walls_button.icon = SpriteLibrary.get_ui_icon("walls")
+	_walls_button.focus_mode = Control.FOCUS_NONE
+	_walls_button.toggled.connect(func(pressed: bool) -> void: walls_toggled.emit(pressed))
+	sections.add_child(_walls_button)
 	_help_button = HelpButton.create("build")
 	sections.add_child(_help_button)
 	_exit_button = Button.new()
@@ -472,5 +485,10 @@ func _anchor_bottom_center(control: Control) -> void:
 
 
 ## Botón «?» que abre la ayuda del modo construcción.
+## Botón Paredes de la fila de secciones.
+func get_walls_button() -> Button:
+	return _walls_button
+
+
 func get_help_button() -> Button:
 	return _help_button
