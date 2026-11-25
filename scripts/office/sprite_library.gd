@@ -9,11 +9,17 @@ const FOLDER: String = "res://assets/sprites/"
 const SHADOW_ALPHA: float = 0.3
 ## Shader que pone la paleta de cada aspecto sobre la hoja base (tablas en characters.palettes).
 const PALETTE_SHADER: Shader = preload("res://scripts/office/character_palette.gdshader")
+## Foto de carné: fila de la hoja que mira al frente, lado del recorte (px de hoja) y aire sobre la cabeza.
+const PORTRAIT_ROW: int = 1
+const PORTRAIT_SIZE: int = 64
+const PORTRAIT_HEADROOM: int = 6
 
 static var _data: Dictionary = {}
 static var _textures: Dictionary[String, Texture2D] = {}
 ## Material de paleta por aspecto (null si usa la paleta base).
 static var _palette_materials: Dictionary[String, ShaderMaterial] = {}
+## Recorte de la foto por hoja (ver get_portrait).
+static var _portrait_rects: Dictionary[String, Rect2] = {}
 
 
 ## Datos de data/sprites.json (se leen una vez).
@@ -286,6 +292,30 @@ static func draw_character(canvas: CanvasItem, look: String, pose: String, rotat
 		target = Rect2(target.position + Vector2(0.0, top / get_scale()), source.size / get_scale())
 	canvas.draw_texture_rect_region(texture, target, source)
 	return true
+
+
+## Hoja y recorte de la foto de carné de un aspecto: cabeza y hombros del cuadro de pie mirando al frente.
+## {} si no hay hoja.
+static func get_portrait(look: String) -> Dictionary:
+	var characters: Dictionary = get_data().get("characters", {})
+	var looks: Dictionary = characters.get("looks", {})
+	var poses: Dictionary = characters.get("poses", {})
+	if not looks.has(look) or not poses.has("stand"):
+		return {}
+	var path: String = FOLDER + String(looks[look])
+	if not _textures.has(path):
+		_textures[path] = (load(path) as Texture2D) if ResourceLoader.exists(path) else null
+	var texture: Texture2D = _textures[path]
+	if texture == null:
+		return {}
+	if not _portrait_rects.has(path):
+		var cell := Vector2i(int(characters["cell"][0]), int(characters["cell"][1]))
+		var frame := Rect2i(Vector2i(int(poses["stand"]["column"]) * cell.x, PORTRAIT_ROW * cell.y), cell)
+		var used: Rect2i = texture.get_image().get_region(frame).get_used_rect()
+		var center_x: int = frame.position.x + used.position.x + used.size.x / 2
+		var top: int = frame.position.y + used.position.y - PORTRAIT_HEADROOM
+		_portrait_rects[path] = Rect2(center_x - PORTRAIT_SIZE / 2, top, PORTRAIT_SIZE, PORTRAIT_SIZE)
+	return {"texture": texture, "source": _portrait_rects[path], "material": get_character_material(look)}
 
 
 ## Material con la paleta de ese aspecto sobre su hoja base; null si es la paleta base o no existe.

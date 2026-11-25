@@ -1,10 +1,10 @@
-# Ficha de empleado (derecha, bajo el reloj; no pausa y se actualiza sola): datos, qué hace (status_provider),
-# barras, habilidades, rasgos, avisos y las filas Aumento, Ascender, Horario propio y Despedir.
-# Si no entra en pantalla, el contenido (menos el título) se desplaza.
+# Ficha de empleado (derecha, bajo el reloj; no pausa y se actualiza sola): cabecera con su foto, nivel, qué
+# hace (status_provider) y rasgos; estado y habilidades, historial, datos, avisos y las filas Aumento, Ascender,
+# Horario propio y Despedir. Si no entra en pantalla, todo se desplaza.
 class_name EmployeeCard
 extends CanvasLayer
 
-const PANEL_WIDTH: float = 360.0
+const PANEL_WIDTH: float = 460.0
 const MARGIN: float = 16.0
 const MARGIN_TOP: float = 140.0
 ## Espacio que se deja abajo para la barra de botones.
@@ -14,8 +14,24 @@ const ALERT_COLOR := Color("f2c14e")
 ## Barras de la ficha: clave en el empleado y nombre para el jugador.
 const BARS: Dictionary[String, String] = {"energy": "Energía", "mood": "Ánimo", "stress": "Estrés"}
 const BAR_COLORS: Dictionary[String, Color] = {
-	"energy": Color("5aa84f"), "mood": Color("4a7fc1"), "stress": Color("c9553f"),
+	"energy": UiTheme.POSITIVE, "mood": UiTheme.INFO, "stress": UiTheme.NEGATIVE,
 }
+## Foto de la cabecera, alto de las barras y columnas de nombres de barras y habilidades.
+const PHOTO_SIZE: float = 96.0
+const METER_HEIGHT: float = 8.0
+const BAR_NAME_WIDTH: float = 62.0
+const SKILL_NAME_WIDTH: float = 96.0
+const VALUE_WIDTH: float = 28.0
+const SKILL_COLOR := UiTheme.FAINT
+## Casillas del historial: clave (ver _history_values) y nombre.
+const HISTORY: Dictionary[String, String] = {
+	"projects": "Contratos", "bugs": "Errores", "late": "Tardanzas", "absent": "Ausencias", "punctuality": "Puntual",
+}
+## Datos de la ficha en dos columnas: clave y título.
+const FACTS: Dictionary[String, String] = {"team": "EQUIPO", "schedule": "HORARIO", "salary": "SUELDO", "days": "EN LA EMPRESA"}
+
+## Cambió el empleado de la ficha (0 al cerrarla).
+signal employee_changed(employee_id: int)
 
 ## Devuelve qué está haciendo un empleado ("Trabajando", …) a partir de su id.
 var status_provider: Callable = Callable()
@@ -57,6 +73,20 @@ var _promote_salary: int = 0
 var _own_label: Label
 var _own_button: Button
 var _shift_editor: ShiftEditor
+var _photo: EmployeePortrait
+var _level_badge: Label
+var _subtitle: Label
+var _now: Label
+var _traits: HFlowContainer
+var _skill_bars: Dictionary[String, ProgressBar] = {}
+var _skill_values: Dictionary[String, Label] = {}
+var _skill_names: Dictionary[String, Label] = {}
+var _history_values: Dictionary[String, Label] = {}
+var _facts: Dictionary[String, Label] = {}
+var _promotion_bar: ProgressBar
+# Texto completo de los datos y detalles (get_text); en pantalla se reparten en secciones.
+var _info_text: String = ""
+var _details_text: String = ""
 
 
 func _ready() -> void:
@@ -77,19 +107,6 @@ func _ready() -> void:
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 6)
 	_panel.add_child(outer)
-	var header := HBoxContainer.new()
-	outer.add_child(header)
-	_title = Label.new()
-	_title.theme_type_variation = &"HeaderLabel"
-	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	header.add_child(_title)
-	var close_button := Button.new()
-	close_button.text = "Cerrar"
-	close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	close_button.pressed.connect(close)
-	header.add_child(close_button)
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(_scroll)
@@ -98,35 +115,16 @@ func _ready() -> void:
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(rows)
 	_rows = rows
+	# La cabecera también se desplaza: con la interfaz grande no queda alto para dejarla fija.
+	rows.add_child(_build_header())
 
+	rows.add_child(_build_stats())
+	rows.add_child(_build_history())
+	rows.add_child(_build_facts())
 	_info = Label.new()
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_info.theme_type_variation = &"MutedLabel"
 	rows.add_child(_info)
-	for bar: String in BARS:
-		var line := HBoxContainer.new()
-		rows.add_child(line)
-		var name_label := Label.new()
-		name_label.text = BARS[bar]
-		name_label.custom_minimum_size = Vector2(80, 0)
-		line.add_child(name_label)
-		var progress := ProgressBar.new()
-		progress.min_value = 0.0
-		progress.max_value = 100.0
-		progress.show_percentage = false
-		progress.custom_minimum_size = Vector2(0, 18)
-		progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var fill := StyleBoxFlat.new()
-		fill.bg_color = BAR_COLORS[bar]
-		fill.set_corner_radius_all(3)
-		progress.add_theme_stylebox_override("fill", fill)
-		line.add_child(progress)
-		var value := Label.new()
-		value.custom_minimum_size = Vector2(40, 0)
-		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		line.add_child(value)
-		_bars[bar] = progress
-		_bar_values[bar] = value
 	_details = Label.new()
 	_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_details.add_theme_color_override("font_color", MUTED_COLOR)
@@ -182,9 +180,18 @@ func _ready() -> void:
 		if not employee.is_empty():
 			Staff.give_raise(_employee_id, int(employee["salary"]) + _raise_amount))
 	raise_row.add_child(_raise_button)
+	# Ascenso: qué le falta y una barra de avance.
+	var promotion_box := PanelContainer.new()
+	promotion_box.add_theme_stylebox_override("panel", UiTheme.flat_box(UiTheme.BG, 8.0))
+	rows.add_child(promotion_box)
+	var promotion_rows := VBoxContainer.new()
+	promotion_rows.add_theme_constant_override("separation", 4)
+	promotion_box.add_child(promotion_rows)
 	_promotion_label = Label.new()
 	_promotion_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rows.add_child(_promotion_label)
+	promotion_rows.add_child(_promotion_label)
+	_promotion_bar = _make_meter(UiTheme.ACCENT)
+	promotion_rows.add_child(_promotion_bar)
 	_promote_row = HBoxContainer.new()
 	rows.add_child(_promote_row)
 	_promote_minus = Button.new()
@@ -254,6 +261,179 @@ func _ready() -> void:
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _refresh())
 
 
+# Cabecera: foto con su nivel, nombre, cargo, qué hace y rasgos; Cerrar arriba a la derecha.
+func _build_header() -> Control:
+	var band := PanelContainer.new()
+	band.theme_type_variation = &"HeaderPanel"
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 14)
+	band.add_child(top)
+	var photo_column := VBoxContainer.new()
+	photo_column.add_theme_constant_override("separation", -10)
+	top.add_child(photo_column)
+	_photo = EmployeePortrait.new()
+	_photo.custom_minimum_size = Vector2(PHOTO_SIZE, PHOTO_SIZE)
+	photo_column.add_child(_photo)
+	_level_badge = Label.new()
+	_level_badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_level_badge.theme_type_variation = &"CaptionLabel"
+	_level_badge.add_theme_color_override("font_color", UiTheme.BG)
+	var badge := StyleBoxFlat.new()
+	badge.bg_color = UiTheme.ACCENT
+	badge.border_color = UiTheme.OUTLINE
+	badge.set_border_width_all(2)
+	badge.content_margin_left = 8.0
+	badge.content_margin_right = 8.0
+	badge.content_margin_top = 1.0
+	badge.content_margin_bottom = 1.0
+	_level_badge.add_theme_stylebox_override("normal", badge)
+	photo_column.add_child(_level_badge)
+	var who := VBoxContainer.new()
+	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	who.add_theme_constant_override("separation", 2)
+	top.add_child(who)
+	_title = Label.new()
+	_title.theme_type_variation = &"HeaderLabel"
+	_title.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	who.add_child(_title)
+	_subtitle = Label.new()
+	_subtitle.theme_type_variation = &"MutedLabel"
+	_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	who.add_child(_subtitle)
+	_now = Label.new()
+	_now.theme_type_variation = &"MutedLabel"
+	_now.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	who.add_child(_now)
+	_traits = HFlowContainer.new()
+	_traits.add_theme_constant_override("h_separation", 4)
+	_traits.add_theme_constant_override("v_separation", 4)
+	who.add_child(_traits)
+	var close_button := Button.new()
+	close_button.text = "Cerrar"
+	close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	close_button.pressed.connect(close)
+	top.add_child(close_button)
+	return band
+
+
+# Estado (energía, ánimo, estrés) y habilidades, lado a lado.
+func _build_stats() -> Control:
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 18)
+	var state := _section("ESTADO")
+	state.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns.add_child(state)
+	for bar: String in BARS:
+		var parts: Array = _meter_row(state, BARS[bar], BAR_NAME_WIDTH, BAR_COLORS[bar])
+		_bars[bar] = parts[0]
+		_bar_values[bar] = parts[1]
+	var skills := _section("HABILIDADES")
+	skills.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skills.size_flags_stretch_ratio = 1.2
+	columns.add_child(skills)
+	for skill: String in StaffCatalog.get_skill_ids():
+		var parts: Array = _meter_row(skills, StaffCatalog.get_skill_name(skill), SKILL_NAME_WIDTH, SKILL_COLOR)
+		_skill_bars[skill] = parts[0]
+		_skill_values[skill] = parts[1]
+		_skill_names[skill] = parts[2]
+	return columns
+
+
+# Historial en casillas: contratos, errores, tardanzas, ausencias y puntualidad.
+func _build_history() -> Control:
+	var section := _section("HISTORIAL")
+	var grid := GridContainer.new()
+	grid.columns = HISTORY.size()
+	grid.add_theme_constant_override("h_separation", 6)
+	section.add_child(grid)
+	for key: String in HISTORY:
+		var tile := PanelContainer.new()
+		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tile.add_theme_stylebox_override("panel", UiTheme.flat_box(UiTheme.BG, 4.0))
+		grid.add_child(tile)
+		var stack := VBoxContainer.new()
+		stack.add_theme_constant_override("separation", 0)
+		tile.add_child(stack)
+		var value := Label.new()
+		value.theme_type_variation = &"SectionLabel"
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		stack.add_child(value)
+		var caption := Label.new()
+		caption.text = HISTORY[key]
+		caption.theme_type_variation = &"MutedLabel"
+		caption.add_theme_font_size_override("font_size", 11)
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		stack.add_child(caption)
+		_history_values[key] = value
+	return section
+
+
+# Equipo, horario, sueldo y dónde trabaja, en dos columnas.
+func _build_facts() -> Control:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 18)
+	grid.add_theme_constant_override("v_separation", 6)
+	for key: String in FACTS:
+		var fact := VBoxContainer.new()
+		fact.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		fact.add_theme_constant_override("separation", 0)
+		grid.add_child(fact)
+		var caption := Label.new()
+		caption.text = FACTS[key]
+		caption.theme_type_variation = &"CaptionLabel"
+		fact.add_child(caption)
+		var value := Label.new()
+		value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		fact.add_child(value)
+		_facts[key] = value
+	return grid
+
+
+func _section(title: String) -> VBoxContainer:
+	var section := VBoxContainer.new()
+	section.add_theme_constant_override("separation", 4)
+	var caption := Label.new()
+	caption.text = title
+	caption.theme_type_variation = &"CaptionLabel"
+	section.add_child(caption)
+	return section
+
+
+# Fila nombre · barra · valor; devuelve [barra, valor, nombre].
+func _meter_row(parent: Container, title: String, name_width: float, color: Color) -> Array:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	parent.add_child(line)
+	var name_label := Label.new()
+	name_label.text = title
+	name_label.custom_minimum_size = Vector2(name_width, 0)
+	name_label.add_theme_font_size_override("font_size", 14)
+	line.add_child(name_label)
+	var meter: ProgressBar = _make_meter(color)
+	meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meter.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_child(meter)
+	var value := Label.new()
+	value.custom_minimum_size = Vector2(VALUE_WIDTH, 0)
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value.theme_type_variation = &"StrongLabel"
+	line.add_child(value)
+	return [meter, value, name_label]
+
+
+func _make_meter(color: Color) -> ProgressBar:
+	var meter := ProgressBar.new()
+	meter.min_value = 0.0
+	meter.max_value = 100.0
+	meter.show_percentage = false
+	meter.custom_minimum_size = Vector2(0, METER_HEIGHT)
+	meter.add_theme_stylebox_override("background", UiTheme.flat_fill(UiTheme.OUTLINE))
+	meter.add_theme_stylebox_override("fill", UiTheme.flat_fill(color))
+	return meter
+
+
 ## Abre la ficha de un empleado (o la cambia a otro).
 func open_employee(employee_id: int) -> void:
 	_employee_id = employee_id
@@ -262,10 +442,13 @@ func open_employee(employee_id: int) -> void:
 	_cancel_fire()
 	_panel.visible = true
 	_refresh()
+	employee_changed.emit(employee_id)
 
 
 func close() -> void:
-	_panel.visible = false
+	if _panel.visible:
+		_panel.visible = false
+		employee_changed.emit(0)
 
 
 func is_open() -> bool:
@@ -359,10 +542,10 @@ func get_bar_value(bar: String) -> float:
 
 ## Todo el texto de la ficha (para las pruebas).
 func get_text() -> String:
-	var texts: Array[String] = [_title.text, _info.text]
+	var texts: Array[String] = [_title.text, _info_text]
 	for bar: String in BARS:
 		texts.append("%s %s" % [BARS[bar], _bar_values[bar].text])
-	texts.append(_details.text)
+	texts.append(_details_text)
 	if _alert.visible:
 		texts.append(_alert.text)
 	texts.append(_raise_label.text)
@@ -388,46 +571,71 @@ func _refresh() -> void:
 		close()
 		return
 	_title.text = employee["name"]
+	_photo.set_employee(employee)
+	var role: String = employee["role"]
+	_level_badge.visible = StaffCatalog.has_levels(role)
+	_level_badge.text = StaffCatalog.get_level_name(employee["level"]).to_upper()
+	var days: int = GameClock.get_day_count() - int(employee["hired_day"])
+	_subtitle.text = "%s · %d años" % [StaffCatalog.get_role_name(role), employee["age"]]
+	var now: String = String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"
+	_now.text = "Ahora: %s" % now
+	_refresh_traits(employee)
 	var schedule: WorkSchedule = Staff.get_schedule(employee)
 	var lunch: int = schedule.get_lunch_hour()
 	var team: Dictionary = Staff.get_team_of(employee["id"])
-	_info.text = "\n".join([
-		"%s, %d años" % [Staff.describe_employee(employee), employee["age"]],
-		"Equipo: %s" % _describe_team(employee, team),
-		"Horario: %s · almuerzo %d:00–%d:00" % [schedule.describe(), lunch, (lunch + 1) % GameConstants.HOURS_PER_DAY],
-		_describe_pay(employee),
-		"Ahora: %s" % (String(status_provider.call(_employee_id)) if status_provider.is_valid() else "—"),
-	])
+	var schedule_text: String = "%s · almuerzo %d:00–%d:00" % [schedule.describe(), lunch, (lunch + 1) % GameConstants.HOURS_PER_DAY]
+	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
+	_facts["team"].text = _describe_team(employee, team)
+	_facts["schedule"].text = schedule_text
+	_facts["salary"].text = "%s al mes" % MoneyFormat.format(employee["salary"])
+	_facts["days"].text = "%d %s" % [days, "día" if days == 1 else "días"]
+	# En pantalla quedan aparte lo que no tiene su casilla: lo ganado, quién lo dirige y cuánto rinde.
+	var extra: Array[String] = [_describe_pay(employee)]
 	var boss: String = _describe_boss(employee)
 	if not boss.is_empty():
-		_info.text += "\n" + boss
+		extra.append(boss)
 	var performance: String = describe_performance(employee)
 	if not performance.is_empty():
-		_info.text += "\n" + performance
+		extra.append(performance)
+	_info.text = "\n".join(extra)
+	_info_text = "\n".join(["%s, %d años" % [Staff.describe_employee(employee), employee["age"]],
+		"Equipo: %s" % _describe_team(employee, team), "Horario: %s" % schedule_text, "Ahora: %s" % now] + extra)
 	for bar: String in BARS:
 		var value: int = int(employee[bar])
 		_bars[bar].value = value
 		_bar_values[bar].text = str(value)
-	var details: Array[String] = ["Habilidades: %s" % Staff.describe_skills(employee)]
-	var known: String = Staff.describe_known_traits(employee)
-	details.append(known if not known.is_empty() else "Rasgos: ninguno conocido todavía")
+	var main_skill: String = StaffCatalog.get_main_skill(role)
+	for skill: String in StaffCatalog.get_skill_ids():
+		var value: int = int(employee["skills"][skill])
+		var main: bool = skill == main_skill
+		_skill_bars[skill].value = value
+		_skill_bars[skill].add_theme_stylebox_override("fill", UiTheme.flat_fill(UiTheme.ACCENT if main else SKILL_COLOR))
+		_skill_values[skill].text = str(value)
+		for label: Label in [_skill_names[skill], _skill_values[skill]]:
+			if main:
+				label.add_theme_color_override("font_color", UiTheme.ACCENT)
+			else:
+				label.remove_theme_color_override("font_color")
+	_refresh_history(employee)
+	var shown: Array[String] = []
 	# Qué hace cada rasgo conocido.
 	for trait_id: String in employee.get("known_traits", []):
 		var effect: String = Staff.describe_trait(trait_id)
 		if not effect.is_empty():
-			details.append("· %s: %s" % [StaffCatalog.get_trait_name(trait_id), effect])
-	# Historial y puntualidad.
-	details.append(Staff.describe_history(employee))
+			shown.append("· %s: %s" % [StaffCatalog.get_trait_name(trait_id), effect])
 	if Staff.is_waiting_promotion(employee):
-		details.append("Quiere un ascenso: ya puede ascender y no se lo dan.")
+		shown.append("Quiere un ascenso: ya puede ascender y no se lo dan.")
 	if Staff.is_missing(employee, GameClock.get_weekday(), GameClock.get_hour()):
-		details.append("Hoy faltó." if int(employee["missing_until"]) - int(employee["missing_from"]) > 1 else "Llegó tarde: viene a la próxima hora.")
-	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
+		shown.append("Hoy faltó." if int(employee["missing_until"]) - int(employee["missing_from"]) > 1 else "Llegó tarde: viene a la próxima hora.")
 	if not room.is_empty():
-		details.append("Trabaja en: %s · %s" % [RoomCatalog.get_display_name(room["type"]),
+		shown.append("Trabaja en: %s · %s" % [RoomCatalog.get_display_name(room["type"]),
 			Ambiance.describe(room, OfficeState.furniture, OfficeState.count_room_windows(room),
 				OfficeState.get_room_door_ambiance(room))])
-	_details.text = "\n".join(details)
+	_details.text = "\n".join(shown)
+	_details.visible = not shown.is_empty()
+	var known: String = Staff.describe_known_traits(employee)
+	_details_text = "\n".join(["Habilidades: %s" % Staff.describe_skills(employee),
+		known if not known.is_empty() else "Rasgos: ninguno conocido todavía", Staff.describe_history(employee)] + shown)
 	_refresh_raise(employee)
 	_refresh_promotion(employee)
 	_refresh_own_schedule(employee, team)
@@ -449,6 +657,51 @@ static func describe_performance(employee: Dictionary) -> String:
 	if mood < 1.0:
 		causes.append("desanimado")
 	return "Rinde %d %% (%s)" % [roundi(energy * mood * 100.0), " y ".join(causes)]
+
+
+# Rasgos conocidos como etiquetas, más cuántos faltan por descubrir.
+func _refresh_traits(employee: Dictionary) -> void:
+	for child: Node in _traits.get_children():
+		_traits.remove_child(child)
+		child.queue_free()
+	var known: Array = employee.get("known_traits", [])
+	for trait_id: String in known:
+		_traits.add_child(_chip(StaffCatalog.get_trait_name(trait_id), UiTheme.SOFT))
+	var hidden: int = (employee.get("traits", []) as Array).size() - known.size()
+	if hidden > 0:
+		var chip: Label = _chip("? %d %s" % [hidden, "oculto" if hidden == 1 else "ocultos"], UiTheme.FAINT)
+		chip.tooltip_text = "Se descubren trabajando con él."
+		chip.mouse_filter = Control.MOUSE_FILTER_PASS
+		_traits.add_child(chip)
+
+
+func _chip(text: String, color: Color) -> Label:
+	var chip := Label.new()
+	chip.text = text
+	chip.add_theme_font_size_override("font_size", 13)
+	chip.add_theme_color_override("font_color", color)
+	var box: StyleBoxFlat = UiTheme.flat_box(Color(UiTheme.OUTLINE, 0.35), 0.0)
+	box.content_margin_left = 8.0
+	box.content_margin_right = 8.0
+	box.content_margin_top = 1.0
+	box.content_margin_bottom = 1.0
+	chip.add_theme_stylebox_override("normal", box)
+	return chip
+
+
+func _refresh_history(employee: Dictionary) -> void:
+	var bugs: int = int(employee.get("bugs_caused", 0))
+	var punctuality: int = Staff.get_punctuality(employee)
+	_history_values["projects"].text = str(int(employee.get("projects_worked", 0)))
+	_history_values["bugs"].text = str(bugs)
+	_history_values["late"].text = str(int(employee.get("late_count", 0)))
+	_history_values["absent"].text = str(int(employee.get("absent_count", 0)))
+	_history_values["punctuality"].text = "—" if punctuality < 0 else "%d%%" % punctuality
+	_history_values["projects"].add_theme_color_override("font_color", UiTheme.POSITIVE)
+	if bugs > 0:
+		_history_values["bugs"].add_theme_color_override("font_color", UiTheme.NEGATIVE)
+	else:
+		_history_values["bugs"].remove_theme_color_override("font_color")
 
 
 # Fila Horario propio: el botón para tenerlo o volver al del equipo o cargo y, si lo tiene, sus controles.
@@ -535,6 +788,17 @@ func _refresh_promotion(employee: Dictionary) -> void:
 	var salary: int = employee["salary"]
 	var ready: bool = bool(progress["ready"])
 	_promote_row.visible = ready
+	# Barra: lo que lleva de contratos y días (llena si ya puede); sin siguiente cargo no se ve.
+	var parts: Array[float] = []
+	for key: String in ["projects", "days"]:
+		var needed: int = int(progress[key + "_needed"])
+		if needed > 0:
+			parts.append(minf(1.0, float(progress[key]) / needed))
+	var fraction: float = 1.0
+	if not ready and not parts.is_empty():
+		fraction = (parts.reduce(func(total: float, part: float) -> float: return total + part, 0.0) as float) / parts.size()
+	_promotion_bar.value = fraction * 100.0
+	_promotion_bar.visible = not (next_level.is_empty() and next_role.is_empty()) and progress["blocker"] != "stage"
 	var new_salary: int = 0
 	if not next_role.is_empty():
 		# Un Senior asciende a líder de equipo desde la etapa de ese cargo.

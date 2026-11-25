@@ -38,6 +38,7 @@ func _ready() -> void:
 	_camera.pan_blocker = _is_camera_locked
 	_staff_panel.attach_button(_build_panel.get_menu_bar())
 	_staff_panel.employee_selected.connect(_employee_card.open_employee)
+	_employee_card.employee_changed.connect(_staff_panel.set_selected_employee)
 	_projects_panel.attach_button(_build_panel.get_menu_bar())
 	_teams_panel.attach_button(_build_panel.get_menu_bar())
 	_bank_panel.attach_button(_build_panel.get_menu_bar())

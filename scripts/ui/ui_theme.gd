@@ -24,6 +24,9 @@ const POSITIVE := Color("7bd389")
 const NEGATIVE := Color("e5645c")
 const INFO := Color("6fa3ef")
 const SELECTED := Color("3a3420")
+## Tarjeta que se pulsa: bajo el ratón y elegida.
+const CARD_HOVER := Color("282c40")
+const CARD_SELECTED := Color("2e2d25")
 const ALERT_BG := Color("2e2026")
 ## Fondo de las tarjetas que flotan sobre la oficina (HUD y paneles laterales).
 const FLOAT_BG := Color(0.106, 0.114, 0.165, 0.95)
@@ -252,6 +255,17 @@ static func _add_buttons(theme: Theme) -> void:
 	theme.set_type_variation("QuietButton", "Button")
 	theme.set_color("font_color", "QuietButton", MUTED)
 	theme.set_color("font_focus_color", "QuietButton", MUTED)
+	# Tarjeta que se pulsa (empleados en Personal): el contenido va dentro como nodos; la elegida lleva borde de acento.
+	theme.set_type_variation("CardButton", "Button")
+	theme.set_stylebox("normal", "CardButton", panel_box(CARD, false, 0.0))
+	theme.set_stylebox("hover", "CardButton", panel_box(CARD_HOVER, false, 0.0))
+	theme.set_stylebox("disabled", "CardButton", panel_box(CARD, false, 0.0))
+	var chosen := StyleBoxFlat.new()
+	chosen.bg_color = CARD_SELECTED
+	chosen.border_color = ACCENT
+	chosen.set_border_width_all(BORDER)
+	for state: String in ["pressed", "hover_pressed"]:
+		theme.set_stylebox(state, "CardButton", chosen)
 	# Casillas: texto normal y sin caja.
 	for type: String in ["CheckBox", "CheckButton"]:
 		var empty := StyleBoxEmpty.new()

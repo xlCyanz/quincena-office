@@ -299,6 +299,13 @@ func _check_panel() -> void:
 	var panel: StaffPanel = game.get_node("StaffPanel")
 	await _click(panel.get_open_button())
 	_expect(panel.get_list_text().contains("Empleados (0) · puestos libres: 1"), "cabecera de empleados: %s" % panel.get_list_text())
+	# Sin empleados abre en Vacantes, con el formulario a la vista.
+	_expect(panel.get_current_tab() == StaffPanel.TAB_HIRING and panel.get_publish_button().is_visible_in_tree(),
+		"sin empleados abre en Vacantes: pestaña %d" % panel.get_current_tab())
+	panel.show_tab(StaffPanel.TAB_EMPLOYEES)
+	_expect(not panel.get_publish_button().is_visible_in_tree() and panel.get_publish_target_rect().has_area(),
+		"en Empleados el formulario no se ve y el tutorial señala la pestaña Vacantes")
+	panel.show_tab(StaffPanel.TAB_HIRING)
 	var vacancy: Dictionary = _vacancy_with_candidates(1)
 	await get_tree().process_frame
 	var candidate: Dictionary = vacancy["candidates"][0]
@@ -329,6 +336,22 @@ func _check_panel() -> void:
 	await get_tree().process_frame
 	_expect(panel.get_list_text().contains("Empleados (1) · puestos libres: 0") and panel.get_list_text().contains(candidate["name"]),
 		"el empleado en la lista: %s" % panel.get_list_text())
+	# Su tarjeta lleva su foto y abre la ficha, que la marca.
+	panel.show_tab(StaffPanel.TAB_EMPLOYEES)
+	await get_tree().process_frame
+	var hired_id: int = Staff.employees[0]["id"]
+	var card_button: Button = panel.get_card_button(hired_id)
+	var portraits: Array[Node] = card_button.find_children("*", "EmployeePortrait", true, false)
+	_expect(portraits.size() == 1 and (portraits[0] as EmployeePortrait).has_photo()
+		and (portraits[0] as EmployeePortrait).get_look() == Employee.look_for(Staff.employees[0]), "la tarjeta tiene su foto")
+	var employee_card: EmployeeCard = game.get_node("EmployeeCard")
+	await _click(card_button)
+	_expect(employee_card.get_employee_id() == hired_id and panel.get_card_button(hired_id).button_pressed,
+		"la tarjeta abre la ficha y queda marcada")
+	employee_card.close()
+	await get_tree().process_frame
+	_expect(not panel.get_card_button(hired_id).button_pressed, "al cerrar la ficha se desmarca")
+	panel.show_tab(StaffPanel.TAB_HIRING)
 
 	var vacancy2: Dictionary = _vacancy_with_candidates(1)
 	await get_tree().process_frame

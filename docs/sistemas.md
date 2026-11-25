@@ -159,7 +159,12 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 ## Personal
 
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
-  en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo.
+  en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo. Va en pestañas
+  (`show_tab`: `TAB_EMPLOYEES`, `TAB_HIRING`, `TAB_ORG`, esta solo si hay organigrama; sin empleados abre en Vacantes y el tutorial
+  señala la pestaña con `get_publish_target_rect`). Empleados son tarjetas (`CardButton`) con su foto (`EmployeePortrait`), nombre,
+  cargo y el globo de estado; abren la ficha, que marca la suya (`EmployeeCard.employee_changed` → `set_selected_employee`).
+  La foto es el cuadro de pie mirando al frente recortado en cabeza y hombros (`SpriteLibrary.get_portrait`, con la paleta de
+  `Employee.look_for`) sobre el color de su área.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
 - Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
   Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
@@ -170,7 +175,10 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   bajó de 50. Con ánimo <30 o estrés >80 tres días seguidos avisa (`quit_day`) y a los 5 días renuncia (cobra lo ganado + lo debido,
   «Liquidación por renuncia»). `Staff.give_raise` (aumento ≥10 % lo retiene, +25 de ánimo; lo ganado antes queda en `carry`).
   Bajo el 110 % y desde 30 días del último aumento, 2 %/día pide +10 % (`raise_request`, 3 días): aceptar +10, negar o dejarlo pasar −15.
-  La ficha muestra avisos, pedido (Dar el aumento / Negar) y la fila Aumento; su contenido se desplaza si no entra.
+  La ficha (`EmployeeCard`, 460 px) lleva cabecera con la foto, el nivel, qué hace y los rasgos (conocidos y «? N ocultos»), estado y
+  habilidades lado a lado (la principal del cargo en ámbar), historial en casillas, equipo, horario, sueldo y días en la empresa, avisos,
+  pedido (Dar el aumento / Negar) y las filas Aumento y Ascender (con barra de avance); todo se desplaza si no entra. `get_text` junta
+  el texto completo de los datos aunque en pantalla vayan repartidos.
 - Ascensos (`Staff.promote`, `get_promotion_progress`; `data/staff.json`, promotion): `projects_worked` cuenta los contratos entregados en
   los que sumó puntos (el contrato anota `worked_by`; `EventBus.contract_delivered`); los vendedores cuentan los aceptados mientras estaban
   (`EventBus.contract_accepted`). Con 3/30, 8/90 y 15/180 (contratos/días desde `hired_day`) la ficha muestra la fila Ascender con un sueldo

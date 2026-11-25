@@ -80,7 +80,8 @@ func tutorial_target_rect(key: String) -> Rect2:
 		"staff":
 			control = _staff_panel.get_open_button()
 		"staff_publish":
-			control = _staff_panel.get_publish_button()
+			# En otra pestaña se resalta Vacantes.
+			return _staff_panel.get_publish_target_rect() if _staff_panel.is_open() else Rect2()
 		"projects":
 			control = _projects_panel.get_open_button()
 		"projects_accept":

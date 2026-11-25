@@ -1,5 +1,6 @@
-# Menú Personal (lado izquierdo, no pausa): publicar vacantes, candidatos (entrevistar y ofertar
-# de a salary_step), empleados, puestos libres y, con líderes o gerentes, el organigrama.
+# Menú Personal (lado izquierdo, no pausa), en pestañas: Empleados (tarjetas con foto que abren la ficha),
+# Vacantes (publicar, candidatos: entrevistar y ofertar de a salary_step) y, con líderes, gerentes o
+# departamentos, Organigrama.
 class_name StaffPanel
 extends CanvasLayer
 
@@ -16,6 +17,19 @@ const MARGIN_BOTTOM: float = 76.0
 const TITLE_FONT_SIZE: int = 24
 const SECTION_FONT_SIZE: int = 18
 const MUTED_COLOR := UiTheme.MUTED
+## Pestañas del panel.
+const TAB_EMPLOYEES: int = 0
+const TAB_HIRING: int = 1
+const TAB_ORG: int = 2
+## Tarjeta de empleado: columnas, alto, lado de la foto y del globo de estado.
+const CARD_COLUMNS: int = 2
+const CARD_HEIGHT: float = 76.0
+const CARD_PHOTO: float = 56.0
+const CARD_ICON: Vector2 = Vector2(22, 24)
+## Nombre de cada globo de estado (Staff.get_status_icon) para el texto de ayuda.
+const STATUS_NAMES: Dictionary[String, String] = {
+	"no_station": "Sin puesto", "tired": "Cansado", "upset": "Molesto", "stressed": "Estresado", "idle": "Sin proyecto",
+}
 
 # Botón «?» de ayuda.
 var _help_button: Button
@@ -32,6 +46,13 @@ var _outlook_label: Label
 var _publish_button: Button
 var _status_label: Label
 var _list: VBoxContainer
+var _tabs: TabBar
+var _hire_form: VBoxContainer
+var _employees_list: VBoxContainer
+var _org_list: VBoxContainer
+var _vacancy_list: VBoxContainer
+## Empleado cuya ficha está abierta (su tarjeta se marca).
+var _selected_id: int = 0
 var _salary: int = 0
 var _vacancy_close_buttons: Dictionary[int, Button] = {}
 var _discard_buttons: Dictionary[int, Button] = {}
@@ -89,7 +110,18 @@ func _ready() -> void:
 	_help_button = HelpButton.create("staff")
 	header.add_child(_help_button)
 	header.add_child(close_button)
-	# Bajo la cabecera todo se desplaza junto para que quepa con la interfaz grande.
+	_tabs = TabBar.new()
+	_tabs.add_tab("Empleados")
+	_tabs.add_tab("Vacantes")
+	_tabs.add_tab("Organigrama")
+	_tabs.tab_changed.connect(func(_tab: int) -> void: _show_tab())
+	rows.add_child(_tabs)
+	_status_label = Label.new()
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status_label.add_theme_color_override("font_color", MUTED_COLOR)
+	rows.add_child(_status_label)
+	_status_label.visible = false
+	# Bajo las pestañas todo se desplaza junto para que quepa con la interfaz grande.
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -98,6 +130,11 @@ func _ready() -> void:
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", 8)
 	scroll.add_child(rows)
+	var content: VBoxContainer = rows
+	_hire_form = VBoxContainer.new()
+	_hire_form.add_theme_constant_override("separation", 8)
+	content.add_child(_hire_form)
+	rows = _hire_form
 
 	_add_section(rows, "Nueva vacante")
 	var choice_row := HBoxContainer.new()
@@ -154,16 +191,15 @@ func _ready() -> void:
 	_publish_button.text = "Publicar vacante"
 	_publish_button.pressed.connect(_on_publish_pressed)
 	rows.add_child(_publish_button)
-	_status_label = Label.new()
-	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status_label.add_theme_color_override("font_color", MUTED_COLOR)
-	rows.add_child(_status_label)
-
 	rows.add_child(HSeparator.new())
+
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
-	rows.add_child(_list)
+	content.add_child(_list)
+	_employees_list = _make_list()
+	_vacancy_list = _make_list()
+	_org_list = _make_list()
 
 	_reset_salary()
 	_panel.visible = false
@@ -183,7 +219,9 @@ func set_open(open: bool) -> void:
 		return
 	_panel.visible = open
 	if open:
-		_status_label.text = ""
+		_set_status("")
+		# Sin empleados lo primero es contratar.
+		show_tab(TAB_HIRING if Staff.employees.is_empty() else TAB_EMPLOYEES)
 		_refresh()
 	staff_mode_changed.emit(open)
 
@@ -350,7 +388,7 @@ func _update_salary() -> void:
 func _on_publish_pressed() -> void:
 	var result: Dictionary = Staff.open_vacancy(_selected_role(), _selected_level(), _salary,
 		_publicity_check.button_pressed)
-	_status_label.text = result["message"]
+	_set_status(result["message"])
 	if result["ok"]:
 		_publicity_check.button_pressed = false
 
@@ -362,9 +400,10 @@ func _refresh() -> void:
 		return
 	_refresh_role_locks()
 	_update_salary()
-	for child: Node in _list.get_children():
-		_list.remove_child(child)
-		child.queue_free()
+	for list: VBoxContainer in [_employees_list, _org_list, _vacancy_list]:
+		for child: Node in list.get_children():
+			list.remove_child(child)
+			child.queue_free()
 	_vacancy_close_buttons.clear()
 	_discard_buttons.clear()
 	_interview_buttons.clear()
@@ -377,12 +416,16 @@ func _refresh() -> void:
 	_boss_choices.clear()
 	_add_employees()
 	_add_org_chart()
-	_list.add_child(HSeparator.new())
-	_add_section(_list, "Vacantes abiertas")
+	_add_section(_vacancy_list, "Vacantes abiertas")
 	if Staff.vacancies.is_empty():
-		_list.add_child(_muted_label("No hay vacantes abiertas."))
+		_vacancy_list.add_child(_muted_label("No hay vacantes abiertas."))
 	for vacancy: Dictionary in Staff.vacancies:
 		_add_vacancy(vacancy)
+	_tabs.set_tab_title(TAB_EMPLOYEES, "Empleados (%d)" % Staff.employees.size())
+	_tabs.set_tab_title(TAB_HIRING, "Vacantes (%d)" % Staff.vacancies.size())
+	_tabs.set_tab_hidden(TAB_ORG, _org_list.get_child_count() == 0)
+	if _tabs.is_tab_hidden(_tabs.current_tab):
+		show_tab(TAB_EMPLOYEES)
 	# Olvida las ofertas de los candidatos que ya no están.
 	for candidate_id: int in _offers.keys():
 		if not _offer_buttons.has(candidate_id):
@@ -391,33 +434,84 @@ func _refresh() -> void:
 
 func _add_employees() -> void:
 	var free: int = Staff.get_free_workstations().size()
-	_add_section(_list, "Empleados (%d) · puestos libres: %d" % [Staff.employees.size(), free])
+	_add_section(_employees_list, "Empleados (%d) · puestos libres: %d" % [Staff.employees.size(), free])
 	if Staff.employees.is_empty():
-		_list.add_child(_muted_label("Todavía no hay empleados. Para contratar hace falta un puesto de trabajo libre: escritorio con computadora y silla delante, dentro de un Área de trabajo que funcione."))
+		_employees_list.add_child(_muted_label("Todavía no hay empleados. Para contratar hace falta un puesto de trabajo libre: escritorio con computadora y silla delante, dentro de un Área de trabajo que funcione."))
+		return
+	var grid := GridContainer.new()
+	grid.columns = CARD_COLUMNS
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	_employees_list.add_child(grid)
 	for employee: Dictionary in Staff.employees:
-		var lines: Array[String] = ["%s, %d años · %s" % [employee["name"], employee["age"], Staff.describe_employee(employee)],
-			Staff.describe_skills(employee)]
-		var known: String = Staff.describe_known_traits(employee)
-		if not known.is_empty():
-			lines.append(known)
-		if int(employee["owed"]) > 0:
-			lines.append("Se le deben %s de nómina." % MoneyFormat.format(employee["owed"]))
-		if not Staff.has_working_station(employee):
-			lines.append("Su puesto de trabajo ya no funciona.")
-		var row := HBoxContainer.new()
-		_list.add_child(row)
-		var info := Label.new()
-		info.text = "\n".join(lines)
-		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(info)
-		var card_button := Button.new()
-		card_button.text = "Ficha"
-		card_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var employee_id: int = employee["id"]
-		card_button.pressed.connect(func() -> void: employee_selected.emit(employee_id))
-		row.add_child(card_button)
-		_card_buttons[employee_id] = card_button
+		grid.add_child(_make_employee_card(employee))
+
+
+# Tarjeta de un empleado: foto, nombre, cargo y, si algo anda mal, su globo. Abre la ficha.
+func _make_employee_card(employee: Dictionary) -> Button:
+	var employee_id: int = employee["id"]
+	var card := Button.new()
+	card.custom_minimum_size = Vector2(0, CARD_HEIGHT)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.theme_type_variation = &"CardButton"
+	card.toggle_mode = true
+	card.button_pressed = employee_id == _selected_id
+	card.pressed.connect(func() -> void: employee_selected.emit(employee_id))
+	_card_buttons[employee_id] = card
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(row)
+	var photo := EmployeePortrait.new()
+	photo.custom_minimum_size = Vector2(CARD_PHOTO, CARD_PHOTO)
+	photo.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	photo.set_employee(employee)
+	row.add_child(photo)
+	var texts := VBoxContainer.new()
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	texts.alignment = BoxContainer.ALIGNMENT_CENTER
+	texts.add_theme_constant_override("separation", 0)
+	texts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(texts)
+	var name_label := Label.new()
+	name_label.text = employee["name"]
+	name_label.theme_type_variation = &"StrongLabel"
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	texts.add_child(name_label)
+	var role_label := Label.new()
+	role_label.text = StaffCatalog.describe_title(employee["role"], employee["level"])
+	role_label.theme_type_variation = &"MutedLabel"
+	role_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	texts.add_child(role_label)
+	var problems: Array[String] = []
+	if int(employee["owed"]) > 0:
+		problems.append("Se le deben %s de nómina." % MoneyFormat.format(employee["owed"]))
+	if not Staff.has_working_station(employee):
+		problems.append("Su puesto de trabajo ya no funciona.")
+	var icon: String = Staff.get_status_icon(employee)
+	if not icon.is_empty():
+		problems.push_front(STATUS_NAMES.get(icon, ""))
+		var sprite: String = SpriteLibrary.get_status_icon_sprite(icon)
+		if not sprite.is_empty():
+			var globe := TextureRect.new()
+			globe.texture = SpriteLibrary.get_texture(sprite)
+			globe.custom_minimum_size = CARD_ICON
+			globe.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			globe.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			globe.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			globe.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			globe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(globe)
+	if problems.size() > (0 if icon.is_empty() else 1) or not icon.is_empty():
+		var note := Label.new()
+		note.text = " · ".join(problems)
+		note.theme_type_variation = &"CaptionLabel"
+		note.add_theme_color_override("font_color", UiTheme.ACCENT)
+		note.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		texts.add_child(note)
+	card.tooltip_text = "Abrir la ficha de %s" % employee["name"]
+	return card
 
 
 # Organigrama: quién dirige a quién, solo si hay líderes o gerentes.
@@ -427,19 +521,18 @@ func _add_org_chart() -> void:
 	var executives: Array[Dictionary] = Staff.get_executives()
 	if leaders.is_empty() and managers.is_empty() and executives.is_empty() and not Staff.departments_apply():
 		return
-	_list.add_child(HSeparator.new())
-	_add_section(_list, "Organigrama")
+	_add_section(_org_list, "Organigrama")
 	_add_departments(executives)
-	_list.add_child(_muted_label("CEO · dirige %d de %d líderes con equipo" % [Staff.get_ceo_leaders().size(), Staff.get_leader_cap(0)]))
+	_org_list.add_child(_muted_label("CEO · dirige %d de %d líderes con equipo" % [Staff.get_ceo_leaders().size(), Staff.get_leader_cap(0)]))
 	for manager: Dictionary in managers:
 		var present: bool = Staff.is_expected_now(Staff.employee_key(manager["id"]))
-		_list.add_child(_muted_label("Gerente %s · dirige %d de %d líderes (%s) · sus equipos rinden +%d %% mientras está presente" % [
+		_org_list.add_child(_muted_label("Gerente %s · dirige %d de %d líderes (%s) · sus equipos rinden +%d %% mientras está presente" % [
 			manager["name"], Staff.get_leaders_of(manager["id"]).size(), Staff.get_leader_cap(manager["id"]),
 			"presente" if present else "fuera de turno",
 			roundi(float(StaffCatalog.get_management("manager_bonus")) * 100.0)]))
 	for leader: Dictionary in leaders:
 		var row := HBoxContainer.new()
-		_list.add_child(row)
+		_org_list.add_child(row)
 		var team: Dictionary = Staff.get_team_of(leader["id"])
 		var label := Label.new()
 		label.text = "Líder %s · %s" % [leader["name"], team["name"] if not team.is_empty() else "sin equipo"]
@@ -458,7 +551,7 @@ func _add_org_chart() -> void:
 		choice.tooltip_text = "Contrata o asciende un gerente para repartir los líderes." if managers.is_empty() else ""
 		var leader_id: int = leader["id"]
 		choice.item_selected.connect(func(index: int) -> void:
-			_status_label.text = Staff.set_manager(leader_id, choice.get_item_id(index))["message"]
+			_set_status(Staff.set_manager(leader_id, choice.get_item_id(index))["message"])
 			_refresh.call_deferred())
 		row.add_child(choice)
 		_boss_choices[leader_id] = choice
@@ -471,17 +564,17 @@ func _add_departments(executives: Array[Dictionary]) -> void:
 		var executive: Dictionary = Staff.get_executive_of(department)
 		var factor: float = Staff.get_department_factor(department)
 		var size: int = Staff.get_department_size(department)
-		_list.add_child(_muted_label("%s · %d %s · lo dirige %s · rinde %d %%" % [StaffCatalog.get_department_name(department),
+		_org_list.add_child(_muted_label("%s · %d %s · lo dirige %s · rinde %d %%" % [StaffCatalog.get_department_name(department),
 			size, "persona" if size == 1 else "personas", "el CEO" if executive.is_empty() else executive["name"],
 			roundi(factor * 100.0)]))
 	if departments.is_empty():
-		_list.add_child(_muted_label("Todavía no hay departamentos: existen desde que tienen un empleado."))
+		_org_list.add_child(_muted_label("Todavía no hay departamentos: existen desde que tienen un empleado."))
 	elif not Staff.departments_apply():
-		_list.add_child(_muted_label("Desde %s el CEO rinde menos cuantos más departamentos dirige." % Company.get_stage_name(
+		_org_list.add_child(_muted_label("Desde %s el CEO rinde menos cuantos más departamentos dirige." % Company.get_stage_name(
 			int(StaffCatalog.get_departments("from_stage")))))
 	for executive: Dictionary in executives:
 		var row := HBoxContainer.new()
-		_list.add_child(row)
+		_org_list.add_child(row)
 		var label := Label.new()
 		label.text = "Ejecutivo %s" % executive["name"]
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -501,7 +594,7 @@ func _add_departments(executives: Array[Dictionary]) -> void:
 		var executive_id: int = executive["id"]
 		choice.item_selected.connect(func(index: int) -> void:
 			if index < ids.size():
-				_status_label.text = Staff.set_executive_department(executive_id, ids[index])["message"]
+				_set_status(Staff.set_executive_department(executive_id, ids[index])["message"])
 			_refresh.call_deferred())
 		row.add_child(choice)
 		_department_choices[executive_id] = choice
@@ -514,7 +607,7 @@ func get_boss_choice(leader_id: int) -> OptionButton:
 
 func _add_vacancy(vacancy: Dictionary) -> void:
 	var header := HBoxContainer.new()
-	_list.add_child(header)
+	_vacancy_list.add_child(header)
 	var title := Label.new()
 	title.text = Staff.describe_vacancy(vacancy)
 	var publicity_left: int = Staff.publicity_days_left(vacancy)
@@ -533,16 +626,16 @@ func _add_vacancy(vacancy: Dictionary) -> void:
 
 	var candidates: Array[Dictionary] = vacancy["candidates"]
 	if candidates.is_empty():
-		_list.add_child(_muted_label("Sin candidatos todavía. Llegan cada día a las %02d:00." % int(
+		_vacancy_list.add_child(_muted_label("Sin candidatos todavía. Llegan cada día a las %02d:00." % int(
 			StaffCatalog.get_hiring("arrival_hour"))))
 	for candidate: Dictionary in candidates:
 		_add_candidate(candidate)
-	_list.add_child(HSeparator.new())
+	_vacancy_list.add_child(HSeparator.new())
 
 
 func _add_candidate(candidate: Dictionary) -> void:
 	var row := HBoxContainer.new()
-	_list.add_child(row)
+	_vacancy_list.add_child(row)
 	var info := Label.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -575,13 +668,13 @@ func _add_candidate(candidate: Dictionary) -> void:
 	row.add_child(info)
 
 	var actions := HBoxContainer.new()
-	_list.add_child(actions)
+	_vacancy_list.add_child(actions)
 	var interview_button := Button.new()
 	interview_button.text = "Entrevistar"
 	var problem: String = Staff.appointment_problem(candidate_id)
 	interview_button.disabled = not problem.is_empty()
 	interview_button.tooltip_text = problem if not problem.is_empty() else "Lo cita para el próximo día del CEO: ocupa %d minutos suyos y revela un rasgo y los valores reales." % int(StaffCatalog.get_hiring("interview_minutes"))
-	interview_button.pressed.connect(func() -> void: _status_label.text = Staff.schedule_interview(candidate_id)["message"])
+	interview_button.pressed.connect(func() -> void: _set_status(Staff.schedule_interview(candidate_id)["message"]))
 	actions.add_child(interview_button)
 	_interview_buttons[candidate_id] = interview_button
 	var interviewer: Dictionary = Staff.get_interviewer()
@@ -592,7 +685,7 @@ func _add_candidate(candidate: Dictionary) -> void:
 		delegate.disabled = not delegate_problem.is_empty()
 		delegate.tooltip_text = delegate_problem if not delegate_problem.is_empty() else \
 			"Lo cita con %s (ejecutivo) en su próxima jornada: %d minutos suyos, el CEO sigue trabajando." % [interviewer["name"], int(StaffCatalog.get_hiring("interview_minutes"))]
-		delegate.pressed.connect(func() -> void: _status_label.text = Staff.schedule_interview(candidate_id, true)["message"])
+		delegate.pressed.connect(func() -> void: _set_status(Staff.schedule_interview(candidate_id, true)["message"]))
 		actions.add_child(delegate)
 		_delegate_buttons[candidate_id] = delegate
 
@@ -620,13 +713,13 @@ func _add_candidate(candidate: Dictionary) -> void:
 	_offer_step_buttons[candidate_id] = [down, up]
 	var offer_button := Button.new()
 	offer_button.text = "Ofrecer"
-	offer_button.pressed.connect(func() -> void: _status_label.text = Staff.make_offer(candidate_id, _offers[candidate_id])["message"])
+	offer_button.pressed.connect(func() -> void: _set_status(Staff.make_offer(candidate_id, _offers[candidate_id])["message"]))
 	actions.add_child(offer_button)
 	_offer_buttons[candidate_id] = offer_button
 	if counter > 0:
 		var counter_button := Button.new()
 		counter_button.text = "Aceptar %s" % MoneyFormat.format(counter)
-		counter_button.pressed.connect(func() -> void: _status_label.text = Staff.accept_counter_offer(candidate_id)["message"])
+		counter_button.pressed.connect(func() -> void: _set_status(Staff.accept_counter_offer(candidate_id)["message"]))
 		actions.add_child(counter_button)
 		_counter_buttons[candidate_id] = counter_button
 	var spacer := Control.new()
@@ -651,6 +744,60 @@ func _vacancy_of(candidate_id: int) -> int:
 			if candidate["id"] == candidate_id:
 				return vacancy["id"]
 	return 0
+
+
+func _make_list() -> VBoxContainer:
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 6)
+	_list.add_child(list)
+	return list
+
+
+## Muestra una pestaña (TAB_EMPLOYEES, TAB_HIRING o TAB_ORG).
+func show_tab(tab: int) -> void:
+	if _tabs.current_tab != tab:
+		_tabs.current_tab = tab
+	_show_tab()
+
+
+func get_current_tab() -> int:
+	return _tabs.current_tab
+
+
+func get_tabs() -> TabBar:
+	return _tabs
+
+
+func _show_tab() -> void:
+	var tab: int = _tabs.current_tab
+	_employees_list.visible = tab == TAB_EMPLOYEES
+	_hire_form.visible = tab == TAB_HIRING
+	_vacancy_list.visible = tab == TAB_HIRING
+	_org_list.visible = tab == TAB_ORG
+
+
+## Marca la tarjeta del empleado cuya ficha está abierta (0 = ninguna).
+func set_selected_employee(employee_id: int) -> void:
+	_selected_id = employee_id
+	for id: int in _card_buttons:
+		_card_buttons[id].set_pressed_no_signal(id == employee_id)
+
+
+## Rectángulo de lo que hay que pulsar para publicar: el botón, o la pestaña Vacantes si no se ve.
+func get_publish_target_rect() -> Rect2:
+	if _publish_button.is_visible_in_tree():
+		return _publish_button.get_global_rect()
+	if _tabs.is_visible_in_tree():
+		var tab: Rect2 = _tabs.get_tab_rect(TAB_HIRING)
+		return Rect2(_tabs.get_global_rect().position + tab.position, tab.size)
+	return Rect2()
+
+
+# Aviso bajo las pestañas (resultado de la última acción); vacío no ocupa lugar.
+func _set_status(text: String) -> void:
+	_status_label.text = text
+	_status_label.visible = not text.is_empty()
 
 
 func _muted_label(text: String) -> Label:

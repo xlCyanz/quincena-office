@@ -23,27 +23,28 @@ func configure(employee: Dictionary) -> void:
 	shirt_color = StaffCatalog.get_shirt_color(employee["role"])
 	skin_color = SKIN_TONES[employee_id % SKIN_TONES.size()]
 	hair_color = HAIR_TONES[(employee_id * 7) % HAIR_TONES.size()]
-	look = _look_for(employee)
+	look = look_for(employee)
 	queue_redraw()
 
 
 ## Pone la camisa del color de su cargo (cambia al ascender).
 func update_role(employee: Dictionary) -> void:
-	look = _look_for(employee)
+	look = look_for(employee)
 	var color: Color = StaffCatalog.get_shirt_color(employee["role"])
 	if color != shirt_color:
 		shirt_color = color
 		queue_redraw()
 
 
-# Ropa según su cargo y paleta según su id.
-func _look_for(employee: Dictionary) -> String:
+## Aspecto de un empleado: ropa según su cargo y paleta según su id (también lo usa su foto).
+static func look_for(employee: Dictionary) -> String:
 	var role: String = String(employee["role"])
+	var id: int = int(employee["id"])
 	var outfit: String = "casual"
 	if role == CLEANING_ROLE:
 		outfit = "cleaning"
 	elif EXECUTIVE_ROLES.has(role):
 		outfit = "executive"
-	elif OFFICE_ROLES.has(role) or employee_id % 3 == 0:
+	elif OFFICE_ROLES.has(role) or id % 3 == 0:
 		outfit = "office"
-	return make_look(is_woman_name(String(employee["name"])), outfit, employee_id * 7)
+	return make_look(is_woman_name(String(employee["name"])), outfit, id * 7)
