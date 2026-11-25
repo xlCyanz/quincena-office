@@ -26,7 +26,7 @@ func _ready() -> void:
 	_aspect_before = get_tree().root.content_scale_aspect
 	get_tree().root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
 	_check_option()
-	for percent: int in [100, 125, 150]:
+	for percent: int in [75, 100, 125, 150]:
 		await _check_scale(percent)
 	Settings.reset_to_defaults()
 	get_tree().root.content_scale_aspect = _aspect_before
@@ -49,8 +49,8 @@ func _wait(frames: int = 3) -> void:
 func _check_option() -> void:
 	_expect(Settings.get_value("ui_scale") == 100 and is_equal_approx(get_tree().root.content_scale_factor, 1.0),
 		"por defecto la interfaz va al 100 %")
-	_expect(Settings.get_ui_scales() == ([100, 125, 150] as Array[int]), "escalas: %s" % [Settings.get_ui_scales()])
-	_expect(not Settings.set_value("ui_scale", 175) and not Settings.set_value("ui_scale", "150") and not Settings.set_value("ui_scale", 99.5),
+	_expect(Settings.get_ui_scales() == ([75, 90, 100, 125, 150] as Array[int]), "escalas: %s" % [Settings.get_ui_scales()])
+	_expect(not Settings.set_value("ui_scale", 175) and not Settings.set_value("ui_scale", 50) and not Settings.set_value("ui_scale", "150") and not Settings.set_value("ui_scale", 99.5),
 		"una escala que no está en la lista no sirve")
 	_expect(Settings.set_value("ui_scale", 125) and is_equal_approx(get_tree().root.content_scale_factor, 1.25),
 		"elegir 125 % escala la ventana")
@@ -59,10 +59,10 @@ func _check_option() -> void:
 		"la escala se guarda y se aplica al leer las opciones")
 	var options := OptionsList.new()
 	add_child(options)
-	_expect(options.get_scale_button().selected == 1 and options.get_scale_button().get_item_text(1) == "125 %",
+	_expect(options.get_scale_button().selected == 3 and options.get_scale_button().get_item_text(3) == "125 %",
 		"el control muestra la escala: %s" % options.get_scale_button().get_item_text(options.get_scale_button().selected))
-	options.get_scale_button().select(2)
-	options.get_scale_button().item_selected.emit(2)
+	options.get_scale_button().select(4)
+	options.get_scale_button().item_selected.emit(4)
 	_expect(Settings.get_value("ui_scale") == 150, "elegir 150 % en las opciones")
 	options.queue_free()
 	Settings.reset_to_defaults()

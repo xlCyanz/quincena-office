@@ -495,7 +495,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   cabecera de Personal, Proyectos, Horarios, Banco y Empresa y en la fila de secciones de Construir (`get_help_button()`); emite
   `EventBus.help_requested` y `HelpDialog` (capa 12, en `main.gd`, `get_help_dialog`) muestra el título y el texto de `data/help.json`
   (`topics`) sin pausar; «Entendido» o Esc (lo primero que cierra `handle_escape`) la cierran.
-- Interfaz escalable (hito 65): opción `ui_scale` (`ui_scales` 100/125/150 en `data/settings.json`) que pone `content_scale_factor` de la
+- Interfaz escalable (hito 65): opción `ui_scale` (`ui_scales` 75/90/100/125/150 en `data/settings.json`) que pone `content_scale_factor` de la
   ventana (a 150 % en 1280×720 quedan 853×480). `Settings` sube a `min_button_height` (44) el alto mínimo de todo botón que entra al árbol
   (`node_added`, salvo Panku). `UiLayout`: `bottom_space` (lo mide `BuildPanel` desde la barra de menús, ahora `HFlowContainer` que se
   parte en filas) y `top_space` (lo mide `Hud` desde el dinero y el reloj); `EventBus.ui_layout_changed` hace que los paneles izquierdos
