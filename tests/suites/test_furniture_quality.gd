@@ -104,6 +104,15 @@ func _check_catalog() -> void:
 	_expect(FurnitureCatalog.is_monitor("second_monitor") and not FurnitureCatalog.is_monitor("pro_computer"), "el monitor es monitor")
 	_expect(FurnitureCatalog.get_work_energy("ergonomic_chair") == -4 and FurnitureCatalog.get_work_energy("basic_chair") == 0,
 		"la ergonómica −4/h; la básica usa la de data/staff.json")
+	_expect(FurnitureCatalog.get_work_energy("mesh_chair") == -5 and FurnitureCatalog.get_work_energy("manager_chair") == -4
+		and FurnitureCatalog.get_work_energy("executive_chair") == -3 and FurnitureCatalog.get_work_energy("visitor_chair") == 0
+		and FurnitureCatalog.get_work_energy("stool") == 0, "malla −5/h, gerencial −4/h, ejecutivo −3/h; visita y taburete la normal")
+	_expect(_near(FurnitureCatalog.get_ambiance_points("executive_chair"), 2.0) and _near(FurnitureCatalog.get_ambiance_points("manager_chair"), 1.0),
+		"el sillón ejecutivo y la gerencial dan ambiente")
+	var seats_ok: bool = true
+	for chair: String in ["mesh_chair", "manager_chair", "executive_chair", "visitor_chair", "stool"]:
+		seats_ok = seats_ok and bool(FurnitureCatalog.get_item(chair).get("is_seat", false))
+	_expect(seats_ok, "las sillas nuevas son asientos")
 	_expect(FurnitureCatalog.get_item("wide_desk").is_empty() and not FurnitureCatalog.get_ids().has("wide_desk"),
 		"el escritorio amplio ya no existe")
 

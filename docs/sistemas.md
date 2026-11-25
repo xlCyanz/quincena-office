@@ -91,6 +91,11 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   (herramienta Mejorar) la cambia en su lugar cobrando la diferencia, también en un puesto ocupado o la silla del CEO. El bono de un puesto es
   computadora + pantallas extra (`Workstations.get_desk_bonus`, `bonus_of`, `bonuses_by_owner` con caché). `data/rooms.json` acepta la silla
   ergonómica donde pedía silla y el escritorio largo donde pedía escritorio.
+- Sillas de oficina (`data/furniture.json`, todas `is_seat`, sin `upgrade_to`): de malla (`mesh_chair`, $150, −5/h), gerencial
+  (`manager_chair`, $400, −4/h, 1 de ambiente), sillón ejecutivo (`executive_chair`, $700, −3/h, 2 de ambiente), de visita (`visitor_chair`,
+  $90, patas fijas) y taburete (`stool`, $70); `data/rooms.json` las acepta donde pide silla. Sprites en `tools/sprites/art/furniture/chair_*`
+  (`_chairs.py`); cada una necesita su base en `_figure.CHAIRS` y en `export_game.py` (`FURNITURE`, `PARTS`, `SEATED_CHAIRS`) para
+  que el personaje sentado se componga con ella (`sit_<id>`, `type_<id>`).
 - Laptop y mesa de vidrio (hito 70, diseño 21.6; `data/furniture.json`): laptop (`laptop`, $1,800, `production_bonus` 0.2) con `desks`
   = los escritorios donde cabe (`["executive_desk"]`; vacío = cualquiera): `FurnitureCatalog.get_desks`/`fits_desk`, que revisa
   `Builder.quote_install_computer`. Sin `upgrade_to` ni `extra_monitors`; Mejorar dice que no se puede mejorar (no «es la mejor»).

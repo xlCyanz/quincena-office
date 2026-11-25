@@ -53,6 +53,26 @@
 				"column": 23,
 				"frames": 1
 			},
+			"sit_executive_chair": {
+				"column": 38,
+				"frames": 1
+			},
+			"sit_manager_chair": {
+				"column": 33,
+				"frames": 1
+			},
+			"sit_mesh_chair": {
+				"column": 28,
+				"frames": 1
+			},
+			"sit_stool": {
+				"column": 48,
+				"frames": 1
+			},
+			"sit_visitor_chair": {
+				"column": 43,
+				"frames": 1
+			},
 			"stand": {
 				"column": 0,
 				"frames": 1
@@ -67,6 +87,26 @@
 			},
 			"type_ergonomic_chair": {
 				"column": 24,
+				"frames": 4
+			},
+			"type_executive_chair": {
+				"column": 39,
+				"frames": 4
+			},
+			"type_manager_chair": {
+				"column": 34,
+				"frames": 4
+			},
+			"type_mesh_chair": {
+				"column": 29,
+				"frames": 4
+			},
+			"type_stool": {
+				"column": 49,
+				"frames": 4
+			},
+			"type_visitor_chair": {
+				"column": 44,
 				"frames": 4
 			},
 			"walk": {
@@ -203,6 +243,11 @@
 			"parts": true,
 			"rotated": true
 		},
+		"executive_chair": {
+			"base": "chair_executive",
+			"parts": true,
+			"rotated": true
+		},
 		"executive_desk": {
 			"base": "executive_desk",
 			"parts": false,
@@ -253,10 +298,20 @@
 				]
 			}
 		},
+		"manager_chair": {
+			"base": "chair_manager",
+			"parts": true,
+			"rotated": true
+		},
 		"meeting_table": {
 			"base": "meeting_table",
 			"parts": false,
 			"rotated": false
+		},
+		"mesh_chair": {
+			"base": "chair_mesh",
+			"parts": true,
+			"rotated": true
 		},
 		"microwave": {
 			"base": "microwave",
@@ -313,6 +368,11 @@
 			"parts": false,
 			"rotated": true
 		},
+		"stool": {
+			"base": "chair_stool",
+			"parts": true,
+			"rotated": true
+		},
 		"toilet": {
 			"base": "toilet",
 			"parts": false,
@@ -326,6 +386,11 @@
 		"vending_machine": {
 			"base": "vending_machine",
 			"parts": false,
+			"rotated": true
+		},
+		"visitor_chair": {
+			"base": "chair_visitor",
+			"parts": true,
 			"rotated": true
 		},
 		"waiting_sofa": {
@@ -885,6 +950,666 @@
 				96.0
 			],
 			"file": "furniture/chair_ergonomic_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_executive_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_executive_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_manager_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_manager_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_mesh_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_mesh_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_stool_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_stool_seat_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_back_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_back_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_back_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_back_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_back_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_back_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_back_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_back_r3.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_r0_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_r0_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_r1_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_r1_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_r2_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_r2_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_r3_shadow": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_r3_shadow.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_seat_r0": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_seat_r0.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_seat_r1": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_seat_r1.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_seat_r2": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_seat_r2.png",
+			"size": [
+				128,
+				128
+			]
+		},
+		"chair_visitor_seat_r3": {
+			"anchor": [
+				64.0,
+				96.0
+			],
+			"file": "furniture/chair_visitor_seat_r3.png",
 			"size": [
 				128,
 				128

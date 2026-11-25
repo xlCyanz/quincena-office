@@ -1629,7 +1629,7 @@ def verify(fig, name):
 # build.py compara profundidades pixel a pixel (misma casilla, centro en (0.5, 0.5)) y guarda por silla la parte
 # que queda DELANTE de la persona; export_game.py compone silla + persona + esa parte. Las sillas las dibuja Moana
 # (art/furniture/chair_*), que deja junto a cada rotación su profundidad.
-CHAIRS = ("chair_basic", "chair_ergonomic")
+CHAIRS = ("chair_basic", "chair_ergonomic", "chair_executive", "chair_manager", "chair_mesh", "chair_visitor", "chair_stool")
 # El lienzo de la silla tiene el centro de la casilla 16 px más arriba que el del personaje.
 CHAIR_SHIFT = 16
 # Margen de profundidad (casillas) que la silla le gana a la persona para taparla; con poco, el canto del cojín

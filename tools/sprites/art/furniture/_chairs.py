@@ -23,6 +23,17 @@ PLASTIC = Mat("plastic", light="#4F4F4FFF", top="#313030FF", upper="#2A2828FF", 
 METAL = Mat("metal", light="#C9CDD3FF", top="#A3A8B0FF", upper="#8E939BFF", left="#7A7F87FF", right="#61656CFF",
             dark="#4A4D53FF", ink="#0C0C0CFF")
 
+BROWN = Mat("brown", light="#B5774AFF", top="#8E5634FF", upper="#7E4A2CFF", left="#6E3F26FF", right="#57301DFF",
+            dark="#3F2114FF", ink="#24120EFF")
+GRAPHITE = Mat("graphite", light="#8A8F99FF", top="#626772FF", upper="#565A65FF", left="#4A4E58FF",
+               right="#3C3F49FF", dark="#2C2E37FF", ink="#17181FFF")
+GREEN = Mat("green", light="#6FA37AFF", top="#4C8259FF", upper="#42744FFF", left="#386645FF", right="#2C5238FF",
+            dark="#1F3C2AFF", ink="#12241AFF")
+WHITE = Mat("white", light="#E8E9ECFF", top="#CDD0D6FF", upper="#BCC0C8FF", left="#ABB0B9FF", right="#9095A0FF",
+            dark="#6E7380FF", ink="#3A3D48FF")
+MUSTARD = Mat("mustard", light="#E3B04FFF", top="#C48E2FFF", upper="#B07E28FF", left="#9A6C22FF",
+              right="#7C531AFF", dark="#5B3A12FF", ink="#33200DFF")
+
 STEP = {"light": "top", "top": "upper", "upper": "left", "left": "right", "right": "dark", "dark": "dark",
         "ink": "ink"}
 
@@ -42,16 +53,17 @@ def rounded_sdf(x: np.ndarray, y: np.ndarray, cx: float, cy: float, hx: float, h
     return np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - r
 
 
-def base(hub_top: float = 7.0, column_top: float = 14.0) -> list[Solid]:
-    """Base de estrella de 5 brazos con ruedas, cubo de plástico y columna de metal."""
+def base(hub_top: float = 7.0, column_top: float = 14.0, star: str = "plastic", column: str = "metal",
+         wheel: str = "plastic") -> list[Solid]:
+    """Base de estrella de 5 brazos (de ``star``) con ruedas, cubo y columna."""
     out = []
     for k in range(5):
         a = math.radians(STAR_TURN + 72 * k)
         tx, ty = C + STAR * math.cos(a), C + STAR * math.sin(a)
-        out.append(beam("star", SEAT_GROUP, "plastic", (C, C, 5.5), (tx, ty, 4.2), 0.9, 1.1, lit=True))
-        out.append(cylinder("wheel", SEAT_GROUP, "plastic", tx, ty, 1.3, 0.0, 3.2, sides=8))
-    out.append(cylinder("hub", SEAT_GROUP, "plastic", C, C, 2.2, 2.0, hub_top, lit=True))
-    out.append(cylinder("column", SEAT_GROUP, "metal", C, C, 0.9, hub_top, column_top, sides=8))
+        out.append(beam("star", SEAT_GROUP, star, (C, C, 5.5), (tx, ty, 4.2), 0.9, 1.1, lit=True))
+        out.append(cylinder("wheel", SEAT_GROUP, wheel, tx, ty, 1.3, 0.0, 3.2, sides=8))
+    out.append(cylinder("hub", SEAT_GROUP, star, C, C, 2.2, 2.0, hub_top, lit=True))
+    out.append(cylinder("column", SEAT_GROUP, column, C, C, 0.9, hub_top, column_top, sides=8))
     return out
 
 
@@ -89,7 +101,7 @@ def padded_back(mat: str, hx: float, y0: float, y1: float, z0: float, z1: float)
     return upright("back", BACK_GROUP, mat, C, hx, y0, y1, z0, z1, 3.0, bevel=0.8, lit=True, texture=panel)
 
 
-def mesh_back(hx: float, y0: float, y1: float, z0: float, z1: float) -> Solid:
+def mesh_back(hx: float, y0: float, y1: float, z0: float, z1: float, mat: str = "plastic") -> Solid:
     """Respaldo de malla: marco liso y, adentro, la malla un tono más oscura con tiras cada 2 px."""
     cz = (z0 + z1) / 2
 
@@ -99,4 +111,4 @@ def mesh_back(hx: float, y0: float, y1: float, z0: float, z1: float) -> Solid:
         inner = on_face & (d < -1.4)
         return darker(darker(tone, inner), inner & (np.floor(z) % 2 == 0))
 
-    return upright("back", BACK_GROUP, "plastic", C, hx, y0, y1, z0, z1, 3.5, bevel=0.7, lit=True, texture=mesh)
+    return upright("back", BACK_GROUP, mat, C, hx, y0, y1, z0, z1, 3.5, bevel=0.7, lit=True, texture=mesh)

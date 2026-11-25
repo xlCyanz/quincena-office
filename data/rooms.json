@@ -9,7 +9,7 @@
 			"locked": true,
 			"required": [
 				{ "name": "Escritorio ejecutivo", "items": ["executive_desk"] },
-				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair"], "count": 2 }
+				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair", "mesh_chair", "manager_chair", "executive_chair", "visitor_chair", "stool"], "count": 2 }
 			],
 			"color": "d9a441"
 		},
@@ -18,7 +18,7 @@
 			"min_area": 4,
 			"required": [
 				{ "name": "Escritorio", "items": ["simple_desk", "long_desk", "executive_desk"] },
-				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair"], "count": 2 }
+				{ "name": "Sillas (la suya y una de visita)", "items": ["basic_chair", "ergonomic_chair", "mesh_chair", "manager_chair", "executive_chair", "visitor_chair", "stool"], "count": 2 }
 			],
 			"color": "c97b5a"
 		},
@@ -55,7 +55,7 @@
 			"min_area": 6,
 			"required": [
 				{ "name": "Escritorio", "items": ["simple_desk", "long_desk", "executive_desk"] },
-				{ "name": "Silla", "items": ["basic_chair", "ergonomic_chair"] }
+				{ "name": "Silla", "items": ["basic_chair", "ergonomic_chair", "mesh_chair", "manager_chair", "executive_chair", "visitor_chair", "stool"] }
 			],
 			"color": "5aa84f"
 		},

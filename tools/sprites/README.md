@@ -476,7 +476,7 @@ cada PNG (y en mesas, `edges`: el hueco hasta el canto del tablero por lado, par
 | `art/ground/path/`, `sidewalk/`, `road/` | Camino de grava, acera y calle (`ground_road_*`, `ground_road_line_x_*`, `ground_road_line_y_*`) |
 | `art/ground/dirt/` | Manchas de suciedad `dirt_0` (barro), `dirt_1` (café) y `dirt_2` (migas y papeles), kind `overlay`; aún no las usa el juego |
 | `art/ground/_ground_kit.py` | Lo común del terreno: rejilla isométrica periódica, anillo del borde compartido, documento Moana por tonos y las comprobaciones de costura y brillo |
-| `art/furniture/chair_basic/`, `chair_ergonomic/` | Sillas de oficina: `<silla>_r0`–`_r3`, sus capas `_seat_r<n>` y `_back_r<n>`, `_shadow` y `_r<n>_depth.png` (profundidad para el personaje sentado, no es sprite) |
+| `art/furniture/chair_basic/`, `chair_ergonomic/`, `chair_mesh/`, `chair_manager/`, `chair_executive/`, `chair_visitor/`, `chair_stool/` | Sillas de oficina: `<silla>_r0`–`_r3`, sus capas `_seat_r<n>` y `_back_r<n>`, `_shadow` y `_r<n>_depth.png` (profundidad para el personaje sentado, no es sprite) |
 | `art/furniture/_chair_kit.py`, `_chairs.py` | Sillas: sólidos convexos (cojín redondeado, cilindros, barras) rasterizados con z-buffer, contorno, capas asiento/respaldo y profundidad; `_chairs.py` tiene base, cojín, soporte y respaldos |
 | `art/furniture/plant_small_q/`, `plant_large/` | Plantas chica (mueble chico, ya a su tamaño) y grande, con `_shadow`; piezas en `_plants.py` (hoja, maceta) sobre `_chair_kit.py` |
 | `art/nature/trees/` | Árboles del mapa: `tree_0`–`tree_7` y sus `_shadow` |

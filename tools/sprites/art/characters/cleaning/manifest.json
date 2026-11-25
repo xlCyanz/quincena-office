@@ -1716,6 +1716,71 @@
    "chair": "chair_ergonomic",
    "rotation": 0
   },
+  "character_cleaning_sit_r0_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 0
+  },
+  "character_cleaning_sit_r0_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 0
+  },
+  "character_cleaning_sit_r0_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 0
+  },
+  "character_cleaning_sit_r0_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 0
+  },
+  "character_cleaning_sit_r0_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 0
+  },
   "character_cleaning_sit_r1.png": {
    "kind": "character",
    "canvas": [
@@ -1765,6 +1830,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_cleaning_sit_r1_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 1
+  },
+  "character_cleaning_sit_r1_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 1
+  },
+  "character_cleaning_sit_r1_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 1
+  },
+  "character_cleaning_sit_r1_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 1
+  },
+  "character_cleaning_sit_r1_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 1
   },
   "character_cleaning_sit_r2.png": {
@@ -1818,6 +1948,71 @@
    "chair": "chair_ergonomic",
    "rotation": 2
   },
+  "character_cleaning_sit_r2_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 2
+  },
+  "character_cleaning_sit_r2_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 2
+  },
+  "character_cleaning_sit_r2_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 2
+  },
+  "character_cleaning_sit_r2_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 2
+  },
+  "character_cleaning_sit_r2_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 2
+  },
   "character_cleaning_sit_r3.png": {
    "kind": "character",
    "canvas": [
@@ -1867,6 +2062,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_cleaning_sit_r3_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 3
+  },
+  "character_cleaning_sit_r3_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 3
+  },
+  "character_cleaning_sit_r3_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 3
+  },
+  "character_cleaning_sit_r3_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 3
+  },
+  "character_cleaning_sit_r3_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 3
   },
   "character_cleaning_stand_r0.png": {
@@ -2018,6 +2278,71 @@
    "chair": "chair_ergonomic",
    "rotation": 0
   },
+  "character_cleaning_type_r0_1_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_1_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_1_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_1_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_1_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 0
+  },
   "character_cleaning_type_r0_2.png": {
    "kind": "character",
    "canvas": [
@@ -2069,6 +2394,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_2_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_2_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_2_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_2_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_2_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 0
   },
   "character_cleaning_type_r0_3.png": {
@@ -2124,6 +2514,71 @@
    "chair": "chair_ergonomic",
    "rotation": 0
   },
+  "character_cleaning_type_r0_3_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_3_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_3_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_3_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_3_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 0
+  },
   "character_cleaning_type_r0_4.png": {
    "kind": "character",
    "canvas": [
@@ -2175,6 +2630,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_4_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_4_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_4_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_4_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 0
+  },
+  "character_cleaning_type_r0_4_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 0
   },
   "character_cleaning_type_r1_1.png": {
@@ -2230,6 +2750,71 @@
    "chair": "chair_ergonomic",
    "rotation": 1
   },
+  "character_cleaning_type_r1_1_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_1_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_1_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_1_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_1_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 1
+  },
   "character_cleaning_type_r1_2.png": {
    "kind": "character",
    "canvas": [
@@ -2281,6 +2866,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_2_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_2_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_2_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_2_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_2_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 1
   },
   "character_cleaning_type_r1_3.png": {
@@ -2336,6 +2986,71 @@
    "chair": "chair_ergonomic",
    "rotation": 1
   },
+  "character_cleaning_type_r1_3_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_3_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_3_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_3_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_3_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 1
+  },
   "character_cleaning_type_r1_4.png": {
    "kind": "character",
    "canvas": [
@@ -2387,6 +3102,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_4_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_4_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_4_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_4_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 1
+  },
+  "character_cleaning_type_r1_4_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 1
   },
   "character_cleaning_type_r2_1.png": {
@@ -2442,6 +3222,71 @@
    "chair": "chair_ergonomic",
    "rotation": 2
   },
+  "character_cleaning_type_r2_1_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_1_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_1_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_1_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_1_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 2
+  },
   "character_cleaning_type_r2_2.png": {
    "kind": "character",
    "canvas": [
@@ -2493,6 +3338,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_2_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_2_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_2_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_2_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_2_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 2
   },
   "character_cleaning_type_r2_3.png": {
@@ -2548,6 +3458,71 @@
    "chair": "chair_ergonomic",
    "rotation": 2
   },
+  "character_cleaning_type_r2_3_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_3_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_3_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_3_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_3_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 2
+  },
   "character_cleaning_type_r2_4.png": {
    "kind": "character",
    "canvas": [
@@ -2599,6 +3574,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_4_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_4_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_4_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_4_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 2
+  },
+  "character_cleaning_type_r2_4_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 2
   },
   "character_cleaning_type_r3_1.png": {
@@ -2654,6 +3694,71 @@
    "chair": "chair_ergonomic",
    "rotation": 3
   },
+  "character_cleaning_type_r3_1_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_1_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_1_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_1_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_1_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 3
+  },
   "character_cleaning_type_r3_2.png": {
    "kind": "character",
    "canvas": [
@@ -2705,6 +3810,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_2_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_2_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_2_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_2_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_2_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 3
   },
   "character_cleaning_type_r3_3.png": {
@@ -2760,6 +3930,71 @@
    "chair": "chair_ergonomic",
    "rotation": 3
   },
+  "character_cleaning_type_r3_3_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_3_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_3_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_3_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_3_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
+   "rotation": 3
+  },
   "character_cleaning_type_r3_4.png": {
    "kind": "character",
    "canvas": [
@@ -2811,6 +4046,71 @@
     112.0
    ],
    "chair": "chair_ergonomic",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_4_chair_executive.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_executive",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_4_chair_manager.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_manager",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_4_chair_mesh.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_mesh",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_4_chair_stool.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_stool",
+   "rotation": 3
+  },
+  "character_cleaning_type_r3_4_chair_visitor.png": {
+   "kind": "character_chair",
+   "canvas": [
+    128,
+    128
+   ],
+   "anchor": [
+    64.0,
+    112.0
+   ],
+   "chair": "chair_visitor",
    "rotation": 3
   },
   "character_cleaning_walk_r0_1.png": {

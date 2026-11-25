@@ -41,6 +41,8 @@ TREES = 8
 FURNITURE = {
     "simple_desk": ("desk_simple", True), "executive_desk": ("executive_desk", True),
     "basic_chair": ("chair_basic", True), "ergonomic_chair": ("chair_ergonomic", True),
+    "mesh_chair": ("chair_mesh", True), "manager_chair": ("chair_manager", True),
+    "executive_chair": ("chair_executive", True), "visitor_chair": ("chair_visitor", True), "stool": ("chair_stool", True),
     "small_plant": ("plant_small_q", False), "large_plant": ("plant_large", False),
     "reception_counter": ("reception_counter", True), "waiting_sofa": ("waiting_sofa", True),
     "trash_can": ("trash_can_q", False), "water_dispenser": ("water_dispenser_q", True),
@@ -64,7 +66,8 @@ DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
                            "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}
 # Sillas (las dibuja Moana en art/furniture/chair_*): asiento y respaldo aparte (<base>_seat_r0,
 # <base>_back_r0); el respaldo va delante o detrás de quien se sienta según la rotación.
-PARTS = ("chair_basic", "chair_ergonomic")
+PARTS = ("chair_basic", "chair_ergonomic", "chair_mesh", "chair_manager", "chair_executive", "chair_visitor",
+         "chair_stool")
 
 # Personajes: cuadros de cada pose, en el orden de las columnas de la hoja.
 CHARACTER_CELL = (128, 128)
@@ -96,7 +99,9 @@ def recolor(image, base, variant):
     return Image.fromarray(out)
 
 # Sillas con las que se arma «sentado en su silla»: mueble del juego -> base del sprite.
-SEATED_CHAIRS = {"basic_chair": "chair_basic", "ergonomic_chair": "chair_ergonomic"}
+SEATED_CHAIRS = {"basic_chair": "chair_basic", "ergonomic_chair": "chair_ergonomic", "mesh_chair": "chair_mesh",
+                 "manager_chair": "chair_manager", "executive_chair": "chair_executive",
+                 "visitor_chair": "chair_visitor", "stool": "chair_stool"}
 
 
 def check_chair_colors(load):

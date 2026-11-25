@@ -131,7 +131,9 @@ func _check_characters() -> void:
 	_expect(SpriteLibrary.get_character_frames("walk") == 8 and SpriteLibrary.get_character_frames("idle") == 4
 		and SpriteLibrary.get_character_frames("type") == 4 and SpriteLibrary.get_character_frames("sit") == 1
 		and SpriteLibrary.get_character_frames("no_existe") == 0, "cuadros de cada pose")
-	for chair: String in ["basic_chair", "ergonomic_chair"]:
+	for chair: String in ["basic_chair", "ergonomic_chair", "mesh_chair", "manager_chair", "executive_chair",
+			"visitor_chair", "stool"]:
+		_expect(not SpriteLibrary.get_furniture_sprite(chair, 0).is_empty(), "%s tiene dibujo" % chair)
 		_expect(SpriteLibrary.has_character_pose("sit_" + chair) and SpriteLibrary.get_character_frames("type_" + chair) == 4,
 			"hay cuadros de sentado y tecleando en %s" % chair)
 	_expect(not SpriteLibrary.has_character_pose("sit_waiting_sofa"), "en un asiento que no es silla, la pose suelta")
