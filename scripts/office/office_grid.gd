@@ -9,10 +9,6 @@ const NO_CELL := Vector2i(-1, -1)
 ## Píxeles que cada rombo del piso se pasa de su borde para no dejar huecos.
 const TILE_OVERLAP_PX: float = 1.0
 
-## Casillas hacia atrás (x e y menores) de la casilla de fuera de un borde donde se busca local
-## (una pared alta lo taparía).
-const BEHIND_WALL_REACH: int = 3
-
 ## Paredes arriba: todas las piezas a su alto; abajo, solo las de atrás. Solo la vista: al cambiarlo, build().
 var walls_up: bool = false
 
@@ -45,8 +41,12 @@ var _site_border := SiteBorder.new()
 @onready var _room_overlay: RoomOverlay = $RoomOverlay
 # Capa ordenada por Y: muebles y personajes (lo de más abajo en pantalla, encima).
 @onready var _objects: Node2D = $Objects
+## Contornos de selección ya calculados (get_furniture_outline); se vacía al llegar a MAX_OUTLINES.
+const MAX_OUTLINES: int = 256
+var _outlines: Dictionary[String, PackedVector2Array] = {}
 # Manchas de suciedad; se crea en _ready, encima del tinte de habitaciones.
 var _dirt_overlay := DirtOverlay.new()
+var _land_overlay := LandOverlay.new()
 # Sombra de las paredes altas en el piso, encima de las manchas.
 var _wall_shadows := WallShadowOverlay.new()
 # Puertas que se abren, pantallas que se prenden y personajes que las abren.
@@ -75,6 +75,10 @@ func _ready() -> void:
 	add_child(_dirt_overlay)
 	move_child(_dirt_overlay, _room_overlay.get_index() + 1)
 	_dirt_overlay.setup(self)
+	_land_overlay.name = "LandOverlay"
+	add_child(_land_overlay)
+	move_child(_land_overlay, _dirt_overlay.get_index() + 1)
+	_land_overlay.setup(self)
 	_wall_shadows.name = "WallShadows"
 	add_child(_wall_shadows)
 	move_child(_wall_shadows, _dirt_overlay.get_index() + 1)
@@ -162,6 +166,11 @@ func set_dirt(rooms: Array[Dictionary]) -> void:
 	_dirt_overlay.set_rooms(rooms)
 
 
+## Capa de los lotes de Terreno, bajo paredes y muebles.
+func get_land_overlay() -> LandOverlay:
+	return _land_overlay
+
+
 ## Capa de suciedad (para pruebas).
 func get_dirt_overlay() -> DirtOverlay:
 	return _dirt_overlay
@@ -235,10 +244,20 @@ func is_back_edge(edge: Vector3i) -> bool:
 	# La segunda casilla de un borde siempre queda más abajo en pantalla que la primera.
 	if _lot.has_point(cells[0]) or not _lot.has_point(cells[1]):
 		return false
-	# Con el local en L un tramo así puede tener local detrás: alto lo taparía, así que va bajo.
-	for back_x: int in range(BEHIND_WALL_REACH + 1):
-		for back_y: int in range(BEHIND_WALL_REACH + 1):
-			if _lot.has_point(cells[0] - Vector2i(back_x, back_y)):
+	# Con el local en L un tramo así puede tener local justo detrás en pantalla: alto lo taparía, así que va
+	# bajo. Solo cuentan las casillas en su columna de pantalla (x − y de los extremos del tramo), no las de al lado.
+	var outside: Vector2i = cells[0]
+	var column: int = outside.x - outside.y + (1 if edge.z == GridEdge.AXIS_X else -1)
+	# Cada fila hacia atrás sube media casilla en pantalla; la pared alta tapa las que caben en su alto.
+	var rows: int = ceili(float(ConstructionCatalog.get_edge_piece(ConstructionCatalog.WALL).get("height", 0.0))
+		/ (GameConstants.TILE_SIZE.y / 2.0))
+	for step: int in range(1, rows + 1):
+		var depth: int = outside.x + outside.y + 1 - step
+		for screen_x: int in [mini(column, outside.x - outside.y), maxi(column, outside.x - outside.y)]:
+			# Casilla con x − y = screen_x y x + y = depth (si los dos tienen la misma paridad).
+			if posmod(depth + screen_x, 2) != 0:
+				continue
+			if _lot.has_point(Vector2i((depth + screen_x) / 2, (depth - screen_x) / 2)):
 				return false
 	return true
 
@@ -263,7 +282,83 @@ func grid_to_world(grid_position: Vector2) -> Vector2:
 	return origin + axis_x * grid_position.x + axis_y * grid_position.y
 
 
+## Rectángulo (px de la cuadrícula) que cubren todas las piezas dibujadas de un mueble de
+## OfficeState.furniture; vacío si no se dibuja.
+func get_furniture_bounds(item: Dictionary) -> Rect2:
+	var bounds := Rect2()
+	var views: Array[FurnitureView] = _views_of(item)
+	for i: int in range(views.size()):
+		bounds = views[i].get_bounds() if i == 0 else bounds.merge(views[i].get_bounds())
+	return bounds
+
+
+## Contorno punteado con la silueta de un mueble (pares de puntos, px de la cuadrícula; ver SelectionOutline).
+## Si el mueble no está puesto (el que se va a poner), se arma con piezas de prueba. Se guarda hasta que
+## cambian los muebles.
+func get_furniture_outline(item: Dictionary, dash: int, gap: float) -> PackedVector2Array:
+	var key: String = var_to_str([item, dash, gap])
+	if _outlines.has(key):
+		return _outlines[key]
+	var views: Array[FurnitureView] = _views_of(item)
+	var temporary: Array[FurnitureView] = []
+	if views.is_empty():
+		temporary = _make_views(item)
+		views = temporary
+	var pieces: Array[Dictionary] = []
+	var bounds := Rect2()
+	for view: FurnitureView in views:
+		var piece: Dictionary = view.get_outline_piece()
+		var area: Rect2 = piece["rect"] if piece.has("rect") else Rect2(piece["polygon"][0], Vector2.ZERO)
+		for point: Vector2 in piece.get("polygon", PackedVector2Array()):
+			area = area.expand(point)
+		bounds = area if pieces.is_empty() else bounds.merge(area)
+		pieces.append(piece)
+	for view: FurnitureView in temporary:
+		view.free()
+	var outline := PackedVector2Array()
+	if not pieces.is_empty():
+		var resolution: float = SpriteLibrary.get_scale()
+		var mask: Image = SelectionOutline.build_mask(pieces, bounds, resolution)
+		outline = SelectionOutline.trace(mask, bounds.position, resolution, dash, gap)
+	if _outlines.size() >= MAX_OUTLINES:
+		_outlines.clear()
+	_outlines[key] = outline
+	return outline
+
+
+# Piezas de prueba (fuera del árbol) de un mueble que no está puesto: la principal y el respaldo. Las tiras
+# usan el mismo sprite que la principal.
+func _make_views(item: Dictionary) -> Array[FurnitureView]:
+	var views: Array[FurnitureView] = []
+	if FurnitureCatalog.get_item(String(item["id"])).is_empty():
+		return views
+	var full: Dictionary = {"assigned_to": "", "computer": "", "monitor": "", "monitors": 0, "quarter": -1}
+	full.merge(item, true)
+	var parts: Array[String] = [FurnitureView.PART_MAIN]
+	if FurnitureView.has_backrest(String(item["id"])):
+		parts.append(FurnitureView.PART_BACKREST)
+	for part: String in parts:
+		var view := FurnitureView.new()
+		view.setup(self, full, part)
+		views.append(view)
+	return views
+
+
+# Piezas dibujadas (principal, tiras y respaldo) de un mueble.
+func _views_of(item: Dictionary) -> Array[FurnitureView]:
+	var footprint: Array[Vector2i] = FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"])
+	var quarter: int = FurnitureCatalog.get_quarter(item)
+	var views: Array[FurnitureView] = []
+	for child: Node in _objects.get_children():
+		var view := child as FurnitureView
+		if view != null and not view.is_queued_for_deletion() and view.item_id == item["id"] and view.footprint == footprint \
+				and view.quarter == quarter and view.rotation_index == int(item["rotation"]):
+			views.append(view)
+	return views
+
+
 func _place_furniture(furniture: Array[Dictionary]) -> void:
+	_outlines.clear()
 	for child: Node in _objects.get_children():
 		if child is FurnitureView:
 			_objects.remove_child(child)

@@ -25,6 +25,7 @@ func _ready() -> void:
 	_check_access()
 	_check_rotate()
 	_check_computer_and_sell()
+	_check_outline()
 	await _check_in_game_with_mouse()
 
 	finished.emit(_failures, _checks)
@@ -178,6 +179,41 @@ func _check_computer_and_sell() -> void:
 	_expect(not result["ok"], "vender donde no hay mueble: %s" % [result])
 
 
+# Contorno de selección: sigue la silueta (una L), se separa de ella y va punteado.
+func _check_outline() -> void:
+	var mask := Image.create_empty(4, 4, false, Image.FORMAT_RGBA8)
+	for cell: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]:
+		mask.set_pixelv(cell + Vector2i.ONE, Color.WHITE)
+	var length: Callable = func(segments: PackedVector2Array) -> float:
+		var total: float = 0.0
+		for i: int in range(0, segments.size(), 2):
+			total += segments[i].distance_to(segments[i + 1])
+		return total
+	var solid: PackedVector2Array = SelectionOutline.trace(mask, Vector2(10.0, 20.0), 2.0, 0, 0.0)
+	_expect(is_equal_approx(length.call(solid), 4.0), "el contorno de la L mide su perímetro (%s)" % solid)
+	var area := Rect2(Vector2(10.0, 20.0), Vector2(1.0, 1.0))
+	var inside: bool = true
+	for point: Vector2 in solid:
+		inside = inside and area.grow(0.001).has_point(point)
+	_expect(inside, "el contorno queda sobre la silueta (%s)" % solid)
+	var apart: PackedVector2Array = SelectionOutline.trace(mask, Vector2.ZERO, 1.0, 0, 1.0)
+	_expect(apart.has(Vector2(-1.0, 0.0)) and apart.has(Vector2(0.0, -1.0)), "el contorno se separa hacia afuera (%s)" % apart)
+	var dashed: PackedVector2Array = SelectionOutline.trace(mask, Vector2.ZERO, 1.0, 1, 0.0)
+	_expect(length.call(dashed) > 0.0 and length.call(dashed) < length.call(SelectionOutline.trace(mask, Vector2.ZERO, 1.0, 0, 0.0)),
+		"el contorno va punteado")
+	var ring := Image.create_empty(5, 5, false, Image.FORMAT_RGBA8)
+	for x: int in range(1, 4):
+		for y: int in range(1, 4):
+			if Vector2i(x, y) != Vector2i(2, 2):
+				ring.set_pixel(x, y, Color.WHITE)
+	_expect(is_equal_approx(length.call(SelectionOutline.trace(ring, Vector2.ZERO, 1.0, 0, 0.0)), 12.0),
+		"un hueco adentro no lleva contorno")
+	var box: Image = SelectionOutline.build_mask([{"polygon": PackedVector2Array([Vector2(0, 0), Vector2(4, 0), Vector2(4, 2), Vector2(0, 2)])}],
+		Rect2(0, 0, 4, 2), 1.0)
+	_expect(box.get_pixel(1, 1).a > 0.5 and box.get_pixel(4, 2).a > 0.5 and box.get_pixel(0, 0).a < 0.5,
+		"la caja provisional se pinta en la máscara")
+
+
 func _push(event: InputEvent) -> void:
 	get_viewport().push_input(event, true)
 	await get_tree().process_frame
@@ -237,6 +273,18 @@ func _check_in_game_with_mouse() -> void:
 	await press.call(BuildController.TOOL_ROTATE)
 	await _click(at_cell.call(Vector2i(4, 5)))
 	_expect(OfficeState.furniture[_index_at(Vector2i(4, 5))]["rotation"] == 2, "girar con el ratón")
+	# Elegir un mueble puesto lo marca con un marco punteado que lo rodea; poner uno nuevo, no.
+	var controller: BuildController = game.get_node("BuildController")
+	var selection: Rect2 = controller.get_selection_bounds()
+	var desk_floor: Vector2 = grid.cell_to_world(Vector2i(4, 5))
+	_expect(selection.has_area() and selection.grow(1.0).has_point(desk_floor) and selection.position.y < desk_floor.y - 8.0,
+		"girar marca el escritorio con el marco (%s, piso %s)" % [selection, desk_floor])
+	_expect(selection.size.x <= GameConstants.TILE_SIZE.x * 2.0 + 1.0, "el marco no es más ancho que el escritorio (%s)" % selection)
+	var outline: PackedVector2Array = controller.get_selection_outline()
+	var around: bool = outline.size() >= 8
+	for point: Vector2 in outline:
+		around = around and selection.grow(2.0).has_point(point)
+	_expect(around, "el contorno rodea el escritorio (%d puntos)" % outline.size())
 
 	# Silla y planta; la planta frente a la puerta de la oficina se rechaza.
 	await press.call("basic_chair")
@@ -250,7 +298,19 @@ func _check_in_game_with_mouse() -> void:
 	await _click(at_cell.call(Vector2i(0, 7)))
 	_expect(_index_at(Vector2i(0, 7)) >= 0 and Economy.balance == money - 40, "colocar la planta con el ratón")
 
+	# El mueble que se va a poner también lleva su contorno, en la casilla del ratón.
+	var spot: Vector2 = grid.cell_to_world(Vector2i(0, 7))
+	var new_outline: PackedVector2Array = controller.get_selection_outline()
+	var near: bool = not new_outline.is_empty() and not controller.get_selection_bounds().has_area()
+	for point: Vector2 in new_outline:
+		near = near and point.distance_to(spot) < GameConstants.TILE_SIZE.x
+	_expect(near, "poner un mueble nuevo muestra su contorno donde va (%d puntos)" % new_outline.size())
 	await press.call(BuildController.TOOL_SELL)
+	var hover := InputEventMouseMotion.new()
+	hover.position = at_cell.call(Vector2i(4, 6))
+	await _push(hover)
+	_expect(controller.get_selection_bounds().grow(1.0).has_point(grid.cell_to_world(Vector2i(4, 6))),
+		"vender marca la silla bajo el ratón (%s)" % controller.get_selection_bounds())
 	money = Economy.balance
 	await _click(at_cell.call(Vector2i(4, 5)))
 	await _click(at_cell.call(Vector2i(4, 5)))

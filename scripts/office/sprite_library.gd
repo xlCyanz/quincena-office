@@ -20,6 +20,10 @@ static var _textures: Dictionary[String, Texture2D] = {}
 static var _palette_materials: Dictionary[String, ShaderMaterial] = {}
 ## Recorte de la foto por hoja (ver get_portrait).
 static var _portrait_rects: Dictionary[String, Rect2] = {}
+## Parte no transparente de cada sprite, en px de su imagen (ver get_visible_rect).
+static var _used_rects: Dictionary[String, Rect2i] = {}
+## Imagen de cada sprite (null sin ventana: el renderizador mudo no la da).
+static var _images: Dictionary[String, Image] = {}
 
 
 ## Datos de data/sprites.json (se leen una vez).
@@ -67,6 +71,37 @@ static func get_rect(sprite: String, at: Vector2 = Vector2.ZERO) -> Rect2:
 	var anchor := Vector2(float(entry["anchor"][0]), float(entry["anchor"][1]))
 	var size := Vector2(float(entry["size"][0]), float(entry["size"][1]))
 	return Rect2(at - anchor / get_scale(), size / get_scale())
+
+
+## Imagen de un sprite para leer sus píxeles, o null.
+static func get_image(sprite: String) -> Image:
+	if _images.has(sprite):
+		return _images[sprite]
+	var texture: Texture2D = get_texture(sprite)
+	var image: Image = texture.get_image() if texture != null else null
+	if image != null and image.is_empty():
+		image = null
+	_images[sprite] = image
+	return image
+
+
+## Como get_rect, pero solo la parte que no es transparente. Sin la imagen (sin ventana) devuelve get_rect.
+static func get_visible_rect(sprite: String, at: Vector2 = Vector2.ZERO) -> Rect2:
+	var rect: Rect2 = get_rect(sprite, at)
+	var texture: Texture2D = get_texture(sprite)
+	if texture == null or rect.size == Vector2.ZERO:
+		return rect
+	if not _used_rects.has(sprite):
+		var image: Image = get_image(sprite)
+		var used := Rect2i(Vector2i.ZERO, Vector2i(texture.get_size()))
+		if image != null and not image.is_empty():
+			used = image.get_used_rect()
+		_used_rects[sprite] = used
+	var full: Rect2i = _used_rects[sprite]
+	if full.size == Vector2i.ZERO:
+		return rect
+	var factor: Vector2 = rect.size / texture.get_size()
+	return Rect2(rect.position + Vector2(full.position) * factor, Vector2(full.size) * factor)
 
 
 ## Dibuja un sprite con su apoyo en `at`. False si no existe.

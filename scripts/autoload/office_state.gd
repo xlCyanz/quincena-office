@@ -55,10 +55,38 @@ var _room_map_key: int = 0
 
 ## Lo que se pagó por el terreno comprado (cuenta en el valor de la empresa).
 var land_paid: int = 0
+## Semilla con que se parte el solar en lotes (LandPlots); al azar en cada partida nueva.
+var land_seed: int = 0
+# Lotes ya partidos (get_land_plots) y la semilla y el solar con que se partieron.
+var _land_plots: Array[Rect2i] = []
+var _land_plots_key: String = ""
 
 ## Casilla del borde del local por la que se entra y se sale.
 var entrance := Vector2i.ZERO
 
+
+
+## Local con que empieza toda partida; no es de ningún lote y no se vende.
+static func get_base_rect() -> Rect2i:
+	return Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE)
+
+
+## Lotes del solar (rectángulos, ver LandPlots), partidos con land_seed.
+func get_land_plots() -> Array[Rect2i]:
+	var sides: Vector2i = ConstructionCatalog.get_land_plot_sides()
+	var key: String = "%d|%s|%s" % [land_seed, site_rect, sides]
+	if key != _land_plots_key:
+		_land_plots = LandPlots.partition(site_rect, get_base_rect(), land_seed, sides.x, sides.y)
+		_land_plots_key = key
+	return _land_plots
+
+
+## Lote (rectángulo) que contiene la casilla; Rect2i() si es del local inicial o está fuera del solar.
+func get_land_plot_at(cell: Vector2i) -> Rect2i:
+	for plot: Rect2i in get_land_plots():
+		if plot.has_point(cell):
+			return plot
+	return Rect2i()
 
 
 ## Indica si hay una partida cargada (nueva o guardada).
@@ -76,6 +104,10 @@ func new_game() -> void:
 	_query_cache.clear()
 	lot = Lot.from_rect(Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE))
 	land_paid = 0
+	# Con un generador propio, para no correr la secuencia del azar global que usan otros sistemas.
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	land_seed = rng.randi()
 	site_rect = site_around(lot.get_bounds())
 	rooms.clear()
 	furniture.clear()
@@ -624,6 +656,7 @@ func export_state() -> Dictionary:
 		"lot": [lot_rect.position.x, lot_rect.position.y, lot_rect.size.x, lot_rect.size.y],
 		"lot_cells": lot.to_data(),
 		"land_paid": land_paid,
+		"land_seed": land_seed,
 		"site": [site_rect.position.x, site_rect.position.y, site_rect.size.x, site_rect.size.y],
 		"floors": saved_floors,
 		"edges": saved_edges,
@@ -646,6 +679,7 @@ func import_state(state: Dictionary) -> void:
 		var saved_lot: Array = state.get("lot", [0, 0, 0, 0])
 		lot = Lot.from_rect(Rect2i(int(saved_lot[0]), int(saved_lot[1]), int(saved_lot[2]), int(saved_lot[3])))
 	land_paid = int(state.get("land_paid", 0))
+	land_seed = int(state.get("land_seed", 0))
 	var site: Array = state.get("site", [])
 	site_rect = Rect2i(int(site[0]), int(site[1]), int(site[2]), int(site[3])) if site.size() == 4 else site_around(lot_rect)
 	floors.clear()

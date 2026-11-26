@@ -198,7 +198,7 @@ func _ready() -> void:
 	_confirm_row.visible = false
 	rows.add_child(_confirm_row)
 	_confirm_yes = Button.new()
-	_confirm_yes.text = "Sí, mudar"
+	_confirm_yes.text = "Sí"
 	_confirm_yes.pressed.connect(func() -> void: confirm_answered.emit(true))
 	_confirm_row.add_child(_confirm_yes)
 	_confirm_no = Button.new()

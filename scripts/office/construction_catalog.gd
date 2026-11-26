@@ -104,10 +104,11 @@ static func get_land() -> Dictionary:
 	return _catalog().get("land", {})
 
 
-## Tamaño de los lotes de la herramienta Terreno.
-static func get_land_plot_size() -> Vector2i:
-	var size: Array = get_land().get("plot_size", [4, 4])
-	return Vector2i(maxi(int(size[0]), 1), maxi(int(size[1]), 1))
+## Lado mínimo y máximo (x, y) de los lotes en que se parte el solar.
+static func get_land_plot_sides() -> Vector2i:
+	var sides: Array = get_land().get("plot_sides", [3, 6])
+	var low: int = maxi(int(sides[0]), 1)
+	return Vector2i(low, maxi(int(sides[1]), low))
 
 
 ## Precio del terreno por m², sin el piso.
@@ -120,6 +121,12 @@ static func get_land_floor_cost(area: int) -> int:
 	var land: Dictionary = get_land()
 	var floor_type: String = String(land.get("floor", BARE_FLOOR))
 	return roundi(area * get_price(floor_type) * float(land.get("floor_price_ratio", 1.0)))
+
+
+## Lo que devuelve vender area m² de terreno: sale_refund_ratio del terreno y su piso.
+static func get_land_refund(area: int) -> int:
+	var price: int = area * get_land_price() + get_land_floor_cost(area)
+	return floori(price * float(_catalog().get("sale_refund_ratio", 0.0)))
 
 
 static func _catalog() -> Dictionary:

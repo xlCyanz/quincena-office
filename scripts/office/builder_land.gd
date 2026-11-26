@@ -1,4 +1,4 @@
-# Construcción, capa 3: compra de terreno (lotes, rectángulos y lados).
+# Construcción, capa 3: compra y venta de terreno (lotes, rectángulos y lados).
 extends "res://scripts/office/builder_furniture.gd"
 
 
@@ -82,36 +82,139 @@ func buy_land_cells(cells: Array[Vector2i]) -> Dictionary:
 	return _commit_land(quote_land_cells(cells))
 
 
-## Casillas del lote en que cae una casilla (lotes alineados con (0, 0)).
+## Casillas del lote (OfficeState.get_land_plots) en que cae una casilla; vacío en el local inicial o fuera del solar.
 static func get_plot_cells(cell: Vector2i) -> Array[Vector2i]:
-	var size: Vector2i = ConstructionCatalog.get_land_plot_size()
-	var origin := Vector2i(floori(float(cell.x) / size.x) * size.x, floori(float(cell.y) / size.y) * size.y)
-	var cells: Array[Vector2i] = []
-	for y: int in range(size.y):
-		for x: int in range(size.x):
-			cells.append(origin + Vector2i(x, y))
-	return cells
+	return LandPlots.get_cells(OfficeState.get_land_plot_at(cell))
 
 
-## Lotes comprables: tocan el local y tienen algo que comprar. Cada uno es el quote_land_cells
-## de sus casillas más "origin" (su primera casilla).
+## Lotes marcados por la herramienta Terreno. Los que tocan el local y tienen algo que comprar son el
+## quote_land_cells de sus casillas con "action" "buy"; los comprados enteros, el quote_sell_land_plot con
+## "action" "sell". Todos llevan "rect", "origin" (su primera casilla) y "marked" (las casillas que se marcan).
 func get_land_plots() -> Array[Dictionary]:
-	var size: Vector2i = ConstructionCatalog.get_land_plot_size()
-	var area: Rect2i = OfficeState.lot_rect.grow_individual(size.x, size.y, size.x, size.y)
 	var plots: Array[Dictionary] = []
-	var seen: Dictionary[Vector2i, bool] = {}
-	for y: int in range(area.position.y, area.end.y, size.y):
-		for x: int in range(area.position.x, area.end.x, size.x):
-			var cells: Array[Vector2i] = get_plot_cells(Vector2i(x, y))
-			if seen.has(cells[0]):
-				continue
-			seen[cells[0]] = true
-			var quote: Dictionary = quote_land_cells(cells)
+	var lot: Lot = OfficeState.lot
+	for rect: Rect2i in OfficeState.get_land_plots():
+		var cells: Array[Vector2i] = LandPlots.get_cells(rect)
+		var owned: int = 0
+		var touches: bool = false
+		for cell: Vector2i in cells:
+			if lot.has_point(cell):
+				owned += 1
+			else:
+				for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+					touches = touches or lot.has_point(cell + direction)
+		var quote: Dictionary
+		if owned == cells.size():
+			quote = quote_sell_land_plot(rect)
+			quote["action"] = "sell"
+			quote["marked"] = cells
+			quote["new_cells"] = [] as Array[Vector2i]
+		elif touches:
+			quote = quote_land_cells(cells)
 			if (quote["new_cells"] as Array).is_empty():
 				continue
-			quote["origin"] = cells[0]
-			plots.append(quote)
+			quote["action"] = "buy"
+			quote["marked"] = quote["new_cells"]
+		else:
+			continue
+		quote["rect"] = rect
+		quote["origin"] = cells[0]
+		plots.append(quote)
 	return plots
+
+
+## Cotiza vender un lote comprado entero: {"ok", "cost" (negativo: lo que se devuelve), "message", "cells",
+## "rooms", "edges"}. El lote tiene que estar vacío (sin muebles, habitaciones, paredes de adentro, puertas
+## ni ventanas) y el local tiene que quedar unido; su contorno nuevo lleva pared.
+func quote_sell_land_plot(plot: Rect2i) -> Dictionary:
+	var cells: Array[Vector2i] = LandPlots.get_cells(plot)
+	var refund: int = ConstructionCatalog.get_land_refund(cells.size())
+	var result: Dictionary = {"ok": false, "cost": -refund, "message": "", "cells": cells}
+	var lot: Lot = OfficeState.lot
+	if cells.is_empty() or plot.intersects(OfficeState.get_base_rect()):
+		result["message"] = "El local inicial no se vende."
+		return result
+	var sold: Dictionary[Vector2i, bool] = {}
+	for cell: Vector2i in cells:
+		sold[cell] = true
+		if not lot.has_point(cell):
+			result["message"] = "Solo se vende un lote que es tuyo entero."
+			return result
+	if sold.has(OfficeState.entrance):
+		result["message"] = "Ahí está la entrada: ese terreno no se vende."
+		return result
+	for item: Dictionary in OfficeState.furniture:
+		for cell: Vector2i in FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"]):
+			if sold.has(cell):
+				result["message"] = "Primero quita lo que hay en ese terreno: %s." % String(FurnitureCatalog.get_item(item["id"]).get("name", item["id"]))
+				return result
+	for room: Dictionary in OfficeState.rooms:
+		for cell: Vector2i in room["cells"]:
+			if sold.has(cell):
+				result["message"] = "Ese terreno es parte de una habitación (%s): desmárcala primero." % \
+					RoomCatalog.get_display_name(room["type"])
+				return result
+	var remaining: Lot = lot.without_cells(cells)
+	if not remaining.is_joined():
+		result["message"] = "Así el local quedaría partido en dos."
+		return result
+	var new_edges: Dictionary[Vector3i, String] = OfficeState.edges.duplicate()
+	for edge: Vector3i in OfficeState.edges:
+		var sides: Array[Vector2i] = GridEdge.get_cells(edge)
+		var inside: int = int(sold.has(sides[0])) + int(sold.has(sides[1]))
+		if inside == 0:
+			continue
+		var kind: String = OfficeState.edges[edge]
+		if not kind.is_empty():
+			var piece: String = ConstructionCatalog.get_display_name(kind).to_lower()
+			if inside == 2:
+				result["message"] = "Primero quita lo construido adentro de ese terreno (%s)." % piece
+				return result
+			if kind != ConstructionCatalog.WALL:
+				result["message"] = "Primero quita %s del borde de ese terreno." % piece
+				return result
+		# Su contorno se va con él; la pared hacia el resto del local se vuelve a poner como contorno.
+		new_edges.erase(edge)
+	for edge: Vector3i in remaining.get_outline():
+		if String(new_edges.get(edge, "")).is_empty():
+			new_edges[edge] = ConstructionCatalog.WALL
+	OfficeState.place_double_door(new_edges, remaining, OfficeState.get_entrance_edge())
+	var spaces: Array[Dictionary] = RoomRules.find_spaces(remaining, new_edges)
+	var rooms: Array[Dictionary] = RoomRules.reconcile(OfficeState.rooms, spaces, OfficeState.entrance, OfficeState.furniture)
+	var lost: Array[String] = _lost_rooms(rooms)
+	if not lost.is_empty():
+		result["message"] = "Así se perdería la %s." % RoomCatalog.get_display_name(lost[0])
+		return result
+	result["ok"] = true
+	result["message"] = "Vender terreno de %d m²: +%s · mantenimiento −%s al mes." % [cells.size(), MoneyFormat.format(refund),
+		MoneyFormat.format(Economy.get_maintenance(cells.size()))]
+	result["rooms"] = rooms
+	result["edges"] = new_edges
+	return result
+
+
+## Vende el lote si quote_sell_land_plot lo permite: el local se achica, el contorno se cierra y se
+## devuelve sale_refund_ratio de lo que cuesta.
+func sell_land_plot(plot: Rect2i) -> Dictionary:
+	var result: Dictionary = quote_sell_land_plot(plot)
+	if not result["ok"]:
+		return result
+	var cells: Array[Vector2i] = result["cells"]
+	var refund: int = -int(result["cost"])
+	OfficeState.edges = result["edges"]
+	OfficeState.lot = OfficeState.lot.without_cells(cells)
+	for cell: Vector2i in cells:
+		OfficeState.floors.erase(cell)
+	var rooms: Array[Dictionary] = result["rooms"]
+	OfficeState.rooms = rooms
+	result.erase("rooms")
+	result.erase("edges")
+	var paid: int = cells.size() * ConstructionCatalog.get_land_price() + ConstructionCatalog.get_land_floor_cost(cells.size())
+	OfficeState.land_paid = maxi(OfficeState.land_paid - paid, 0)
+	Economy.earn(refund, CONCEPT_LAND)
+	EventBus.office_changed.emit()
+	result["message"] = "Vendiste %d m² de terreno por %s." % [cells.size(), MoneyFormat.format(refund)]
+	return result
 
 
 ## Cotiza esas casillas: {"ok", "cost", "message", "cells", "new_cells", "rooms", "edges", "entrance"?}.

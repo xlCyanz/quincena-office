@@ -11,10 +11,18 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `RoomRules` detecta los espacios y reubica las habitaciones al cambiar paredes.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
-  terreno: la herramienta Terreno marca lotes alrededor del local con su precio (`land.plot_size` 4×4 en `data/construction.json`, alineados con
-  la casilla (0, 0): `Builder.get_plot_cells`, `get_land_plots`; `BuildController.get_land_plots`, `refresh_land_plots`) y un clic en uno lo compra
-  (`buy_land_plot_at`, `Builder.buy_land_cells`); es la única forma de comprar en el juego: solo se marcan los lotes que tocan el local, así
-  que para llegar a uno de más afuera hay que comprar antes el que lo separa. Para pruebas y simulaciones sigue el rectángulo libre (`BuildController.set_land_rect`/`get_land_rect`, `land_changed`;
+  terreno: el solar, menos el local inicial (`OfficeState.get_base_rect`), se parte en lotes rectangulares de tamaños variados
+  (`LandPlots.partition`: cuatro franjas alrededor del local inicial cortadas al azar hasta que cada lado mide de 3 a 6, `land.plot_sides` en
+  `data/construction.json`; con la semilla de la partida, `OfficeState.land_seed`, guardada; `OfficeState.get_land_plots`/`get_land_plot_at`).
+  La herramienta Terreno marca los lotes que tocan el local con su precio (`Builder.get_plot_cells`, `get_land_plots` con `action` "buy";
+  `BuildController.get_land_plots`, `refresh_land_plots`) y un clic en uno lo compra (`buy_land_plot_at`, `Builder.buy_land_cells`); es la
+  única forma de comprar en el juego: para llegar a uno de más afuera hay que comprar antes el que lo separa. Así el local toma formas libres
+  hechas de rectángulos. Los rellenos y bordes de los lotes van en `LandOverlay` (capa de `OfficeGrid` sobre el piso, bajo paredes y
+  muebles: `get_land_overlay`); los precios los dibuja `BuildController` encima. Los lotes propios enteros se marcan con su borde punteado (`action` "sell") y un clic pregunta si se venden
+  («Sí» / «No», `ask_confirm`): `Builder.quote_sell_land_plot`/`sell_land_plot` devuelven `sale_refund_ratio` del terreno y su piso
+  (`ConstructionCatalog.get_land_refund`), bajan `land_paid`, quitan sus pisos y cierran el contorno nuevo con pared. Solo se vende un lote
+  vacío (sin muebles, habitación, paredes de adentro, puertas ni ventanas en su borde, ni la entrada) que no parte el local
+  (`Lot.without_cells`, `is_joined`). Las partidas con lotes de antes (4×4) los completan comprando lo que falta; el local inicial no se vende. Para pruebas y simulaciones sigue el rectángulo libre (`BuildController.set_land_rect`/`get_land_rect`, `land_changed`;
   Comprar en `BuildPanel`) y `Builder.quote_land_rect`/`buy_land_rect` (o `quote_land_cells`; `quote_land`/`buy_land` por lado siguen para
   pruebas) toman sus casillas dentro del solar y fuera del local, conectadas al local; si entre ellas va la casilla de frente a la puerta, la entrada
   se corre derecho al borde nuevo con su puerta (`result["entrance"]`, `OfficeState.entrance`; ese pedazo se abre hacia el espacio de la entrada,
@@ -38,12 +46,20 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   la casilla sigue siendo de 1 m² para paredes, habitaciones, caminos y precios y sigue tapando el paso. `Builder.quote_place(…, quarter)`
   (sin cuarto, el primero libre), `rotate`/`sell_furniture_at(cell, quarter)` y `OfficeState.find_furniture_at(cell, quarter)` eligen el del
   cuarto bajo el ratón; las partidas viejas los ponen en el cuarto 0. Prueba `test_quarters`.
+- Contorno de selección: en Construir, el mueble ya puesto que elige la herramienta (vender, girar, mejorar, ponerle computadora o
+  pantalla, o el objeto de pared que se vende) y el que se va a poner se marcan con una línea punteada que sigue su silueta, verde si se
+  puede y rojo si no (`BuildController._preview_item`, `_preview_new`, `get_selection_outline`, `SELECTION_*`; el que se va a poner se
+  arma con piezas de prueba fuera del árbol, `OfficeGrid._make_views`). `SelectionOutline` pinta las piezas del mueble en una
+  máscara a la resolución de los sprites (`FurnitureView.get_outline_piece`: el sprite o, sin él, la caja provisional), llena los huecos
+  de adentro y toma el borde exterior, separado 1 px y punteado; `OfficeGrid.get_furniture_outline` lo guarda por mueble hasta que
+  cambian los muebles. Sin ventana no hay imagen de los sprites y usa su rectángulo visible (`SpriteLibrary.get_image`,
+  `get_visible_rect`). Prueba `test_furniture`.
 - El mapa es el solar fijo de `GameConstants.MAX_SITE_SIZE` (40×40) con el local en el centro (`OfficeState.site_rect`);
   fuera del local se dibuja terreno (`MapDecor`, hito 68). Paredes arriba / abajo (solo la vista, no se guarda):
   botón Paredes de la fila de secciones de Construir (`BuildPanel.walls_toggled`, `get_walls_button`, con el icono `ui_walls`) o tecla P (`main.set_walls_up`, `are_walls_up`; `OfficeGrid.walls_up`, `is_tall_edge`) suben todas las piezas de borde a su
   alto y lo colgado se ve a tamaño real; al elegir un objeto de pared en Construir suben solas (`main._apply_walls`). Con las paredes abajo, un
-  tramo del contorno va alto solo si es de atrás y no hay local detrás de él
-  (`OfficeGrid.is_back_edge`, `BEHIND_WALL_REACH`): con el local en L, el lado de un saliente va bajo. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
+  tramo del contorno va alto solo si es de atrás y no tapa local: se miran solo las casillas de su columna de pantalla (x − y de sus
+  extremos) que caben en su alto (`OfficeGrid.is_back_edge`): con el local en L, solo baja el tramo que tiene el saliente justo detrás. La cámara se mueve libre por el solar: su centro no sale del rombo del mapa.
   Al empezar encuadra la oficina (`OfficeCamera.fit_rect`); «Ver oficina» o la tecla F la vuelven a encuadrar.
 - Mapa y cámara (hito 68, fuera de la lista del diseño): `CAMERA_ZOOM_LEVELS` 0.25–4 en 11 niveles (referencia 2.0, índice 7); la cámara
   guarda `{"zoom": nivel, x, y}` y una partida vieja con solo `zoom_index` lo lee en `CAMERA_LEGACY_ZOOM_LEVELS`. Estado lógico = `position` y

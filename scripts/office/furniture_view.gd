@@ -334,6 +334,61 @@ func get_sprite() -> String:
 	return whole if not whole.is_empty() else SpriteLibrary.get_furniture_sprite(item_id, rotation_index)
 
 
+## Rectángulo que ocupa el dibujo de la pieza, en las coordenadas de la cuadrícula (px).
+func get_bounds() -> Rect2:
+	var sprite: String = get_sprite()
+	if not sprite.is_empty():
+		return _fit_low_wall(SpriteLibrary.get_visible_rect(sprite, _grid.grid_to_world(_anchor)))
+	var box: PackedVector2Array = _box_outline()
+	var bounds := Rect2(box[0], Vector2.ZERO)
+	for point: Vector2 in box:
+		bounds = bounds.expand(point)
+	return bounds
+
+
+## Forma de la pieza para el contorno de selección (SelectionOutline), en px de la cuadrícula:
+## {image, rect} con el sprite, o {polygon} con la caja provisional (o el rectángulo del sprite sin su imagen).
+func get_outline_piece() -> Dictionary:
+	var sprite: String = get_sprite()
+	if sprite.is_empty():
+		return {"polygon": _box_outline()}
+	var rect: Rect2 = _fit_low_wall(SpriteLibrary.get_rect(sprite, _grid.grid_to_world(_anchor)))
+	var image: Image = SpriteLibrary.get_image(sprite)
+	if image != null:
+		return {"image": image, "rect": rect}
+	var visible: Rect2 = get_bounds()
+	return {"polygon": PackedVector2Array([visible.position, Vector2(visible.end.x, visible.position.y), visible.end,
+		Vector2(visible.position.x, visible.end.y)])}
+
+
+# En pared baja el objeto se dibuja achicado y bajado (ver _draw_sprites).
+func _fit_low_wall(rect: Rect2) -> Rect2:
+	if not (FurnitureCatalog.is_wall_mounted(item_id) and _on_low_wall):
+		return rect
+	var at: Vector2 = _grid.grid_to_world(_anchor)
+	var drop: float = SpriteLibrary.get_wall_item_base(item_id) * LOW_WALL_SPRITE_SCALE - LOW_WALL_ITEM_BASE_PX
+	return Rect2(at + (rect.position - at) * LOW_WALL_SPRITE_SCALE + Vector2(0.0, drop), rect.size * LOW_WALL_SPRITE_SCALE)
+
+
+# Silueta de la caja provisional: la base y su alto (con respaldo, pantalla de lámpara o copa de planta).
+func _box_outline() -> PackedVector2Array:
+	var rise: float = float(_info.get("height", 16.0))
+	if FurnitureCatalog.is_wall_mounted(item_id):
+		rise += LOW_WALL_ITEM_BASE_PX if _on_low_wall else WALL_ITEM_BASE_PX
+	match String(_info.get("shape", "")):
+		"chair":
+			rise += BACKREST_HEIGHT_PX
+		"lamp":
+			rise += LAMP_SHADE_RADIUS * 2.0 * _scale
+		"plant":
+			rise += 22.0 * _scale
+	var points := PackedVector2Array()
+	for corner: Vector2 in IsoBox.grid_rect_corners(_grid, _low, _high):
+		points.append(corner)
+		points.append(corner - Vector2(0.0, rise))
+	return Geometry2D.convex_hull(points)
+
+
 # Dibuja la pieza con sprites (sombra, mueble y lo de encima). False si no hay sprite.
 func _draw_sprites() -> bool:
 	var sprite: String = get_sprite()

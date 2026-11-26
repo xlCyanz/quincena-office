@@ -364,6 +364,19 @@ func _check_fixed_view() -> void:
 	_expect(views.has(front) and not views[front].tall and is_equal_approx(views[front].get("_height"), low), "la de adelante, baja")
 	_expect(views.has(inner) and not views[inner].tall, "la interior, baja")
 	_expect(tall > 40.0 and low < 16.0, "alta más que una persona y baja casi al piso: %d / %d" % [tall, low])
+	# Local en L (terreno al noroeste): la pared norte de más a la derecha va alta (nada justo detrás); la que
+	# tiene el terreno nuevo detrás en pantalla, baja.
+	Economy.earn(20000, "Prueba")
+	var bought: Array[Vector2i] = []
+	for x: int in range(lot.position.x, lot.position.x + 3):
+		for y: int in range(lot.position.y - 3, lot.position.y):
+			bought.append(Vector2i(x, y))
+	_expect(bool(builder.buy_land_cells(bought)["ok"]), "se compra el terreno al noroeste")
+	await _wait()
+	var clear := Vector3i(lot.end.x - 1, lot.position.y - 1, GridEdge.AXIS_Y)
+	var hidden := Vector3i(lot.position.x + 3, lot.position.y - 1, GridEdge.AXIS_Y)
+	_expect(grid.is_back_edge(clear), "en L, la pared norte sin local justo detrás va alta")
+	_expect(not grid.is_back_edge(hidden), "en L, la que taparía el terreno nuevo va baja")
 	await _close_game(game)
 
 

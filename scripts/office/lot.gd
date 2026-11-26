@@ -64,6 +64,37 @@ func with_cells(cells: Array[Vector2i]) -> Lot:
 	return copy
 
 
+## Copia sin esas casillas.
+func without_cells(cells: Array[Vector2i]) -> Lot:
+	var copy := Lot.new()
+	var removed: Dictionary[Vector2i, bool] = {}
+	for cell: Vector2i in cells:
+		removed[cell] = true
+	var kept: Array[Vector2i] = []
+	for cell: Vector2i in get_cells():
+		if not removed.has(cell):
+			kept.append(cell)
+	copy.add_cells(kept)
+	return copy
+
+
+## Indica si todas las casillas están unidas por sus lados (un local vacío no lo está).
+func is_joined() -> bool:
+	if _cells.is_empty():
+		return false
+	var first: Vector2i = _cells.keys()[0]
+	var found: Dictionary[Vector2i, bool] = {first: true}
+	var queue: Array[Vector2i] = [first]
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_back()
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var next: Vector2i = cell + direction
+			if _cells.has(next) and not found.has(next):
+				found[next] = true
+				queue.append(next)
+	return found.size() == _cells.size()
+
+
 ## Bordes del contorno (una casilla dentro y otra fuera).
 func get_outline() -> Array[Vector3i]:
 	var edges: Array[Vector3i] = []

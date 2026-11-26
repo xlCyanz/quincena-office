@@ -10,7 +10,7 @@ extends Node2D
 signal status_changed(text: String)
 ## Cambió el terreno elegido con el ratón (o se compró).
 signal land_changed
-## Hay algo que confirmar (mudar la Oficina Ejecutiva): text es la pregunta; vacío = nada pendiente.
+## Hay algo que confirmar (mudar la Oficina Ejecutiva, vender terreno): text es la pregunta; vacío = nada pendiente.
 signal confirm_changed(text: String)
 
 const TOOL_WALL: String = "wall"
@@ -20,11 +20,8 @@ const TOOL_ROTATE: String = "rotate"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
-const LAND_HINT: String = "Clic en un lote marcado para comprarlo. Los de más afuera aparecen al comprar el que tienen antes."
-## Colores de los lotes de Terreno: comprable, no comprable y bajo el ratón.
-const PLOT_OK := Color(0.4, 1.0, 0.5, 0.16)
-const PLOT_BAD := Color(1.0, 0.35, 0.3, 0.14)
-const PLOT_HOVER := Color(0.4, 1.0, 0.5, 0.38)
+const LAND_HINT: String = "Clic en un lote marcado para comprarlo, o en uno tuyo para venderlo."
+const LABEL_SELL_COLOR := Color(1.0, 0.82, 0.4)
 ## Mejorar computadora o silla a su calidad siguiente.
 const TOOL_UPGRADE: String = "upgrade"
 
@@ -36,6 +33,11 @@ const RIGHT_CLICK_SLOP_PX: float = 6.0
 const PREVIEW_OK := Color(0.4, 1.0, 0.5, 0.9)
 const PREVIEW_BAD := Color(1.0, 0.35, 0.3, 0.9)
 const PREVIEW_LINE_WIDTH: float = 3.0
+## Contorno punteado del mueble que se elige (vender, girar, mejorar, ponerle computadora): grosor en px del
+## mundo, y largo de cada tramo y separación de la silueta en px de sprite (2 por px del mundo).
+const SELECTION_LINE_WIDTH: float = 1.5
+const SELECTION_DASH: int = 6
+const SELECTION_GAP: float = 1.0
 
 const LABEL_FONT_SIZE: int = 20
 const LABEL_WIDTH: float = 240.0
@@ -63,6 +65,10 @@ var _right_press_position := Vector2.ZERO
 var _preview_cells: Array[Vector2i] = []
 var _preview_edges: Array[Vector3i] = []
 var _preview_front := Vector2i.ZERO
+## Mueble ya puesto que se elige (índice en OfficeState.furniture), o -1: se marca con el contorno punteado.
+var _preview_item: int = -1
+## Mueble que se va a poner ({id, cell, rotation, quarter}), o vacío: también lleva el contorno.
+var _preview_new: Dictionary = {}
 var _preview_ok: bool = false
 var _apply_preview := Callable()
 # Terreno elegido en BuildPanel: esquinas (vacío si no hay), si se arrastra y la casilla del
@@ -103,21 +109,32 @@ func get_land_plots() -> Array[Dictionary]:
 func refresh_land_plots() -> void:
 	_plots = builder.get_land_plots() if _active and tool == TOOL_LAND else ([] as Array[Dictionary])
 	_hover_plot = -1
+	if _grid != null:
+		_grid.get_land_overlay().set_plots(_plots, _hover_plot)
 	queue_redraw()
 
 
-## Compra el lote marcado que contiene esa casilla.
+## Compra el lote marcado que contiene esa casilla; si es un lote propio, pregunta si se vende.
 func buy_land_plot_at(cell: Vector2i) -> Dictionary:
 	var index: int = _plot_at(cell)
 	if index < 0:
 		var none: Dictionary = {"ok": false, "message": LAND_HINT}
 		status_changed.emit(none["message"])
 		return none
-	var result: Dictionary = builder.buy_land_cells(_plots[index]["cells"])
+	var plot: Dictionary = _plots[index]
+	if plot["action"] == "sell":
+		if not plot["ok"]:
+			_play_result(plot)
+			status_changed.emit(plot["message"])
+			return plot
+		var rect: Rect2i = plot["rect"]
+		var question: String = "¿Vender este terreno de %d m² por %s?" % [rect.get_area(), MoneyFormat.format(-int(plot["cost"]))]
+		return ask_confirm(question, func() -> Dictionary: return sell_land_plot(rect))
+	var result: Dictionary = builder.buy_land_cells(plot["cells"])
 	_play_result(result)
 	if not result["ok"]:
 		# Lo que impide comprar (dinero, una habitación que se perdería).
-		result = builder.quote_land_cells(_plots[index]["cells"])
+		result = builder.quote_land_cells(plot["cells"])
 	status_changed.emit(result["message"])
 	refresh_land_plots()
 	_update_preview(false)
@@ -125,10 +142,20 @@ func buy_land_plot_at(cell: Vector2i) -> Dictionary:
 	return result
 
 
-# Índice del lote marcado que compraría esa casilla, o -1.
+## Vende un lote propio (sin preguntar).
+func sell_land_plot(rect: Rect2i) -> Dictionary:
+	var result: Dictionary = builder.sell_land_plot(rect)
+	if result["ok"]:
+		EventBus.sound_requested.emit("sell")
+	refresh_land_plots()
+	land_changed.emit()
+	return result
+
+
+# Índice del lote marcado (para comprar o vender) que contiene esa casilla, o -1.
 func _plot_at(cell: Vector2i) -> int:
 	for index: int in range(_plots.size()):
-		if (_plots[index]["new_cells"] as Array).has(cell):
+		if (_plots[index]["marked"] as Array).has(cell):
 			return index
 	return -1
 
@@ -158,7 +185,7 @@ func answer_confirm(accept: bool) -> Dictionary:
 	confirm_changed.emit("")
 	if not action.is_valid():
 		return {"ok": false, "message": ""}
-	var result: Dictionary = action.call() if accept else {"ok": false, "message": "No se mudó nada."}
+	var result: Dictionary = action.call() if accept else {"ok": false, "message": "No se hizo nada."}
 	if accept:
 		_play_result(result)
 	status_changed.emit(result["message"])
@@ -268,9 +295,11 @@ func _land_input(event: InputEvent) -> void:
 		var hover: int = _plot_at(cell)
 		if hover != _hover_plot:
 			_hover_plot = hover
+			_grid.get_land_overlay().set_plots(_plots, _hover_plot)
 			if hover >= 0:
 				var plot: Dictionary = _plots[hover]
-				status_changed.emit(("Clic para comprar: " + String(plot["message"])) if plot["ok"] else String(plot["message"]))
+				var verb: String = "Clic para comprar: " if plot["action"] == "buy" else "Clic para vender. "
+				status_changed.emit((verb + String(plot["message"])) if plot["ok"] else String(plot["message"]))
 			queue_redraw()
 
 
@@ -288,6 +317,8 @@ func _clear_preview() -> void:
 	_preview_cells.clear()
 	_preview_edges.clear()
 	_preview_front = Vector2i.ZERO
+	_preview_item = -1
+	_preview_new = {}
 	_preview_ok = false
 	_apply_preview = Callable()
 
@@ -311,14 +342,15 @@ func _update_preview(announce: bool = true) -> void:
 		var wall_rotation: int = slot[1]
 		_preview_cells = [wall_cell]
 		_preview_edges = [FurnitureCatalog.get_wall_edge(wall_cell, wall_rotation)]
+		_preview_new = {"id": tool, "cell": wall_cell, "rotation": wall_rotation}
 		quote = builder.quote_place(tool, wall_cell, wall_rotation)
 		_apply_preview = func() -> Dictionary: return builder.place(tool, wall_cell, wall_rotation)
 	elif tool == TOOL_SELL and _wall_item_under_pointer() >= 0:
 		var hung: Dictionary = OfficeState.furniture[_wall_item_under_pointer()]
 		var hung_cell: Vector2i = hung["cell"]
 		var hung_rotation: int = hung["rotation"]
+		_preview_item = _wall_item_under_pointer()
 		_preview_cells = [hung_cell]
-		_preview_edges = [FurnitureCatalog.get_wall_edge(hung_cell, hung_rotation)]
 		quote = builder.quote_sell_wall_item(hung_cell, hung_rotation)
 		_apply_preview = func() -> Dictionary: return builder.sell_wall_item(hung_cell, hung_rotation)
 	elif _is_furniture_tool():
@@ -327,6 +359,7 @@ func _update_preview(announce: bool = true) -> void:
 		_preview_cells = FurnitureCatalog.get_footprint(tool, cell, placement_rotation)
 		_preview_quarter = placement_quarter
 		_preview_front = FurnitureCatalog.get_front(placement_rotation)
+		_preview_new = {"id": tool, "cell": cell, "rotation": placement_rotation, "quarter": placement_quarter}
 		quote = builder.quote_place(tool, cell, placement_rotation, placement_quarter)
 		_apply_preview = func() -> Dictionary: return builder.place(tool, cell, placement_rotation, placement_quarter)
 	elif not info.is_empty() and FurnitureCatalog.is_monitor(tool):  # segundo monitor
@@ -346,6 +379,7 @@ func _update_preview(announce: bool = true) -> void:
 		var index: int = OfficeState.find_furniture_at(cell, quarter)
 		if index >= 0:
 			var item: Dictionary = OfficeState.furniture[index]
+			_preview_item = index
 			_preview_cells = FurnitureCatalog.get_footprint(item["id"], item["cell"], int(item["rotation"]) + 1)
 			_preview_quarter = FurnitureCatalog.get_quarter(item)
 			_preview_front = FurnitureCatalog.get_front(int(item["rotation"]) + 1)
@@ -429,6 +463,7 @@ func _footprint_at(cell: Vector2i, quarter: int = -1) -> Array[Vector2i]:
 	if index < 0:
 		return [cell]
 	var item: Dictionary = OfficeState.furniture[index]
+	_preview_item = index
 	_preview_quarter = FurnitureCatalog.get_quarter(item)
 	return FurnitureCatalog.get_footprint(item["id"], item["cell"], item["rotation"])
 
@@ -483,6 +518,43 @@ func _draw() -> void:
 	_draw_room_labels()
 	_draw_land_plots()
 	var color: Color = PREVIEW_OK if _preview_ok else PREVIEW_BAD
+	var outline: PackedVector2Array = get_selection_outline()
+	if not outline.is_empty():
+		draw_multiline(outline, color, SELECTION_LINE_WIDTH)
+	else:
+		_draw_preview_shapes(color)
+	# Flecha hacia el frente del mueble.
+	if _preview_front != Vector2i.ZERO and not _preview_cells.is_empty():
+		var center := Vector2.ZERO
+		for cell: Vector2i in _preview_cells:
+			center += Vector2(cell)
+		center /= _preview_cells.size()
+		var tip: Vector2 = center + Vector2(_preview_front) * 0.45
+		draw_line(_grid.grid_to_world(center), _grid.grid_to_world(tip), color, PREVIEW_LINE_WIDTH)
+		draw_circle(_grid.grid_to_world(tip), PREVIEW_LINE_WIDTH * 1.5, color)
+
+
+## Rectángulo (px) que ocupa el dibujo del mueble elegido; vacío si no hay.
+func get_selection_bounds() -> Rect2:
+	if not _active or _preview_item < 0 or _preview_item >= OfficeState.furniture.size():
+		return Rect2()
+	return _grid.get_furniture_bounds(OfficeState.furniture[_preview_item])
+
+
+## Contorno punteado con la silueta del mueble elegido o del que se va a poner (pares de puntos, px);
+## vacío si no hay.
+func get_selection_outline() -> PackedVector2Array:
+	if not _active:
+		return PackedVector2Array()
+	if _preview_item >= 0 and _preview_item < OfficeState.furniture.size():
+		return _grid.get_furniture_outline(OfficeState.furniture[_preview_item], SELECTION_DASH, SELECTION_GAP)
+	if not _preview_new.is_empty():
+		return _grid.get_furniture_outline(_preview_new, SELECTION_DASH, SELECTION_GAP)
+	return PackedVector2Array()
+
+
+# Bordes y casillas de lo que se construye o se pone.
+func _draw_preview_shapes(color: Color) -> void:
 	for edge: Vector3i in _preview_edges:
 		var ends: Array[Vector2] = GridEdge.get_endpoints(edge)
 		draw_line(_grid.grid_to_world(ends[0]), _grid.grid_to_world(ends[1]), color, PREVIEW_LINE_WIDTH)
@@ -495,18 +567,10 @@ func _draw() -> void:
 		var corners: PackedVector2Array = IsoBox.grid_rect_corners(_grid, center - half, center + half)
 		corners.append(corners[0])
 		draw_polyline(corners, color, PREVIEW_LINE_WIDTH / 2.0)
-	# Flecha hacia el frente del mueble.
-	if _preview_front != Vector2i.ZERO and not _preview_cells.is_empty():
-		var center := Vector2.ZERO
-		for cell: Vector2i in _preview_cells:
-			center += Vector2(cell)
-		center /= _preview_cells.size()
-		var tip: Vector2 = center + Vector2(_preview_front) * 0.45
-		draw_line(_grid.grid_to_world(center), _grid.grid_to_world(tip), color, PREVIEW_LINE_WIDTH)
-		draw_circle(_grid.grid_to_world(tip), PREVIEW_LINE_WIDTH * 1.5, color)
 
 
-# Lotes marcados: casillas rellenas y precio encima.
+# Precio de los lotes marcados (los rellenos y bordes van en LandOverlay, bajo las paredes): el de cada
+# lote que se compra y, bajo el ratón, lo que devuelve uno propio.
 func _draw_land_plots() -> void:
 	if tool != TOOL_LAND or _plots.is_empty():
 		return
@@ -514,17 +578,20 @@ func _draw_land_plots() -> void:
 	var zoom: float = get_canvas_transform().get_scale().x
 	for index: int in range(_plots.size()):
 		var plot: Dictionary = _plots[index]
-		var fill: Color = PLOT_HOVER if index == _hover_plot and plot["ok"] else (PLOT_OK if plot["ok"] else PLOT_BAD)
+		var selling: bool = plot["action"] == "sell"
+		if selling and index != _hover_plot:
+			continue
 		var center := Vector2.ZERO
-		var cells: Array = plot["new_cells"]
+		var cells: Array = plot["marked"]
 		for cell: Vector2i in cells:
 			center += Vector2(cell)
-			draw_colored_polygon(IsoBox.grid_rect_corners(_grid, Vector2(cell) - Vector2(0.47, 0.47), Vector2(cell) + Vector2(0.47, 0.47)), fill)
 		draw_set_transform(_grid.grid_to_world(center / cells.size()), 0.0, Vector2.ONE / zoom)
-		var text: String = MoneyFormat.format(int(plot["cost"]))
+		var amount: int = int(plot["cost"])
+		var text: String = ("+" + MoneyFormat.format(-amount)) if selling else MoneyFormat.format(amount)
+		var color: Color = (LABEL_SELL_COLOR if selling else LABEL_OK_COLOR) if plot["ok"] else LABEL_BAD_COLOR
 		var at := Vector2(-LABEL_WIDTH / 2.0, LABEL_FONT_SIZE * 0.35)
 		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH, LABEL_FONT_SIZE, LABEL_OUTLINE, LABEL_OUTLINE_COLOR)
-		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH, LABEL_FONT_SIZE, LABEL_OK_COLOR if plot["ok"] else LABEL_BAD_COLOR)
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_CENTER, LABEL_WIDTH, LABEL_FONT_SIZE, color)
 		draw_set_transform(Vector2.ZERO)
 
 
