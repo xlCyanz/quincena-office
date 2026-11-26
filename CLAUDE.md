@@ -77,11 +77,11 @@ Solo para probar y balancear; no viajan en las exportaciones.
 | `scripts/ui/` | Interfaz |
 | `scripts/debug/` | Herramientas de desarrollo |
 | `data/` | Datos de diseño (JSON) |
-| `assets/` | Arte; `tools/sprites/` lo genera |
+| `assets/` | Arte y sonido; `tools/sprites/` y `tools/sounds/` los generan |
 | `addons/` | Addons de terceros y el plugin de exportación |
 | `tests/` | Pruebas sin ventana |
 
-- Autoloads, en este orden: `EventBus`, `Settings`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`,
+- Autoloads, en este orden: `EventBus`, `Settings`, `Audio`, `GameClock`, `Economy`, `OfficeState`, `Staff`, `Projects`, `Products`,
   `Bank`, `Company`, `Events`, `Tutorial`, `SaveManager`; para desarrollo `Panku` y `DevTools`.
 - `GameConstants` (`scripts/autoload/game_constants.gd`) es una clase con `class_name`, no un autoload.
 - Los archivos grandes van en capas por herencia (`extends "res://…"`), de abajo hacia arriba; cada capa solo llama a las

@@ -12,6 +12,7 @@ func _ready() -> void:
 	if not OfficeState.has_game():
 		SaveManager.new_game()
 	_rebuild_office()
+	EventBus.music_requested.emit("office")
 	_camera.set_map_area(_office_grid.get_site_world_area())
 	_camera.fit_rect(_office_grid.get_lot_world_rect())
 	_spawn_ceo()

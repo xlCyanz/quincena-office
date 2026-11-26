@@ -1,4 +1,4 @@
-# Controles de las opciones (Ajustes y menú principal): sí/no, velocidad inicial, escala y
+# Controles de las opciones (Ajustes y menú principal): sí/no, velocidad inicial, escala, volúmenes y
 # «Valores por defecto». Cada cambio va a Settings y los controles siguen sus cambios.
 class_name OptionsList
 extends VBoxContainer
@@ -13,6 +13,15 @@ const TOGGLES: Dictionary[String, String] = {
 	"edge_pan": "Mover la cámara con el borde de la pantalla",
 	"console_overlay": "Mostrar la consola de desarrollo sobre el juego",
 }
+## Volúmenes (0 a 100 %), en orden, con su texto.
+const VOLUMES: Dictionary[String, String] = {
+	"master_volume": "Volumen general",
+	"music_volume": "Música",
+	"sfx_volume": "Efectos",
+}
+const VOLUME_STEP: float = 5.0
+const VOLUME_SLIDER_WIDTH: float = 180.0
+const VOLUME_VALUE_WIDTH: float = 52.0
 ## Opciones que solo existen con la consola de desarrollo.
 const DEV_TOGGLES: Array[String] = ["console_overlay"]
 
@@ -20,6 +29,8 @@ var _toggles: Dictionary[String, CheckBox] = {}
 var _speed_button: OptionButton
 var _scale_button: OptionButton
 var _reset_button: Button
+var _volume_sliders: Dictionary[String, HSlider] = {}
+var _volume_labels: Dictionary[String, Label] = {}
 
 
 func _init() -> void:
@@ -57,10 +68,36 @@ func _init() -> void:
 	_scale_button.item_selected.connect(func(index: int) -> void:
 		Settings.set_value("ui_scale", Settings.get_ui_scales()[index]))
 	scale_row.add_child(_scale_button)
+	for key: String in VOLUMES:
+		_add_volume_row(key)
 	_reset_button = Button.new()
 	_reset_button.text = "Valores por defecto"
 	_reset_button.pressed.connect(Settings.reset_to_defaults)
 	add_child(_reset_button)
+
+
+func _add_volume_row(key: String) -> void:
+	var row := HBoxContainer.new()
+	add_child(row)
+	var label := Label.new()
+	label.text = VOLUMES[key]
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 100.0
+	slider.step = VOLUME_STEP
+	slider.custom_minimum_size = Vector2(VOLUME_SLIDER_WIDTH, 32)
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slider.tooltip_text = "%s: 0 es silencio" % VOLUMES[key]
+	slider.value_changed.connect(func(value: float) -> void: Settings.set_value(key, roundi(value)))
+	row.add_child(slider)
+	var value_label := Label.new()
+	value_label.custom_minimum_size.x = VOLUME_VALUE_WIDTH
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(value_label)
+	_volume_sliders[key] = slider
+	_volume_labels[key] = value_label
 
 
 func _ready() -> void:
@@ -78,6 +115,10 @@ func refresh() -> void:
 		_toggles[key].set_pressed_no_signal(bool(Settings.get_value(key)))
 	_speed_button.select(int(Settings.get_value("start_speed")))
 	_scale_button.select(Settings.get_ui_scales().find(int(Settings.get_value("ui_scale"))))
+	for key: String in _volume_sliders:
+		var value: int = int(Settings.get_value(key))
+		_volume_sliders[key].set_value_no_signal(value)
+		_volume_labels[key].text = "%d %%" % value
 
 
 func get_scale_button() -> OptionButton:
@@ -90,6 +131,10 @@ func get_toggle(key: String) -> CheckBox:
 
 func get_speed_button() -> OptionButton:
 	return _speed_button
+
+
+func get_volume_slider(key: String) -> HSlider:
+	return _volume_sliders[key]
 
 
 func get_reset_button() -> Button:

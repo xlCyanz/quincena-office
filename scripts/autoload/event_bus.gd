@@ -170,3 +170,11 @@ signal help_requested(topic: String)
 ## Cambió el espacio de la interfaz (pantalla, escala o alto de la barra): los paneles se reacomodan.
 @warning_ignore("unused_signal")
 signal ui_layout_changed
+
+## Pide un efecto de sonido de data/audio.json (p. ej., "build" o "error"). Lo toca Audio.
+@warning_ignore("unused_signal")
+signal sound_requested(sound_id: String)
+
+## Pide una pista de música de data/audio.json ("menu", "office" o "" para callar). La toca Audio.
+@warning_ignore("unused_signal")
+signal music_requested(track: String)

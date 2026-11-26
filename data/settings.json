@@ -1,5 +1,5 @@
 {
-	"_comentario": "Hito 60: opciones del jugador y su valor por defecto. Settings las guarda en user://settings.cfg, aparte de las partidas; un valor que falta o no sirve (otro tipo o fuera de rango) vuelve al de aquí. fullscreen = pantalla completa; autosave = guardar solo al empezar cada día; start_speed = índice de GameConstants.CLOCK_SPEEDS con que empieza una partida nueva; pause_on_build = el modo construcción pausa el tiempo; pause_on_focus_loss = pausar cuando la ventana pierde el foco; min_button_height = alto mínimo de todo botón (hito 65); ui_scale = escala de la interfaz en %, uno de ui_scales (hito 65; 75 y 90 achican la interfaz en pantallas grandes); tutorial_seen = el jugador ya terminó o saltó el tutorial (hito 63): las partidas nuevas empiezan sin él (se retoma desde Ajustes); smooth_camera = la cámara anima el zoom y el encuadre y sigue un poco al soltar un arrastre; edge_pan = el ratón en el borde de la ventana mueve la cámara; console_overlay = los renglones de la consola de desarrollo (Panku) se ven siempre sobre el juego (solo existe en compilaciones de depuración; apagado, se ven solo con la consola abierta).",
+	"_comentario": "Hito 60: opciones del jugador y su valor por defecto. Settings las guarda en user://settings.cfg, aparte de las partidas; un valor que falta o no sirve (otro tipo o fuera de rango) vuelve al de aquí. fullscreen = pantalla completa; autosave = guardar solo al empezar cada día; start_speed = índice de GameConstants.CLOCK_SPEEDS con que empieza una partida nueva; pause_on_build = el modo construcción pausa el tiempo; pause_on_focus_loss = pausar cuando la ventana pierde el foco; min_button_height = alto mínimo de todo botón (hito 65); ui_scale = escala de la interfaz en %, uno de ui_scales (hito 65; 75 y 90 achican la interfaz en pantallas grandes); tutorial_seen = el jugador ya terminó o saltó el tutorial (hito 63): las partidas nuevas empiezan sin él (se retoma desde Ajustes); smooth_camera = la cámara anima el zoom y el encuadre y sigue un poco al soltar un arrastre; edge_pan = el ratón en el borde de la ventana mueve la cámara; console_overlay = los renglones de la consola de desarrollo (Panku) se ven siempre sobre el juego (solo existe en compilaciones de depuración; apagado, se ven solo con la consola abierta); master_volume, music_volume y sfx_volume = volumen general, de la música y de los efectos en %, de 0 (silencio) a 100 (data/audio.json tiene los sonidos).",
 	"defaults": {
 		"fullscreen": false,
 		"autosave": true,
@@ -10,7 +10,10 @@
 		"tutorial_seen": false,
 		"smooth_camera": true,
 		"edge_pan": true,
-		"console_overlay": false
+		"console_overlay": false,
+		"master_volume": 80,
+		"music_volume": 60,
+		"sfx_volume": 80
 	},
 	"ui_scales": [75, 90, 100, 125, 150],
 	"min_button_height": 44

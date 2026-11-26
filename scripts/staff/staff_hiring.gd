@@ -456,6 +456,7 @@ func _hire(candidate: Dictionary, salary: int) -> Dictionary:
 	_drop_missing_interview()
 	EventBus.office_changed.emit()
 	EventBus.staff_changed.emit()
+	EventBus.sound_requested.emit("hire")
 	return {"ok": true, "result": "hired", "message": "%s aceptó: entra como %s." % [
 		employee["name"], describe_employee(employee)]}
 

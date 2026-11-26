@@ -1,6 +1,7 @@
 # Opciones del jugador: ConfigFile aparte de las partidas, con valores por defecto en
 # data/settings.json (un valor roto vuelve al suyo). Aplica pantalla completa, escala de la
-# interfaz, alto mínimo de los botones y el tema (UiTheme); lo demás lo leen los sistemas con get_value.
+# interfaz, alto mínimo de los botones y el tema (UiTheme); lo demás (como los volúmenes, que aplica
+# Audio) lo leen los sistemas con get_value.
 extends Node
 
 const DATA_PATH: String = "res://data/settings.json"
@@ -64,7 +65,7 @@ func get_value(key: String) -> Variant:
 	return _values.get(key)
 
 
-## Indica si un valor sirve: del tipo del de defecto y, la velocidad y la escala, entre las que hay.
+## Indica si un valor sirve: del tipo del de defecto y, la velocidad, la escala y los volúmenes, entre los que hay.
 func is_valid(key: String, value: Variant) -> bool:
 	var defaults: Dictionary = get_defaults()
 	if not defaults.has(key):
@@ -79,6 +80,8 @@ func is_valid(key: String, value: Variant) -> bool:
 			return int(value) >= 0 and int(value) < GameConstants.CLOCK_SPEEDS.size()
 		if key == "ui_scale":
 			return get_ui_scales().has(int(value))
+		if key.ends_with("_volume"):
+			return int(value) >= 0 and int(value) <= 100
 		return true
 	return typeof(value) == typeof(default)
 

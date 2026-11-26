@@ -1,0 +1,41 @@
+{
+	"_comentario": "Sonidos del juego (assets/sounds, los genera tools/sounds/make_sounds.py). sounds: efecto -> volumen en dB, separación mínima en segundos entre dos iguales (los avisos seguidos no se amontonan) y variación de tono al azar (±). music: pista -> archivo; suenan en bucle y se cruzan en fade_seconds. signals: señal de EventBus -> efecto que suena al emitirse. buses: nombre de cada bus bajo Master. Los volúmenes del jugador (master_volume, music_volume, sfx_volume) están en data/settings.json.",
+	"folder": "res://assets/sounds/",
+	"sounds": {
+		"click": {"volume_db": -14.0, "min_interval": 0.04, "pitch_jitter": 0.06},
+		"build": {"volume_db": -6.0, "min_interval": 0.06, "pitch_jitter": 0.08},
+		"sell": {"volume_db": -9.0, "min_interval": 0.08, "pitch_jitter": 0.0},
+		"error": {"volume_db": -12.0, "min_interval": 0.25, "pitch_jitter": 0.0},
+		"notice": {"volume_db": -11.0, "min_interval": 0.5, "pitch_jitter": 0.0},
+		"hire": {"volume_db": -6.0, "min_interval": 0.3, "pitch_jitter": 0.0},
+		"contract": {"volume_db": -7.0, "min_interval": 0.3, "pitch_jitter": 0.0},
+		"cash": {"volume_db": -7.0, "min_interval": 1.0, "pitch_jitter": 0.0},
+		"success": {"volume_db": -5.0, "min_interval": 0.5, "pitch_jitter": 0.0},
+		"objective": {"volume_db": -5.0, "min_interval": 0.5, "pitch_jitter": 0.0},
+		"fanfare": {"volume_db": -5.0, "min_interval": 1.0, "pitch_jitter": 0.0},
+		"event": {"volume_db": -8.0, "min_interval": 0.5, "pitch_jitter": 0.0},
+		"alarm": {"volume_db": -12.0, "min_interval": 1.0, "pitch_jitter": 0.0},
+		"game_over": {"volume_db": -6.0, "min_interval": 1.0, "pitch_jitter": 0.0}
+	},
+	"music": {
+		"menu": "music_menu.wav",
+		"office": "music_office.wav"
+	},
+	"fade_seconds": 1.5,
+	"signals": {
+		"notice": "notice",
+		"contract_accepted": "contract",
+		"contract_delivered": "success",
+		"objective_completed": "objective",
+		"stage_changed": "fanfare",
+		"went_public": "fanfare",
+		"game_over": "game_over",
+		"event_started": "event",
+		"payroll_short": "alarm",
+		"emergency_loan_offered": "alarm"
+	},
+	"payroll_sound": "cash",
+	"late_payment_sound": "alarm",
+	"players": 8,
+	"buses": {"music": "Music", "sfx": "Sfx"}
+}

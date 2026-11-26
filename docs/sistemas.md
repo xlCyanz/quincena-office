@@ -584,6 +584,26 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `_play_<n>` cada `PRESENTATION_SCREEN_FRAME_SECONDS` mientras corre el reloj (`FurnitureView.set_screen_frame`, 0 = apagada).
   Prueba `test_sprites`.
 
+## Sonido (fase 8)
+
+- Sonido (autoload `Audio`, `scripts/autoload/audio.gd`, va después de `Settings`; `data/audio.json`, la cabecera explica las claves): los
+  efectos y las dos pistas son WAV en `assets/sounds/` que genera `tools/sounds/make_sounds.py` por síntesis (numpy, sin muestras de afuera;
+  después `Godot --headless --editor --quit`). Las pistas (`music_menu`, `music_office`, 22 kHz) se importan en bucle (`edit/loop_mode=2` en
+  su `.import`) y los efectos a 44 kHz; todos con compresión QOA. Buses `Music` y `Sfx` bajo `Master`, creados en `_ready`.
+- `Audio.play(id)` suena un efecto en un grupo de `players` reproductores con su `volume_db`, `pitch_jitter` y `min_interval` (dos iguales
+  más juntos no suenan: devuelve false). Lo piden `EventBus.sound_requested(id)` (construir/vender/no se pudo desde
+  `BuildController._play_result`, contratar desde `Staff._hire`) y las señales de `signals` (aviso, contrato aceptado y entregado, objetivo,
+  etapa, bolsa, fin, evento, nómina corta, préstamo de emergencia), que se conectan solas con `unbind` según sus argumentos. `payment_recorded`
+  suena a caja con la nómina pagada y a alarma con un pago atrasado. Todo `BaseButton` (y el cambio de pestaña de un `TabBar`) que entra al
+  árbol hace `click`, salvo los de Panku.
+- Música: `EventBus.music_requested(pista)` («menu» desde `main_menu.gd`, «office» desde `main.gd`, «» calla) cruza las pistas en
+  `fade_seconds` con dos reproductores; repetir la que suena no hace nada. `get_music_track`, `get_music_player`.
+- Volúmenes: opciones `master_volume`, `music_volume` y `sfx_volume` (0–100, enteros; por defecto 80, 60 y 80) en `data/settings.json`;
+  `apply_volumes` las pasa a los buses (`linear_to_db`, 0 silencia) al empezar y con `settings_changed`. `OptionsList` las muestra con
+  deslizadores de 5 en 5 (`get_volume_slider`).
+- Pruebas (`test_audio`): con el controlador mudo de `--headless` (`Dummy`) no se llama `play()` (sus reproducciones no se liberan al cerrar
+  y Godot avisa de recursos en uso); el historial (`get_history`, `clear_history`) y la pista cuentan igual. `_exit_tree` suelta los streams.
+
 ## Exportación
 
 - Exportación de escritorio (hito 66): `export_presets.cfg` con macOS (universal, firma ad hoc, `com.quincenaoffice.game`), Windows y Linux

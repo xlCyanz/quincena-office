@@ -36,6 +36,7 @@ var _cancel_button: Button
 func _ready() -> void:
 	# El suelo de la partida se pinta mientras se ve el menú (tarda ~1 s).
 	OfficeGrid.prepare_tile_set.call_deferred()
+	EventBus.music_requested.emit("menu")
 	var latest: String = SaveManager.get_latest_slot()
 	_continue_button.visible = not latest.is_empty()
 	_continue_button.tooltip_text = SaveManager.describe_slot(latest) if not latest.is_empty() else ""

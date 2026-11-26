@@ -114,6 +114,7 @@ func buy_land_plot_at(cell: Vector2i) -> Dictionary:
 		status_changed.emit(none["message"])
 		return none
 	var result: Dictionary = builder.buy_land_cells(_plots[index]["cells"])
+	_play_result(result)
 	if not result["ok"]:
 		# Lo que impide comprar (dinero, una habitación que se perdería).
 		result = builder.quote_land_cells(_plots[index]["cells"])
@@ -158,6 +159,8 @@ func answer_confirm(accept: bool) -> Dictionary:
 	if not action.is_valid():
 		return {"ok": false, "message": ""}
 	var result: Dictionary = action.call() if accept else {"ok": false, "message": "No se mudó nada."}
+	if accept:
+		_play_result(result)
 	status_changed.emit(result["message"])
 	_update_preview(false)
 	return result
@@ -179,6 +182,16 @@ func set_tool(new_tool: String) -> void:
 		if not missing.is_empty():
 			hint += " Faltan: %s." % ", ".join(missing)
 		status_changed.emit(hint)
+
+
+# Sonido de lo que hizo un clic: vender, construir o no se pudo. Una pregunta pendiente no suena.
+func _play_result(result: Dictionary) -> void:
+	if is_confirming():
+		return
+	if not bool(result.get("ok", false)):
+		EventBus.sound_requested.emit("error")
+	else:
+		EventBus.sound_requested.emit("sell" if tool == TOOL_SELL else "build")
 
 
 ## Gira un cuarto de vuelta el mueble que se va a colocar.
@@ -219,6 +232,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragging = false
 			var result: Dictionary = _apply_preview.call() if _apply_preview.is_valid() else {
 				"message": "No hay nada que hacer ahí."}
+			_play_result(result)
 			status_changed.emit(result["message"])
 			_update_preview(false)
 		get_viewport().set_input_as_handled()
