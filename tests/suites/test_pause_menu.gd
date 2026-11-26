@@ -113,11 +113,13 @@ func _check_open_and_resume(game: Node) -> void:
 	await _escape()
 	_expect(not pause.is_open() and GameClock.is_paused, "Esc en la pausa la cierra y sigue la pausa del jugador")
 	# Perder el foco con la pausa abierta: al seguir no vuelve a correr solo.
+	Settings.set_value("pause_on_focus_loss", true)
 	GameClock.set_paused(false)
 	await _escape()
 	game.on_focus_lost()
 	await _click(pause.get_button("resume"))
 	_expect(GameClock.is_paused, "perder el foco en la pausa deja el reloj en pausa al seguir")
+	Settings.reset_to_defaults()
 	GameClock.set_paused(false)
 	await _escape()
 	var space := InputEventKey.new()

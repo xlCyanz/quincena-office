@@ -81,7 +81,7 @@ func _check_defaults() -> void:
 	for key: String in ["fullscreen", "autosave", "start_speed", "pause_on_build", "pause_on_focus_loss"]:
 		_expect(defaults.has(key), "opción %s en data/settings.json" % key)
 	_expect(not bool(Settings.get_value("fullscreen")) and bool(Settings.get_value("autosave")) and int(Settings.get_value("start_speed")) == 0
-		and bool(Settings.get_value("pause_on_build")) and bool(Settings.get_value("pause_on_focus_loss")), "valores por defecto")
+		and bool(Settings.get_value("pause_on_build")) and not bool(Settings.get_value("pause_on_focus_loss")), "valores por defecto")
 
 
 # Al leer el archivo de nuevo (como al reiniciar) sigue igual.
@@ -169,7 +169,10 @@ func _check_effects() -> void:
 	Settings.set_value("pause_on_build", true)
 	GameClock.set_paused(false)
 	game.on_focus_lost()
-	_expect(GameClock.is_paused, "al perder el foco se pausa")
+	_expect(not GameClock.is_paused, "por defecto el juego sigue al perder el foco")
+	Settings.set_value("pause_on_focus_loss", true)
+	game.on_focus_lost()
+	_expect(GameClock.is_paused, "con la opción, al perder el foco se pausa")
 	GameClock.set_paused(false)
 	game.notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
 	_expect(GameClock.is_paused, "con la notificación de la ventana también")

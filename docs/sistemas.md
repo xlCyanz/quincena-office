@@ -475,7 +475,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 - Opciones (`Settings`, hito 60; `data/settings.json`): `user://settings.cfg` (`ConfigFile`, sección `options`), aparte de las partidas;
   `get_value`, `set_value` (valida tipo y rango, aplica, guarda y emite `EventBus.settings_changed`), `load_settings` (lo que falta o no sirve
   vuelve a su valor por defecto) y `reset_to_defaults`. Opciones: `fullscreen` (no hace nada sin ventana), `autosave` (`SaveManager`),
-  `start_speed` (`GameClock.new_game`), `pause_on_build` y `pause_on_focus_loss` (`main.gd`, `on_focus_lost`). `test_all` usa
+  `start_speed` (`GameClock.new_game`), `pause_on_build` y `pause_on_focus_loss` (`main.gd`, `on_focus_lost`; apagada por defecto: el juego sigue en otra ventana). `test_all` usa
   `Settings.path = "user://test_settings.cfg"` con los valores por defecto. Ajustes (`SettingsPanel`) tiene las pestañas Guardar, Cargar y
   Opciones (`set_tab`); cargar y salir piden confirmación (`is_confirming`) y emiten `load_requested`/`quit_requested`; `main.gd` carga la
   ranura y vuelve a abrir la escena de juego. Los controles de opciones son `OptionsList` (también en el menú principal).
