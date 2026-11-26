@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bfw1l072du4bu" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="Texture2D" path="res://assets/ui/bg_menu.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/ui/logo.png" id="3_logo"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -59,7 +60,20 @@ theme_type_variation = &"CaptionLabel"
 theme_override_font_sizes/font_size = 15
 text = "CEO · SOFTWARE"
 
-[node name="Title" type="Label" parent="Side/Margin/Items"]
+[node name="Brand" type="HBoxContainer" parent="Side/Margin/Items"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Logo" type="TextureRect" parent="Side/Margin/Items/Brand"]
+texture_filter = 1
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("3_logo")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Side/Margin/Items/Brand"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
 theme_override_constants/line_spacing = -8

@@ -21,8 +21,8 @@ const PLATFORMS: Dictionary[String, String] = {
 const REQUIRED_EXCLUDES: Array[String] = ["addons/panku_console/*", "scripts/debug/*", "tests/*", "addons/quincena_export/*"]
 ## Carpetas que no se revisan al buscar dependencias (caché, exportaciones, addons de terceros).
 const SKIP_DIRS: Array[String] = [".godot", "build", ".git"]
-## Color del logo de Godot: el icono por defecto lo usa, el propio no.
-const GODOT_LOGO_COLOR: String = "#478cbf"
+## Icono de Godot que trae un proyecto nuevo.
+const GODOT_ICON: String = "res://icon.svg"
 
 var _failures: int = 0
 var _checks: int = 0
@@ -165,7 +165,12 @@ func _check_identity(presets: ConfigFile) -> void:
 	var icon_path: String = String(ProjectSettings.get_setting("application/config/icon", ""))
 	var icon: Texture2D = load(icon_path) as Texture2D
 	_expect(icon != null and icon.get_width() >= 128 and icon.get_height() == icon.get_width(), "el icono se carga y es cuadrado: %s" % icon_path)
-	_expect(not FileAccess.get_file_as_string(icon_path).contains(GODOT_LOGO_COLOR), "el icono es propio, no el de Godot")
+	_expect(icon_path != GODOT_ICON, "el icono es propio, no el de Godot")
+	var windows_icon: String = String(ProjectSettings.get_setting("application/config/windows_native_icon", ""))
+	_expect(windows_icon.get_extension() == "ico" and FileAccess.file_exists(windows_icon), "Windows tiene icono .ico: %s" % windows_icon)
+	var splash: Texture2D = load(String(ProjectSettings.get_setting("application/boot_splash/image", ""))) as Texture2D
+	_expect(splash != null and not bool(ProjectSettings.get_setting("application/boot_splash/use_filter")),
+		"la pantalla de arranque tiene el logo, sin suavizar el pixel art")
 	for section: String in _preset_sections(presets):
 		var options: String = section + ".options"
 		match String(presets.get_value(section, "platform", "")):
@@ -175,10 +180,13 @@ func _check_identity(presets: ConfigFile) -> void:
 				_expect(String(presets.get_value(options, "application/bundle_identifier", "")).count(".") >= 2,
 					"macOS tiene identificador de paquete")
 				_expect(presets.get_value(options, "binary_format/architecture", "") == "universal", "macOS sale para Intel y Apple")
+				_expect(presets.get_value(options, "application/icon", "") == icon_path, "macOS usa el icono del juego")
 			"Windows Desktop":
 				_expect(presets.get_value(options, "application/product_name", "") == GAME_NAME, "Windows lleva el nombre del juego")
 				_expect(String(presets.get_value(options, "application/product_version", "")).begins_with(version),
 					"Windows lleva la versión del juego")
+				_expect(presets.get_value(options, "application/icon", "") == windows_icon
+					and bool(presets.get_value(options, "application/modify_resources", false)), "Windows mete el icono .ico en el .exe")
 
 
 # Las plantillas no son parte del proyecto: si faltan solo se avisa.

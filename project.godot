@@ -15,7 +15,11 @@ config/description="Juego de gestión de oficina: contrata, construye y paga la 
 config/version="0.7.0"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.10588235, 0.11372549, 0.16470589, 1)
+boot_splash/use_filter=false
+boot_splash/image="res://assets/ui/boot_splash.png"
+config/icon="res://icon.png"
+config/windows_native_icon="res://assets/ui/app_icon.ico"
 
 [autoload]
 

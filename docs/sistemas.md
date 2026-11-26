@@ -604,12 +604,20 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 - Pruebas (`test_audio`): con el controlador mudo de `--headless` (`Dummy`) no se llama `play()` (sus reproducciones no se liberan al cerrar
   y Godot avisa de recursos en uso); el historial (`get_history`, `clear_history`) y la pista cuentan igual. `_exit_tree` suelta los streams.
 
+## Logo (fase 8)
+
+- El edificio isométrico en pixel art de 32×32 (techo en rombo 2:1 como las casillas, borde ámbar, dos ventanas encendidas). Lo genera
+  `tools/logo/make_logo.py` con los colores de `UiTheme`: `assets/ui/logo.png` (32 px, el menú principal lo muestra a 96 px junto al título,
+  filtro más cercano), `icon.png` (1024 px en baldosa: `config/icon` y el icono de macOS), `assets/ui/app_icon.ico` (`windows_native_icon`
+  y el preset de Windows) y `assets/ui/boot_splash.png` (pantalla de arranque sobre el fondo del juego, `use_filter` apagado).
+  `test_export` y `test_main_menu` lo revisan.
+
 ## Exportación
 
 - Exportación de escritorio (hito 66): `export_presets.cfg` con macOS (universal, firma ad hoc, `com.quincenaoffice.game`), Windows y Linux
   (x86_64, `.pck` aparte) a `build/`; todos exportan los recursos más `data/*.json` (el juego los lee con `FileAccess`) y excluyen lo de
   desarrollo. macOS universal pide `import_etc2_astc`. Nombre «Quincena Office», `config/version` 0.7.0 (los presets la repiten) e icono
-  propio (`icon.svg`). Un autoload nuevo cuyo archivo no viaja se suma a `DEV_AUTOLOADS` del plugin. `test_export` revisa presets, plugin,
+  propio (ver Logo). Un autoload nuevo cuyo archivo no viaja se suma a `DEV_AUTOLOADS` del plugin. `test_export` revisa presets, plugin,
   icono y que ningún archivo que viaja nombre lo excluido; `export_desktop.sh` hace la exportación real. Con `--main-pack` lo que falta en el
   paquete se busca en la carpeta actual: la revisión corre desde una vacía.
 

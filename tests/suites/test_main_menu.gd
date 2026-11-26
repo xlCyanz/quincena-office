@@ -106,6 +106,9 @@ func _check_latest_slot() -> void:
 
 func _check_without_saves() -> void:
 	var menu: Control = await _open_menu()
+	var logo := menu.get_node("Side/Margin/Items/Brand/Logo") as TextureRect
+	_expect(logo.texture != null and logo.texture.get_width() == 32 and logo.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST
+		and logo.size.x >= 96.0, "el menú muestra el logo del edificio en pixel art (%s)" % [logo.size])
 	_expect(not menu.get_continue_button().visible, "sin partidas no aparece Continuar")
 	_expect(menu.get_new_game_button().visible and menu.get_settings_button().visible and menu.get_quit_button().visible
 		and menu.get_node("%LoadButton").disabled, "Nueva partida, Ajustes y Salir; Cargar sin partidas no se puede pulsar")
