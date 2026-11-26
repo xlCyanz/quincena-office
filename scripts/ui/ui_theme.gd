@@ -67,6 +67,7 @@ static var _body_font: FontVariation
 static var _strong_font: FontVariation
 static var _pixel_font: FontVariation
 static var _title_font: FontVariation
+static var _number_font: FontVariation
 
 
 ## Mezcla el tema en el de Godot. Se llama una vez al arrancar (Settings).
@@ -106,6 +107,16 @@ static func title_font() -> Font:
 	return _title_font
 
 
+## Nunito gruesa con cifras de ancho fijo, para el dinero, la reputación y la hora: se leen
+## mejor que Pixelify y no bailan al cambiar los números.
+static func number_font() -> Font:
+	if _number_font == null:
+		_number_font = _variation(BODY_FONT_PATH, STRONG_WEIGHT)
+		var server: TextServer = TextServerManager.get_primary_interface()
+		_number_font.opentype_features[server.name_to_tag("tnum")] = 1
+	return _number_font
+
+
 static func _variation(path: String, weight: int) -> FontVariation:
 	var font := FontVariation.new()
 	font.base_font = load(path) as Font
@@ -142,7 +153,7 @@ static func _add_labels(theme: Theme) -> void:
 	theme.set_color("font_shadow_color", "HeaderLabel", OUTLINE)
 	theme.set_constant("shadow_offset_x", "HeaderLabel", 0)
 	theme.set_constant("shadow_offset_y", "HeaderLabel", 3)
-	_label_variation(theme, "MoneyLabel", pixel_font(), MONEY_FONT_SIZE, TEXT)
+	_label_variation(theme, "MoneyLabel", number_font(), MONEY_FONT_SIZE, TEXT)
 	_label_variation(theme, "SectionLabel", pixel_font(), SECTION_FONT_SIZE, TEXT)
 	_label_variation(theme, "CaptionLabel", pixel_font(), CAPTION_FONT_SIZE, MUTED)
 	_label_variation(theme, "MutedLabel", body_font(), 14, SOFT)

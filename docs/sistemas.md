@@ -50,7 +50,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `zoom_index`; lo que se ve (`get_shown_zoom`) llega con una animación que deja fijo el punto bajo el ratón; `fit_rect`/`center_on(…, animate)`
   se deslizan («Ver oficina», F y los avisos de habitación); al soltar un arrastre rápido sigue con inercia; WASD/flechas (por posición, no con
   un campo de texto activo) y el ratón en el borde de la ventana (no sobre la interfaz, solo con ventana y foco) la mueven; `pan_blocker` lo
-  corta con un menú encima. Opciones `smooth_camera` y `edge_pan` (Ajustes). `OfficeCamera.smoothing_enabled` (no se guarda) es solo para
+  corta con un menú encima. La rueda y el pellizco sobre un control (`is_pointer_over_ui`) no hacen zoom aunque la ventana no los use. Opciones `smooth_camera` y `edge_pan` (Ajustes). `OfficeCamera.smoothing_enabled` (no se guarda) es solo para
   pruebas: `test_all` lo apaga antes de `camera_view`; `finish_motion()` termina la animación. La vista ya no se gira (se quitó
   después del hito 69): siempre desde la misma esquina; una partida guardada con `view_rotation` distinto de 0 encuadra la oficina al cargar.
   Paredes: las de atrás (`OfficeGrid.is_back_edge`: contorno con la casilla de fuera detrás) se dibujan a su `height` de `data/construction.json`
@@ -434,7 +434,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 ## Interfaz, menús y guardado
 
 - Tema «Oficina de noche» (`UiTheme`, `scripts/ui/ui_theme.gd`): paleta (`BG`, `PANEL`, `CARD`, `BUTTON`, `OUTLINE`, `TEXT`, `MUTED`,
-  `ACCENT`, `POSITIVE`, `NEGATIVE`, `INFO`…), Nunito para el texto y Pixelify Sans para botones, pestañas, cifras y títulos
+  `ACCENT`, `POSITIVE`, `NEGATIVE`, `INFO`…), Nunito para el texto y las cifras de la barra (`MoneyLabel` usa `number_font`: gruesa y con cifras de ancho fijo, `tnum`) y Pixelify Sans para botones, pestañas y títulos
   (`assets/fonts/`, licencia OFL al lado; sin ligaduras, Pixelify no trae «fi»). `Settings._ready` llama `UiTheme.apply()`, que mezcla el
   tema en el de Godot (`ThemeDB.get_default_theme()`) para que lo tomen también los nodos bajo un `CanvasLayer`. Cajas con bisel desde una
   imagen chica en nueve partes (borde de 2 px, línea clara arriba, franja oscura abajo y sombra corta en los paneles). Variaciones:

@@ -182,14 +182,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_handle_mouse_button(event as InputEventMouseButton)
 	elif event is InputEventMouseMotion:
 		_handle_mouse_motion(event as InputEventMouseMotion)
-	elif event is InputEventMagnifyGesture:
+	elif event is InputEventMagnifyGesture and not is_pointer_over_ui():
 		_handle_pinch(event as InputEventMagnifyGesture)
+
+
+## Indica si el ratón está sobre un panel o control. La rueda sobre una ventana no hace zoom aunque
+## la ventana no la use (no tiene desplazamiento o ya llegó al final).
+func is_pointer_over_ui() -> bool:
+	return get_viewport().gui_get_hovered_control() != null
 
 
 func _handle_mouse_button(event: InputEventMouseButton) -> void:
 	match event.button_index:
 		MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN:
-			if event.pressed:
+			if event.pressed and not is_pointer_over_ui():
 				_handle_wheel(event)
 		MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT:
 			if event.button_index == MOUSE_BUTTON_LEFT and not left_drag_enabled:
@@ -277,7 +283,7 @@ func get_edge_pan_direction(window_point: Vector2, window_size: Vector2) -> Vect
 		return Vector2.ZERO
 	if not Rect2(Vector2.ZERO, window_size).has_point(window_point):
 		return Vector2.ZERO
-	if get_viewport().gui_get_hovered_control() != null:
+	if is_pointer_over_ui():
 		return Vector2.ZERO
 	var edge: float = GameConstants.CAMERA_EDGE_PAN_PX
 	var direction := Vector2.ZERO

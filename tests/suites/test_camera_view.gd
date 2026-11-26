@@ -184,6 +184,35 @@ func _check_zoom() -> void:
 	var lot_rect: Rect2 = grid.get_lot_world_rect()
 	_expect(camera.position.distance_to(lot_rect.get_center()) < 0.6 and camera.zoom.x == camera.get_zoom_level(),
 		"el encuadre animado termina centrado: %s vs %s" % [camera.position, lot_rect.get_center()])
+	# La rueda sobre una ventana no hace zoom, aunque su lista no tenga nada que desplazar.
+	var layer := CanvasLayer.new()
+	game.add_child(layer)
+	var scroll := ScrollContainer.new()
+	scroll.position = SCREEN / 2.0 - Vector2(100, 100)
+	scroll.size = Vector2(200, 200)
+	var content := Label.new()
+	content.text = "Lista corta"
+	content.mouse_filter = Control.MOUSE_FILTER_PASS
+	scroll.add_child(content)
+	layer.add_child(scroll)
+	await get_tree().process_frame
+	var over := InputEventMouseMotion.new()
+	over.position = SCREEN / 2.0
+	get_viewport().push_input(over, true)
+	await get_tree().process_frame
+	var level_before: float = camera.get_zoom_level()
+	_push_mouse_button(MOUSE_BUTTON_WHEEL_DOWN, true, SCREEN / 2.0)
+	_push_mouse_button(MOUSE_BUTTON_WHEEL_UP, true, SCREEN / 2.0)
+	_push_mouse_button(MOUSE_BUTTON_WHEEL_UP, true, SCREEN / 2.0)
+	_expect(camera.is_pointer_over_ui() and camera.get_zoom_level() == level_before,
+		"la rueda sobre una ventana no hace zoom: %s → %s" % [level_before, camera.get_zoom_level()])
+	layer.queue_free()
+	await get_tree().process_frame
+	var away := InputEventMouseMotion.new()
+	away.position = SCREEN / 2.0
+	get_viewport().push_input(away, true)
+	await get_tree().process_frame
+	await _settle(camera)
 	Settings.set_value("smooth_camera", false)
 	_push_mouse_button(MOUSE_BUTTON_WHEEL_DOWN, true, SCREEN / 2.0)
 	_expect(camera.zoom.x == camera.get_zoom_level() and not camera.is_moving(), "sin cámara suave el zoom salta")
