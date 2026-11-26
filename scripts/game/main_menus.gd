@@ -177,6 +177,9 @@ func handle_escape() -> String:
 			return "pause_confirm"
 		set_pause_menu_open(false)
 		return "resume"
+	if _build_panel.is_shop_open():
+		_build_panel.set_shop_open(false)
+		return "shop"
 	if _build_panel.is_build_mode():
 		if _build_controller.is_moving():
 			_build_controller.cancel_move()

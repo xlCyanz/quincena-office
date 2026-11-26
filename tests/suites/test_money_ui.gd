@@ -152,10 +152,18 @@ func _check_hud() -> void:
 	await _click(hud.get_speed_button(2))
 	_expect(GameClock.is_paused and GameClock.speed_index == 0, "un botón de velocidad cambió el tiempo en modo construcción")
 
-	# Muebles → Decoración → Planta pequeña.
-	for i: int in range(3):
+	# Salir → Tienda → Planta pequeña → Comprar → Volver; luego Construir y su tarjeta del inventario.
+	var shop: ShopScreen = panel.get_shop()
+	await _click(panel.get_button_toward("small_plant"))
+	await _click(panel.get_button_toward("small_plant"))
+	await _click(panel.get_button_toward("small_plant"))
+	await _click(shop.get_buy_button())
+	_expect(hud.get_balance_text() == "$19,960" and OfficeState.get_stock("small_plant") == 1,
+		"comprar la planta en la Tienda: %s" % hud.get_balance_text())
+	await _click(shop.get_back_button())
+	for i: int in range(4):
 		await _click(panel.get_button_toward("small_plant"))
-		if panel.get_selected_tool() == "small_plant":
+		if panel.is_build_mode() and panel.get_selected_tool() == "small_plant":
 			break
 	var grid: OfficeGrid = game.get_node("OfficeGrid")
 	var at := InputEventMouseMotion.new()
@@ -169,7 +177,8 @@ func _check_hud() -> void:
 		event.position = cell_position
 		event.global_position = cell_position
 		await _push(event)
-	_expect(hud.get_balance_text() == "$19,960", "dinero tras comprar una planta: %s" % hud.get_balance_text())
+	_expect(hud.get_balance_text() == "$19,960" and OfficeState.get_stock("small_plant") == 0,
+		"colocar la planta del inventario no cobra: %s" % hud.get_balance_text())
 	await _click(panel.get_exit_button())
 	await get_tree().process_frame
 	_expect(not GameClock.is_paused and not hud.get_speed_button(0).disabled, "al salir se recupera el tiempo")

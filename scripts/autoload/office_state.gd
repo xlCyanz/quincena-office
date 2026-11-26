@@ -49,6 +49,9 @@ var rooms: Array[Dictionary] = []
 ## "monitor" (en un escritorio; "" si no tiene, puede faltar)}. Los cambia Builder.
 var furniture: Array[Dictionary] = []
 
+## Muebles comprados en la tienda que aún no se colocan: id → cantidad (solo cantidades > 0).
+var inventory: Dictionary[String, int] = {}
+
 # Casilla → índice de habitación (get_room_index_map), con el hash de las casillas con que se armó.
 var _room_map: Dictionary[Vector2i, int] = {}
 var _room_map_key: int = 0
@@ -111,6 +114,7 @@ func new_game() -> void:
 	site_rect = site_around(lot.get_bounds())
 	rooms.clear()
 	furniture.clear()
+	inventory.clear()
 	floors.clear()
 	edges.clear()
 	var data: Dictionary = _load_json(STARTING_OFFICE_PATH)
@@ -632,6 +636,21 @@ func get_room_spot(room_index: int) -> Vector2i:
 	return cells[0]
 
 
+## Cuántos de un mueble hay en el inventario.
+func get_stock(id: String) -> int:
+	return inventory.get(id, 0)
+
+
+## Suma (o resta, con count negativo) unidades de un mueble al inventario y avisa.
+func add_stock(id: String, count: int) -> void:
+	var total: int = get_stock(id) + count
+	if total > 0:
+		inventory[id] = total
+	else:
+		inventory.erase(id)
+	EventBus.inventory_changed.emit()
+
+
 ## Devuelve el estado de la oficina para guardarlo; las casillas van como [x, y] para JSON.
 func export_state() -> Dictionary:
 	var saved_rooms: Array = []
@@ -662,6 +681,7 @@ func export_state() -> Dictionary:
 		"edges": saved_edges,
 		"rooms": saved_rooms,
 		"furniture": saved_furniture,
+		"inventory": inventory.duplicate(),
 		"entrance": [entrance.x, entrance.y],
 	}
 
@@ -698,6 +718,11 @@ func import_state(state: Dictionary) -> void:
 	for item: Dictionary in state.get("furniture", []):
 		furniture.append(_furniture_from_data(item))
 	_replace_removed_furniture()
+	inventory.clear()
+	var saved_inventory: Dictionary = state.get("inventory", {})
+	for id: String in saved_inventory:
+		if not FurnitureCatalog.get_item(id).is_empty() and int(saved_inventory[id]) > 0:
+			inventory[id] = int(saved_inventory[id])
 	entrance = _to_cell(state.get("entrance", [0, 0]))
 	# Partidas viejas: la entrada tenía puerta normal o de vidrio sencilla.
 	place_double_door(edges, lot, get_entrance_edge())

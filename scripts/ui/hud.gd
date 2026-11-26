@@ -57,6 +57,8 @@ func _ready() -> void:
 	var money_panel: PanelContainer = make_panel()
 	_money_panel = money_panel
 	root.add_child(money_panel)
+	# Mismo ancho mínimo que los Objetivos de abajo, que se alinean con este panel.
+	money_panel.custom_minimum_size.x = ObjectivesPanel.PANEL_WIDTH
 	money_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT, Control.PRESET_MODE_MINSIZE, int(MARGIN))
 	var money_rows := VBoxContainer.new()
 	money_panel.add_child(money_rows)

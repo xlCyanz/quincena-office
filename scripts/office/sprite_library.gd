@@ -24,6 +24,8 @@ static var _portrait_rects: Dictionary[String, Rect2] = {}
 static var _used_rects: Dictionary[String, Rect2i] = {}
 ## Imagen de cada sprite (null sin ventana: el renderizador mudo no la da).
 static var _images: Dictionary[String, Image] = {}
+## Miniatura de cada mueble para la tienda y el inventario (null sin ventana).
+static var _icons: Dictionary[String, Texture2D] = {}
 
 
 ## Datos de data/sprites.json (se leen una vez).
@@ -383,6 +385,61 @@ static func get_dirt_sprites() -> Array[String]:
 		if has_sprite(String(sprite)):
 			sprites.append(String(sprite))
 	return sprites
+
+
+## Miniatura de un mueble (rotación 1, con sus partes juntas y recortada a lo visible), o null si no tiene sprite.
+static func get_furniture_icon(item_id: String) -> Texture2D:
+	if _icons.has(item_id):
+		return _icons[item_id]
+	var sprites: Array[String] = _icon_sprites(item_id)
+	var area := Rect2()
+	for sprite: String in sprites:
+		area = get_rect(sprite) if area.size == Vector2.ZERO else area.merge(get_rect(sprite))
+	var icon: Texture2D = null
+	if not sprites.is_empty() and area.size != Vector2.ZERO:
+		var factor: float = get_scale()
+		var canvas := Image.create_empty(ceili(area.size.x * factor), ceili(area.size.y * factor), false, Image.FORMAT_RGBA8)
+		var drawn: bool = false
+		for sprite: String in sprites:
+			var image: Image = get_image(sprite)
+			if image == null:
+				continue
+			image = image.duplicate() as Image
+			if image.is_compressed():
+				image.decompress()
+			image.convert(Image.FORMAT_RGBA8)
+			var at: Vector2i = Vector2i(((get_rect(sprite).position - area.position) * factor).round())
+			canvas.blend_rect(image, Rect2i(Vector2i.ZERO, image.get_size()), at)
+			drawn = true
+		var used: Rect2i = canvas.get_used_rect()
+		if drawn and used.size != Vector2i.ZERO:
+			icon = ImageTexture.create_from_image(canvas.get_region(used))
+	_icons[item_id] = icon
+	return icon
+
+
+# Sprites que forman la miniatura de un mueble, de atrás hacia adelante.
+static func _icon_sprites(item_id: String) -> Array[String]:
+	var found: Array[String] = []
+	if get_data().get("wall_items", {}).has(item_id):
+		found.append(get_wall_item_sprite(item_id, GridEdge.AXIS_Y))
+	elif FurnitureCatalog.is_monitor(item_id):
+		# La pantalla extra no tiene dibujo propio: el escritorio largo con dos.
+		for desk_id: String in get_data().get("furniture", {}):
+			var sets: Dictionary = get_data()["furniture"][desk_id].get("sets", {})
+			for computer_id: String in sets:
+				if found.is_empty() and (sets[computer_id] as Array).size() > 2:
+					found.append(get_desk_set_sprite(desk_id, computer_id, 2, 1))
+	else:
+		var entry: Dictionary = get_data().get("furniture", {}).get(item_id, {})
+		if bool(entry.get("parts", false)):
+			found.append(get_furniture_sprite(item_id, 1, "back"))
+		found.append(get_furniture_sprite(item_id, 1))
+	var named: Array[String] = []
+	for sprite: String in found:
+		if not sprite.is_empty():
+			named.append(sprite)
+	return named
 
 
 ## Icono de la barra de la partida (null si no hay).

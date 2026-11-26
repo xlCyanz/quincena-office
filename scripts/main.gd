@@ -27,6 +27,8 @@ func _ready() -> void:
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
+	_build_panel.buy_requested.connect(func(id: String, count: int) -> void:
+		_build_panel.show_buy_result(_build_controller.buy(id, count)))
 	_build_controller.confirm_changed.connect(_build_panel.show_confirm)
 	_build_panel.confirm_answered.connect(func(accept: bool) -> void: _build_controller.answer_confirm(accept))
 	_build_panel.tool_selected.connect(func(_tool: String) -> void: _apply_walls())
@@ -78,10 +80,16 @@ func _ready() -> void:
 	_pause_menu.resume_requested.connect(func() -> void: set_pause_menu_open(false))
 	_pause_menu.settings_requested.connect(_open_settings_from_pause)
 	_pause_menu.quit_requested.connect(_on_quit_requested)
+	_objectives_panel.align_provider = func() -> Rect2: return _hud.get_corner_rects()[0]
 	_tutorial_panel = TutorialPanel.new()
 	_tutorial_panel.name = "TutorialPanel"
 	_tutorial_panel.target_provider = tutorial_target_rect
-	_tutorial_panel.corners_provider = _hud.get_corner_rects
+	# Con la Tienda abierta, el tutorial va bajo su barra (las esquinas del HUD quedan tapadas).
+	_tutorial_panel.corners_provider = func() -> Array[Rect2]:
+		if _build_panel.is_shop_open():
+			var bar: Rect2 = _build_panel.get_shop().get_top_bar_rect()
+			return [bar, bar]
+		return _hud.get_corner_rects()
 	add_child(_tutorial_panel)
 	_help_dialog = HelpDialog.new()
 	_help_dialog.name = "HelpDialog"

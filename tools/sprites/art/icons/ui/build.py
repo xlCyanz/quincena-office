@@ -276,10 +276,27 @@ def settings_icon() -> np.ndarray:
     return c.px
 
 
+def shop_icon() -> np.ndarray:
+    # Tienda: bolsa de compras con un asa en arco y dos remaches.
+    c = Canvas()
+    c.rows(7, 1, [
+        "..######..",
+        ".##....##.",
+        "##......##",
+        "##......##",
+        "##......##",
+        "##......##",
+    ])
+    c.rect(3, 7, 18, 15, W).rect(3, 7, 18, 2, L).rect(18, 9, 3, 13, L).rect(3, 21, 18, 1, D)
+    c.rect(7, 9, 2, 2, D).rect(15, 9, 2, 2, D)
+    return c.px
+
+
 # Icono -> función que lo dibuja.
 ICONS = {
     "build": build_icon, "frame": frame_icon, "walls": walls_icon, "staff": staff_icon, "projects": projects_icon,
     "teams": teams_icon, "bank": bank_icon, "company": company_icon, "ceo": ceo_icon, "settings": settings_icon,
+    "shop": shop_icon,
 }
 
 

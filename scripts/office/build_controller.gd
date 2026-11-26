@@ -1,6 +1,7 @@
 # Herramientas del modo construcción con el ratón: vista previa y, al soltar, Builder lo aplica.
 # Pared: arrastrar una fila · Puerta/Computadora/Girar: clic · Piso: arrastrar un rectángulo ·
-# Mueble: clic (clic derecho o R gira) · Vender: pieza interior o mueble (antes la computadora) ·
+# Mueble: clic (clic derecho o R gira; sale del inventario, o se compra si no hay) · Vender: pieza interior
+# o mueble (antes la computadora) · Guardar: como Vender, pero el mueble vuelve al inventario ·
 # Habitación: clic en un espacio cerrado · Terreno: clic en un lote marcado (los que tocan el local).
 # Los pisos no se venden, se cambian. Sobre cada habitación se escribe su nombre y si funciona.
 class_name BuildController
@@ -22,8 +23,13 @@ const TOOL_ROTATE: String = "rotate"
 ## Mover un mueble ya puesto: un clic lo toma, otro lo suelta donde se elija.
 const TOOL_MOVE: String = "move"
 const TOOL_SELL: String = "sell"
+## Guardar en el inventario un mueble puesto (como Vender, pero sin dinero: se vuelve a colocar gratis).
+const TOOL_STORE: String = "store"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
+## Sin herramienta: el clic no hace nada (al abrir Inventario o cuando se acaba lo elegido).
+const TOOL_NONE: String = "none"
+const NONE_HINT: String = "Elige algo de tu inventario o una herramienta."
 const LAND_HINT: String = "Clic en un lote marcado para comprarlo, o en uno tuyo para venderlo."
 const LABEL_SELL_COLOR := Color(1.0, 0.82, 0.4)
 ## Mejorar computadora o silla a su calidad siguiente.
@@ -121,6 +127,16 @@ func refresh_land_plots() -> void:
 	queue_redraw()
 
 
+## Compra unidades de un mueble para el inventario (desde la Tienda).
+func buy(id: String, count: int) -> Dictionary:
+	var result: Dictionary = builder.buy(id, count)
+	EventBus.sound_requested.emit("build" if result["ok"] else "error")
+	status_changed.emit(result["message"])
+	if result["ok"] and _active:
+		_update_preview(false)
+	return result
+
+
 ## Compra el lote marcado que contiene esa casilla; si es un lote propio, pregunta si se vende.
 func buy_land_plot_at(cell: Vector2i) -> Dictionary:
 	var index: int = _plot_at(cell)
@@ -211,6 +227,8 @@ func set_tool(new_tool: String) -> void:
 	_update_preview()
 	if tool == TOOL_LAND:
 		status_changed.emit(LAND_HINT)
+	elif tool == TOOL_NONE:
+		status_changed.emit(NONE_HINT)
 	if _is_room_tool():
 		var missing: Array[String] = RoomRules.missing_mandatory(OfficeState.rooms)
 		var hint: String = "Clic en un espacio cerrado con puerta."
@@ -221,7 +239,7 @@ func set_tool(new_tool: String) -> void:
 
 # Sonido de lo que hizo un clic: vender, construir o no se pudo. Una pregunta pendiente no suena.
 func _play_result(result: Dictionary) -> void:
-	if is_confirming():
+	if is_confirming() or tool == TOOL_NONE:
 		return
 	if not bool(result.get("ok", false)):
 		EventBus.sound_requested.emit("error")
@@ -302,7 +320,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_preview(false)
 			_dragging = false
 			var result: Dictionary = _apply_preview.call() if _apply_preview.is_valid() else {
-				"message": "No hay nada que hacer ahí."}
+				"message": NONE_HINT if tool == TOOL_NONE else "No hay nada que hacer ahí."}
 			_play_result(result)
 			status_changed.emit(result["message"])
 			_update_preview(false)
@@ -423,14 +441,18 @@ func _update_preview(announce: bool = true) -> void:
 		_preview_new = {"id": tool, "cell": wall_cell, "rotation": wall_rotation}
 		quote = builder.quote_place(tool, wall_cell, wall_rotation)
 		_apply_preview = func() -> Dictionary: return builder.place(tool, wall_cell, wall_rotation)
-	elif tool == TOOL_SELL and _wall_item_under_pointer() >= 0:
+	elif (tool == TOOL_SELL or tool == TOOL_STORE) and _wall_item_under_pointer() >= 0:
 		var hung: Dictionary = OfficeState.furniture[_wall_item_under_pointer()]
 		var hung_cell: Vector2i = hung["cell"]
 		var hung_rotation: int = hung["rotation"]
 		_preview_item = _wall_item_under_pointer()
 		_preview_cells = [hung_cell]
-		quote = builder.quote_sell_wall_item(hung_cell, hung_rotation)
-		_apply_preview = func() -> Dictionary: return builder.sell_wall_item(hung_cell, hung_rotation)
+		if tool == TOOL_STORE:
+			quote = builder.quote_store_wall_item(hung_cell, hung_rotation)
+			_apply_preview = func() -> Dictionary: return builder.store_wall_item(hung_cell, hung_rotation)
+		else:
+			quote = builder.quote_sell_wall_item(hung_cell, hung_rotation)
+			_apply_preview = func() -> Dictionary: return builder.sell_wall_item(hung_cell, hung_rotation)
 	elif _is_furniture_tool():
 		var placement_rotation: int = _placement_rotation
 		var placement_quarter: int = quarter if FurnitureCatalog.is_small(tool) else -1
@@ -482,6 +504,13 @@ func _update_preview(announce: bool = true) -> void:
 		_preview_cells = _footprint_at(cell, quarter)
 		quote = builder.quote_sell_furniture_at(cell, quarter)
 		_apply_preview = func() -> Dictionary: return builder.sell_furniture_at(cell, quarter)
+	elif tool == TOOL_STORE:
+		var stored: int = OfficeState.find_furniture_at(cell, quarter)
+		if stored >= 0:
+			_preview_item = stored
+			_preview_cells = _footprint_at(cell, quarter)
+			quote = builder.quote_store_furniture_at(cell, quarter)
+			_apply_preview = func() -> Dictionary: return builder.store_furniture_at(cell, quarter)
 	else:
 		var changes: Array[Dictionary] = _structure_changes(start, _pointer)
 		for change: Dictionary in changes:
@@ -575,7 +604,7 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 				changes.append({"edge": edge, "kind": ""})
 			else:
 				changes.append({"cell": Vector2i(end.round()), "kind": ConstructionCatalog.BARE_FLOOR})
-		TOOL_ROTATE, TOOL_UNMARK_ROOM, TOOL_MOVE:
+		TOOL_ROTATE, TOOL_UNMARK_ROOM, TOOL_MOVE, TOOL_NONE:
 			pass
 		_:
 			var first: Vector2i = Vector2i(start.round())

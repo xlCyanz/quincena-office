@@ -70,7 +70,7 @@ OPENING_DOORS = ("door",)
 DIRT_STAINS = 3
 STATUS_ICONS = ("no_station", "tired", "upset", "stressed", "idle")
 # Iconos de la barra de la partida (ui_<icono>), dibujados en art/icons/ui.
-UI_ICONS = ("build", "frame", "walls", "staff", "projects", "teams", "bank", "company", "ceo", "settings")
+UI_ICONS = ("build", "frame", "walls", "staff", "projects", "teams", "bank", "company", "ceo", "settings", "shop")
 # Escritorio dibujado entero con su computadora -> sprite según las pantallas extra (0, 1, 2).
 DESK_SETS = {"long_desk": {"basic_computer": ["desk_long_basic"],
                            "pro_computer": ["desk_long_pro1", "desk_long_pro2", "desk_long_pro3"]}}

@@ -300,23 +300,34 @@ func _check_in_game_with_mouse() -> void:
 	var panel: BuildPanel = game.get_node("BuildPanel")
 	var at_cell: Callable = func(cell: Vector2i) -> Vector2:
 		return grid.get_canvas_transform() * grid.cell_to_world(cell)
-	# Abre con clics la sección (y la categoría de muebles) de la herramienta y la elige.
+	# Elige la herramienta con clics siguiendo get_button_toward. Un mueble que no está en el inventario se
+	# compra antes: Salir, Tienda, su tarjeta, Comprar y Volver al mapa (el precio se cobra ahí; colocarlo es
+	# gratis); después Construir, Inventario y su tarjeta.
 	var press: Callable = func(tool: String) -> void:
-		for i: int in range(3):
-			await _click(panel.get_button_toward(tool).get_global_rect().get_center())
-			if panel.get_selected_tool() == tool:
+		var shop: ShopScreen = panel.get_shop()
+		for i: int in range(10):
+			if panel.is_build_mode() and panel.get_selected_tool() == tool:
 				break
+			if shop.is_open() and OfficeState.get_stock(tool) > 0:
+				await _click(shop.get_back_button().get_global_rect().get_center())
+			elif shop.is_open() and shop.get_selected() == tool:
+				await _click(shop.get_buy_button().get_global_rect().get_center())
+			else:
+				await _click(panel.get_button_toward(tool).get_global_rect().get_center())
 
 	await _click(panel.get_open_button().get_global_rect().get_center())
 	_expect(panel.is_build_mode() and GameClock.is_paused, "no se abrió el modo construcción en pausa")
 
-	await press.call("simple_desk")
 	var money: int = Economy.balance
+	await press.call("simple_desk")
+	_expect(panel.get_selected_tool() == "simple_desk" and OfficeState.get_stock("simple_desk") == 1 and not panel.is_shop_open(),
+		"comprar el escritorio en la Tienda lo deja en el inventario, elegido")
 	await _click(at_cell.call(Vector2i(4, 5)), MOUSE_BUTTON_RIGHT)
 	await _click(at_cell.call(Vector2i(4, 5)))
 	var index: int = _index_at(Vector2i(4, 5))
 	_expect(index >= 0 and OfficeState.furniture[index]["id"] == "simple_desk" and OfficeState.furniture[index]["rotation"] == 1
-		and Economy.balance == money - 150, "colocar el escritorio girado con el ratón")
+		and Economy.balance == money - 150 and OfficeState.get_stock("simple_desk") == 0, "colocar el escritorio girado con el ratón")
+	_expect(panel.get_selected_tool() == BuildController.TOOL_NONE, "sin escritorios en el inventario queda sin herramienta")
 	var views: int = _count_views(grid)
 	money = Economy.balance
 	await _click(at_cell.call(Vector2i(4, 5)))
@@ -344,18 +355,20 @@ func _check_in_game_with_mouse() -> void:
 	_expect(around, "el contorno rodea el escritorio (%d puntos)" % outline.size())
 
 	# Silla y planta; la planta frente a la puerta de la oficina se rechaza.
-	await press.call("basic_chair")
 	money = Economy.balance
+	await press.call("basic_chair")
 	await _click(at_cell.call(Vector2i(4, 6)))
 	_expect(_index_at(Vector2i(4, 6)) >= 0 and Economy.balance == money - 60, "colocar la silla con el ratón")
 	await press.call("small_plant")
-	money = Economy.balance
+	money = Economy.balance + 40
 	await _click(at_cell.call(Vector2i(1, 3)))
-	_expect(_index_at(Vector2i(1, 3)) < 0 and Economy.balance == money, "la planta bloqueó la puerta de la oficina")
+	_expect(_index_at(Vector2i(1, 3)) < 0 and OfficeState.get_stock("small_plant") == 1, "la planta bloqueó la puerta de la oficina")
 	await _click(at_cell.call(Vector2i(0, 7)))
 	_expect(_index_at(Vector2i(0, 7)) >= 0 and Economy.balance == money - 40, "colocar la planta con el ratón")
 
 	# El mueble que se va a poner también lleva su contorno, en la casilla del ratón.
+	OfficeState.add_stock("small_plant", 1)
+	await press.call("small_plant")
 	var spot: Vector2 = grid.cell_to_world(Vector2i(0, 7))
 	var new_outline: PackedVector2Array = controller.get_selection_outline()
 	var near: bool = not new_outline.is_empty() and not controller.get_selection_bounds().has_area()

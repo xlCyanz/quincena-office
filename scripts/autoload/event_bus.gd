@@ -18,6 +18,10 @@ signal balance_changed(balance: int)
 @warning_ignore("unused_signal")
 signal office_changed
 
+## Cambió el inventario de muebles comprados sin colocar (OfficeState.inventory).
+@warning_ignore("unused_signal")
+signal inventory_changed
+
 ## Cambiaron las vacantes, sus candidatos o los empleados. La emite Staff.
 @warning_ignore("unused_signal")
 signal staff_changed

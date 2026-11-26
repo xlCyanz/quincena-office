@@ -318,13 +318,27 @@ func _play(seed: int) -> void:
 		"un clic en el espacio libre marca el Área de trabajo")
 	_expect(_step_id() == "workstation", "el Área de trabajo cumple el paso 3")
 
-	# 4. Puesto: escritorio, computadora encima y silla delante (girar con clic derecho).
-	await _open_tool("simple_desk", "Escritorio sencillo", true)
+	# 4. Puesto: salir de Construir, comprar en la Tienda escritorio, computadora y silla y volver a Construir
+	# para ponerlos desde el Inventario (la computadora encima y la silla delante; girar con clic derecho).
+	await _follows(build.get_button_toward("simple_desk"), "Salir de Construir")
+	await _click(build.get_exit_button())
+	await _follows(build.get_button_toward("simple_desk"), "Tienda")
+	await _click(build.get_shop_button())
+	var shop: ShopScreen = build.get_shop()
 	var money_before: int = Economy.balance
+	for id: String in ["simple_desk", "basic_computer", "basic_chair"]:
+		await _click(shop.get_card(id))
+		await _click(shop.get_buy_button())
+	_expect(Economy.balance < money_before, "los muebles se compraron: $%d" % (money_before - Economy.balance))
+	await _click(shop.get_back_button())
+	await _follows(build.get_button_toward("simple_desk"), "Construir")
+	await _click(build.get_open_button())
+	await _follows(build.get_button_toward("simple_desk"), "Inventario")
+	money_before = Economy.balance
 	await _place("simple_desk", DESK_CELL, DESK_ROTATION)
 	await _place("basic_computer", DESK_CELL, _rotation)
 	await _place("basic_chair", CHAIR_CELL, CHAIR_ROTATION)
-	_expect(Economy.balance < money_before, "los muebles se compraron: $%d" % (money_before - Economy.balance))
+	_expect(Economy.balance == money_before, "ponerlos desde el Inventario no cobró: $%d" % (money_before - Economy.balance))
 	_expect(Workstations.find_all(OfficeState.furniture, OfficeState.rooms, Workstations.WORK_AREA).size() == 1,
 		"queda un puesto de trabajo")
 	_expect(_step_id() == "vacancy", "el puesto cumple el paso 4: %s" % _step_id())

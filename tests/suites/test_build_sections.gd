@@ -1,5 +1,5 @@
-# Secciones de Construir (Estructura, Muebles, Habitaciones y Terreno): solo se ven las
-# herramientas de la abierta, los muebles por categoría y Terreno solo su fila.
+# Bandeja de Construir (Inventario, Estructura, Habitaciones y Terreno): solo se ve la sección abierta, el
+# inventario con sus tarjetas ×N, la Tienda a pantalla completa y Terreno solo su fila.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=build_sections
 extends Node
 
@@ -27,26 +27,45 @@ func _ready() -> void:
 	build.set_build_mode(true)
 	await get_tree().process_frame
 
-	_expect(build.get_section() == BuildPanel.SECTION_STRUCTURE, "empieza en Estructura")
-	_expect(_visible(build, BuildController.TOOL_WALL) and not _visible(build, "simple_desk")
-		and not _visible(build, "work_area") and not build.is_land_row_visible(), "solo se ven las de Estructura")
+	_expect(build.get_section() == BuildPanel.SECTION_FURNITURE and build.get_selected_tool() == BuildController.TOOL_NONE,
+		"empieza en Inventario, vacío y sin herramienta: %s" % build.get_selected_tool())
+	_expect(build.get_tool_button("simple_desk") == null and _visible(build, BuildController.TOOL_STORE)
+		and _visible(build, BuildController.TOOL_SELL), "inventario vacío: sin tarjetas; Guardar y Vender siempre a la vista")
+	_expect(build.get_button_toward("simple_desk") == build.get_exit_button() and not build.get_shop_button().is_visible_in_tree(),
+		"sin escritorios, el camino es salir: la Tienda está en la barra del mapa")
 	var panel: PanelContainer = build.get("_panel")
 	var view_height: float = panel.get_viewport_rect().size.y
 
+	build.get_section_button(BuildPanel.SECTION_STRUCTURE).pressed.emit()
+	await get_tree().process_frame
+	_expect(build.get_selected_tool() == BuildController.TOOL_WALL and _visible(build, BuildController.TOOL_WALL)
+		and not _visible(build, "work_area") and not build.is_land_row_visible(), "Estructura elige la pared y solo muestra lo suyo")
+
+	OfficeState.add_stock("simple_desk", 2)
+	OfficeState.add_stock("small_plant", 1)
+	await get_tree().process_frame
+	_expect(build.get_section_button(BuildPanel.SECTION_FURNITURE).text == "Inventario (3)",
+		"la sección cuenta lo que hay: %s" % build.get_section_button(BuildPanel.SECTION_FURNITURE).text)
+	_expect(build.get_button_toward("simple_desk") == build.get_section_button(BuildPanel.SECTION_FURNITURE),
+		"con escritorios guardados, el camino es Inventario")
 	build.get_section_button(BuildPanel.SECTION_FURNITURE).pressed.emit()
 	await get_tree().process_frame
-	_expect(build.get_selected_tool() == "simple_desk" and build.get_category() == "work",
-		"Muebles elige el primero de Trabajo: %s" % build.get_selected_tool())
-	_expect(_visible(build, "simple_desk") and not _visible(build, "small_plant") and _visible(build, BuildController.TOOL_ROTATE),
-		"se ven Trabajo, Girar y Mejorar, no la decoración")
-	_expect(panel.get_global_rect().size.y < view_height * 0.4, "Muebles tapa menos de 40 %% de la pantalla: %d" % panel.get_global_rect().size.y)
-	build.get_category_button("decor").pressed.emit()
-	await get_tree().process_frame
-	_expect(build.get_selected_tool() == "small_plant" and _visible(build, "small_plant") and not _visible(build, "simple_desk"),
-		"Decoración muestra sus muebles y elige el primero")
-	_expect(build.get_button_toward("simple_desk") == build.get_category_button("work"), "para llegar a un escritorio, Trabajo")
+	_expect(build.get_selected_tool() != BuildController.TOOL_NONE and _visible(build, "simple_desk") and _visible(build, "small_plant"),
+		"Inventario elige el primero y muestra cada tarjeta: %s" % build.get_selected_tool())
+	_expect(build.get_tool_button("simple_desk").find_children("*", "Label", true, false).any(
+		func(label: Label) -> bool: return label.text == "×2"), "la tarjeta dice ×2")
+	_expect(panel.get_global_rect().size.y < view_height * 0.4, "Inventario tapa menos de 40 %% de la pantalla: %d" % panel.get_global_rect().size.y)
 	_expect(build.get_button_toward("work_area") == build.get_section_button(BuildPanel.SECTION_ROOMS),
 		"para llegar a un tipo de habitación, Habitaciones")
+
+	build.set_shop_open(true)
+	await get_tree().process_frame
+	_expect(build.is_shop_open() and not panel.is_visible_in_tree() and build.is_build_mode(),
+		"la Tienda tapa la bandeja y sigue en construcción")
+	_expect(build.get_button_toward("aquarium") == build.get_shop().get_card("aquarium"), "en la Tienda, el camino es la tarjeta")
+	build.get_shop().get_back_button().pressed.emit()
+	await get_tree().process_frame
+	_expect(not build.is_shop_open() and panel.is_visible_in_tree(), "Volver al mapa regresa a la bandeja")
 
 	build.get_section_button(BuildPanel.SECTION_LAND).pressed.emit()
 	await get_tree().process_frame
@@ -64,10 +83,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_expect(build.get_section() == BuildPanel.SECTION_ROOMS and _visible(build, "work_area") and not build.is_land_row_visible(),
 		"elegir una habitación abre Habitaciones")
-	build.select_tool("aquarium")
+	build.select_tool("small_plant")
 	await get_tree().process_frame
-	_expect(build.get_section() == BuildPanel.SECTION_FURNITURE and build.get_category() == "decor" and _visible(build, "aquarium"),
-		"elegir la pecera abre Muebles en Decoración")
+	_expect(build.get_section() == BuildPanel.SECTION_FURNITURE and _visible(build, "small_plant"),
+		"elegir un mueble guardado abre Inventario")
 	_expect(FurnitureCatalog.get_ids().all(func(id: String) -> bool: return FurnitureCatalog.get_categories().has(FurnitureCatalog.get_category(id))),
 		"cada mueble tiene una categoría")
 	game.queue_free()

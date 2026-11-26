@@ -498,7 +498,7 @@ cada PNG (y en mesas, `edges`: el hueco hasta el canto del tablero por lado, par
 | `art/wall_items/wall_clock/`, `whiteboard/`, `air_conditioner/` | Reloj, pizarra y aire acondicionado: `<pieza>_x` y `_y` |
 | `art/wall_items/presentation_screen/` | Televisor de dos bordes: apagado, encendido (`_chart`, `_pie`, `_title`) y sus 12 cuadros `_play_<n>` |
 | `art/wall_items/_wall_kit.py` | Objetos de pared: lienzo y apoyo de pared, `_y` en rotación 0 y `_x` en rotación 3 (girado, no espejado), de espaldas `_back_y` (rotación 2) y `_back_x` (rotación 1) colgado del lado que no se ve, `base_z` en el manifest |
-| `art/icons/ui/` | Iconos de la barra de la partida `ui_<icono>` (`build`, `frame`, `walls`, `staff`, `projects`, `teams`, `bank`, `company`, `ceo`, `settings`): rectángulos en una cuadrícula de 12 ×2, blancos (Godot los tiñe); 24×24, apoyo en el centro |
+| `art/icons/ui/` | Iconos de la barra de la partida `ui_<icono>` (`build`, `frame`, `walls`, `staff`, `projects`, `teams`, `bank`, `company`, `ceo`, `settings`, `shop`): rectángulos en una cuadrícula de 12 ×2, blancos (Godot los tiñe); 24×24, apoyo en el centro |
 | `art/icons/status/` | Globos de estado `status_<icono>` (`no_station`, `tired`, `upset`, `stressed`, `idle`): círculo con contorno, luz, colita y signo; 32×36, apoyo en el centro del círculo |
 | `art/walls/wall/` | Tramos lisos `wall_<tall\|low>_<eje>` en los cinco colores (`wall_<color>_…`) y la sombra `wall_tall_<eje>_shadow` |
 | `art/walls/door/` | Puertas de una hoja `door`, `door_wood`, `door_office` (altas, bajas y `_tall_<eje>_open_1` a `_6`) |

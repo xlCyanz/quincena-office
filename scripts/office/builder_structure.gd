@@ -243,6 +243,10 @@ func _commit(result: Dictionary) -> Dictionary:
 		Economy.spend(result["cost"], CONCEPT_FURNITURE)
 	else:
 		Economy.earn(-result["cost"], CONCEPT_FURNITURE)
+	if result.has("stock"):
+		OfficeState.add_stock(result["stock"], -1)
+	if result.has("stored"):
+		OfficeState.add_stock(result["stored"], 1)
 	EventBus.office_changed.emit()
 	result.erase("furniture")
 	return result

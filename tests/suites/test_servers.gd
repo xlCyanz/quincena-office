@@ -154,11 +154,9 @@ func _check_ui() -> void:
 	await get_tree().process_frame
 	_expect(panel.get_text().contains("no funciona"), "y avisa si la sala no funciona")
 	var build_panel: Node = game.get_node("BuildPanel")
-	var names: Array[String] = []
-	for button: Node in build_panel.find_children("*", "Button", true, false):
-		names.append((button as Button).text)
-	_expect(names.has("Rack $3000") and names.has("Aire $800"),
-		"botones Rack y Aire en construcción: %s" % [names])
+	var shop: ShopScreen = (build_panel as BuildPanel).get_shop()
+	_expect(shop.get_card("server_rack") != null and shop.get_card("air_conditioner") != null,
+		"la Tienda vende el rack y el aire")
 	panel.set_open(false)
 	game.queue_free()
 	await get_tree().process_frame

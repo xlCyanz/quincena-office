@@ -196,6 +196,12 @@ func _check_ui() -> void:
 	_expect(panel.is_shown() and panel.is_expanded() and text.begins_with("▾ Objetivos")
 		and text.contains("• Arma un Área de trabajo") and text.contains("Recompensa: $300")
 		and text.contains("• Acepta tu primer contrato"), "lista: %s" % text)
+	await get_tree().process_frame
+	var money_rect: Rect2 = (game.get_node("Hud") as Hud).get_corner_rects()[0]
+	var list_rect: Rect2 = (panel.get("_panel") as Control).get_global_rect()
+	_expect(is_equal_approx(list_rect.position.x, money_rect.position.x) and is_equal_approx(list_rect.size.x, money_rect.size.x)
+		and list_rect.position.y > money_rect.end.y, "la lista va bajo el dinero, con su borde y ancho: %s bajo %s" % [list_rect, money_rect])
+	_expect(list_rect.size.y < 400.0, "los renglones se parten al ancho del panel: alto %d" % list_rect.size.y)
 	staff.set_open(true)
 	_expect(not panel.is_shown(), "se pliega al abrir Personal")
 	bank.get_open_button().pressed.emit()

@@ -328,9 +328,11 @@ func _check_ui() -> void:
 	for button: Node in game.find_children("*", "Button", true, false):
 		texts.append((button as Button).text)
 	_expect(texts.has("Mejorar"), "el modo construcción tiene Mejorar")
-	_expect(texts.has("PC pro $2500") and texts.has("Pantalla $300") and texts.has("Silla ergo. $250") and texts.has("Esc. largo $350")
-		and not texts.has("Esc. amplio $350") and not texts.has("PC media $1200"),
-		"y los muebles nuevos con su precio")
+	var shop: ShopScreen = (game.get_node("BuildPanel") as BuildPanel).get_shop()
+	_expect(["pro_computer", "second_monitor", "ergonomic_chair", "long_desk"].all(
+		func(id: String) -> bool: return shop.get_card(id) != null)
+		and shop.get_card("wide_desk") == null and shop.get_card("mid_computer") == null,
+		"y la Tienda vende los muebles nuevos, no los quitados")
 	var controller: BuildController = null
 	for node: Node in game.find_children("*", "", true, false):
 		if node is BuildController:

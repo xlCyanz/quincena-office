@@ -1,8 +1,31 @@
-# Construcción, capa 2: muebles (poner, girar, mover, vender, computadoras, pantallas y mejoras).
+# Construcción, capa 2: muebles (comprar al inventario, poner, girar, mover, vender, guardar, computadoras,
+# pantallas y mejoras).
 extends "res://scripts/office/builder_structure.gd"
 
 
-## Compra y coloca un mueble. Uno chico va en el cuarto quarter (0–3); sin cuarto, el primero libre.
+## Compra unidades de un mueble para el inventario (se colocan después sin costo).
+func quote_buy(id: String, count: int) -> Dictionary:
+	var info: Dictionary = FurnitureCatalog.get_item(id)
+	if info.is_empty() or count < 1:
+		return _fail(0, "Eso no se vende.")
+	var cost: int = FurnitureCatalog.get_price(id) * count
+	if not Economy.can_afford(cost):
+		return _fail(cost, "No alcanza el dinero: cuesta %s." % MoneyFormat.format(cost))
+	var label: String = "%d × %s" % [count, info["name"]] if count > 1 else String(info["name"])
+	return {"ok": true, "cost": cost, "message": "Compraste %s: −%s. Ya está en tu inventario." % [label, MoneyFormat.format(cost)],
+		"id": id, "count": count}
+
+
+func buy(id: String, count: int) -> Dictionary:
+	var result: Dictionary = quote_buy(id, count)
+	if result["ok"]:
+		Economy.spend(result["cost"], CONCEPT_FURNITURE)
+		OfficeState.add_stock(id, count)
+	return result
+
+
+## Coloca un mueble: si hay en el inventario sale de ahí sin costo; si no, se compra al colocarlo.
+## Uno chico va en el cuarto quarter (0–3); sin cuarto, el primero libre.
 func quote_place(id: String, anchor: Vector2i, rotation: int, quarter: int = -1) -> Dictionary:
 	var info: Dictionary = FurnitureCatalog.get_item(id)
 	if info.is_empty() or bool(info["on_desk"]):
@@ -13,13 +36,26 @@ func quote_place(id: String, anchor: Vector2i, rotation: int, quarter: int = -1)
 		"assigned_to": "", "computer": "", "monitor": "", "monitors": 0, "quarter": quarter if FurnitureCatalog.is_small(id) else -1}
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate.append(item)
-	var cost: int = FurnitureCatalog.get_price(id)
+	var cost: int = _cost_or_stock(id)
 	var problem: String = _wall_problem(item) if bool(info["wall_mounted"]) else _placement_problem(candidate, item)
 	if problem.is_empty() and not Economy.can_afford(cost):
 		problem = "No alcanza el dinero: cuesta $%d." % cost
 	if not problem.is_empty():
 		return _fail(cost, problem)
-	return {"ok": true, "cost": cost, "message": "%s: −$%d" % [info["name"], cost], "furniture": candidate}
+	return _with_stock({"ok": true, "cost": cost, "message": "%s: −$%d" % [info["name"], cost], "furniture": candidate}, id)
+
+
+# Precio de un mueble, o 0 si hay en el inventario.
+func _cost_or_stock(id: String) -> int:
+	return 0 if OfficeState.get_stock(id) > 0 else FurnitureCatalog.get_price(id)
+
+
+# Si el mueble sale del inventario, la cotización lo dice (y _commit lo descuenta).
+func _with_stock(result: Dictionary, id: String) -> Dictionary:
+	if OfficeState.get_stock(id) > 0:
+		result["stock"] = id
+		result["message"] = "%s del inventario (quedan %d)." % [FurnitureCatalog.get_item(id)["name"], OfficeState.get_stock(id) - 1]
+	return result
 
 
 func place(id: String, anchor: Vector2i, rotation: int, quarter: int = -1) -> Dictionary:
@@ -45,7 +81,8 @@ func quote_sell_wall_item(cell: Vector2i, rotation: int) -> Dictionary:
 	candidate.remove_at(index)
 	var resale: int = FurnitureCatalog.get_resale(item["id"])
 	var item_name: String = FurnitureCatalog.get_item(item["id"])["name"]
-	return {"ok": true, "cost": -resale, "message": "Venta de %s: +$%d" % [item_name, resale], "furniture": candidate}
+	return {"ok": true, "cost": -resale, "message": "Venta de %s: +$%d" % [item_name, resale], "furniture": candidate,
+		"item_id": item["id"]}
 
 
 func sell_wall_item(cell: Vector2i, rotation: int) -> Dictionary:
@@ -163,31 +200,64 @@ func quote_sell_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	var item: Dictionary = candidate[index].duplicate()
 	if not String(item.get("monitor", "")).is_empty():
-		var monitor_refund: int = FurnitureCatalog.get_resale(item["monitor"])
-		var monitor_name: String = FurnitureCatalog.get_item(item["monitor"])["name"]
+		var monitor_id: String = item["monitor"]
+		var monitor_refund: int = FurnitureCatalog.get_resale(monitor_id)
+		var monitor_name: String = FurnitureCatalog.get_item(monitor_id)["name"]
 		# Se vende de a una.
 		item["monitors"] = FurnitureCatalog.get_monitor_count(item) - 1
 		if int(item["monitors"]) <= 0:
 			item["monitor"] = ""
 		candidate[index] = item
 		return {"ok": true, "cost": -monitor_refund, "message": "Venta de %s: +$%d" % [monitor_name, monitor_refund],
-			"furniture": candidate}
+			"furniture": candidate, "item_id": monitor_id}
 	if not String(item["computer"]).is_empty():
-		var refund: int = FurnitureCatalog.get_resale(item["computer"])
-		var computer_name: String = FurnitureCatalog.get_item(item["computer"])["name"]
+		var computer_id: String = item["computer"]
+		var refund: int = FurnitureCatalog.get_resale(computer_id)
+		var computer_name: String = FurnitureCatalog.get_item(computer_id)["name"]
 		item["computer"] = ""
 		candidate[index] = item
 		return {"ok": true, "cost": -refund, "message": "Venta de %s: +$%d" % [computer_name, refund],
-			"furniture": candidate}
+			"furniture": candidate, "item_id": computer_id}
 	candidate.remove_at(index)
 	var resale: int = FurnitureCatalog.get_resale(item["id"])
 	var item_name: String = FurnitureCatalog.get_item(item["id"])["name"]
 	return {"ok": true, "cost": -resale, "message": "Venta de %s: +$%d" % [item_name, resale],
-		"furniture": candidate}
+		"furniture": candidate, "item_id": item["id"]}
 
 
 func sell_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
 	return _commit(quote_sell_furniture_at(cell, quarter))
+
+
+## Guarda en el inventario lo de cell, en el mismo orden y con los mismos límites que Vender, sin
+## devolver dinero (se vuelve a colocar gratis).
+func quote_store_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
+	return _as_store(quote_sell_furniture_at(cell, quarter))
+
+
+func store_furniture_at(cell: Vector2i, quarter: int = -1) -> Dictionary:
+	return _commit(quote_store_furniture_at(cell, quarter))
+
+
+## Guarda en el inventario lo colgado en esa cara de pared.
+func quote_store_wall_item(cell: Vector2i, rotation: int) -> Dictionary:
+	return _as_store(quote_sell_wall_item(cell, rotation))
+
+
+func store_wall_item(cell: Vector2i, rotation: int) -> Dictionary:
+	return _commit(quote_store_wall_item(cell, rotation))
+
+
+# Una venta posible pasa a guardar: sin dinero, el objeto va al inventario.
+func _as_store(sale: Dictionary) -> Dictionary:
+	if not sale["ok"]:
+		sale["message"] = String(sale["message"]).replace("vender", "guardar")
+		return sale
+	var id: String = sale["item_id"]
+	sale["cost"] = 0
+	sale["stored"] = id
+	sale["message"] = "%s al inventario." % FurnitureCatalog.get_item(id)["name"]
+	return sale
 
 
 ## Instala una computadora en el escritorio de cell (una por escritorio).
@@ -203,14 +273,14 @@ func quote_install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
 		for desk_id: String in FurnitureCatalog.get_desks(computer_id):
 			desk_names.append(String(FurnitureCatalog.get_item(desk_id)["name"]).to_lower())
 		return _fail(0, "%s solo va sobre un %s." % [FurnitureCatalog.get_item(computer_id)["name"], " o ".join(desk_names)])
-	var cost: int = FurnitureCatalog.get_price(computer_id)
+	var cost: int = _cost_or_stock(computer_id)
 	if not Economy.can_afford(cost):
 		return _fail(cost, "No alcanza el dinero: cuesta $%d." % cost)
 	item["computer"] = computer_id
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate[index] = item
 	var computer_name: String = FurnitureCatalog.get_item(computer_id)["name"]
-	return {"ok": true, "cost": cost, "message": "%s: −$%d" % [computer_name, cost], "furniture": candidate}
+	return _with_stock({"ok": true, "cost": cost, "message": "%s: −$%d" % [computer_name, cost], "furniture": candidate}, computer_id)
 
 
 func install_computer(computer_id: String, cell: Vector2i) -> Dictionary:
@@ -233,7 +303,7 @@ func quote_install_monitor(monitor_id: String, cell: Vector2i) -> Dictionary:
 	var count: int = FurnitureCatalog.get_monitor_count(item)
 	if count >= limit:
 		return _fail(0, "Ese escritorio ya tiene todas sus pantallas.")
-	var cost: int = FurnitureCatalog.get_price(monitor_id)
+	var cost: int = _cost_or_stock(monitor_id)
 	if not Economy.can_afford(cost):
 		return _fail(cost, "No alcanza el dinero: cuesta $%d." % cost)
 	item["monitor"] = monitor_id
@@ -241,7 +311,7 @@ func quote_install_monitor(monitor_id: String, cell: Vector2i) -> Dictionary:
 	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
 	candidate[index] = item
 	var monitor_name: String = FurnitureCatalog.get_item(monitor_id)["name"]
-	return {"ok": true, "cost": cost, "message": "%s: −$%d" % [monitor_name, cost], "furniture": candidate}
+	return _with_stock({"ok": true, "cost": cost, "message": "%s: −$%d" % [monitor_name, cost], "furniture": candidate}, monitor_id)
 
 
 func install_monitor(monitor_id: String, cell: Vector2i) -> Dictionary:

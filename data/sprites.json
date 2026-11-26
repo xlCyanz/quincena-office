@@ -8425,6 +8425,17 @@
 				24
 			]
 		},
+		"ui_shop": {
+			"anchor": [
+				12.0,
+				12.0
+			],
+			"file": "ui/ui_shop.png",
+			"size": [
+				24,
+				24
+			]
+		},
 		"ui_staff": {
 			"anchor": [
 				12.0,
@@ -11224,6 +11235,7 @@
 		"frame": "ui_frame",
 		"projects": "ui_projects",
 		"settings": "ui_settings",
+		"shop": "ui_shop",
 		"staff": "ui_staff",
 		"teams": "ui_teams",
 		"walls": "ui_walls"

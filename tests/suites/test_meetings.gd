@@ -259,9 +259,8 @@ func _check_ui() -> void:
 		"el botón de la Sala de reuniones está deshabilitado")
 	Projects.create_offer("large")
 	_expect(meeting_button != null and not meeting_button.disabled, "al llegar la oferta grande se habilita")
-	var texts: Array[String] = []
-	for button: Node in game.find_children("*", "Button", true, false):
-		texts.append((button as Button).text)
-	_expect(texts.has("Mesa reun. $1200") and texts.has("Pantalla $800"), "mesa y pantalla en el modo construcción")
+	var shop: ShopScreen = (game.get_node("BuildPanel") as BuildPanel).get_shop()
+	_expect(shop.get_card("meeting_table") != null and shop.get_card("presentation_screen") != null,
+		"la Tienda vende la mesa y la pantalla")
 	game.queue_free()
 	await get_tree().process_frame

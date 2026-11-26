@@ -227,6 +227,9 @@ func _check_build_mode_in_game() -> void:
 	key.pressed = true
 	await _push(key)
 	_expect(GameClock.is_paused, "en modo construcción el atajo 3 quitó la pausa")
+	# Construir abre en Inventario; Estructura elige Pared.
+	await _click(panel.get_section_button(BuildPanel.SECTION_STRUCTURE).get_global_rect().get_center())
+	_expect(panel.get_selected_tool() == BuildController.TOOL_WALL, "Estructura elige Pared")
 
 	# Paredes: arrastrar por el borde x = 4.5, filas 1 a 4 (4 piezas).
 	var money: int = Economy.balance

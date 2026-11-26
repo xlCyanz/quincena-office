@@ -52,6 +52,13 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   `Builder.quote_pick_up`/`quote_move`/`move(index, anchor, rotation, quarter)`: gratis, con su computadora, pantallas y dueño; las mismas
   reglas que poner (o colgar, para lo de pared); no lo del puesto de un empleado y la silla del CEO solo dentro de su oficina. Con lo
   colgado tomado las paredes suben. Prueba `test_furniture`.
+- Tienda e inventario: los muebles se compran en la Tienda (`ShopScreen`, a pantalla completa; `Builder.quote_buy`/`buy(id, count)`,
+  `BuildController.buy`) y quedan en `OfficeState.inventory` (id → cantidad, guardado; `get_stock`, `add_stock`, señal
+  `EventBus.inventory_changed`). `quote_place`, `quote_install_computer` y `quote_install_monitor` sacan del inventario sin costo si hay
+  (`"stock"` en la cotización, lo descuenta `_commit`); sin inventario cobran el precio como antes. Guardar (`BuildController.TOOL_STORE`;
+  `quote_store_furniture_at`/`store_furniture_at`, `quote_store_wall_item`/`store_wall_item`) devuelve al inventario lo que Vender
+  vendería, en el mismo orden y con los mismos límites, sin dinero (`"stored"`). Lo del inventario cuenta en `Bank.get_assets_value` por su
+  reventa. `TOOL_NONE` es «sin herramienta» (inventario vacío o se acabó lo elegido). Prueba `test_inventory`.
 - Contorno de selección: en Construir, el mueble ya puesto que elige la herramienta (vender, girar, mejorar, ponerle computadora o
   pantalla, o el objeto de pared que se vende) y el que se va a poner se marcan con una línea punteada que sigue su silueta, verde si se
   puede y rojo si no (`BuildController._preview_item`, `_preview_new`, `get_selection_outline`, `SELECTION_*`; el que se va a poner se
@@ -412,7 +419,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   ingresos y gastos del mes (los préstamos van aparte, no son ingreso). El tope por préstamo no va en `unlocks`: lo cuenta
   `Company.get_new_unlocks`. Las pruebas viejas fijan `Company.stage` cuando necesitan algo bloqueado.
 - Objetivos guiados (`Company.objectives_done`; `data/objectives.json`, 15 en orden): se ven los 3 primeros sin cumplir
-  (`ObjectivesPanel`, izquierda bajo el dinero, plegable). Las condiciones miran el estado (habitación, cargos, empleados,
+  (`ObjectivesPanel`, izquierda bajo el dinero con su mismo borde y ancho, `align_provider`; plegable). Las condiciones miran el estado (habitación, cargos, empleados,
   `Projects.accepted_count`, entregados, equipos, etapa, terreno, estrellas, valor) y se revisan con las señales de esos sistemas;
   al cumplirse uno avisa, paga «Objetivo cumplido» y/o `Projects.add_reputation` una sola vez y entra el siguiente.
   `SaveManager` envuelve preparar/cargar en `Company.begin_load`/`finish_load` para no revisar con el estado a medias; una
@@ -469,10 +476,15 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   con la fecha detenida, Seguir en acento y Salir al menú en rojo.
 - Escena inicial: `scenes/main_menu.tscn`; la partida es `scenes/main.tscn`.
   La interfaz superpuesta es `Hud` (dinero y reloj) más `BuildPanel` (botón Construir y herramientas).
-  Construir va en secciones (`BuildPanel.SECTION_*`: Estructura, Muebles, Habitaciones y Terreno, con «?» y Salir en la misma fila): solo se ve
-  la abierta (`set_section`, `get_section_of`); Muebles se parte por `category` de `data/furniture.json` (`categories`; `set_category`,
-  `FurnitureCatalog.get_category`) con Mover, Girar y Mejorar en la fila de categorías; Terreno muestra solo su fila (la herramienta va en un botón
-  oculto). `select_tool` abre la sección y la categoría; `get_button_toward(tool)` es el botón a pulsar para llegar (lo resalta el tutorial
+  La Tienda se abre desde la barra del mapa (botón Tienda junto a Construir, icono `ui_shop`; `get_shop_button`, `set_shop_open`,
+  `is_shop_open`, `get_shop`): `ShopScreen` a pantalla completa, sin pausar; con ella abierta el tutorial va bajo su barra
+  (`get_top_bar_rect`). Construir es una bandeja abajo. Arriba: las secciones (`BuildPanel.SECTION_*`: Inventario, Estructura, Habitaciones y Terreno) y, fijos a la derecha,
+  Paredes, «?» y Salir; la fila se desplaza si no cabe. Abajo, el estado y Mover, Girar, Mejorar, Guardar y Vender. Solo se ve la sección
+  abierta (`set_section`, `get_section_of`); Inventario muestra una tarjeta por mueble guardado con su miniatura
+  (`SpriteLibrary.get_furniture_icon`) y «×N», o un aviso de que está vacío; Terreno muestra solo su fila (la herramienta va en un botón
+  oculto). La Tienda filtra por `category` de `data/furniture.json` (`set_category`, `FurnitureCatalog.get_category`) y su detalle elige
+  cantidad y compra; Esc o «Volver al mapa» la cierran. `select_tool` abre la sección; `get_button_toward(tool)` es el botón a pulsar para
+  llegar (sin inventario de ese mueble, Salir y luego la Tienda; con inventario fuera de Construir, Construir; lo resalta el tutorial
   con `tool:`). Prueba `test_build_sections`.
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`, los últimos 200, y en
   `Economy.month_totals`, totales por concepto del mes actual y el anterior). Menú Banco (`BankPanel`): saldo, resumen del

@@ -105,7 +105,7 @@ func get_limit() -> int:
 	return maxi(int(_config_data().get("min_limit", 0)), roundi(multiple * monthly_income))
 
 
-## Valor de reventa de muebles y computadoras (los bienes).
+## Valor de reventa de muebles y computadoras (los bienes), los puestos y los del inventario.
 func get_assets_value() -> int:
 	var total: int = 0
 	for item: Dictionary in OfficeState.furniture:
@@ -114,6 +114,8 @@ func get_assets_value() -> int:
 			total += FurnitureCatalog.get_resale(item["computer"])
 		if not String(item.get("monitor", "")).is_empty():
 			total += FurnitureCatalog.get_resale(item["monitor"]) * FurnitureCatalog.get_monitor_count(item)
+	for id: String in OfficeState.inventory:
+		total += FurnitureCatalog.get_resale(id) * OfficeState.inventory[id]
 	return total
 
 

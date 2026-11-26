@@ -6,6 +6,8 @@ extends CanvasLayer
 const MARGIN: float = 16.0
 const MARGIN_TOP: float = 100.0
 const PANEL_WIDTH: float = 340.0
+## Espacio bajo el panel de dinero.
+const GAP: float = 8.0
 const MUTED_COLOR := UiTheme.MUTED
 const REWARD_COLOR := UiTheme.POSITIVE
 
@@ -15,6 +17,8 @@ var _rows: VBoxContainer
 # Elección del jugador (true = desplegada) y si un panel izquierdo la tapa.
 var _expanded: bool = true
 var _suppressed: bool = false
+## Rectángulo del panel de dinero (lo da main): la lista va debajo, con su mismo borde izquierdo y ancho.
+var align_provider: Callable
 
 
 func _ready() -> void:
@@ -43,6 +47,18 @@ func _ready() -> void:
 	EventBus.projects_changed.connect(_refresh)
 	EventBus.company_value_changed.connect(func(_value: int) -> void: _refresh())
 	_refresh()
+
+
+func _process(_delta: float) -> void:
+	if not align_provider.is_valid() or not _panel.visible:
+		return
+	var above: Rect2 = align_provider.call()
+	var at := Vector2(above.position.x, above.end.y + GAP)
+	if _panel.position != at:
+		_panel.position = at
+	if not is_equal_approx(_panel.custom_minimum_size.x, above.size.x):
+		_panel.custom_minimum_size.x = above.size.x
+		_refresh()
 
 
 ## Despliega (true) o pliega (false) la lista.
@@ -96,7 +112,7 @@ func _refresh() -> void:
 		var title := Label.new()
 		title.text = "• %s%s" % [objective["text"], "  (%s)" % progress if not progress.is_empty() else ""]
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title.custom_minimum_size.x = PANEL_WIDTH
+		title.custom_minimum_size.x = _text_width()
 		row.add_child(title)
 		var reward := Label.new()
 		reward.text = "   Recompensa: %s" % _describe_reward(objective)
@@ -105,6 +121,12 @@ func _refresh() -> void:
 		row.add_child(reward)
 		_rows.add_child(row)
 	_panel.reset_size()
+
+
+# Ancho del texto: el del panel menos sus márgenes (los renglones se parten ahí).
+func _text_width() -> float:
+	var style: StyleBox = _panel.get_theme_stylebox("panel")
+	return maxf(_panel.custom_minimum_size.x, PANEL_WIDTH) - style.get_margin(SIDE_LEFT) - style.get_margin(SIDE_RIGHT)
 
 
 static func _describe_reward(objective: Dictionary) -> String:
