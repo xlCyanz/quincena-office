@@ -178,6 +178,9 @@ func handle_escape() -> String:
 		set_pause_menu_open(false)
 		return "resume"
 	if _build_panel.is_build_mode():
+		if _build_controller.is_moving():
+			_build_controller.cancel_move()
+			return "move"
 		_build_panel.set_build_mode(false)
 		return "build"
 	if _employee_card.is_open():
@@ -314,7 +317,8 @@ func are_walls_up() -> bool:
 
 # Arriba si el jugador lo pidió o si en Construir hay un objeto de pared elegido.
 func _apply_walls() -> void:
-	var hanging: bool = _build_panel.is_build_mode() and FurnitureCatalog.is_wall_mounted(_build_controller.tool)
+	var hanging: bool = _build_panel.is_build_mode() and (FurnitureCatalog.is_wall_mounted(_build_controller.tool)
+		or _build_controller.is_moving_wall_item())
 	var up: bool = _walls_wanted or hanging
 	_build_panel.get_walls_button().set_pressed_no_signal(_walls_wanted)
 	if up == _office_grid.walls_up:

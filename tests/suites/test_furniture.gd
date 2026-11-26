@@ -1,4 +1,4 @@
-# Muebles: colocar, girar y vender escritorio, silla, computadora y planta; no se coloca sobre
+# Muebles: colocar, girar, mover y vender escritorio, silla, computadora y planta; no se coloca sobre
 # otro objeto ni tapando el único acceso; la reventa devuelve el 50 %.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=furniture
 extends Node
@@ -25,6 +25,7 @@ func _ready() -> void:
 	_check_access()
 	_check_rotate()
 	_check_computer_and_sell()
+	_check_move()
 	_check_outline()
 	await _check_in_game_with_mouse()
 
@@ -132,6 +133,62 @@ func _check_rotate() -> void:
 	_expect(OfficeState.furniture[_index_at(Vector2i(4, 4))]["rotation"] == 0, "cuatro giros vuelven al inicio")
 	result = builder.rotate(Vector2i(3, 3))
 	_expect(not result["ok"], "girar donde no hay mueble: %s" % [result])
+
+
+# Mover: gratis, con lo que lleva; no encima de otro, no lo de un puesto ajeno; la silla del CEO solo
+# dentro de su oficina; lo colgado, a otra pared.
+func _check_move() -> void:
+	SaveManager.new_game()
+	var builder := Builder.new()
+	builder.place("simple_desk", Vector2i(4, 4), 0)
+	builder.install_computer("basic_computer", Vector2i(4, 4))
+	var money: int = Economy.balance
+	var count: int = OfficeState.furniture.size()
+	var index: int = _index_at(Vector2i(4, 4))
+	_expect(bool(builder.quote_pick_up(index)["ok"]), "el escritorio se puede tomar")
+	var result: Dictionary = builder.move(index, Vector2i(3, 6), 1)
+	var moved: int = _index_at(Vector2i(3, 6))
+	_expect(result["ok"] and Economy.balance == money and OfficeState.furniture.size() == count and _index_at(Vector2i(4, 4)) < 0
+		and moved >= 0 and OfficeState.furniture[moved]["rotation"] == 1 and OfficeState.furniture[moved]["computer"] == "basic_computer",
+		"mover es gratis, deja libre el lugar y se lleva la computadora: %s" % [result])
+	builder.place("small_plant", Vector2i(4, 4), 0, 0)
+	result = builder.move(moved, Vector2i(4, 4), 0)
+	_expect(not result["ok"] and _index_at(Vector2i(3, 6)) == moved, "no se mueve encima de otro: %s" % [result])
+	_expect(not bool(builder.quote_move(moved, Vector2i(3, 6), 1)["ok"]), "soltarlo donde está no es mover")
+	# Planta chica: a otro cuarto de la misma casilla.
+	var plant: int = OfficeState.find_furniture_at(Vector2i(4, 4), 0)
+	result = builder.move(plant, Vector2i(4, 4), 0, 3)
+	_expect(result["ok"] and FurnitureCatalog.get_quarter(OfficeState.furniture[plant]) == 3,
+		"una planta chica pasa a otro cuarto: %s" % [result])
+	# Silla del CEO: dentro de su oficina sí, fuera no.
+	var ceo: Dictionary = OfficeState.find_furniture_assigned_to("ceo")
+	var ceo_index: int = OfficeState.furniture.find(ceo)
+	var office: int = RoomRules.room_index_at(OfficeState.rooms, ceo["cell"])
+	result = builder.move(ceo_index, Vector2i(4, 6), 0)
+	_expect(not result["ok"] and String(result["message"]).contains("CEO"), "la silla del CEO no sale de su oficina: %s" % [result])
+	var inside: Vector2i = Vector2i(-1, -1)
+	for cell: Vector2i in OfficeState.rooms[office]["cells"]:
+		if OfficeState.find_furniture_at(cell) < 0 and bool(builder.quote_move(ceo_index, cell, ceo["rotation"])["ok"]):
+			inside = cell
+			break
+	_expect(inside.x >= 0, "la silla del CEO se mueve dentro de su oficina")
+	# Lo colgado se mueve a otra pared libre.
+	var spots: Array[Array] = []
+	for cell: Vector2i in OfficeState.lot.get_cells():
+		for rotation: int in range(4):
+			if bool(builder.quote_place("painting", cell, rotation)["ok"]):
+				spots.append([cell, rotation])
+	var hung: int = -1
+	if spots.size() >= 2 and bool(builder.place("painting", spots[0][0], spots[0][1])["ok"]):
+		hung = OfficeState.find_wall_item(spots[0][0], spots[0][1])
+	if hung >= 0:
+		result = builder.move(hung, spots[1][0], spots[1][1])
+		_expect(result["ok"] and OfficeState.find_wall_item(spots[1][0], spots[1][1]) == hung
+			and OfficeState.find_wall_item(spots[0][0], spots[0][1]) < 0, "el cuadro pasa a otra pared: %s" % [result])
+		result = builder.move(hung, Vector2i(3, 3), 0)
+		_expect(not result["ok"], "en medio del piso no se cuelga: %s" % [result])
+	else:
+		_expect(false, "se cuelga un cuadro para moverlo")
 
 
 func _check_computer_and_sell() -> void:
@@ -305,11 +362,23 @@ func _check_in_game_with_mouse() -> void:
 	for point: Vector2 in new_outline:
 		near = near and point.distance_to(spot) < GameConstants.TILE_SIZE.x
 	_expect(near, "poner un mueble nuevo muestra su contorno donde va (%d puntos)" % new_outline.size())
+	# Mover con el ratón: un clic toma la silla, otro la suelta; Esc suelta lo tomado sin salir de Construir.
+	await press.call(BuildController.TOOL_MOVE)
+	money = Economy.balance
+	await _click(at_cell.call(Vector2i(4, 6)))
+	_expect(controller.is_moving() and controller.get_move_index() == _index_at(Vector2i(4, 6)), "un clic toma la silla")
+	await _click(at_cell.call(Vector2i(3, 6)))
+	_expect(not controller.is_moving() and _index_at(Vector2i(3, 6)) >= 0 and _index_at(Vector2i(4, 6)) < 0
+		and Economy.balance == money, "otro clic la suelta en su nuevo lugar, gratis")
+	await _click(at_cell.call(Vector2i(0, 7)))
+	_expect(controller.is_moving() and not controller.get_selection_outline().is_empty(), "tomar la planta muestra su contorno")
+	_expect(game.handle_escape() == "move" and not controller.is_moving() and panel.is_build_mode()
+		and _index_at(Vector2i(0, 7)) >= 0, "Esc la deja donde estaba sin salir de Construir")
 	await press.call(BuildController.TOOL_SELL)
 	var hover := InputEventMouseMotion.new()
-	hover.position = at_cell.call(Vector2i(4, 6))
+	hover.position = at_cell.call(Vector2i(3, 6))
 	await _push(hover)
-	_expect(controller.get_selection_bounds().grow(1.0).has_point(grid.cell_to_world(Vector2i(4, 6))),
+	_expect(controller.get_selection_bounds().grow(1.0).has_point(grid.cell_to_world(Vector2i(3, 6))),
 		"vender marca la silla bajo el ratón (%s)" % controller.get_selection_bounds())
 	money = Economy.balance
 	await _click(at_cell.call(Vector2i(4, 5)))

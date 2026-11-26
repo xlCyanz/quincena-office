@@ -10,6 +10,8 @@ extends Node2D
 signal status_changed(text: String)
 ## Cambió el terreno elegido con el ratón (o se compró).
 signal land_changed
+## Se tomó o se soltó un mueble con Mover (las paredes suben para lo colgado).
+signal move_changed
 ## Hay algo que confirmar (mudar la Oficina Ejecutiva, vender terreno): text es la pregunta; vacío = nada pendiente.
 signal confirm_changed(text: String)
 
@@ -17,6 +19,8 @@ const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
 const TOOL_WINDOW: String = "window"
 const TOOL_ROTATE: String = "rotate"
+## Mover un mueble ya puesto: un clic lo toma, otro lo suelta donde se elija.
+const TOOL_MOVE: String = "move"
 const TOOL_SELL: String = "sell"
 const TOOL_UNMARK_ROOM: String = "unmark_room"
 const TOOL_LAND: String = "land"
@@ -69,6 +73,8 @@ var _preview_front := Vector2i.ZERO
 var _preview_item: int = -1
 ## Mueble que se va a poner ({id, cell, rotation, quarter}), o vacío: también lleva el contorno.
 var _preview_new: Dictionary = {}
+## Mueble tomado con Mover (índice en OfficeState.furniture), o -1.
+var _move_index: int = -1
 var _preview_ok: bool = false
 var _apply_preview := Callable()
 # Terreno elegido en BuildPanel: esquinas (vacío si no hay), si se arrastra y la casilla del
@@ -95,6 +101,7 @@ func set_active(active: bool) -> void:
 		answer_confirm(false)
 	_active = active
 	_dragging = false
+	cancel_move()
 	_clear_preview()
 	refresh_land_plots()
 	queue_redraw()
@@ -198,6 +205,7 @@ func set_tool(new_tool: String) -> void:
 		answer_confirm(false)
 	tool = new_tool
 	_dragging = false
+	cancel_move()
 	_land_pressed = false
 	refresh_land_plots()
 	_update_preview()
@@ -219,6 +227,42 @@ func _play_result(result: Dictionary) -> void:
 		EventBus.sound_requested.emit("error")
 	else:
 		EventBus.sound_requested.emit("sell" if tool == TOOL_SELL else "build")
+
+
+## Indica si hay un mueble tomado con Mover.
+func is_moving() -> bool:
+	return _move_index >= 0
+
+
+## Índice en OfficeState.furniture del mueble tomado con Mover, o -1.
+func get_move_index() -> int:
+	return _move_index
+
+
+## Indica si lo tomado con Mover va colgado en una pared.
+func is_moving_wall_item() -> bool:
+	return is_moving() and FurnitureCatalog.is_wall_mounted(String(OfficeState.furniture[_move_index]["id"]))
+
+
+## Toma con Mover el mueble index (si se puede); después un clic lo suelta.
+func pick_up(index: int) -> Dictionary:
+	var quote: Dictionary = builder.quote_pick_up(index)
+	if not quote["ok"]:
+		return quote
+	_move_index = index
+	_placement_rotation = int(OfficeState.furniture[index]["rotation"])
+	move_changed.emit()
+	_update_preview(false)
+	return quote
+
+
+## Suelta lo tomado con Mover sin moverlo (Esc, otra herramienta o salir de Construir).
+func cancel_move() -> void:
+	if _move_index < 0:
+		return
+	_move_index = -1
+	move_changed.emit()
+	_update_preview(false)
 
 
 ## Gira un cuarto de vuelta el mueble que se va a colocar.
@@ -267,7 +311,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		# El clic derecho arrastrado mueve la cámara; aquí solo cuenta el clic.
 		if button.pressed:
 			_right_press_position = button.position
-		elif button.position.distance_to(_right_press_position) <= RIGHT_CLICK_SLOP_PX and _is_furniture_tool():
+		elif button.position.distance_to(_right_press_position) <= RIGHT_CLICK_SLOP_PX \
+				and (_is_furniture_tool() or is_moving()):
 			rotate_placement()
 	elif event is InputEventMouseMotion:
 		_update_preview()
@@ -335,6 +380,39 @@ func _update_preview(announce: bool = true) -> void:
 		# Los lotes marcados se dibujan aparte (_draw_land_plots).
 		queue_redraw()
 		return
+	elif tool == TOOL_MOVE and (_move_index < 0 or _move_index >= OfficeState.furniture.size()):
+		# Mover, paso 1: lo de bajo el ratón (lo colgado en la pared junto al ratón gana, como al vender).
+		_move_index = -1
+		var index: int = _wall_item_under_pointer()
+		if index < 0:
+			index = OfficeState.find_furniture_at(cell, quarter)
+		if index >= 0:
+			_preview_item = index
+			quote = builder.quote_pick_up(index)
+			_apply_preview = func() -> Dictionary: return pick_up(index)
+	elif tool == TOOL_MOVE:
+		# Mover, paso 2: el mueble tomado donde se soltaría, con su contorno.
+		var moving: Dictionary = OfficeState.furniture[_move_index]
+		var target: Dictionary = moving.duplicate()
+		if FurnitureCatalog.is_wall_mounted(moving["id"]):
+			var slot: Array = _wall_slot()
+			target["cell"] = slot[0]
+			target["rotation"] = slot[1]
+		else:
+			target["cell"] = cell
+			target["rotation"] = _placement_rotation
+			if FurnitureCatalog.is_small(moving["id"]):
+				target["quarter"] = quarter
+			_preview_front = FurnitureCatalog.get_front(_placement_rotation)
+			_preview_cells = FurnitureCatalog.get_footprint(moving["id"], cell, _placement_rotation)
+		_preview_new = target
+		var index: int = _move_index
+		quote = builder.quote_move(index, target["cell"], target["rotation"], int(target.get("quarter", -1)))
+		var same: bool = target["cell"] == moving["cell"] and target["rotation"] == moving["rotation"] \
+			and FurnitureCatalog.get_quarter(target) == FurnitureCatalog.get_quarter(moving)
+		if same:
+			quote = {"ok": true, "cost": 0, "message": "Clic para dejarlo donde estaba."}
+		_apply_preview = func() -> Dictionary: return _drop(index, target, same)
 	elif _is_furniture_tool() and bool(info["wall_mounted"]):
 		# Objeto de pared: en la pared más cercana, del lado del ratón.
 		var slot: Array = _wall_slot()
@@ -421,6 +499,18 @@ func _update_preview(announce: bool = true) -> void:
 	queue_redraw()
 
 
+# Suelta lo tomado con Mover en target (o lo deja donde estaba).
+func _drop(index: int, target: Dictionary, same: bool) -> Dictionary:
+	if same:
+		cancel_move()
+		return {"ok": true, "message": "Se quedó donde estaba."}
+	var result: Dictionary = builder.move(index, target["cell"], target["rotation"], int(target.get("quarter", -1)))
+	if result["ok"]:
+		_move_index = -1
+		move_changed.emit()
+	return result
+
+
 # [casilla, rotación] de la cara de pared más cercana: el borde más cercano y la casilla del lado del ratón.
 func _wall_slot() -> Array:
 	var edge: Vector3i = GridEdge.nearest(_pointer)
@@ -485,7 +575,7 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 				changes.append({"edge": edge, "kind": ""})
 			else:
 				changes.append({"cell": Vector2i(end.round()), "kind": ConstructionCatalog.BARE_FLOOR})
-		TOOL_ROTATE, TOOL_UNMARK_ROOM:
+		TOOL_ROTATE, TOOL_UNMARK_ROOM, TOOL_MOVE:
 			pass
 		_:
 			var first: Vector2i = Vector2i(start.round())

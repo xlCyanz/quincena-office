@@ -46,6 +46,12 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   la casilla sigue siendo de 1 m² para paredes, habitaciones, caminos y precios y sigue tapando el paso. `Builder.quote_place(…, quarter)`
   (sin cuarto, el primero libre), `rotate`/`sell_furniture_at(cell, quarter)` y `OfficeState.find_furniture_at(cell, quarter)` eligen el del
   cuarto bajo el ratón; las partidas viejas los ponen en el cuarto 0. Prueba `test_quarters`.
+- Mover (`BuildController.TOOL_MOVE`): un clic toma el mueble bajo el ratón (lo colgado junto al ratón primero; `pick_up`,
+  `is_moving`, `get_move_index`, `move_changed`) y otro lo suelta donde se elija, con su contorno; clic derecho o R lo gira; soltarlo
+  donde estaba, Esc (`main.handle_escape` → "move"), otra herramienta o salir de Construir lo dejan donde estaba (`cancel_move`).
+  `Builder.quote_pick_up`/`quote_move`/`move(index, anchor, rotation, quarter)`: gratis, con su computadora, pantallas y dueño; las mismas
+  reglas que poner (o colgar, para lo de pared); no lo del puesto de un empleado y la silla del CEO solo dentro de su oficina. Con lo
+  colgado tomado las paredes suben. Prueba `test_furniture`.
 - Contorno de selección: en Construir, el mueble ya puesto que elige la herramienta (vender, girar, mejorar, ponerle computadora o
   pantalla, o el objeto de pared que se vende) y el que se va a poner se marcan con una línea punteada que sigue su silueta, verde si se
   puede y rojo si no (`BuildController._preview_item`, `_preview_new`, `get_selection_outline`, `SELECTION_*`; el que se va a poner se
@@ -465,7 +471,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   La interfaz superpuesta es `Hud` (dinero y reloj) más `BuildPanel` (botón Construir y herramientas).
   Construir va en secciones (`BuildPanel.SECTION_*`: Estructura, Muebles, Habitaciones y Terreno, con «?» y Salir en la misma fila): solo se ve
   la abierta (`set_section`, `get_section_of`); Muebles se parte por `category` de `data/furniture.json` (`categories`; `set_category`,
-  `FurnitureCatalog.get_category`) con Girar y Mejorar en la fila de categorías; Terreno muestra solo su fila (la herramienta va en un botón
+  `FurnitureCatalog.get_category`) con Mover, Girar y Mejorar en la fila de categorías; Terreno muestra solo su fila (la herramienta va en un botón
   oculto). `select_tool` abre la sección y la categoría; `get_button_toward(tool)` es el botón a pulsar para llegar (lo resalta el tutorial
   con `tool:`). Prueba `test_build_sections`.
   Todo movimiento de dinero pasa por `Economy` con un concepto (queda en `Economy.movements`, los últimos 200, y en

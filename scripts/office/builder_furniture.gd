@@ -1,4 +1,4 @@
-# Construcción, capa 2: muebles (poner, girar, vender, computadoras, pantallas y mejoras).
+# Construcción, capa 2: muebles (poner, girar, mover, vender, computadoras, pantallas y mejoras).
 extends "res://scripts/office/builder_structure.gd"
 
 
@@ -85,6 +85,64 @@ func quote_rotate(cell: Vector2i, quarter: int = -1) -> Dictionary:
 
 func rotate(cell: Vector2i, quarter: int = -1) -> Dictionary:
 	return _commit(quote_rotate(cell, quarter))
+
+
+## Mueve el mueble index de OfficeState.furniture a otro anclaje, rotación y cuarto, gratis y con todo lo
+## que lleva (computadora, pantallas, dueño). Un objeto de pared va a otra cara de pared. No se mueve lo del
+## puesto de un empleado; la silla del CEO, solo dentro de su habitación.
+func quote_move(index: int, anchor: Vector2i, rotation: int, quarter: int = -1) -> Dictionary:
+	if index < 0 or index >= OfficeState.furniture.size():
+		return _fail(0, "Ahí no hay ningún mueble.")
+	var station_problem: String = _station_problem(index)
+	if not station_problem.is_empty():
+		return _fail(0, station_problem)
+	var old: Dictionary = OfficeState.furniture[index]
+	var id: String = old["id"]
+	var item: Dictionary = old.duplicate()
+	item["cell"] = anchor
+	item["rotation"] = posmod(rotation, 4)
+	if FurnitureCatalog.is_small(id):
+		item["quarter"] = quarter if quarter >= 0 else FurnitureCatalog.get_quarter(old)
+	var item_name: String = FurnitureCatalog.get_item(id)["name"]
+	if item["cell"] == old["cell"] and item["rotation"] == old["rotation"] \
+			and FurnitureCatalog.get_quarter(item) == FurnitureCatalog.get_quarter(old):
+		return _fail(0, "%s ya está ahí." % item_name)
+	var candidate: Array[Dictionary] = OfficeState.furniture.duplicate()
+	candidate[index] = item
+	var problem: String
+	if FurnitureCatalog.is_wall_mounted(id):
+		# La cara de destino puede ser la misma pared donde ya está colgado (se libera al moverlo).
+		var taken: int = OfficeState.find_wall_item(anchor, item["rotation"])
+		problem = "" if taken == index else _wall_problem(item)
+	else:
+		problem = _placement_problem(candidate, item)
+	if problem.is_empty() and old["assigned_to"] == "ceo":
+		var room: int = RoomRules.room_index_at(OfficeState.rooms, old["cell"])
+		var target: int = RoomRules.room_index_at(OfficeState.rooms, anchor)
+		if room < 0 or target != room:
+			problem = "La silla del CEO se mueve solo dentro de su oficina."
+	if not problem.is_empty():
+		return _fail(0, problem)
+	return {"ok": true, "cost": 0, "message": "Clic para dejarlo aquí (clic derecho lo gira; Esc lo deja donde estaba).",
+		"furniture": candidate, "name": item_name}
+
+
+## Si el mueble index se puede tomar con Mover (no si es del puesto de un empleado).
+func quote_pick_up(index: int) -> Dictionary:
+	if index < 0 or index >= OfficeState.furniture.size():
+		return _fail(0, "Ahí no hay ningún mueble.")
+	var station_problem: String = _station_problem(index)
+	if not station_problem.is_empty():
+		return _fail(0, station_problem)
+	var item_name: String = FurnitureCatalog.get_item(OfficeState.furniture[index]["id"])["name"]
+	return {"ok": true, "cost": 0, "message": "Clic para tomar %s y elegir dónde va." % item_name.to_lower()}
+
+
+func move(index: int, anchor: Vector2i, rotation: int, quarter: int = -1) -> Dictionary:
+	var result: Dictionary = _commit(quote_move(index, anchor, rotation, quarter))
+	if result["ok"]:
+		result["message"] = "%s en su nuevo lugar." % result["name"]
+	return result
 
 
 ## Vende lo de cell: primero la pantalla extra, luego la computadora, luego el mueble (sin
@@ -231,7 +289,7 @@ func _station_problem(index: int) -> String:
 		owner = Workstations.owner_of(OfficeState.furniture, OfficeState.rooms, index)
 	if owner.is_empty() or owner == "ceo":
 		return ""
-	return "Es parte del puesto de %s: no se puede vender ni girar." % Staff.get_person_name(owner)
+	return "Es parte del puesto de %s: no se puede vender, girar ni mover." % Staff.get_person_name(owner)
 
 
 # Por qué item (ya en candidate) no puede quedar así, o "".

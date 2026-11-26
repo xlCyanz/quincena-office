@@ -99,8 +99,9 @@ func _ready() -> void:
 	for floor_type: String in ConstructionCatalog.get_floor_types():
 		structure.append([floor_type, ConstructionCatalog.get_display_name(floor_type)])
 	structure.append([BuildController.TOOL_SELL, "Vender"])
-	# Muebles: fila de categorías con Girar y Mejorar; debajo, los de la categoría abierta.
-	var furniture: Array[Array] = [[BuildController.TOOL_ROTATE, "Girar"], [BuildController.TOOL_UPGRADE, "Mejorar"]]
+	# Muebles: fila de categorías con Mover, Girar y Mejorar; debajo, los de la categoría abierta.
+	var furniture: Array[Array] = [[BuildController.TOOL_MOVE, "Mover"], [BuildController.TOOL_ROTATE, "Girar"],
+		[BuildController.TOOL_UPGRADE, "Mejorar"]]
 	var by_category: Dictionary[String, Array] = {}
 	for category: String in FurnitureCatalog.get_categories():
 		by_category[category] = [] as Array[Array]
@@ -262,6 +263,7 @@ func set_category(category: String) -> void:
 	_show_section(SECTION_FURNITURE)
 	var current: String = get_selected_tool()
 	var keep: bool = current == BuildController.TOOL_ROTATE or current == BuildController.TOOL_UPGRADE \
+		or current == BuildController.TOOL_MOVE \
 		or _tool_categories.get(current, "") == category
 	if keep:
 		return
