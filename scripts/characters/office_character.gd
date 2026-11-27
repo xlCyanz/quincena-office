@@ -92,7 +92,7 @@ var _entrance := Vector2i.ZERO
 var _outside := Vector2i.ZERO
 # Casillas por recorrer; la primera es la siguiente.
 var _path: Array[Vector2i] = []
-# Una persona por casilla del local: casilla → personaje (la suya y, caminando, la siguiente).
+# Una persona por casilla del local: casilla → personaje (la suya y, en la primera mitad de cada tramo, la siguiente).
 static var _occupants: Dictionary = {}
 # Fila en la puerta: quienes esperan en la calle, por orden de llegada.
 static var _door_queue: Array = []
@@ -117,6 +117,9 @@ var _seat_item: String = ""
 var _claimed_chair := Vector2i(-1000000, -1000000)
 # Cuánto se arrima sentado al escritorio de delante, en casillas.
 var _tuck := Vector2.ZERO
+# Al caminar, lo que el ajuste a píxel del mundo (snap_2d_transforms_to_pixel) le quita a la posición,
+# redondeado a píxeles de pantalla: el dibujo se corre eso y avanza de a un píxel de pantalla con cualquier zoom.
+var _draw_offset := Vector2.ZERO
 # Pieza que dibuja las manos sobre el escritorio (_draw_hands).
 var _hands: Node2D
 # Cubo de trapear: pieza aparte para ordenarse con los muebles (_draw_bucket).
@@ -339,6 +342,9 @@ func _advance(scaled_delta: float) -> void:
 		else:
 			grid_position = grid_position.move_toward(target, step)
 			step = 0.0
+			# Pasada la mitad ya está en la casilla nueva: suelta la de atrás para ocupar una sola.
+			if grid_position.distance_to(target) < 0.5:
+				_release_cells(next)
 	_update_position()
 	if _path.is_empty():
 		_on_destination_reached()
@@ -490,7 +496,7 @@ func is_cell_taken(cell: Vector2i) -> bool:
 	return other != null and is_instance_valid(other) and other != self and (other as OfficeCharacter)._held.has(cell)
 
 
-## Casillas del local que ocupa (la suya y, caminando, la siguiente).
+## Casillas del local que ocupa: la suya y, en la primera mitad de cada tramo, la siguiente.
 func get_held_cells() -> Array[Vector2i]:
 	return _held.duplicate()
 
@@ -677,6 +683,10 @@ func _update_position() -> void:
 	if _grid == null:
 		return
 	position = _grid.grid_to_world(grid_position + (_tuck if _is_sitting() else Vector2.ZERO))
+	var offset: Vector2 = _subpixel_offset() if not _path.is_empty() else Vector2.ZERO
+	if offset != _draw_offset:
+		_draw_offset = offset
+		queue_redraw()
 	if _hands != null:
 		# Justo después del escritorio de delante (el mueble se ordena 1 px antes de su centro).
 		_hands.position = _grid.grid_to_world(Vector2(_seat_cell + FurnitureCatalog.get_front(maxi(_seat_facing, 0)))) - position
@@ -684,14 +694,31 @@ func _update_position() -> void:
 	_place_bucket()
 
 
+# Parte de la posición que el ajuste a píxel redondea (lo hace como floor(x + 0.5) en px del mundo),
+# llevada al píxel de pantalla más cercano con el zoom y la escala de la ventana de ahora.
+func _subpixel_offset() -> Vector2:
+	var world: Vector2 = global_position
+	var remainder: Vector2 = world - (world + Vector2(0.5, 0.5)).floor()
+	var zoom: float = get_global_transform_with_canvas().get_scale().x * get_viewport().get_final_transform().get_scale().x
+	if zoom <= 0.0:
+		return Vector2.ZERO
+	return (remainder * zoom).round() / zoom
+
+
+## Corrimiento del dibujo al caminar (ver _draw_offset).
+func get_draw_offset() -> Vector2:
+	return _draw_offset
+
+
 # Muñeco provisional; origen en el apoyo. Sentado, la cadera sobre el asiento y las piernas por delante.
 func _draw() -> void:
+	draw_set_transform(_draw_offset)
 	if _draw_sprite():
 		return
 	var seated: bool = activity == Activity.SEATED and not standing
 	# La cadera queda sobre el asiento aunque el cuerpo se achique.
 	var lift: float = -SEAT_HEIGHT_PX * (1.0 - BODY_SCALE) if seated else 0.0
-	var body := Transform2D(0.0, Vector2.ONE * BODY_SCALE, 0.0, Vector2(0.0, lift))
+	var body := Transform2D(0.0, Vector2.ONE * BODY_SCALE, 0.0, Vector2(0.0, lift) + _draw_offset)
 	draw_set_transform_matrix(body)
 	var hip_y: float = -24.0
 	if seated:
@@ -701,7 +728,7 @@ func _draw() -> void:
 		draw_rect(Rect2(2.0, hip_y + 2.0, 4.0, 10.0), PANTS_COLOR)
 		hip_y -= 4.0
 	else:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(BODY_SCALE, 0.5 * BODY_SCALE))
+		draw_set_transform(_draw_offset, 0.0, Vector2(BODY_SCALE, 0.5 * BODY_SCALE))
 		draw_circle(Vector2.ZERO, 10.0, SHADOW_COLOR)
 		draw_set_transform_matrix(body)
 		draw_rect(Rect2(-7.0, hip_y, 6.0, 24.0), PANTS_COLOR)
@@ -713,9 +740,9 @@ func _draw() -> void:
 	var head_center := Vector2(0.0, torso.position.y - 8.0)
 	draw_circle(head_center, 8.0, skin_color)
 	draw_rect(Rect2(head_center.x - 8.0, head_center.y - 9.0, 16.0, 6.0), hair_color)
-	draw_set_transform(Vector2.ZERO)
+	draw_set_transform(_draw_offset)
 	if not status_icon.is_empty():
-		_draw_status_icon(body * head_center + Vector2(9.0, -12.0))
+		_draw_status_icon(body * head_center + Vector2(9.0, -12.0) - _draw_offset)
 
 
 # Dibuja sombra (de pie), cuadro e icono con su hoja. False si no tiene aspecto u hoja.

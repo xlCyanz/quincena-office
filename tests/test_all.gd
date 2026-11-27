@@ -11,7 +11,7 @@ const SUITES: Array[String] = [
 	"save", "vacancies", "hiring", "workday", "payroll", "contracts", "teams", "production", "bugs",
 	"delivery", "morale", "bank", "credit", "loans", "default", "emergency", "land", "company_value",
 	"stages", "objectives", "phase3", "promotions", "leaders", "managers", "departments", "overtime",
-	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "office_chairs", "interview_view", "appointments", "cleaning_view", "build_sections", "quarters", "ground", "sprites", "starting_company", "dev_tools", "cleaning_shift", "laptop_glass_table", "seating", "glass_door_double", "audio", "inventory", "station_change",
+	"agenda", "reception", "administration", "competition", "phase4", "servers", "products", "launch", "events", "event_list", "ambiance", "furniture_quality", "meetings", "ipo", "phase5", "traits", "conduct", "bathrooms", "lunch", "breaks", "office_extras", "candidates", "status_icons", "investor", "phase6", "settings", "main_menu", "pause_menu", "tutorial", "help", "ui_scale", "export", "phase7", "camera_view", "glass_door", "walking", "arrivals", "office_chairs", "interview_view", "appointments", "cleaning_view", "build_sections", "quarters", "ground", "sprites", "starting_company", "dev_tools", "cleaning_shift", "laptop_glass_table", "seating", "glass_door_double", "audio", "inventory", "station_change", "build_blocks", "glass_door_single",
 ]
 ## Desde aquí cuentan los baños; las anteriores corren con Staff.bathrooms_enabled en false.
 const FIRST_BATHROOM_SUITE: String = "bathrooms"
@@ -29,6 +29,11 @@ const FIRST_OFFICE_CHAIRS_SUITE: String = "office_chairs"
 const FIRST_CLEANING_SHIFT_SUITE: String = "cleaning_shift"
 ## Desde aquí la entrada lleva la puerta de vidrio doble; antes OfficeState.double_door_enabled en false.
 const FIRST_DOUBLE_DOOR_SUITE: String = "glass_door_double"
+## Desde aquí se construye en bloques; antes OfficeState.build_blocks_enabled en false.
+const FIRST_BUILD_BLOCKS_SUITE: String = "build_blocks"
+## Oficina inicial y empresa de prueba de antes de los bloques.
+const LEGACY_STARTING_OFFICE_PATH: String = "res://tests/fixtures/starting_office_legacy.json"
+const LEGACY_STARTING_COMPANY_PATH: String = "res://tests/fixtures/starting_company_legacy.json"
 ## Desde aquí los personajes tienen sus tres formas; antes OfficeCharacter.forms_enabled en false.
 const FIRST_FORMS_SUITE: String = "sprites"
 ## Tope por parte; las más largas son las simulaciones de fase.
@@ -93,6 +98,10 @@ func _run_suite(suite: String) -> Vector2i:
 	RoomRules.counts_enabled = SUITES.find(suite) >= SUITES.find(FIRST_OFFICE_CHAIRS_SUITE)
 	Staff.cleaning_shift_enabled = SUITES.find(suite) >= SUITES.find(FIRST_CLEANING_SHIFT_SUITE)
 	OfficeState.double_door_enabled = SUITES.find(suite) >= SUITES.find(FIRST_DOUBLE_DOOR_SUITE)
+	OfficeState.build_blocks_enabled = SUITES.find(suite) >= SUITES.find(FIRST_BUILD_BLOCKS_SUITE)
+	OfficeState.starting_office_path = OfficeState.STARTING_OFFICE_PATH if OfficeState.build_blocks_enabled \
+		else LEGACY_STARTING_OFFICE_PATH
+	StartingCompany.data_path = StartingCompany.DATA_PATH if OfficeState.build_blocks_enabled else LEGACY_STARTING_COMPANY_PATH
 	OfficeCharacter.forms_enabled = SUITES.find(suite) >= SUITES.find(FIRST_FORMS_SUITE)
 	var script: GDScript = load("%stest_%s.gd" % [SUITES_DIR, suite])
 	var node := Node.new()

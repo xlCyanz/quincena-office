@@ -1,9 +1,10 @@
 """Puertas de una hoja (``door``, ``door_wood``, ``door_office``; ``_tall``/``_low``, ``_x``/``_y``, en los cinco
 colores de pared) y sus cuadros de abrir (``<puerta>_tall_<eje>_open_1`` a ``_6``), con Moana. Ver ../_walls_kit.py.
 
-Pared a los lados y encima, marco, umbral y hoja hundida 2 px con manija de metal del lado de adentro; la baja va
-sin hoja. ``door`` beige de dos tableros con marco crema; ``door_wood`` madera naranja de seis tableros con marco
-de madera; ``door_office`` lisa gris clara con mirilla de vidrio y marco de aluminio. La hoja abre hacia adentro.
+Pared encima, marco desde la punta del borde (la junta del piso), umbral y hoja hundida 2 px con manija de metal del
+lado de adentro; la baja va sin hoja. ``door`` beige de dos tableros con marco crema; ``door_wood`` madera naranja de
+seis tableros con marco de madera; ``door_office`` lisa gris clara con mirilla de vidrio y marco de aluminio. La hoja
+abre hacia adentro.
 Desde el repositorio de Moana:
 
     sh scripts/uv.sh run python RUTA/tools/sprites/art/walls/door/build.py [--out DIR] [--only TEXTO]
@@ -25,7 +26,7 @@ LINTEL = 4  # alto del cabezal del marco
 OPENING = k.DOOR_TOP - LINTEL  # 88: arriba de la hoja
 HANDLE_Z = 44
 SWING_ANGLES = (15, 30, 45, 60, 75, 90)
-GROW = (48, 0, 48, 32)  # cuánto sale la hoja abierta del lienzo (izquierda, arriba, derecha, abajo)
+GROW = (60, 0, 60, 40)  # cuánto sale la hoja abierta del lienzo (izquierda, arriba, derecha, abajo)
 
 LEAF = k.ramp8("leaf", "#2A211BFF", "#5E3E29FF", "#AFA08DFF", "#B8A991FF", "#C1B29AFF", "#C9BAA2FF", "#EFDFBDFF")
 LEAF_X = k.colors("leaf_x", "#2A211BFF", dark="#8D6E4FFF", light="#E3D4B4FF")  # ranura y filo de los tableros
@@ -38,15 +39,15 @@ OFFICE = k.ramp8("office", "#2E3236FF", "#6B7378FF", "#BCC2C4FF", "#C9CECFFF", "
 OFFICE_X = k.colors("office_x", "#2E3236FF", dark="#8F989DFF", top="#9FC7DCFF", light="#E4F5FBFF")
 
 # layout: (pared, fin de la jamba, hoja desde, hoja hasta) en unidades; panels: tableros (a0, a1, b0, b1) en px.
-NARROW = (2, 5, 5, 27)  # hoja de 44 px
-WIDE = (4, 6, 6, 26)  # hoja de 40 px
+# Sin pared a los lados: el marco empieza en la punta del borde, en la junta del piso, con jambas de 2 unidades.
+LAYOUT = (0, 2, 2, 30)  # hoja de 56 px
 TYPES = {
-    "door": {"leaf": LEAF, "extra": LEAF_X, "frame": FRAME, "layout": NARROW,
-             "panels": ((6, 38, 8, 36), (6, 38, 44, 78)), "slot": None},
-    "door_wood": {"leaf": WOOD, "extra": WOOD_X, "frame": WOOD_FRAME, "layout": WIDE,
-                  "panels": ((4, 18, 6, 26), (22, 36, 6, 26), (4, 18, 32, 52), (22, 36, 32, 52),
-                             (4, 18, 58, 80), (22, 36, 58, 80)), "slot": None},
-    "door_office": {"leaf": OFFICE, "extra": OFFICE_X, "frame": k.ALU, "layout": WIDE, "panels": (),
+    "door": {"leaf": LEAF, "extra": LEAF_X, "frame": FRAME, "layout": LAYOUT,
+             "panels": ((6, 50, 8, 36), (6, 50, 44, 78)), "slot": None},
+    "door_wood": {"leaf": WOOD, "extra": WOOD_X, "frame": WOOD_FRAME, "layout": LAYOUT,
+                  "panels": ((5, 25, 6, 26), (31, 51, 6, 26), (5, 25, 32, 52), (31, 51, 32, 52),
+                             (5, 25, 58, 80), (31, 51, 58, 80)), "slot": None},
+    "door_office": {"leaf": OFFICE, "extra": OFFICE_X, "frame": k.ALU, "layout": LAYOUT, "panels": (),
                     "slot": (7, 14, 40, 78)},
 }
 
@@ -92,9 +93,9 @@ def model(f: k.Along, kind: str, tall: bool, angle: float = 0, skip: Optional[st
     height = k.WALL_TOP if tall else k.LOW
     stub_top = k.DOOR_TOP if tall else height
     E = k.EDGE
-    if skip != "start":
+    if wall and skip != "start":
         k.wall_block(f, 0, wall, 0, stub_top, top=not tall)
-    if skip != "end":
+    if wall and skip != "end":
         k.wall_block(f, E - wall, E, 0, stub_top, top=not tall)
     if tall:
         k.wall_block(f, 0, E, k.DOOR_TOP, height)

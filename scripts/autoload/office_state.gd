@@ -31,6 +31,11 @@ var lot_rect: Rect2i:
 var site_rect := Rect2i()
 ## Solo para pruebas: false deja la entrada como venga, sin la puerta de vidrio doble. No se guarda.
 var double_door_enabled: bool = true
+## Construcción en bloques (BuildGrid): con false, como antes (casillas de 1 m y la oficina inicial vieja). Solo
+## para las pruebas; no se guarda.
+var build_blocks_enabled: bool = true
+## Oficina inicial de una partida nueva; las pruebas de antes de los bloques usan la de antes (no se guarda).
+var starting_office_path: String = STARTING_OFFICE_PATH
 
 # Consultas pedidas muchas veces por hora (habitaciones que funcionan, mesas, Sala de descanso,
 # inodoros). Solo vale con GameClock.in_hour_tick; se borra al cambiar oficina u hora y al empezar o cargar.
@@ -76,10 +81,15 @@ static func get_base_rect() -> Rect2i:
 
 ## Lotes del solar (rectángulos, ver LandPlots), partidos con land_seed.
 func get_land_plots() -> Array[Rect2i]:
-	var sides: Vector2i = ConstructionCatalog.get_land_plot_sides()
-	var key: String = "%d|%s|%s" % [land_seed, site_rect, sides]
+	var blocks: bool = build_blocks_enabled
+	var sides: Vector2i = ConstructionCatalog.get_land_plot_sides(blocks)
+	var key: String = "%d|%s|%s|%s" % [land_seed, site_rect, sides, blocks]
 	if key != _land_plots_key:
-		_land_plots = LandPlots.partition(site_rect, get_base_rect(), land_seed, sides.x, sides.y)
+		if blocks:
+			_land_plots = LandPlots.partition_blocks(site_rect, get_base_rect(), land_seed, sides.x, sides.y,
+				GameConstants.BUILD_BLOCK)
+		else:
+			_land_plots = LandPlots.partition(site_rect, get_base_rect(), land_seed, sides.x, sides.y)
 		_land_plots_key = key
 	return _land_plots
 
@@ -102,7 +112,7 @@ func _ready() -> void:
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _query_cache.clear())
 
 
-## Prepara la oficina de una partida nueva con lo que dice STARTING_OFFICE_PATH.
+## Prepara la oficina de una partida nueva con lo que dice starting_office_path.
 func new_game() -> void:
 	_query_cache.clear()
 	lot = Lot.from_rect(Rect2i(Vector2i.ZERO, GameConstants.STARTING_LOT_SIZE))
@@ -117,7 +127,7 @@ func new_game() -> void:
 	inventory.clear()
 	floors.clear()
 	edges.clear()
-	var data: Dictionary = _load_json(STARTING_OFFICE_PATH)
+	var data: Dictionary = _load_json(starting_office_path)
 	var base_floor: String = String(data.get("floor", ConstructionCatalog.BARE_FLOOR))
 	for cell: Vector2i in lot.get_cells():
 		floors[cell] = base_floor
@@ -146,11 +156,15 @@ func new_game() -> void:
 	place_double_door(edges, lot, get_entrance_edge())
 
 
-## Solar de tamaño GameConstants.MAX_SITE_SIZE con el local en el centro.
+## Solar de tamaño GameConstants.MAX_SITE_SIZE con el local en el centro; con bloques, corrido a la línea de
+## bloque más cercana para que los lotes queden alineados.
 static func site_around(lot: Rect2i) -> Rect2i:
 	@warning_ignore("integer_division")
 	var offset: Vector2i = (GameConstants.MAX_SITE_SIZE - lot.size) / 2
-	return Rect2i(lot.position - offset, GameConstants.MAX_SITE_SIZE)
+	var position: Vector2i = lot.position - offset
+	if OfficeState.build_blocks_enabled:
+		position = BuildGrid.block_of(position) * GameConstants.BUILD_BLOCK
+	return Rect2i(position, GameConstants.MAX_SITE_SIZE)
 
 
 ## Primer mueble asignado a alguien (por ejemplo, "ceo"), o {}.
@@ -273,13 +287,23 @@ func blocks_passage(edge: Vector3i) -> bool:
 	return kind == ConstructionCatalog.WALL or kind == ConstructionCatalog.WINDOW
 
 
-## Puntos de ambiente de la puerta de vidrio (sencilla o doble): cuentan para la habitación con la casilla de entrada.
+## Puntos de ambiente de las puertas de vidrio de una habitación: la de la entrada (sencilla o doble) cuenta para la
+## habitación con la casilla de entrada; cada una de adentro, para las habitaciones de sus dos lados.
 func get_room_door_ambiance(room: Dictionary) -> int:
-	var kind: String = get_edge(get_entrance_edge())
-	if not ConstructionCatalog.is_glass_door(kind):
-		return 0
 	var cells: Array = room["cells"]
-	return ConstructionCatalog.get_glass_door_ambiance(kind) if cells.has(entrance) else 0
+	var points: int = 0
+	var door: Vector3i = get_entrance_edge()
+	var kind: String = get_edge(door)
+	if ConstructionCatalog.is_glass_door(kind) and cells.has(entrance):
+		points += ConstructionCatalog.get_glass_door_ambiance(kind)
+	for edge: Vector3i in edges:
+		if edges[edge] != ConstructionCatalog.GLASS_DOOR or edge == door:
+			continue
+		for cell: Vector2i in GridEdge.get_cells(edge):
+			if cells.has(cell):
+				points += ConstructionCatalog.get_glass_door_ambiance()
+				break
+	return points
 
 
 ## Tramo que acompaña a la puerta de vidrio doble de la entrada (el de al lado con la misma pieza), o
@@ -305,6 +329,10 @@ func place_double_door(on_edges: Dictionary[Vector3i, String], on_lot: Lot, door
 	var kind: String = ConstructionCatalog.GLASS_DOOR_DOUBLE
 	var sides: Array[Vector3i] = GridEdge.get_line_neighbors(door)
 	sides.reverse()
+	# Con bloques, el otro tramo es el del mismo tramo de bloque: la puerta no cruza dos bloques.
+	if build_blocks_enabled and BuildGrid.is_block_edge(door):
+		sides = BuildGrid.block_segment(door)
+		sides.erase(door)
 	var partner: Vector3i = NO_EDGE
 	for pass_index: int in range(3):
 		for side: Vector3i in sides:

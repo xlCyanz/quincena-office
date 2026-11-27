@@ -60,6 +60,7 @@ Solo para probar y balancear; no viajan en las exportaciones.
 - Todo movimiento de dinero pasa por `Economy` con un concepto.
 - Las paredes van en los bordes de las casillas (`Vector3i(x, y, eje)`, ver `GridEdge`); los caminos usan `AStarGrid2D` a doble
   resolución para que bloqueen el paso.
+- La construcción (paredes, puertas, ventanas, pisos y terreno) va en bloques de 2×2 casillas (`BuildGrid`); muebles y personajes, en casillas.
 - Una habitación es `{type, cells}` y ocupa siempre un espacio entero (cerrado por paredes, con puerta).
 - La vista es fija desde una esquina. Todo se controla con ratón; el teclado es un extra.
 - Un flag de sistema que solo usan las pruebas (`*_enabled`, no se guarda) lo apaga `test_all` en las partes anteriores a su hito.
@@ -100,4 +101,4 @@ Solo para probar y balancear; no viajan en las exportaciones.
 - Antes de dar un hito por terminado, comprobar su criterio de aceptación.
 - Cada hito agrega su parte en `tests/suites/`, la suma a `SUITES`, anota su sistema en `docs/sistemas.md` y su estado en
   `docs/hitos.md`.
-- Hitos 0–70 completados (fases 1–7 y los agregados de la 21.6); la fase 8 (arte y sonido) está en curso.
+- Hitos 0–72 completados (fases 1–7 y los agregados de la 21.6); la fase 8 (arte y sonido) está en curso.

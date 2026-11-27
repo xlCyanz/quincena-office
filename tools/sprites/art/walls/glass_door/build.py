@@ -1,9 +1,10 @@
-"""Puerta de vidrio de la Recepción (``glass_door_tall``/``_low``, ``_x``/``_y``, en los cinco colores de pared) y sus
+"""Puerta de vidrio de una hoja (``glass_door_tall``/``_low``, ``_x``/``_y``, en los cinco colores de pared) y sus
 cuadros de abrir (``glass_door_tall_<eje>_open_1`` a ``_6``), con Moana. Ver ../_walls_kit.py.
 
-Marco de aluminio oscuro hasta 100 px con pared encima; dos hojas de vidrio con perfil de aluminio, reflejos en
-diagonal y tirador vertical de los dos lados, cada una con la bisagra en su jamba, que abren hacia afuera (la
-calle). La baja deja solo el marco y el umbral. Desde el repositorio de Moana:
+Una hoja de la puerta doble de la Recepción (``../glass_door_double``) en un borde de 1 m: vidrio templado sin
+perfil de punta a punta del borde (de junta a junta del piso), canto celeste más oscuro, herrajes de metal junto a
+la bisagra arriba y abajo y tirador largo junto al canto libre, de los dos lados; pared encima y abre hacia afuera.
+La baja deja solo un umbral de metal. Desde el repositorio de Moana:
 
     sh scripts/uv.sh run python RUTA/tools/sprites/art/walls/glass_door/build.py [--out DIR] [--only TEXTO]
 """
@@ -19,67 +20,54 @@ sys.path.insert(0, str(HERE.parent))
 
 import _walls_kit as k  # noqa: E402
 
-SILL = 2
-HEAD = k.GLASS_TOP - 4  # 96: arriba del vidrio
-WALL = 4.0
-IN0, IN1 = 6.0, 26.0  # hueco entre las jambas
-PANE = (IN1 - IN0) / 2  # 10 unidades: cada hoja
+GAP = 0.5  # 1 px libre en cada punta
+TOP = k.DATA["glass_door"]["height"] * k.SCALE  # 114, como la doble
+BOTTOM = 1  # la hoja queda 1 px sobre el piso
+SILL = 2  # umbral de la baja
+PULL = (26, 74)
 ANGLES = (15, 30, 45, 60, 75, 90)
-PULL = (30, 62)  # tirador vertical: de z 30 a 62
-GROW = (32, 24, 32, 8)  # la hoja abre hacia atrás
+GROW = (72, 48, 72, 72)  # cuánto sale la hoja abierta del lienzo (izquierda, arriba, derecha, abajo)
+WIDTH = k.EDGE - 2 * GAP
 
 GLASS = k.ramp8("glass", "#2B3D4CFF", "#5D8AA6FF", "#A9D4E6FF", "#B4DCECFF", "#BCE0EFFF", "#C3E4F2FF", "#DFF1F8FF")
-GLASS_X = k.colors("glass_x", "#2B3D4CFF", top="#5A646DFF", dark="#4F5862FF", light="#FFFFFFFF")
+GLASS_X = k.colors("glass_x", "#2B3D4CFF", top="#8FB8CCFF", light="#FFFFFFFF")
 
 
 def leaf_face(a: np.ndarray, b: np.ndarray, kk: np.ndarray, tone: np.ndarray) -> np.ndarray:
-    """Vidrio: perfil de aluminio de 2 px (zócalo de 4), canto oscuro y dos reflejos en diagonal."""
-    width = np.floor(PANE * 2)
-    height = HEAD - SILL
+    """Reflejos en diagonal y canto más oscuro, como cada hoja de la doble."""
+    width = np.floor(WIDTH * 2)
+    height = TOP - BOTTOM
     out = tone.copy()
-    d = np.mod(a + b * 0.5, 24.0)
-    out[((d >= 8) & (d < 10) | (d >= 13) & (d < 14)) & (b > 6)] = "glass_x.light"
-    frame = (a < 2) | (a >= width - 2) | (b < 4) | (b >= height - 2)
-    out[frame] = "glass_x.top"
-    out[frame & ((a == 0) | (a == width - 1) | (b == 0))] = "glass_x.dark"
+    d = np.mod(a + b * 0.5, 30.0)
+    out[((d >= 10) & (d < 12) | (d >= 16) & (d < 17)) & (b > 8) & (b < height - 8)] = "glass_x.light"
+    out[(a < 1) | (a >= width - 1) | (b < 1) | (b >= height - 1)] = "glass_x.top"
     return out
-
-
-def pull(px: float) -> list:
-    r = k.RECESS
-    return [(px - 5, px - 4, k0, k1, PULL[0] - SILL, PULL[1] - SILL, "metal") for k0, k1 in ((r, r + 0.5), (-r - 0.5, -r))]
 
 
 def model(f: k.Along, tall: bool, angle: float = 0) -> None:
     E = k.EDGE
-    height = k.WALL_TOP if tall else k.LOW
-    if tall:
-        k.wall_block(f, 0, WALL, 0, k.GLASS_TOP, top=False)
-        k.wall_block(f, E - WALL, E, 0, k.GLASS_TOP, top=False)
-        k.wall_block(f, 0, E, k.GLASS_TOP, height)
-    else:
-        k.wall_block(f, 0, WALL, 0, height)
-        k.wall_block(f, E - WALL, E, 0, height)
-    top = HEAD if tall else height
-    f.box("frame", "alu", WALL, IN0, -k.HALF, k.HALF, 0, top, tex=k.jamb_light(IN0 - 0.25, "alu"))
-    f.box("frame", "alu", IN1, E - WALL, -k.HALF, k.HALF, 0, top)
-    if tall:
-        f.box("frame", "alu", WALL, E - WALL, -k.HALF, k.HALF, HEAD, k.GLASS_TOP)
-    f.box("sill", "alu", IN0, IN1, -k.HALF, k.HALF, 0, SILL)
-    if tall:
-        for hinge, sign in ((IN0, 1.0), (IN1, -1.0)):
-            leaf = k.Leaf(hinge, sign, PANE, angle, True, SILL, HEAD)
-            leaf.add(f, "glass", leaf_face, pull(leaf.px))
+    if not tall:
+        f.box("sill", "metal", 0, E, -k.HALF, k.HALF, 0, SILL)
+        return
+    k.wall_block(f, 0, E, TOP, k.WALL_TOP)
+    r = k.RECESS
+    leaf = k.Leaf(GAP, 1.0, WIDTH, angle, True, BOTTOM, TOP)
+    height = TOP - BOTTOM
+    hold = (-r - 0.5, r + 0.5)
+    hardware = [(0, 6, hold[0], hold[1], 0, 6, "metal"), (0, 6, hold[0], hold[1], height - 6, height, "metal")]
+    for k0, k1 in ((r, r + 0.5), (-r - 0.5, -r)):
+        hardware.append((leaf.px - 6, leaf.px - 5, k0, k1, PULL[0], PULL[1], "metal"))
+    leaf.add(f, "glass", leaf_face, hardware)
 
 
 def render(edge: str, tall: bool, color: str, angle: float = 0, grow=(0, 0, 0, 0)) -> np.ndarray:
     f = k.Along(edge)
     model(f, tall, angle)
+    height = k.WALL_TOP if tall else k.LOW
     v = k.wall_canvas(edge, tall, grow)
     side = k.ink_side(edge) if grow == (0, 0, 0, 0) else None
-    height = k.WALL_TOP if tall else k.LOW
-    return k.draw(f.solids + k.ghosts(edge, height), v, [k.wall_mat(color), k.CAP, k.ALU, GLASS, GLASS_X, k.METAL],
-                  side)[0]
+    mats = [k.wall_mat(color), k.CAP, GLASS, GLASS_X, k.METAL]
+    return k.draw(f.solids + k.ghosts(edge, height), v, mats, side)[0]
 
 
 def sprites() -> Iterator[k.Sprite]:

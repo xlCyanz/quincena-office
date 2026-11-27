@@ -1,5 +1,5 @@
-# Puerta de vidrio sencilla: ya no se compra (la entrada lleva la doble, ver test_glass_door_double); queda
-# en el catálogo para la entrada sin tramo al lado. Pasa y cuenta como puerta.
+# Puerta de vidrio sencilla: catálogo y paso (se compra en cualquier borde desde test_glass_door_single; la
+# entrada lleva la doble, ver test_glass_door_double). Pasa y cuenta como puerta.
 # Parte de test_all; sola: Godot --headless --path . res://tests/test_all.tscn -- --only=glass_door
 extends Node
 

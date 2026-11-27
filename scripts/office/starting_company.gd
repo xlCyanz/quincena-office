@@ -4,6 +4,8 @@ class_name StartingCompany
 extends RefCounted
 
 const DATA_PATH: String = "res://data/starting_company.json"
+## Datos que se arman; las pruebas de antes de los bloques usan los de antes.
+static var data_path: String = DATA_PATH
 ## Concepto del saldo con que empieza la empresa.
 const CONCEPT_CAPITAL: String = "Capital inicial"
 ## Dinero para la obra y los muebles mientras se arma (después se fija el saldo).
@@ -188,7 +190,7 @@ static func _cell(values: Array) -> Vector2i:
 
 
 static func _load() -> Dictionary:
-	var file := FileAccess.open(DATA_PATH, FileAccess.READ)
+	var file := FileAccess.open(data_path, FileAccess.READ)
 	if file == null:
 		return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())

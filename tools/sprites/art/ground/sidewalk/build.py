@@ -1,6 +1,6 @@
 """Acera (4 variantes), hecha con Moana. Ver ../_ground_kit.py.
 
-Una losa por casilla: junta oscura en el borde (2 px entre dos losas), bisel claro arriba a la izquierda y
+Una losa por casilla: junta oscura de 2 celdas en el borde de arriba, bisel claro arriba a la izquierda y
 en sombra abajo a la derecha, cemento gris claro moteado con árido suelto (granos claros y oscuros).
 Desde el repositorio de Moana:
 
@@ -36,9 +36,10 @@ def draw_factory():
         cells = specks(cells, ring_dark, hash_cells(s + 1), 0.03, 6, (1,))
         cells = specks(cells, ring_light, hash_cells(s + 2), 0.02, 3, (3,))
         # Losa: bisel claro en los bordes de arriba (a = 1 o b = 1), en sombra en los de abajo, y la junta.
-        cells[(A == 1) | (B == 1)] = 6
-        cells[(A == N - 2) | (B == N - 2)] = 5
-        cells[(A == 0) | (B == 0) | (A == N - 1) | (B == N - 1)] = 4
+        # Todo de 2 celdas (con zoom 1 cada línea queda de 1 px entero).
+        cells[((A >= 2) & (A < 4)) | ((B >= 2) & (B < 4))] = 6
+        cells[(A >= N - 2) | (B >= N - 2)] = 5
+        cells[(A < 2) | (B < 2)] = 4
         return Tile(cells)
     return draw
 

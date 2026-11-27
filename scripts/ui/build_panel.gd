@@ -423,6 +423,7 @@ func _build_structure() -> Control:
 		[BuildController.TOOL_WALL, ConstructionCatalog.WALL],
 		[BuildController.TOOL_DOOR, ConstructionCatalog.DOOR],
 		[BuildController.TOOL_WINDOW, ConstructionCatalog.WINDOW],
+		[BuildController.TOOL_GLASS_DOOR, ConstructionCatalog.GLASS_DOOR],
 	]:
 		_add_tool_button(row, entry[0], ConstructionCatalog.get_display_name(entry[1]), SECTION_STRUCTURE)
 	for floor_type: String in ConstructionCatalog.get_floor_types():

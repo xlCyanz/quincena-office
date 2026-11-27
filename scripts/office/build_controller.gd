@@ -19,6 +19,8 @@ signal confirm_changed(text: String)
 const TOOL_WALL: String = "wall"
 const TOOL_DOOR: String = "door"
 const TOOL_WINDOW: String = "window"
+## Puerta de vidrio de una hoja, en cualquier borde como una puerta.
+const TOOL_GLASS_DOOR: String = "glass_door"
 const TOOL_ROTATE: String = "rotate"
 ## Mover un mueble ya puesto: un clic lo toma, otro lo suelta donde se elija.
 const TOOL_MOVE: String = "move"
@@ -592,12 +594,14 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 	var changes: Array[Dictionary] = []
 	match tool:
 		TOOL_WALL:
-			for edge: Vector3i in _edge_line(GridEdge.nearest(start), end):
+			for edge: Vector3i in _edge_line(_build_edge(start), end):
 				changes.append({"edge": edge, "kind": ConstructionCatalog.WALL})
 		TOOL_DOOR:
-			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.DOOR})
+			changes.append({"edge": _build_edge(end), "kind": ConstructionCatalog.DOOR})
 		TOOL_WINDOW:
-			changes.append({"edge": GridEdge.nearest(end), "kind": ConstructionCatalog.WINDOW})
+			changes.append({"edge": _build_edge(end), "kind": ConstructionCatalog.WINDOW})
+		TOOL_GLASS_DOOR:
+			changes.append({"edge": _build_edge(end), "kind": ConstructionCatalog.GLASS_DOOR})
 		TOOL_SELL:
 			var edge: Vector3i = GridEdge.nearest(end)
 			if not OfficeState.get_edge(edge).is_empty() and GridEdge.distance_to(edge, end) <= SELL_EDGE_DISTANCE:
@@ -610,6 +614,8 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 			var first: Vector2i = Vector2i(start.round())
 			var last: Vector2i = Vector2i(end.round())
 			var area := Rect2i(first.min(last), (first - last).abs() + Vector2i.ONE)
+			if OfficeState.build_blocks_enabled:
+				area = BuildGrid.snap_rect_to_blocks(area)
 			for x: int in range(area.position.x, area.end.x):
 				for y: int in range(area.position.y, area.end.y):
 					if OfficeState.lot.has_point(Vector2i(x, y)):
@@ -617,8 +623,26 @@ func _structure_changes(start: Vector2, end: Vector2) -> Array[Dictionary]:
 	return changes
 
 
-# Bordes de la línea de start, de start hasta la altura de end.
+# Borde de construcción bajo un punto: con bloques, solo en las líneas de bloque.
+func _build_edge(grid_position: Vector2) -> Vector3i:
+	if OfficeState.build_blocks_enabled:
+		return BuildGrid.nearest_block_edge(grid_position)
+	return GridEdge.nearest(grid_position)
+
+
+# Bordes de la línea de start, de start hasta la altura de end; con bloques, por tramos enteros.
 func _edge_line(start: Vector3i, end: Vector2) -> Array[Vector3i]:
+	var edges: Array[Vector3i] = []
+	if OfficeState.build_blocks_enabled:
+		for edge: Vector3i in _edge_line_cells(start, end):
+			for part: Vector3i in BuildGrid.block_segment(edge):
+				if not edges.has(part):
+					edges.append(part)
+		return edges
+	return _edge_line_cells(start, end)
+
+
+func _edge_line_cells(start: Vector3i, end: Vector2) -> Array[Vector3i]:
 	var edges: Array[Vector3i] = []
 	if start.z == GridEdge.AXIS_X:
 		var last: int = roundi(end.y)

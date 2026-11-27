@@ -49,7 +49,7 @@ func _check_catalog() -> void:
 	_expect(ConstructionCatalog.is_door(DOUBLE) and ConstructionCatalog.is_glass_door(DOUBLE)
 		and not ConstructionCatalog.is_glass_door(ConstructionCatalog.DOOR), "es puerta y de vidrio")
 	_expect(int(ConstructionCatalog.get_edge_piece(DOUBLE).get("height", 0))
-		> int(ConstructionCatalog.get_edge_piece(ConstructionCatalog.GLASS_DOOR).get("height", 0)), "más alta que la sencilla")
+		> int(ConstructionCatalog.get_edge_piece(ConstructionCatalog.DOOR).get("height", 0)), "más alta que la puerta")
 	var row: Array[Vector3i] = [Vector3i(2, 7, GridEdge.AXIS_Y), Vector3i(4, 7, GridEdge.AXIS_Y)]
 	var column: Array[Vector3i] = [Vector3i(3, 6, GridEdge.AXIS_X), Vector3i(3, 8, GridEdge.AXIS_X)]
 	_expect(GridEdge.get_line_neighbors(Vector3i(3, 7, GridEdge.AXIS_Y)) == row
@@ -58,6 +58,8 @@ func _check_catalog() -> void:
 	_expect(EdgePieceView.get_double_half(edges, Vector3i(3, 7, GridEdge.AXIS_Y)) == "a"
 		and EdgePieceView.get_double_half(edges, Vector3i(4, 7, GridEdge.AXIS_Y)) == "b"
 		and EdgePieceView.get_double_half({Vector3i.ZERO: ConstructionCatalog.WALL}, Vector3i.ZERO).is_empty(), "mitades a y b")
+	_expect(SpriteLibrary.get_door_frames(DOUBLE) == 6 and SpriteLibrary.has_sprite("glass_door_double_a_tall_x_open_6")
+		and SpriteLibrary.has_sprite("glass_door_double_b_tall_y_open_1"), "abre sus dos mitades en 6 cuadros")
 	_expect(EdgePieceView.get_sprite_name(DOUBLE, false, GridEdge.AXIS_Y, "b") == "glass_door_double_b_low_y"
 		and SpriteLibrary.has_sprite("glass_door_double_a_tall_x") and SpriteLibrary.has_sprite("glass_door_double_b_low_y"),
 		"sprites de las mitades")
@@ -93,6 +95,29 @@ func _check_in_game() -> void:
 	_expect(partner == GridEdge.get_line_neighbors(door)[1] and OfficeState.get_edge(partner) == DOUBLE
 		and GridEdge.is_exterior(partner, OfficeState.lot), "su otro tramo es el contorno de al lado (el de arriba)")
 
+	# Con las paredes arriba abre: alguien junto a una mitad abre las dos.
+	game.set_walls_up(true)
+	var grid: OfficeGrid = game.get_node("OfficeGrid")
+	var leaves: Dictionary[Vector3i, EdgePieceView] = {}
+	for view: EdgePieceView in grid.get_doors():
+		if view.edge == door or view.edge == partner:
+			leaves[view.edge] = view
+	_expect(leaves.size() == 2, "las dos mitades abren (con las paredes arriba): %d" % leaves.size())
+	var visitor := Node2D.new()
+	grid.get_node("Objects").add_child(visitor)
+	var ends: Array[Vector2] = GridEdge.get_endpoints(door)
+	visitor.position = grid.grid_to_world((ends[0] + ends[1]) / 2.0)
+	var people: Array[Node2D] = [visitor]
+	grid.set("_characters", people)
+	grid.update_doors()
+	for view: EdgePieceView in leaves.values():
+		view._process(1.0)
+	_expect(leaves.values().all(func(view: EdgePieceView) -> bool: return view.get_door_frame() == 6),
+		"alguien en una mitad abre las dos")
+	grid.set("_characters", [] as Array[Node2D])
+	visitor.queue_free()
+	game.set_walls_up(false)
+
 	# Fija: no se vende, no se cambia y no se compra en otro lado.
 	var balance: int = Economy.balance
 	for edge: Vector3i in [door, partner]:
@@ -106,12 +131,11 @@ func _check_in_game() -> void:
 			far = edge
 			break
 	for kind: String in [DOUBLE, ConstructionCatalog.GLASS_DOOR]:
-		_expect(not builder.quote(_changes(far, kind))["ok"], "%s en otra pared no" % kind)
+		_expect(not builder.quote(_changes(far, kind))["ok"], "%s en otra pared del contorno no" % kind)
 	_expect(Economy.balance == balance and OfficeState.get_edge(door) == DOUBLE and OfficeState.get_edge(partner) == DOUBLE,
 		"sigue igual y sin cobrar")
 	var panel: BuildPanel = game.get_node("BuildPanel")
-	_expect(panel.get_tool_button("glass_door") == null and panel.get_tool_button(DOUBLE) == null,
-		"no hay botón de puertas de vidrio en Construir")
+	_expect(panel.get_tool_button(DOUBLE) == null, "no hay botón de la puerta doble en Construir")
 
 	var marked: Dictionary = builder.mark_room("reception", OfficeState.entrance)
 	_expect(marked["ok"], "Recepción en la entrada: %s" % marked.get("message", ""))

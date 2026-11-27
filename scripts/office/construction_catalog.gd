@@ -47,7 +47,7 @@ static func is_door(kind: String) -> bool:
 	return kind == DOOR or kind == GLASS_DOOR or kind == GLASS_DOOR_DOUBLE
 
 
-## Indica si una pieza es de vidrio (va solo en la entrada y suma ambiente).
+## Indica si una pieza es de vidrio (suma ambiente): la de una hoja va en cualquier borde y la doble en la entrada.
 static func is_glass_door(kind: String) -> bool:
 	return kind == GLASS_DOOR or kind == GLASS_DOOR_DOUBLE
 
@@ -105,8 +105,9 @@ static func get_land() -> Dictionary:
 
 
 ## Lado mínimo y máximo (x, y) de los lotes en que se parte el solar.
-static func get_land_plot_sides() -> Vector2i:
-	var sides: Array = get_land().get("plot_sides", [3, 6])
+## Con blocks, en bloques de construcción (plot_sides_blocks).
+static func get_land_plot_sides(blocks: bool = false) -> Vector2i:
+	var sides: Array = get_land().get("plot_sides_blocks", [2, 3]) if blocks else get_land().get("plot_sides", [3, 6])
 	var low: int = maxi(int(sides[0]), 1)
 	return Vector2i(low, maxi(int(sides[1]), low))
 

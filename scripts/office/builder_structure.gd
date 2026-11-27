@@ -16,6 +16,8 @@ const SIDES: Array[String] = [SIDE_NORTH, SIDE_SOUTH, SIDE_EAST, SIDE_WEST]
 
 ## Lo que dice el cartel al tocar la puerta de entrada.
 const ENTRANCE_FIXED_MESSAGE: String = "La puerta de entrada no se cambia ni se vende: se corre sola al comprar terreno frente a ella."
+## Lo que dice el cartel con una pared, puerta o ventana, o un piso, fuera de los bloques de construcción.
+const OFF_BLOCK_MESSAGE: String = "Se construye en bloques de 2×2: las paredes van en las líneas de bloque y el piso cubre bloques enteros."
 
 ## Casillas con personajes (no se ponen muebles ahí).
 ## Ninguna casilla (para _edges_with_land).
@@ -44,7 +46,7 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 			return {"ok": false, "cost": cost, "message": "Las ventanas solo van en las paredes exteriores del local."}
 		if _is_entrance_door(change):
 			return {"ok": false, "cost": cost, "message": ENTRANCE_FIXED_MESSAGE}
-		if change.has("edge") and ConstructionCatalog.is_glass_door(String(change["kind"])):
+		if change.has("edge") and change["kind"] == ConstructionCatalog.GLASS_DOOR_DOUBLE:
 			return {"ok": false, "cost": cost, "message": "La puerta de vidrio doble ya está en la entrada y no se compra."}
 		if exterior and not _is_window_swap(change):
 			return {"ok": false, "cost": cost, "message": "Las paredes exteriores no se pueden comprar ni vender."}
@@ -53,6 +55,8 @@ func quote(changes: Array[Dictionary]) -> Dictionary:
 		if change.has("cell") and change["kind"] == ConstructionCatalog.BARE_FLOOR:
 			return {"ok": false, "cost": cost,
 				"message": "El piso no se puede quitar, solo cambiar por otro: elige un piso y pásalo encima."}
+	if _breaks_blocks(changes):
+		return {"ok": false, "cost": cost, "message": OFF_BLOCK_MESSAGE}
 	if not Economy.can_afford(cost):
 		return {"ok": false, "cost": cost, "message": "No alcanza el dinero: cuesta $%d." % cost}
 	for change: Dictionary in effective:
@@ -140,6 +144,25 @@ func _paid_kind(change: Dictionary, kind: String) -> String:
 			and (kind == ConstructionCatalog.WALL or ConstructionCatalog.is_door(kind)):
 		return ""
 	return kind
+
+
+# Con bloques (BuildGrid): una pieza nueva va en una línea de bloque (las del contorno, como ventanas, en cualquier
+# borde) y un piso cubre todas las casillas del local de cada bloque que toca. Quitar o vender se puede siempre.
+func _breaks_blocks(changes: Array[Dictionary]) -> bool:
+	if not OfficeState.build_blocks_enabled:
+		return false
+	var floor_cells: Dictionary[Vector2i, bool] = {}
+	for change: Dictionary in changes:
+		if change.has("cell"):
+			floor_cells[change["cell"]] = true
+		elif not String(change["kind"]).is_empty() and not BuildGrid.is_block_edge(change["edge"]) \
+				and not GridEdge.is_exterior(change["edge"], OfficeState.lot):
+			return true
+	for cell: Vector2i in floor_cells:
+		for other: Vector2i in BuildGrid.block_cells(BuildGrid.block_of(cell)):
+			if OfficeState.lot.has_point(other) and not floor_cells.has(other):
+				return true
+	return false
 
 
 # En el contorno solo se cambia pared por ventana o al revés.

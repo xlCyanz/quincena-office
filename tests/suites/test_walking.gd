@@ -139,6 +139,13 @@ func _check_speed() -> void:
 		"con prisa camina %s casillas por segundo" % GameConstants.CHARACTER_HURRY_FACTOR)
 	_run(2.0)
 	_expect(not walker.hurry and walker.get_cell() == _cell(4, 7), "al llegar se le pasa la prisa")
+	# Toma la casilla siguiente al salir y suelta la de atrás pasada la mitad: ocupa una sola casilla.
+	_send(walker, _cell(4, 3))
+	_run(0.25)
+	_expect(walker.get_held_cells().size() == 2, "al salir toma también la siguiente: %s" % [walker.get_held_cells()])
+	_run(0.4)
+	_expect(walker.get_held_cells() == ([_cell(4, 6)] as Array[Vector2i]),
+		"pasada la mitad suelta la de atrás: %s" % [walker.get_held_cells()])
 	_clear()
 
 

@@ -24,6 +24,23 @@ static func partition(site: Rect2i, base: Rect2i, seed_value: int, min_side: int
 	return plots
 
 
+## Como partition, en bloques de construcción de step casillas (BuildGrid): site y base alineados a step y los
+## lados en bloques; los lotes salen con lados y posición múltiplos de step.
+static func partition_blocks(site: Rect2i, base: Rect2i, seed_value: int, min_blocks: int, max_blocks: int,
+		step: int) -> Array[Rect2i]:
+	var plots: Array[Rect2i] = []
+	for plot: Rect2i in partition(_shrink(site, step), _shrink(base, step), seed_value, min_blocks, max_blocks):
+		plots.append(Rect2i(plot.position * step, plot.size * step))
+	return plots
+
+
+# Rectángulo en unidades de step (los bordes que no caen justo se recortan hacia adentro).
+static func _shrink(rect: Rect2i, step: int) -> Rect2i:
+	var low := Vector2i(ceili(float(rect.position.x) / step), ceili(float(rect.position.y) / step))
+	var high := Vector2i(floori(float(rect.end.x) / step), floori(float(rect.end.y) / step))
+	return Rect2i(low, (high - low).max(Vector2i.ZERO))
+
+
 # Corta el rectángulo en dos (a lo largo de su lado más largo) hasta que los lados quepan en max_side;
 # a veces corta antes, para que salgan tamaños distintos.
 static func _split(rect: Rect2i, rng: RandomNumberGenerator, min_side: int, max_side: int, out: Array[Rect2i]) -> void:

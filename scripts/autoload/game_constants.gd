@@ -5,6 +5,9 @@ extends RefCounted
 ## Tamaño de una casilla isométrica en píxeles (1 casilla = 1 m²).
 const TILE_SIZE := Vector2i(64, 32)
 
+## Lado en casillas de un bloque de construcción: paredes, puertas, pisos y terreno van en bloques (BuildGrid).
+const BUILD_BLOCK: int = 2
+
 ## Tamaño del solar en casillas: el mapa fijo alrededor del local y el tope del terreno.
 const MAX_SITE_SIZE := Vector2i(40, 40)
 

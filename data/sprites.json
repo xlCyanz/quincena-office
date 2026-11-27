@@ -2904,7 +2904,9 @@
 	"doors": {
 		"frames": 6,
 		"opening": [
-			"door"
+			"door",
+			"glass_door",
+			"glass_door_double"
 		]
 	},
 	"edges": {
@@ -5550,8 +5552,8 @@
 			],
 			"file": "walls/door_tall_x_open_1.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_x_open_2": {
@@ -5561,8 +5563,8 @@
 			],
 			"file": "walls/door_tall_x_open_2.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_x_open_3": {
@@ -5572,8 +5574,8 @@
 			],
 			"file": "walls/door_tall_x_open_3.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_x_open_4": {
@@ -5583,8 +5585,8 @@
 			],
 			"file": "walls/door_tall_x_open_4.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_x_open_5": {
@@ -5594,8 +5596,8 @@
 			],
 			"file": "walls/door_tall_x_open_5.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_x_open_6": {
@@ -5605,8 +5607,8 @@
 			],
 			"file": "walls/door_tall_x_open_6.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_y": {
@@ -5622,68 +5624,68 @@
 		},
 		"door_tall_y_open_1": {
 			"anchor": [
-				67.0,
+				85.0,
 				142.0
 			],
 			"file": "walls/door_tall_y_open_1.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_y_open_2": {
 			"anchor": [
-				67.0,
+				85.0,
 				142.0
 			],
 			"file": "walls/door_tall_y_open_2.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_y_open_3": {
 			"anchor": [
-				67.0,
+				85.0,
 				142.0
 			],
 			"file": "walls/door_tall_y_open_3.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_y_open_4": {
 			"anchor": [
-				67.0,
+				85.0,
 				142.0
 			],
 			"file": "walls/door_tall_y_open_4.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_y_open_5": {
 			"anchor": [
-				67.0,
+				85.0,
 				142.0
 			],
 			"file": "walls/door_tall_y_open_5.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"door_tall_y_open_6": {
 			"anchor": [
-				67.0,
+				85.0,
 				142.0
 			],
 			"file": "walls/door_tall_y_open_6.png",
 			"size": [
-				104,
-				162
+				122,
+				167
 			]
 		},
 		"executive_desk_r0": {
@@ -6005,6 +6007,72 @@
 				160
 			]
 		},
+		"glass_door_double_a_tall_x_open_1": {
+			"anchor": [
+				50.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_x_open_1.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_x_open_2": {
+			"anchor": [
+				50.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_x_open_2.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_x_open_3": {
+			"anchor": [
+				50.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_x_open_3.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_x_open_4": {
+			"anchor": [
+				50.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_x_open_4.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_x_open_5": {
+			"anchor": [
+				50.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_x_open_5.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_x_open_6": {
+			"anchor": [
+				50.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_x_open_6.png",
+			"size": [
+				86,
+				166
+			]
+		},
 		"glass_door_double_a_tall_y": {
 			"anchor": [
 				36.0,
@@ -6014,6 +6082,72 @@
 			"size": [
 				72,
 				160
+			]
+		},
+		"glass_door_double_a_tall_y_open_1": {
+			"anchor": [
+				36.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_y_open_1.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_y_open_2": {
+			"anchor": [
+				36.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_y_open_2.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_y_open_3": {
+			"anchor": [
+				36.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_y_open_3.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_y_open_4": {
+			"anchor": [
+				36.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_y_open_4.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_y_open_5": {
+			"anchor": [
+				36.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_y_open_5.png",
+			"size": [
+				86,
+				166
+			]
+		},
+		"glass_door_double_a_tall_y_open_6": {
+			"anchor": [
+				36.0,
+				148.0
+			],
+			"file": "walls/glass_door_double_a_tall_y_open_6.png",
+			"size": [
+				86,
+				166
 			]
 		},
 		"glass_door_double_b_low_x": {
@@ -6049,6 +6183,72 @@
 				160
 			]
 		},
+		"glass_door_double_b_tall_x_open_1": {
+			"anchor": [
+				68.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x_open_1.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_x_open_2": {
+			"anchor": [
+				68.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x_open_2.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_x_open_3": {
+			"anchor": [
+				68.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x_open_3.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_x_open_4": {
+			"anchor": [
+				68.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x_open_4.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_x_open_5": {
+			"anchor": [
+				68.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x_open_5.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_x_open_6": {
+			"anchor": [
+				68.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_x_open_6.png",
+			"size": [
+				104,
+				160
+			]
+		},
 		"glass_door_double_b_tall_y": {
 			"anchor": [
 				36.0,
@@ -6057,6 +6257,72 @@
 			"file": "walls/glass_door_double_b_tall_y.png",
 			"size": [
 				72,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y_open_1": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y_open_1.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y_open_2": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y_open_2.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y_open_3": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y_open_3.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y_open_4": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y_open_4.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y_open_5": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y_open_5.png",
+			"size": [
+				104,
+				160
+			]
+		},
+		"glass_door_double_b_tall_y_open_6": {
+			"anchor": [
+				36.0,
+				142.0
+			],
+			"file": "walls/glass_door_double_b_tall_y_open_6.png",
+			"size": [
+				104,
 				160
 			]
 		},
@@ -6093,6 +6359,72 @@
 				160
 			]
 		},
+		"glass_door_tall_x_open_1": {
+			"anchor": [
+				56.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_x_open_1.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_x_open_2": {
+			"anchor": [
+				56.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_x_open_2.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_x_open_3": {
+			"anchor": [
+				56.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_x_open_3.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_x_open_4": {
+			"anchor": [
+				56.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_x_open_4.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_x_open_5": {
+			"anchor": [
+				56.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_x_open_5.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_x_open_6": {
+			"anchor": [
+				56.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_x_open_6.png",
+			"size": [
+				92,
+				181
+			]
+		},
 		"glass_door_tall_y": {
 			"anchor": [
 				36.0,
@@ -6102,6 +6434,72 @@
 			"size": [
 				72,
 				160
+			]
+		},
+		"glass_door_tall_y_open_1": {
+			"anchor": [
+				36.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_y_open_1.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_y_open_2": {
+			"anchor": [
+				36.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_y_open_2.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_y_open_3": {
+			"anchor": [
+				36.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_y_open_3.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_y_open_4": {
+			"anchor": [
+				36.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_y_open_4.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_y_open_5": {
+			"anchor": [
+				36.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_y_open_5.png",
+			"size": [
+				92,
+				181
+			]
+		},
+		"glass_door_tall_y_open_6": {
+			"anchor": [
+				36.0,
+				163.0
+			],
+			"file": "walls/glass_door_tall_y_open_6.png",
+			"size": [
+				92,
+				181
 			]
 		},
 		"glass_meeting_table_r0": {

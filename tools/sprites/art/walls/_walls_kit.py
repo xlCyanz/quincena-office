@@ -40,7 +40,7 @@ DATA = json.loads((ROOT / "data" / "construction.json").read_text(encoding="utf-
 SCALE = 2  # px de sprite por px del mundo
 WALL_TOP = DATA["wall"]["height"] * SCALE  # 120
 DOOR_TOP = DATA["door"]["height"] * SCALE  # 92
-GLASS_TOP = DATA["glass_door"]["height"] * SCALE  # 100
+GLASS_TOP = DATA["glass_door"]["height"] * SCALE  # 114
 LOW = DATA["low_wall_height"] * SCALE  # 20
 CAP_H = 2  # alto de la tapa ciruela
 HALF = 2.0  # medio grosor de la pared (4 px)

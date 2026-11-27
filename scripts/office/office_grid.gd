@@ -100,14 +100,20 @@ func update_doors() -> void:
 	for character: Variant in _characters:
 		if is_instance_valid(character) and (character as Node2D).is_visible_in_tree():
 			spots.append(world_to_grid((character as Node2D).position))
+	var open: Dictionary[Vector3i, bool] = {}
 	for door: EdgePieceView in _doors:
 		var ends: Array[Vector2] = GridEdge.get_endpoints(door.edge)
 		var middle: Vector2 = (ends[0] + ends[1]) / 2.0
-		var near: bool = false
 		for spot: Vector2 in spots:
 			if spot.distance_to(middle) <= GameConstants.DOOR_OPEN_REACH:
-				near = true
+				open[door.edge] = true
 				break
+	for door: EdgePieceView in _doors:
+		var near: bool = open.has(door.edge)
+		# Las dos mitades de la puerta doble abren juntas.
+		if door.kind == ConstructionCatalog.GLASS_DOOR_DOUBLE:
+			for side: Vector3i in GridEdge.get_line_neighbors(door.edge):
+				near = near or open.has(side)
 		door.set_door_open(near)
 
 

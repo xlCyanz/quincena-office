@@ -65,7 +65,7 @@ WALL_ITEMS = {
 # Pantalla de presentaciones prendida: un dibujo por pantalla (elegido por casilla) con sus cuadros _play_<n> de frente.
 SCREENS = {"presentation_screen": ("presentation_screen_chart", "presentation_screen_pie", "presentation_screen_title")}
 # Puertas de una hoja que se abren (cuadros <pieza>_tall_<eje>_open_<n>, solo las altas: la baja no tiene hoja).
-OPENING_DOORS = ("door",)
+OPENING_DOORS = ("door", "glass_door")
 # Manchas de suciedad (dirt_0 …) y globos de estado (status_<icono>), dibujados en art/ground/dirt y art/icons/status.
 DIRT_STAINS = 3
 STATUS_ICONS = ("no_station", "tired", "upset", "stressed", "idle")
@@ -219,6 +219,11 @@ def main():
             door_frames = int(art[base + "_open_1.png"][1]["frames"])
             for frame in range(1, door_frames + 1):
                 copy("%s_open_%d" % (base, frame), "walls")
+    # La doble abre sus dos mitades con los mismos cuadros.
+    for half in DOUBLE_HALVES:
+        for axis in ("x", "y"):
+            for frame in range(1, door_frames + 1):
+                copy("glass_door_double_%s_tall_%s_open_%d" % (half, axis, frame), "walls")
     for axis in ("x", "y"):
         copy("wall_tall_%s_shadow" % axis, "walls")
     # Postes de toda unión (art/walls/posts/): el juego arma el nombre con sus vecinos.
@@ -406,7 +411,7 @@ def main():
         "seats": seats,
         "edges": edges,
         "dirt": ["dirt_%d" % index for index in range(DIRT_STAINS)],
-        "doors": {"opening": list(OPENING_DOORS), "frames": door_frames},
+        "doors": {"opening": list(OPENING_DOORS) + ["glass_door_double"], "frames": door_frames},
         "wall_shadow": "wall_tall_%s_shadow",
         "status_icons": dict((icon, "status_" + icon) for icon in STATUS_ICONS),
         "ui_icons": dict((icon, "ui_" + icon) for icon in UI_ICONS),

@@ -12,8 +12,8 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 - Las paredes y puertas del contorno del local no se compran ni se venden; los pisos no se quitan, solo se cambian por otro.
 - El local es un conjunto de casillas (`Lot`, `OfficeState.lot`; `lot_rect` es solo el rectángulo que lo encierra). Crece comprando
   terreno: el solar, menos el local inicial (`OfficeState.get_base_rect`), se parte en lotes rectangulares de tamaños variados
-  (`LandPlots.partition`: cuatro franjas alrededor del local inicial cortadas al azar hasta que cada lado mide de 3 a 6, `land.plot_sides` en
-  `data/construction.json`; con la semilla de la partida, `OfficeState.land_seed`, guardada; `OfficeState.get_land_plots`/`get_land_plot_at`).
+  (`LandPlots.partition_blocks`: cuatro franjas alrededor del local inicial cortadas al azar en bloques hasta que cada lado mide de 4 a 6 m,
+  `land.plot_sides_blocks` en `data/construction.json`; sin bloques, `partition` con `plot_sides` de 3 a 6; con la semilla de la partida, `OfficeState.land_seed`, guardada; `OfficeState.get_land_plots`/`get_land_plot_at`).
   La herramienta Terreno marca los lotes que tocan el local con su precio (`Builder.get_plot_cells`, `get_land_plots` con `action` "buy";
   `BuildController.get_land_plots`, `refresh_land_plots`) y un clic en uno lo compra (`buy_land_plot_at`, `Builder.buy_land_cells`); es la
   única forma de comprar en el juego: para llegar a uno de más afuera hay que comprar antes el que lo separa. Así el local toma formas libres
@@ -30,6 +30,18 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   mitad de precio, en `data/construction.json`). El contorno nuevo lleva pared; cada pedazo nuevo abre los bordes que comparte con un solo
   espacio viejo (`_edges_with_land`: el que no es habitación antes, si no el de más bordes), así no junta habitaciones; una pared con algo
   colgado queda cerrada. Solo se rechaza si se perdería una habitación. El mantenimiento se cobra por `lot.get_area()`.
+- Bloques de construcción (hito 71, `BuildGrid`, funciones puras; `GameConstants.BUILD_BLOCK` 2): paredes, puertas, ventanas, pisos y
+  terreno van en bloques de 2×2 m que empiezan en coordenadas pares; muebles y personajes siguen en casillas de 1 m. El modelo no cambia
+  (bordes de 1 m y casillas, guardado, habitaciones, caminos): un tramo de bloque son 2 bordes en línea (`block_segment`) y una línea de
+  bloque es la de un borde con x impar (eje x) o y impar (eje y) (`is_block_edge`). Construir usa `BuildController._build_edge`
+  (`nearest_block_edge`) para pared, puerta y ventana; la pared avanza de a tramo (`_edge_line`) y el piso se agranda a bloques enteros
+  (`snap_rect_to_blocks`); Vender sigue en 1 m (`GridEdge.nearest`). `Builder.quote` rechaza con `OFF_BLOCK_MESSAGE` poner una pieza fuera
+  de línea de bloque (salvo el contorno) o un piso que no cubre bloques enteros del local (`_breaks_blocks`); quitar siempre se puede, así
+  las partidas viejas cargan como están y venden sus paredes de 1 m. El solar queda alineado (`site_around`), los lotes se cortan en
+  bloques (`LandPlots.partition_blocks`, `land.plot_sides_blocks` [2, 3] = 4–6 m) y la puerta doble usa el otro borde de su tramo
+  (`place_double_door`). La oficina inicial (CEO de 4×4) y la empresa de prueba están alineadas; las partes anteriores usan
+  `tests/fixtures/starting_office_legacy.json` y `starting_company_legacy.json` con `OfficeState.build_blocks_enabled` en false (no se
+  guarda; `FIRST_BUILD_BLOCKS_SUITE`). Prueba `test_build_blocks`.
 - Mudar la Oficina Ejecutiva (fase 8): marcarla en otro espacio cerrado con puerta, cuando ya hay una, es mudarla
   (`Builder.quote_mark_room` → `quote_move_ceo_office`): hace falta ahí una silla sin dueño con el frente de un escritorio delante; el resultado
   trae `confirm` y el modo construcción pregunta («Sí, mudar» / «No»: `BuildController.ask_confirm`/`answer_confirm`/`is_confirming`,
@@ -83,7 +95,7 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   pruebas: `test_all` lo apaga antes de `camera_view`; `finish_motion()` termina la animación. La vista ya no se gira (se quitó
   después del hito 69): siempre desde la misma esquina; una partida guardada con `view_rotation` distinto de 0 encuadra la oficina al cargar.
   Paredes: las de atrás (`OfficeGrid.is_back_edge`: contorno con la casilla de fuera detrás) se dibujan a su `height` de `data/construction.json`
-  (pared 60, puerta 46, ventana 60, puerta de vidrio 50) y todas las demás a `low_wall_height` (10), para ver adentro (`EdgePieceView.tall`);
+  (pared 60, puerta 46, ventana 60, puerta de vidrio 57) y todas las demás a `low_wall_height` (10), para ver adentro (`EdgePieceView.tall`);
   un objeto de pared en una pared baja se dibuja pegado abajo y no más alto que ella. Mapa (`MapDecor`,
   funciones puras, `data/map.json`): pasto variado en el solar, camino de la puerta al borde, afuera (`Surroundings`, otra capa debajo del
   piso, 10 casillas) acera y calle del lado de la salida y pasto oscuro, árboles (`TreeView`) a 2 casillas o más del local, y la línea
@@ -140,21 +152,25 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   pared; cierra como pared (`blocks_passage`, caminos, espacios) y nada se cuelga en ella. Suma sus puntos al ambiente de la habitación a la que da
   (`OfficeState.count_room_windows`, `Ambiance.get_detail(…, windows)`). Al comprar terreno las del borde que se abre se devuelven a la mitad
   (`window_refund`, «Construcción»). No cuentan como bienes. Herramienta Ventana en la sección Estructura (`BuildController.TOOL_WINDOW`).
-- Puerta de vidrio sencilla (hito 69, diseño 21.6; `glass_door` en `data/construction.json`, `ambiance` 6): ya no se compra; solo queda
-  en la entrada cuando no cabe la doble (sin tramo de contorno al lado) y para partidas viejas. `ConstructionCatalog.is_door` (pasa,
-  abre espacios, la entrada) reemplaza las comparaciones con `DOOR`. Suma sus puntos al ambiente de la habitación con la casilla de
-  entrada (`OfficeState.get_room_door_ambiance`, cuarto parámetro `extra_points` de `Ambiance`). `EdgePieceView` la dibuja con dos
-  postes, dintel y dos hojas. No cuenta como bien.
+- Puerta de vidrio de una hoja (hito 69, rehecha en el 72; `glass_door` en `data/construction.json`, $900, `height` 57, `ambiance` 6):
+  una hoja de la doble, de vidrio sin marco de punta a punta del borde (`tools/sprites/art/walls/glass_door/`), que abre con sus
+  cuadros (`OPENING_DOORS` en `export_game.py`). Se compra en cualquier borde de adentro como una puerta (en línea de bloque; no en el
+  contorno) con la herramienta Puerta de vidrio de Estructura (`BuildController.TOOL_GLASS_DOOR`); se vende a la mitad. También queda
+  en la entrada cuando no cabe la doble. `ConstructionCatalog.is_door` (pasa, abre espacios, la entrada) reemplaza las comparaciones
+  con `DOOR`. `OfficeState.get_room_door_ambiance`: la de la entrada suma a la habitación con la casilla de entrada y cada una de
+  adentro a las habitaciones de sus dos lados (cuarto parámetro `extra_points` de `Ambiance`). No cuenta como bien. Prueba
+  `test_glass_door_single`.
 - Puerta de vidrio doble (`glass_door_double` en `data/construction.json`, `price` 0, `height` 57, `ambiance` 10): la entrada la lleva
   siempre. Sin marco, de dos bordes: la puerta de entrada y un tramo del contorno de al lado, en línea (`GridEdge.get_line_neighbors`);
   los dos guardan la misma pieza y `OfficeState.get_double_door_partner` da el otro. `OfficeState.place_double_door(edges, lot, door)`
   la pone (partida nueva, `import_state` para partidas viejas, empresa de prueba y terreno): primero el tramo que ya la tenía, si no
   una pared sin nada colgado (la de arriba primero), si no pared o ventana; sin tramo posible queda la sencilla. Es fija: `Builder`
-  rechaza cualquier cambio en sus dos bordes (`_is_entrance_door`, `ENTRANCE_FIXED_MESSAGE`) y no hay herramienta de puertas de
-  vidrio. Con terreno frente a la entrada se corre entera (el tramo con el mismo desplazamiento). El camino de grava sale de sus
+  rechaza cualquier cambio en sus dos bordes (`_is_entrance_door`, `ENTRANCE_FIXED_MESSAGE`) y no se compra ni tiene
+  herramienta. Con terreno frente a la entrada se corre entera (el tramo con el mismo desplazamiento). El camino de grava sale de sus
   dos tramos (`MapDecor.get_path_starts`, `plan(…, edges)`), así queda centrado y sigue a la puerta. `ConstructionCatalog.is_glass_door`
   cubre las dos para el ambiente. `EdgePieceView` dibuja en cada borde su mitad (`glass_door_double_<a|b>_<tall|low>_<x|y>`,
-  `get_double_half`: a = el de menor x o y). Pruebas anteriores a `glass_door_double` corren con `OfficeState.double_door_enabled`
+  `get_double_half`: a = el de menor x o y) y abre sus dos mitades juntas con sus cuadros (`glass_door_double_<a|b>_tall_<eje>_open_<n>`,
+  `OfficeGrid.update_doors`: alguien junto a una abre las dos); como pared del frente, solo con las paredes arriba. Pruebas anteriores a `glass_door_double` corren con `OfficeState.double_door_enabled`
   en false.
 
 ## Tiempo, jornada y personajes
@@ -169,11 +185,13 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   Un clic en un empleado abre su ficha (`EmployeeCard`). El muñeco se dibuja a `OfficeCharacter.BODY_SCALE` (0.8, unos 50 px de pie, a la escala
   de los muebles); sentado la cadera queda a `SEAT_HEIGHT_PX` y el icono de estado no se achica; `CLICK_AREA` ya va escalado.
   Caminan a `CHARACTER_WALK_SPEED` (1 casilla/s a 1x; con prisa, `OfficeCharacter.hurry`, × `CHARACTER_HURRY_FACTOR` 2 hasta llegar: quien entra después de su hora (`main._arrive_staggered`) y el candidato llamado a la entrevista) y hay una persona por casilla del local: cada uno ocupa la suya y, al
-  caminar, la siguiente (`OfficeCharacter._occupants`, estático; `is_cell_taken`, `get_held_cells`). Si la siguiente está ocupada
+  caminar, la siguiente hasta pasar la mitad del tramo, cuando suelta la de atrás (`OfficeCharacter._occupants`, estático; `is_cell_taken`, `get_held_cells`). Si la siguiente está ocupada
   espera; cada `CHARACTER_REPATH_WAIT` busca un camino que esquive a los demás (`OfficePathfinder.find_path(…, avoid)`) y tras
   `CHARACTER_PASS_WAIT` pasa igual (dos de frente en un pasillo de una casilla). Aparece en la entrada si está libre; si no,
   espera en la calle sin verse. Fuera del local no hay límite. `main.gd` no manda a dos al mismo lugar: limpieza, almuerzo,
-  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). Desde la calle se entra por turno (`_door_queue`, primero el que espera hace más); quien está afuera y debe irse se va sin cruzar la puerta (`update_routine`, `_walk_to` con `WALKING_OUT`). Prueba `test_walking`.
+  pausas y visitas toman la casilla libre más cercana (`_cells_near`, `_free_spot_near`). El proyecto ajusta todo a píxeles enteros del mundo
+  (`snap_2d_transforms_to_pixel`): con zoom 4 eso haría saltar de a 4 px a quien camina, así que al caminar el dibujo se corre lo que
+  el ajuste le quita, redondeado a píxeles de pantalla (`OfficeCharacter._draw_offset`, `_subpixel_offset`; quieto vale cero). Desde la calle se entra por turno (`_door_queue`, primero el que espera hace más); quien está afuera y debe irse se va sin cruzar la puerta (`update_routine`, `_walk_to` con `WALKING_OUT`). Prueba `test_walking`.
   Llegadas escalonadas (`arrivals` en `data/staff.json`): al empezar la jornada cada empleado entra entre −30 y +10 minutos de su hora
   (`Staff.get_arrival_offset(empleado, hora absoluta)`, fijo por persona y hora; 10 % tarde, impuntual 50 % y desde −10). `get_early_minutes`
   (turno que empieza la hora siguiente, sin tardanza sorteada: `_lateness_roll` predice `_check_arrivals`) y `get_late_minutes` (llegada de ahora).
