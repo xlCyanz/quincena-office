@@ -188,10 +188,24 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
 ## Personal
 
 - `Staff` guarda vacantes y candidatos (`data/staff.json`, `data/names.json`); su azar usa una semilla guardada
-  en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo. Va en pestañas
-  (`show_tab`: `TAB_EMPLOYEES`, `TAB_HIRING`, `TAB_ORG`, esta solo si hay organigrama; sin empleados abre en Vacantes y el tutorial
-  señala la pestaña con `get_publish_target_rect`). Empleados son tarjetas (`CardButton`) con su foto (`EmployeePortrait`), nombre,
-  cargo y el globo de estado; abren la ficha, que marca la suya (`EmployeeCard.employee_changed` → `set_selected_employee`).
+  en la partida (`Staff.set_seed` en las pruebas). El menú Personal (`StaffPanel`) no pausa el tiempo. Ocupa el ancho entre el
+  dinero y la barra de menús (empieza bajo la tarjeta del tutorial: `avoid_provider`; si no cabe, se desplaza entero) y va en capas:
+  `scripts/ui/staff/staff_panel_base.gd` (constantes, estado, piezas: `Bar` es la barra fina, con rango para habilidades sin
+  entrevistar) → `staff_panel_employees` → `staff_panel_hiring` → `staff_panel_org` → `scripts/ui/staff_panel.gd` (cabecera, API).
+  La cabecera tiene las pestañas (`show_tab`: `TAB_EMPLOYEES`, `TAB_HIRING`, `TAB_ORG`, esta solo si hay organigrama; sin empleados
+  abre en Vacantes y el tutorial señala la pestaña con `get_publish_target_rect`; `tab_shown` avisa el cambio), el resumen (nómina,
+  puestos libres, ánimo medio), «?» y Volver al mapa.
+  - Empleados: avisos (ofertas de otra empresa con Igualar / Dejar ir, `Staff.match_offer` / `let_go`, y cuántos están cansados,
+    molestos… o pueden ascender), filtro por área (`AREAS`), búsqueda, orden (`SORT_NAMES`) y tarjetas (`CardButton`) agrupadas por
+    equipo con foto (`EmployeePortrait`), nombre, cargo, barras de ánimo, energía y estrés y el globo de estado. A la derecha queda
+    la columna de la ficha: main la pone ahí (`get_body_top` → `EmployeeCard.set_top`, cada vez que se mueve: `body_moved`) y la
+    cierra fuera de Empleados; la ficha marca su tarjeta (`EmployeeCard.employee_changed` → `set_selected_employee`).
+  - Vacantes: formulario (chips de cargo y botones de nivel que reflejan `_role_option` / `_level_option`, ocultas, que son el
+    modelo; sueldo −/+ contra la tabla, Pronóstico, publicidad, Publicar) y cada vacante con sus candidatos en tarjetas: foto (el
+    aspecto con que llegan, `Visitor`), edad, lo que piden, cuándo se van, habilidades (rango hasta la entrevista), rasgos, cita,
+    oferta −/+ con lo que pasaría (`_offer_hint`) y Entrevistar / Delegar / Ofrecer / contraoferta / Descartar.
+  - Organigrama: departamentos con quien los dirige y cuánto rinden, la lista de cada ejecutivo y el árbol CEO → gerentes → líderes
+    (con «A cargo de») → caras del equipo; las líneas se dibujan detrás (`_org_links`).
   La foto es el cuadro de pie mirando al frente recortado en cabeza y hombros (`SpriteLibrary.get_portrait`, con la paleta de
   `Employee.look_for`) sobre el color de su área.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.

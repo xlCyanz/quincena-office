@@ -91,6 +91,8 @@ Solo para probar y balancear; no viajan en las exportaciones.
     `staff_hiring` → `scripts/autoload/staff.gd` (`_ready`, reloj, guardado).
   - `main.gd`: `scripts/game/main_characters.gd` → `main_menus.gd` → `scripts/main.gd`.
   - `Builder`: `scripts/office/builder_structure.gd` → `builder_furniture` → `builder_land` → `builder.gd` (habitaciones).
+  - `StaffPanel`: `scripts/ui/staff/staff_panel_base.gd` → `staff_panel_employees` → `staff_panel_hiring` → `staff_panel_org` →
+    `scripts/ui/staff_panel.gd`.
 
 ## Forma de trabajo
 

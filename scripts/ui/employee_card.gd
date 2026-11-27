@@ -37,6 +37,8 @@ signal employee_changed(employee_id: int)
 var status_provider: Callable = Callable()
 
 var _panel: PanelContainer
+## Borde de arriba de la ficha (ver set_top).
+var _top: float = MARGIN_TOP
 var _scroll: ScrollContainer
 var _rows: VBoxContainer
 var _title: Label
@@ -100,7 +102,7 @@ func _ready() -> void:
 	_panel.anchor_right = 1.0
 	_panel.offset_left = -MARGIN - PANEL_WIDTH
 	_panel.offset_right = -MARGIN
-	_panel.offset_top = MARGIN_TOP
+	_panel.offset_top = _top
 	# Con la interfaz grande el contenido puede pedir más ancho: crece hacia la izquierda.
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	EventBus.ui_layout_changed.connect(_fit)
@@ -434,6 +436,13 @@ func _make_meter(color: Color) -> ProgressBar:
 	return meter
 
 
+## Pone el borde de arriba de la ficha (bajo el reloj, o en la columna de Personal); negativo vuelve al de siempre.
+func set_top(top: float) -> void:
+	_top = MARGIN_TOP if top < 0.0 else top
+	_panel.offset_top = _top
+	_fit()
+
+
 ## Abre la ficha de un empleado (o la cambia a otro).
 func open_employee(employee_id: int) -> void:
 	_employee_id = employee_id
@@ -740,7 +749,7 @@ func get_shift_editor() -> ShiftEditor:
 func _fit() -> void:
 	if not is_open():
 		return
-	var available: float = UiLayout.available_height(_panel.get_viewport_rect().size, MARGIN_TOP) \
+	var available: float = UiLayout.available_height(_panel.get_viewport_rect().size, _top) \
 		- (_panel.get_combined_minimum_size().y - _scroll.get_combined_minimum_size().y)
 	_scroll.custom_minimum_size.y = minf(_rows.get_combined_minimum_size().y, maxf(available, 100.0))
 	_panel.offset_bottom = _panel.offset_top

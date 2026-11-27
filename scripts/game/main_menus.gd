@@ -31,6 +31,16 @@ func _update_objectives_fold() -> void:
 		or _bank_panel.is_open() or _company_panel.is_open())
 
 
+# Con Personal abierto, la ficha empieza donde empiezan sus pestañas (columna derecha de Empleados); si ahí
+# no queda alto para leerla, va en su lugar de siempre.
+func _place_card_in_staff() -> void:
+	if not _staff_panel.is_open():
+		return
+	var top: float = _staff_panel.get_body_top()
+	var room: float = UiLayout.available_height(_staff_panel.get_viewport().get_visible_rect().size, top)
+	_employee_card.set_top(top if room >= MIN_CARD_ROOM else -1.0)
+
+
 # Cierra los paneles izquierdos menos uno (null: todos).
 func _close_side_panels(keep: CanvasLayer) -> void:
 	if keep != _staff_panel:

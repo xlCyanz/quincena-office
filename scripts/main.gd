@@ -41,7 +41,13 @@ func _ready() -> void:
 	_add_frame_button(_build_panel.get_menu_bar())
 	_camera.pan_blocker = _is_camera_locked
 	_staff_panel.attach_button(_build_panel.get_menu_bar())
-	_staff_panel.employee_selected.connect(_employee_card.open_employee)
+	_staff_panel.employee_selected.connect(func(employee_id: int) -> void:
+		_place_card_in_staff()
+		_employee_card.open_employee(employee_id))
+	# Con Personal abierto la ficha va en su columna derecha y solo en Empleados.
+	_staff_panel.tab_shown.connect(func(tab: int) -> void:
+		if tab != StaffPanel.TAB_EMPLOYEES:
+			_employee_card.close())
 	_employee_card.employee_changed.connect(_staff_panel.set_selected_employee)
 	_projects_panel.attach_button(_build_panel.get_menu_bar())
 	_teams_panel.attach_button(_build_panel.get_menu_bar())
@@ -50,7 +56,10 @@ func _ready() -> void:
 	# Paneles del lado izquierdo: abrir uno cierra los otros.
 	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
 		if active:
-			_close_side_panels(_staff_panel))
+			_close_side_panels(_staff_panel)
+			_place_card_in_staff.call_deferred()
+		else:
+			_employee_card.set_top(-1.0))
 	_projects_panel.projects_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_projects_panel))
@@ -91,6 +100,10 @@ func _ready() -> void:
 			return [bar, bar]
 		return _hud.get_corner_rects()
 	add_child(_tutorial_panel)
+	# Personal ocupa el ancho: empieza bajo la tarjeta del tutorial para no quedar tapado.
+	_staff_panel.avoid_provider = func() -> Rect2:
+		return _tutorial_panel.get_panel_rect() if _tutorial_panel.is_showing() else Rect2()
+	_staff_panel.body_moved.connect(_place_card_in_staff)
 	_help_dialog = HelpDialog.new()
 	_help_dialog.name = "HelpDialog"
 	add_child(_help_dialog)

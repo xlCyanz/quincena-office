@@ -10,6 +10,8 @@ const CLICK_TOLERANCE_PX: float = 8.0
 const MENU_SCENE_PATH: String = "res://scenes/main_menu.tscn"
 ## Sin lugar (p. ej. donde trapear).
 const NO_SPOT := Vector2i(-9999, -9999)
+## Alto mínimo para poner la ficha en la columna de Personal.
+const MIN_CARD_ROOM: float = 300.0
 
 # Paredes arriba pedidas por el jugador (botón ↕ o tecla P).
 var _walls_wanted: bool = false
