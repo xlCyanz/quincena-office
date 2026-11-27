@@ -32,6 +32,10 @@ const FACTS: Dictionary[String, String] = {"team": "EQUIPO", "schedule": "HORARI
 
 ## Cambió el empleado de la ficha (0 al cerrarla).
 signal employee_changed(employee_id: int)
+## Se pidió elegir en el mapa otro puesto para el empleado de la ficha (main abre StationPicker).
+signal station_change_requested(employee_id: int)
+## Se canceló la elección de puesto desde la ficha.
+signal station_change_cancelled
 
 ## Devuelve qué está haciendo un empleado ("Trabajando", …) a partir de su id.
 var status_provider: Callable = Callable()
@@ -74,6 +78,10 @@ var _promote_button: Button
 var _promote_salary: int = 0
 var _own_label: Label
 var _own_button: Button
+var _station_label: Label
+var _station_button: Button
+## Mientras se elige en el mapa el puesto nuevo (set_station_picking).
+var _station_picking: bool = false
 var _shift_editor: ShiftEditor
 var _photo: EmployeePortrait
 var _level_badge: Label
@@ -236,6 +244,22 @@ func _ready() -> void:
 	# Avisos y aumento antes de las habilidades: es lo urgente.
 	rows.move_child(_details, rows.get_child_count() - 1)
 
+	var station_row := HBoxContainer.new()
+	station_row.add_theme_constant_override("separation", 8)
+	rows.add_child(station_row)
+	_station_label = Label.new()
+	_station_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_station_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	station_row.add_child(_station_label)
+	_station_button = Button.new()
+	_station_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_station_button.pressed.connect(func() -> void:
+		if _station_picking:
+			station_change_cancelled.emit()
+		else:
+			station_change_requested.emit(_employee_id))
+	station_row.add_child(_station_button)
+
 	_fire_button = Button.new()
 	_fire_button.text = "Despedir"
 	_fire_button.pressed.connect(_ask_fire)
@@ -260,6 +284,7 @@ func _ready() -> void:
 
 	_panel.visible = false
 	EventBus.staff_changed.connect(_refresh)
+	EventBus.office_changed.connect(_refresh)
 	EventBus.hour_changed.connect(func(_hour: int) -> void: _refresh())
 
 
@@ -648,6 +673,7 @@ func _refresh() -> void:
 	_refresh_raise(employee)
 	_refresh_promotion(employee)
 	_refresh_own_schedule(employee, team)
+	_refresh_station(employee)
 	_fit.call_deferred()
 	if _confirm_row.visible:
 		_confirm_label.text = "¿Despedir a %s? Cuesta %s y baja el ánimo de sus compañeros." % [
@@ -711,6 +737,36 @@ func _refresh_history(employee: Dictionary) -> void:
 		_history_values["bugs"].add_theme_color_override("font_color", UiTheme.NEGATIVE)
 	else:
 		_history_values["bugs"].remove_theme_color_override("font_color")
+
+
+# Fila Puesto: dónde trabaja y el botón para pasarlo a otro puesto (o cancelar mientras se elige).
+func _refresh_station(employee: Dictionary) -> void:
+	if _station_picking:
+		_station_label.text = "Elige su puesto nuevo en el mapa: verde libre, azul intercambian."
+		_station_button.text = "Cancelar"
+		_station_button.disabled = false
+		_station_button.tooltip_text = "Deja su puesto como está (también con clic derecho o Esc)."
+		return
+	var room: Dictionary = Staff.get_workplace_room(Staff.employee_key(employee["id"]))
+	if not Staff.has_working_station(employee):
+		_station_label.text = "Su puesto no funciona"
+	else:
+		_station_label.text = "Puesto en %s" % (RoomCatalog.get_display_name(room["type"]) if not room.is_empty() else "la oficina")
+	_station_button.text = "Cambiar de puesto"
+	var choices: int = Staff.get_station_choices(employee["id"]).size()
+	_station_button.disabled = choices == 0
+	_station_button.tooltip_text = "No hay otro puesto al que pueda pasar." if choices == 0 else \
+		"Elige en el mapa otro puesto libre, o uno ocupado para intercambiarlo."
+
+
+## Marca que se está eligiendo en el mapa el puesto del empleado de la ficha.
+func set_station_picking(picking: bool) -> void:
+	_station_picking = picking
+	_refresh()
+
+
+func get_station_button() -> Button:
+	return _station_button
 
 
 # Fila Horario propio: el botón para tenerlo o volver al del equipo o cargo y, si lo tiene, sus controles.

@@ -355,3 +355,74 @@ func get_work_area_ambiance() -> float:
 			total += int(_ambiance_detail(room)["value"])
 			count += 1
 	return float(total) / count if count > 0 else 0.0
+
+
+## Puestos a los que puede pasar un empleado: los que funcionan en su lugar de trabajo, menos el suyo.
+## Cada uno es el de Workstations.find_all con "owner" (assigned_to de quien lo ocupa, "" si está libre).
+func get_station_choices(employee_id: int) -> Array[Dictionary]:
+	var employee: Dictionary = get_employee(employee_id)
+	var choices: Array[Dictionary] = []
+	if employee.is_empty():
+		return choices
+	var key: String = employee_key(employee_id)
+	var room_type: String = StaffCatalog.get_workplace(employee["role"])
+	for station: Dictionary in Workstations.find_all(OfficeState.furniture, OfficeState.rooms, room_type):
+		var owner: String = String(OfficeState.furniture[station["chair"]]["assigned_to"])
+		if owner != key and owner != "ceo":
+			var choice: Dictionary = station.duplicate()
+			choice["owner"] = owner
+			choices.append(choice)
+	return choices
+
+
+## Por qué un empleado no puede pasar al puesto de esa silla, o "".
+func station_change_problem(employee_id: int, chair_index: int) -> String:
+	var employee: Dictionary = get_employee(employee_id)
+	if employee.is_empty():
+		return "Ese empleado ya no está."
+	var key: String = employee_key(employee_id)
+	for choice: Dictionary in get_station_choices(employee_id):
+		if int(choice["chair"]) == chair_index:
+			# Intercambiar necesita una silla que darle al otro.
+			if not String(choice["owner"]).is_empty() and OfficeState.find_furniture_assigned_to(key).is_empty():
+				return "Ese puesto es de %s y %s no tiene uno para cambiarle." % [get_person_name(choice["owner"]), employee["name"]]
+			return ""
+	if chair_index >= 0 and chair_index < OfficeState.furniture.size() \
+			and OfficeState.furniture[chair_index]["assigned_to"] == key:
+		return "%s ya trabaja ahí." % employee["name"]
+	return "Ahí no hay un puesto para %s: %s." % [employee["name"], _workplace_hint(employee["role"])]
+
+
+## Pasa a un empleado al puesto de esa silla; si lo ocupa otro, intercambian puestos. Devuelve {"ok", "message"}.
+func move_to_station(employee_id: int, chair_index: int) -> Dictionary:
+	var problem: String = station_change_problem(employee_id, chair_index)
+	if not problem.is_empty():
+		return {"ok": false, "message": problem}
+	var key: String = employee_key(employee_id)
+	var other: String = String(OfficeState.furniture[chair_index]["assigned_to"])
+	var old_chair: int = -1
+	for index: int in range(OfficeState.furniture.size()):
+		if OfficeState.furniture[index]["assigned_to"] == key:
+			old_chair = index
+			OfficeState.furniture[index]["assigned_to"] = ""
+	OfficeState.furniture[chair_index]["assigned_to"] = key
+	var name: String = get_employee(employee_id)["name"]
+	var message: String = "%s cambia de puesto." % name
+	if not other.is_empty():
+		OfficeState.furniture[old_chair]["assigned_to"] = other
+		message = "%s y %s intercambian puestos." % [name, get_person_name(other)]
+	EventBus.office_changed.emit()
+	EventBus.staff_changed.emit()
+	return {"ok": true, "message": message}
+
+
+# Dónde trabaja un cargo, para los avisos.
+func _workplace_hint(role: String) -> String:
+	match StaffCatalog.get_workplace(role):
+		Workstations.SINGLE_OFFICE:
+			return "trabaja en una Oficina única"
+		Workstations.RECEPTION:
+			return "trabaja en un mostrador de la Recepción"
+		Workstations.CLEANING_ROOM:
+			return "trabaja en un armario de limpieza"
+	return "hace falta un escritorio con computadora y una silla delante, en un Área de trabajo"

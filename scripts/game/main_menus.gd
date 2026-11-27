@@ -31,6 +31,16 @@ func _update_objectives_fold() -> void:
 		or _bank_panel.is_open() or _company_panel.is_open())
 
 
+# Desde la ficha: cierra Personal (tapa el mapa) y empieza a elegir el puesto nuevo en el mapa.
+func _start_station_change(employee_id: int) -> void:
+	_staff_panel.set_open(false)
+	var result: Dictionary = _station_picker.start(employee_id)
+	if result["ok"]:
+		_employee_card.set_station_picking(true)
+	else:
+		EventBus.notice.emit(result["message"])
+
+
 # Con Personal abierto, la ficha empieza donde empiezan sus pestañas (columna derecha de Empleados); si ahí
 # no queda alto para leerla, va en su lugar de siempre.
 func _place_card_in_staff() -> void:
@@ -59,6 +69,7 @@ func _close_side_panels(keep: CanvasLayer) -> void:
 func _on_build_mode_changed(active: bool) -> void:
 	if active:
 		_close_side_panels(null)
+		_station_picker.cancel()
 		EventBus.ui_action.emit("build_opened")
 	_build_controller.set_active(active)
 	_hud.set_controls_enabled(not active)
@@ -190,6 +201,9 @@ func handle_escape() -> String:
 	if _build_panel.is_shop_open():
 		_build_panel.set_shop_open(false)
 		return "shop"
+	if _station_picker.is_active():
+		_station_picker.cancel()
+		return "station"
 	if _build_panel.is_build_mode():
 		if _build_controller.is_moving():
 			_build_controller.cancel_move()

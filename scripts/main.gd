@@ -24,6 +24,10 @@ func _ready() -> void:
 	_sync_interview()
 	SaveManager.scene_state_provider = _export_scene_state
 	_build_controller.setup(_office_grid)
+	_station_picker = StationPicker.new()
+	_station_picker.name = "StationPicker"
+	add_child(_station_picker)
+	_station_picker.setup(_office_grid)
 	_build_controller.status_changed.connect(_build_panel.show_status)
 	_build_panel.build_mode_changed.connect(_on_build_mode_changed)
 	_build_panel.tool_selected.connect(_build_controller.set_tool)
@@ -49,6 +53,16 @@ func _ready() -> void:
 		if tab != StaffPanel.TAB_EMPLOYEES:
 			_employee_card.close())
 	_employee_card.employee_changed.connect(_staff_panel.set_selected_employee)
+	# Cambiar de puesto: la ficha pide elegir en el mapa; otra ficha o cerrarla lo cancela.
+	_employee_card.station_change_requested.connect(_start_station_change)
+	_employee_card.station_change_cancelled.connect(_station_picker.cancel)
+	_employee_card.employee_changed.connect(func(employee_id: int) -> void:
+		if employee_id != _station_picker.get_employee_id():
+			_station_picker.cancel())
+	_station_picker.finished.connect(func(message: String) -> void:
+		_employee_card.set_station_picking(false)
+		if not message.is_empty():
+			EventBus.notice.emit(message))
 	_projects_panel.attach_button(_build_panel.get_menu_bar())
 	_teams_panel.attach_button(_build_panel.get_menu_bar())
 	_bank_panel.attach_button(_build_panel.get_menu_bar())
@@ -57,6 +71,7 @@ func _ready() -> void:
 	_staff_panel.staff_mode_changed.connect(func(active: bool) -> void:
 		if active:
 			_close_side_panels(_staff_panel)
+			_station_picker.cancel()
 			_place_card_in_staff.call_deferred()
 		else:
 			_employee_card.set_top(-1.0))

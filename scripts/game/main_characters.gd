@@ -58,6 +58,8 @@ var _pause_menu: PauseMenu
 var _tutorial_panel: TutorialPanel
 # Ayuda de los menús (botones «?»); se arma en código.
 var _help_dialog: HelpDialog
+## Elegir en el mapa el puesto nuevo de un empleado (desde su ficha).
+var _station_picker: StationPicker
 # Pantalla de salida a bolsa; se arma en código.
 var _ipo_screen: IpoScreen
 # Dónde se apretó el botón izquierdo (clic o arrastre).

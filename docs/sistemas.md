@@ -209,6 +209,12 @@ lo general (motor, convenciones, reglas de arquitectura) en `CLAUDE.md`.
   La foto es el cuadro de pie mirando al frente recortado en cabeza y hombros (`SpriteLibrary.get_portrait`, con la paleta de
   `Employee.look_for`) sobre el color de su área.
   `Staff.employees` son los contratados; cada uno ocupa la silla de un puesto con `assigned_to = Staff.employee_key(id)`.
+- Cambiar de puesto: la ficha tiene la fila Puesto con «Cambiar de puesto» (`EmployeeCard.station_change_requested`); main
+  cierra Personal y `StationPicker` (`scripts/office/station_picker.gd`, hijo de Main) marca en el mapa los puestos de su lugar de
+  trabajo (`Staff.get_station_choices`: verde libres, azul ocupados, ámbar el suyo). Un clic en la silla o el escritorio llama a
+  `Staff.move_to_station(employee_id, chair_index)`: pasa la asignación de silla o, si es de otro, intercambian (hace falta tener
+  silla; la del CEO no se toma; `station_change_problem`). Clic derecho, Esc (`handle_escape` → "station"), Construir, abrir
+  Personal o cambiar de ficha cancelan. Prueba `test_station_change`.
 - Nómina (`Staff`): cada empleado gana sueldo/30 por día desde `paid_until`; los días 15 y 30 se paga todo o nada.
   Lo que no alcanza queda en `owed`, baja el ánimo y se paga solo al alcanzar el saldo. Despedir cobra lo ganado más
   lo debido (puede dejar saldo negativo). Los avisos al jugador van por `EventBus.notice` y los muestra el `Hud`.
